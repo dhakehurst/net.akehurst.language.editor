@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.ace
 
+import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.analyser.AsmElementSimple
 import net.akehurst.language.api.analyser.SyntaxAnalyserException
 import net.akehurst.language.api.parser.InputLocation
@@ -25,11 +26,21 @@ import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.api.ParseEvent
 import net.akehurst.language.editor.api.ProcessEvent
 import net.akehurst.language.editor.common.AglEditorAbstract
-import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.comon.AglWorkerClient
-import net.akehurst.language.processor.Agl
-import org.w3c.dom.*
+import org.w3c.dom.Document
+import org.w3c.dom.Element
+import org.w3c.dom.asList
 import kotlin.browser.window
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.associate
+import kotlin.collections.forEach
+import kotlin.collections.listOf
+import kotlin.collections.mutableListOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
+import kotlin.collections.toMutableMap
+import kotlin.collections.toTypedArray
 
 class AglErrorAnnotation(
         val line: Int,

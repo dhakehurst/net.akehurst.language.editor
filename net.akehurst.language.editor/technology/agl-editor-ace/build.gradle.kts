@@ -17,7 +17,10 @@ dependencies {
 }
 
 tasks.withType<ProcessResources>  {
+    val map = project.properties.toMutableMap()
+    map["version_agl"] = version_agl
+    map["version_ace"] = version_ace
     filesMatching("**/package.json") {
-        expand(project.properties)
+        expand(map)
     }
 }

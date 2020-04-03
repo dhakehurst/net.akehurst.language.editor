@@ -25,7 +25,7 @@ import net.akehurst.language.api.sppt.SPPTNode
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.common.*
-import net.akehurst.language.processor.Agl
+import net.akehurst.language.agl.processor.Agl
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.MessagePort
 import org.w3c.dom.SharedWorkerGlobalScope
