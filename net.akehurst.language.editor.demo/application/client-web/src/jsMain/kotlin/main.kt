@@ -28,8 +28,8 @@ import net.akehurst.language.editor.monaco.AglEditorMonaco
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
-import net.akehurst.language.processor.Agl
-import net.akehurst.language.processor.AglLanguage
+import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.processor.AglLanguage
 import org.w3c.dom.HTMLDialogElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLSelectElement
@@ -64,7 +64,7 @@ fun createBaseDom(appDivSelector: String) {
     while (null != appDiv.firstChild) {
         appDiv.removeChild(appDiv.firstChild!!)
     }
-    val aglEditorVersion = net.akehurst.language.editor.ace.
+    //val aglEditorVersion = net.akehurst.language.editor.ace.
     appDiv.create().article {
         header {
             section {
@@ -80,7 +80,7 @@ fun createBaseDom(appDivSelector: String) {
                             header { h2 { content="About" } }
                             section {
                                 p { content = "Ace version 1.4.8, Licence BSD" }
-                                p { content = "Monaco version 1.4.8, Licence MIT" }
+                                p { content = "Monaco version 0.20.0, Licence MIT" }
                                 p { content = "AGL version ${Agl.version}, Licence Apache 2.0" }
                                 p { content = "Kotlin version 1.3.71, Licence Apache 2.0" }
                             }
