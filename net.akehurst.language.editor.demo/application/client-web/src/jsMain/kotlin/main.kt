@@ -30,6 +30,7 @@ import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.processor.AglLanguage
+import net.akehurst.language.editor.information.examples.SQL
 import org.w3c.dom.HTMLDialogElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLSelectElement
@@ -184,6 +185,7 @@ fun createBaseDom(appDivSelector: String) {
 fun initialiseExamples() {
     val exampleSelect = document.querySelector("select#example") as HTMLElement
     Examples.add(Datatypes.example)
+    Examples.add(SQL.example)
     Examples.add(GraphvizDot.example)
     Examples.add(SText.example)
 

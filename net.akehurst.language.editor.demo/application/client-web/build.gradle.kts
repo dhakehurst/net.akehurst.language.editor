@@ -4,9 +4,9 @@ val version_html_builder:String by project
 dependencies {
 
     jsMainImplementation(project(":information-editor"))
-    jsMainImplementation("net.akehurst.language.editor:technology-gui-widgets:$version_agl_editor")
-    jsMainImplementation("net.akehurst.language.editor:technology-agl-editor-ace:$version_agl_editor")
-    jsMainImplementation("net.akehurst.language.editor:technology-agl-editor-monaco:$version_agl_editor")
+    jsMainImplementation(project(":technology-gui-widgets"))
+    jsMainImplementation("net.akehurst.language.editor:agl-editor-ace:$version_agl_editor")
+    jsMainImplementation("net.akehurst.language.editor:agl-editor-monaco:$version_agl_editor")
 
     jsMainImplementation("net.akehurst.kotlin.html5:html-builder:$version_html_builder")
 
