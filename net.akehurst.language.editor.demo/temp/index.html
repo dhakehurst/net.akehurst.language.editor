@@ -14,13 +14,23 @@
 
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.9/ace.js"> </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.8/ace.js"> </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.8/ext-language_tools.js"> </script>
+<script src="https://unpkg.com/kotlin@1.3.71/kotlin.js" ></script>
+<script>
+    var Ace = ace;
+    var VirtualRenderer = ace.require('ace/virtual_renderer');
+    var Editor = ace.require('ace/editor');
+    var Autocomplete = ace.require('ace/autocomplete');
+    var BackgroundTokenizer = ace.require('ace/background_tokenizer');
+</script>
+<script src="./net.akehurst.language.editor-agl-editor-common.js"> </script>
+<script src="./net.akehurst.language-agl-processor.js"> </script>
+<script src="./net.akehurst.language.editor-agl-editor-ace.js"> </script>
 
 <script>
     var aglScriptBasePath = "./";
-    var editor = ace.edit("editor");
-    editor.setTheme("ace/theme/twilight");
-    editor.session.setMode("ace/mode/javascript");
+    AglEditorAce.initialise(document, "${aglScriptBasePath}/application-agl-editor-worker.js")
 </script>
 
 </body>
