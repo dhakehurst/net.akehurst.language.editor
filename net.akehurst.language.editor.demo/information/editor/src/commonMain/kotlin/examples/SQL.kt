@@ -73,29 +73,42 @@ grammar SQL {
     """.trimIndent()
 
     val style = """
-        'class' {
-          foreground: purple;
-          font-style: bold;
-        }
-        ID {
-          foreground: blue;
-          font-style: italic;
-        }
-        '{' {
-          foreground: darkgreen;
-          font-style: bold;
-        }
-        '}' {
-          foreground: darkgreen;
-          font-style: bold;
-        }
-        property {
-          background: lightgray;
-        }
-        typeReference {
-          foreground: green;
-          background: lightblue;
-        }
+ID {
+  foreground: blue;
+  font-style: italic;
+}
+SELECT {
+  foreground: chocolate;
+  font-style: bold;
+}
+UPDATE {
+  foreground: chocolate;
+  font-style: bold;
+}
+DELETE {
+  foreground: chocolate;
+  font-style: bold;
+}
+INSERT {
+  foreground: chocolate;
+  font-style: bold;
+}
+INTO {
+  foreground: chocolate;
+  font-style: bold;
+}
+FROM {
+  foreground: chocolate;
+  font-style: bold;
+}
+VALUES {
+  foreground: chocolate;
+  font-style: bold;
+}
+SET {
+  foreground: chocolate;
+  font-style: bold;
+}
     """.trimIndent()
 
     val format = """
