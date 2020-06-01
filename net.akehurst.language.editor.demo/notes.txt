@@ -1,0 +1,6 @@
+1. Show demo in web browser
+ a. Datatype language
+ b. add a property
+ c. add a class
+ d. note clas class ....keywords as identifiers not an issue
+ c. note colouring....esp scan vs parse colouring

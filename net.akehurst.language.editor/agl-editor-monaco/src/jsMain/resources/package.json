@@ -15,7 +15,7 @@
   "main": "./${group}-${name}.js",
 
   "dependencies": {
-    "kotlin": "1.3.71",
+    "kotlin": "$version_kotlin",
     "net.akehurst.language-agl-processor": "$version_agl",
     "monaco-editor": "$version_monaco"
   }

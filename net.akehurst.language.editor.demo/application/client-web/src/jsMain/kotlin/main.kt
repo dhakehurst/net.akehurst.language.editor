@@ -21,16 +21,13 @@ import net.akehurst.language.api.analyser.AsmElementSimple
 import net.akehurst.language.editor.ace.AglEditorAce
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.information.Examples
-import net.akehurst.language.editor.information.examples.Datatypes
-import net.akehurst.language.editor.information.examples.GraphvizDot
-import net.akehurst.language.editor.information.examples.SText
 import net.akehurst.language.editor.monaco.AglEditorMonaco
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.processor.AglLanguage
-import net.akehurst.language.editor.information.examples.SQL
+import net.akehurst.language.editor.information.examples.*
 import org.w3c.dom.HTMLDialogElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLSelectElement
@@ -188,6 +185,8 @@ fun initialiseExamples() {
     Examples.add(SQL.example)
     Examples.add(GraphvizDot.example)
     Examples.add(SText.example)
+    Examples.add(Java8.example)
+    Examples.add(English.example)
 
     Examples.map.forEach { eg ->
         val option = document.createElement("option")

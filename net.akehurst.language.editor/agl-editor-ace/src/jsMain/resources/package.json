@@ -15,7 +15,7 @@
   "main": "./${group}-${name}.js",
 
   "dependencies": {
-    "kotlin": "1.3.71",
+    "kotlin": "$version_kotlin",
     "net.akehurst.language-agl-processor": "$version_agl",
     "ace-builds": "$version_ace",
     "net.akehurst.language.editor-kotlin-ace-loader": "1.0.4"
