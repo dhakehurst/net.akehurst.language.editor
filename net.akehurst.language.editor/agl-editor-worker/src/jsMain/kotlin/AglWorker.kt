@@ -83,7 +83,7 @@ class AglWorker {
                     else -> createAgl(languageId, Agl.processor(grammarStr))
                 }
                 port.postMessage(MessageProcessorCreateSuccess(languageId, editorId, "OK"))
-            } catch (t:Throwable) {
+            } catch (t: Throwable) {
                 port.postMessage(MessageProcessorCreateFailure(languageId, editorId, t.message!!))
             }
         }
@@ -109,34 +109,32 @@ class AglWorker {
                 style.mapClass(rule.selector)
             }
             port.postMessage(MessageSetStyleResult(languageId, editorId, true, "OK"))
-        } catch (t:Throwable) {
+        } catch (t: Throwable) {
             port.postMessage(MessageSetStyleResult(languageId, editorId, false, t.message!!))
         }
     }
 
     fun parse(port: dynamic, languageId: String, editorId: String, sentence: String) {
         try {
+            self.postMessage(MessageParseStart(languageId, editorId))
             val proc = this.processor ?: throw RuntimeException("Processor for $languageId not found")
-            if (null == proc) {
-                //do nothing
-            } else {
-                val sppt = proc.parse(sentence)
-                val tree = createParseTree(sppt.root)
-                self.postMessage(MessageParseSuccess(languageId, editorId, tree))
-                this.sendParseLineTokens(port, languageId, editorId, sppt)
-                this.process(port, languageId, editorId, sppt)
-            }
+            val sppt = proc.parse(sentence)
+            val tree = createParseTree(sppt.root)
+            self.postMessage(MessageParseSuccess(languageId, editorId, tree))
+            this.sendParseLineTokens(port, languageId, editorId, sppt)
+            this.process(port, languageId, editorId, sppt)
         } catch (e: ParseFailedException) {
             val sppt = e.longestMatch
             val tree = createParseTree(sppt!!.root)
             port.postMessage(MessageParseFailure(languageId, editorId, e.message!!, e.location, e.expected.toTypedArray(), tree))
         } catch (t: Throwable) {
-            port.postMessage(MessageParseFailure(languageId, editorId, t.message!!, null, emptyArray(),null))
+            port.postMessage(MessageParseFailure(languageId, editorId, t.message!!, null, emptyArray(), null))
         }
     }
 
     fun process(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
         try {
+            self.postMessage(MessageProcessStart(languageId, editorId))
             val proc = this.processor ?: throw RuntimeException("Processor for $languageId not found")
             val asm = proc.process<Any>(sppt)
             val asmTree = createAsmTree(asm) ?: "No Asm"

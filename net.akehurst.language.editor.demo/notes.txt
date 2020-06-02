@@ -2,5 +2,6 @@
  a. Datatype language
  b. add a property
  c. add a class
- d. note clas class ....keywords as identifiers not an issue
+ d. note class class ....keywords as identifiers not an issue
  c. note colouring....esp scan vs parse colouring
+2. It is all done browser side, there is no backend (in the demo)

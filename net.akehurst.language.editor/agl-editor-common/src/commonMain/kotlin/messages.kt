@@ -50,6 +50,11 @@ class MessageParseRequest(
         val text: String
 ) : AglWorkerMessage("MessageParseRequest")
 
+class MessageParseStart(
+        val languageId:String,
+        val editorId:String
+) : AglWorkerMessage("MessageParseStart")
+
 class MessageParseSuccess(
         val languageId:String,
         val editorId:String,
@@ -89,6 +94,11 @@ class MessageSetStyleResult(
         val success: Boolean,
         val message: String
 ) : AglWorkerMessage("MessageSetStyleResult")
+
+class MessageProcessStart(
+        val languageId:String,
+        val editorId:String
+) : AglWorkerMessage("MessageProcessStart")
 
 class MessageProcessSuccess(
         val languageId:String,

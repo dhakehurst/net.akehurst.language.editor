@@ -44,14 +44,24 @@ interface AglEditor {
     fun finalize()
 }
 
-class ParseEvent(
-        val success: Boolean,
-        val message: String,
-        val tree:Any?
-)
-
-class ProcessEvent(
-        val success: Boolean,
-        val message: String,
+sealed class ParseEvent(val message: String )
+class ParseEventStart(): ParseEvent("Parse started")
+class ParseEventSuccess(
         val tree:Any
+) : ParseEvent("Parse success")
+class ParseEventFailure(
+        message: String,
+        val tree:Any?
+): ParseEvent(message)
+
+sealed class ProcessEvent(
+        val message: String
 )
+class ProcessEventStart() : ProcessEvent("Process started")
+class ProcessEventSuccess(
+        val tree:Any
+) : ProcessEvent("Process success")
+class ProcessEventFailure(
+        message: String,
+        val tree:Any?
+) : ProcessEvent(message)

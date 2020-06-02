@@ -26,8 +26,7 @@ import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.editor.api.ParseEvent
-import net.akehurst.language.editor.api.ProcessEvent
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.comon.AglWorkerClient
 import org.w3c.dom.Document
@@ -151,6 +150,7 @@ class AglEditorMonaco(
             }
             this.aglWorker.processorCreateSuccess = this::processorCreateSuccess
             this.aglWorker.processorCreateFailure = { msg -> console.error("Failed to create processor $msg") }
+            this.aglWorker.parseStart = { this.notifyParse(ParseEventStart()) }
             this.aglWorker.parseSuccess = this::parseSuccess
             this.aglWorker.parseFailure = this::parseFailure
             this.aglWorker.lineTokens = {
@@ -158,11 +158,12 @@ class AglEditorMonaco(
                 this.workerTokenizer.receiveTokens(it)
                 this.resetTokenization()
             }
+            this.aglWorker.processStart = { this.notifyProcess(ProcessEventStart()) }
             this.aglWorker.processSuccess = { tree ->
-                this.notifyProcess(ProcessEvent(true, "OK", tree))
+                this.notifyProcess(ProcessEventSuccess(tree))
             }
             this.aglWorker.processFailure = { message ->
-                this.notifyProcess(ProcessEvent(false, message, "No Asm"))
+                this.notifyProcess(ProcessEventFailure(message, "No Asm"))
             }
         } catch (t: Throwable) {
             console.error(t.message)
@@ -296,7 +297,7 @@ class AglEditorMonaco(
                 }
                 this.agl.sppt = sppt
                 this.resetTokenization()
-                val event = ParseEvent(true, "OK", sppt)
+                val event = ParseEventSuccess(sppt)
                 this.notifyParse(event)
                 //this.doBackgroundTryProcess()
             } catch (e: ParseFailedException) {
@@ -316,7 +317,7 @@ class AglEditorMonaco(
                     override val source: String? = null
                 })
                 monaco.editor.setModelMarkers(this.monacoEditor.getModel(), "", errors.toTypedArray())
-                val event = ParseEvent(false, e.message!!, e.longestMatch)
+                val event = ParseEventFailure(e.message!!, e.longestMatch)
                 this.notifyParse(event)
             } catch (t: Throwable) {
                 console.error("Error parsing text in " + this.editorId + " for language " + this.languageId, t.message);
@@ -330,11 +331,11 @@ class AglEditorMonaco(
         if (null != proc && null != sppt) {
             try {
                 this.agl.asm = proc.process(sppt)
-                val event = ProcessEvent(true, "OK", this.agl.asm!!)
+                val event = ProcessEventSuccess(this.agl.asm!!)
                 this.notifyProcess(event)
             } catch (e: SyntaxAnalyserException) {
                 this.agl.asm = null
-                val event = ProcessEvent(false, e.message!!, "No Asm")
+                val event = ProcessEventFailure(e.message!!, "No Asm")
                 this.notifyProcess(event)
             } catch (t: Throwable) {
                 console.error("Error processing parse result in " + this.editorId + " for language " + this.languageId, t.message)
@@ -360,7 +361,7 @@ class AglEditorMonaco(
 
     private fun parseSuccess(tree: Any) {
         this.resetTokenization()
-        val event = ParseEvent(true, "OK", tree)
+        val event = ParseEventSuccess(tree)
         this.notifyParse(event)
     }
 
@@ -388,7 +389,7 @@ class AglEditorMonaco(
                 override val source: String? = null
             })
             monaco.editor.setModelMarkers(this.monacoEditor.getModel(), "", errors.toTypedArray())
-            val event = ParseEvent(false, message, tree)
+            val event = ParseEventFailure(message, tree)
             this.notifyParse(event)
 
         }

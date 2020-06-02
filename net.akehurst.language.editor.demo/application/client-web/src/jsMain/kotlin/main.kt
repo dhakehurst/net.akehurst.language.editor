@@ -19,7 +19,6 @@ package net.akehurst.language.editor.application.client.web
 import net.akehurst.kotlin.html5.create
 import net.akehurst.language.api.analyser.AsmElementSimple
 import net.akehurst.language.editor.ace.AglEditorAce
-import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.monaco.AglEditorMonaco
 import net.akehurst.language.editor.technology.gui.widgets.TabView
@@ -27,6 +26,7 @@ import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.processor.AglLanguage
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.information.examples.*
 import org.w3c.dom.HTMLDialogElement
 import org.w3c.dom.HTMLElement
@@ -237,29 +237,42 @@ class Demo(
         styleEditor.setStyle(AglLanguage.style.style)
 
         grammarEditor.onParse { event ->
-            if (event.success) {
-                try {
-                    console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
-                    sentenceEditor.setProcessor(grammarEditor.text)
-                } catch (t: Throwable) {
-                    sentenceEditor.setProcessor(null)
-                    console.error(grammarEditor.editorId + ": " + t.message)
+            when(event) {
+                is ParseEventStart ->{
+
                 }
-            } else {
-                sentenceEditor.setProcessor(null)
-                console.error(grammarEditor.editorId + ": " + event.message)
+                is ParseEventSuccess ->{
+                    try {
+                        console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
+                        sentenceEditor.setProcessor(grammarEditor.text)
+                    } catch (t: Throwable) {
+                        sentenceEditor.setProcessor(null)
+                        console.error(grammarEditor.editorId + ": " + t.message)
+                    }
+                }
+                is ParseEventFailure ->{
+                    sentenceEditor.setProcessor(null)
+                    console.error(grammarEditor.editorId + ": " + event.message)
+                }
             }
         }
 
         styleEditor.onParse { event ->
-            if (event.success) {
-                try {
-                    console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
-                    sentenceEditor.setStyle(styleEditor.text)
-                } catch (t: Throwable) {
-                    console.error(sentenceEditor.editorId + ": " + t.message)
+            when(event) {
+                is ParseEventStart ->{
+
                 }
-            } else {
+                is ParseEventSuccess ->{
+                    try {
+                        console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
+                        sentenceEditor.setStyle(styleEditor.text)
+                    } catch (t: Throwable) {
+                        console.error(styleEditor.editorId + ": " + t.message)
+                    }
+                }
+                is ParseEventFailure ->{
+                    console.error(styleEditor.editorId + ": " + event.message)
+                }
             }
         }
     }
@@ -275,12 +288,22 @@ class Demo(
                 },
                 hasChildren = { it.isBranch },
                 children = { it.children }
-        ) as TreeViewFunctions<Any>
+        )
 
         sentenceEditor.onParse { event ->
-            if (event.success) {
-                trees["parse"]!!.root = event.tree
-            } else {
+            when(event) {
+                is ParseEventStart ->{
+                    trees["parse"]!!.loading = true
+                    trees["ast"]!!.loading = true
+                }
+                is ParseEventSuccess ->{
+                    trees["parse"]!!.loading = false
+                    trees["parse"]!!.root = event.tree
+                }
+                is ParseEventFailure->{
+                    trees["parse"]!!.loading = false
+                    trees["ast"]!!.loading = false
+                }
             }
         }
 
@@ -335,11 +358,19 @@ class Demo(
         )
 
         sentenceEditor.onProcess { event ->
-            if (event.success) {
-                trees["ast"]!!.root = event.tree
-            } else {
-                console.error(event.message)
-                trees["ast"]!!.root = event.tree
+            when(event) {
+                is ProcessEventStart ->{
+                    //trees["ast"]!!.loading = true
+                }
+                is ProcessEventSuccess ->{
+                    trees["ast"]!!.loading = false
+                    trees["ast"]!!.root = event.tree
+                }
+                is ProcessEventFailure ->{
+                    console.error(event.message)
+                    trees["ast"]!!.loading = false
+                    trees["ast"]!!.root = event.tree
+                }
             }
         }
     }

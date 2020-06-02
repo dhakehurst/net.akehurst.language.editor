@@ -23,8 +23,7 @@ import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.editor.api.ParseEvent
-import net.akehurst.language.editor.api.ProcessEvent
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.comon.AglWorkerClient
 import org.w3c.dom.Document
@@ -79,7 +78,6 @@ class AglEditorAce(
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
-    //private val mode: ace.SyntaxMode
 
     val aceEditor: ace.Editor = ace.Editor(
             ace.VirtualRenderer(this.element, null),
@@ -138,6 +136,7 @@ class AglEditorAce(
         }
         this.aglWorker.processorCreateSuccess = this::processorCreateSuccess
         this.aglWorker.processorCreateFailure = { msg -> console.error("Failed to create processor $msg") }
+        this.aglWorker.parseStart = { this.notifyParse(ParseEventStart()) }
         this.aglWorker.parseSuccess = this::parseSuccess
         this.aglWorker.parseFailure = this::parseFailure
         this.aglWorker.lineTokens = {
@@ -145,11 +144,12 @@ class AglEditorAce(
             this.workerTokenizer.receiveTokens(it)
             this.resetTokenization()
         }
+        this.aglWorker.processStart = { this.notifyProcess(ProcessEventStart()) }
         this.aglWorker.processSuccess = { tree ->
-            this.notifyProcess(ProcessEvent(true, "OK", tree))
+            this.notifyProcess(ProcessEventSuccess(tree))
         }
         this.aglWorker.processFailure = { message ->
-            this.notifyProcess(ProcessEvent(false, message, "No Asm"))
+            this.notifyProcess(ProcessEventFailure(message, "No Asm"))
         }
     }
 
@@ -272,6 +272,7 @@ class AglEditorAce(
     fun doBackgroundTryParse() {
         this.clearErrorMarkers()
         this.aglWorker.interrupt(languageId, editorId)
+        this.notifyParse(ParseEventStart())
         this.aglWorker.tryParse(languageId, editorId, this.text)
     }
 
@@ -300,11 +301,11 @@ class AglEditorAce(
         if (null != proc && null != sppt) {
             try {
                 this.agl.asm = proc.process(sppt)
-                val event = ProcessEvent(true, "OK", this.agl.asm!!)
+                val event = ProcessEventSuccess(this.agl.asm!!)
                 this.notifyProcess(event)
             } catch (e: SyntaxAnalyserException) {
                 this.agl.asm = null
-                val event = ProcessEvent(false, e.message!!, "No Asm")
+                val event = ProcessEventFailure(e.message!!, "No Asm")
                 this.notifyProcess(event)
             } catch (t: Throwable) {
                 console.error("Error processing parse result in " + this.editorId + " for language " + this.languageId, t.message)
@@ -319,7 +320,7 @@ class AglEditorAce(
 
     private fun parseSuccess(tree: Any) {
         this.resetTokenization()
-        val event = ParseEvent(true, "OK", tree)
+        val event = ParseEventSuccess(tree)
         this.notifyParse(event)
     }
 
@@ -350,7 +351,7 @@ class AglEditorAce(
                 val errMrkId = this.aceEditor.getSession().addMarker(range, cls, "text")
                 this.errorParseMarkerIds.add(errMrkId)
             }
-            val event = ParseEvent(false, message, tree)
+            val event = ParseEventFailure(message, tree)
             this.notifyParse(event)
         }
     }

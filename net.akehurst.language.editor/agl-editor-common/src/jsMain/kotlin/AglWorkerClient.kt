@@ -28,9 +28,11 @@ class AglWorkerClient(
     var setStyleResult: (success: Boolean, message: String) -> Unit = { _, _ -> }
     var processorCreateSuccess: (message: String) -> Unit = { _ -> }
     var processorCreateFailure: (message: String) -> Unit = { _ -> }
+    var parseStart: () -> Unit = {  }
     var parseSuccess: (tree: Any) -> Unit = { _ -> }
     var parseFailure: (message: String, location: InputLocation?, expected: Array<String>, tree: Any?) -> Unit = { _, _, _, _ -> }
     var lineTokens: (Array<Array<AglToken>>) -> Unit = { _ -> }
+    var processStart: () -> Unit = {  }
     var processSuccess: (tree: Any) -> Unit = { _ -> }
     var processFailure: (message: String) -> Unit = { _ -> }
 
@@ -47,9 +49,11 @@ class AglWorkerClient(
                 "MessageSetStyleResult" -> this.setStyleResult(msg.success, msg.message)
                 "MessageProcessorCreateSuccess" -> this.processorCreateSuccess(msg.message)
                 "MessageProcessorCreateFailure" -> this.processorCreateFailure(msg.message)
+                "MessageParseStart" -> this.parseStart()
                 "MessageParseSuccess" -> this.parseSuccess(msg.tree)
                 "MessageParseFailure" -> this.parseFailure(msg.message, msg.location, msg.expected, msg.tree)
                 "MessageLineTokens" -> this.lineTokens(msg.lineTokens)
+                "MessageProcessStart" -> this.processStart()
                 "MessageProcessSuccess" -> this.processSuccess(msg.asm)
                 "MessageProcessFailure" -> this.processFailure(msg.message)
                 else -> error("Unknown Message type")

@@ -1,6 +1,6 @@
 val version_kotlin:String by project
 val version_agl:String by project
-val version_ace:String = "1.4.8"
+val version_ace:String = "1.4.11"
 val version_coroutines:String by project
 
 dependencies {
