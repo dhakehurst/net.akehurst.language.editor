@@ -50,7 +50,7 @@ class Server(
             }
             install(SinglePageApplication) {
                 defaultPage = "index.html"
-                folderPath = "/dist"
+                folderPath = "/"
                 spaRoute = ""
                 useFiles = false
             }

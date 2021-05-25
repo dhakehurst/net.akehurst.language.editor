@@ -16,7 +16,7 @@
 
 package net.akehurst.language.editor.worker
 
-import net.akehurst.language.api.analyser.AsmElementSimple
+import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
 import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.processor.LanguageProcessor
 import net.akehurst.language.api.sppt.SPPTBranch
@@ -104,7 +104,7 @@ class AglWorker {
         try {
             val style = AglStyleHandler(languageId)
             this.styleHandler = style
-            val rules: List<AglStyleRule> = Agl.styleProcessor.process(css)
+            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class,css)
             rules.forEach { rule ->
                 style.mapClass(rule.selector)
             }
@@ -136,7 +136,7 @@ class AglWorker {
         try {
             self.postMessage(MessageProcessStart(languageId, editorId))
             val proc = this.processor ?: throw RuntimeException("Processor for $languageId not found")
-            val asm = proc.process<Any>(sppt)
+            val asm = proc.process<Any>(Any::class,sppt)
             val asmTree = createAsmTree(asm) ?: "No Asm"
             port.postMessage(MessageProcessSuccess(languageId, editorId, asmTree))
         } catch (t: Throwable) {

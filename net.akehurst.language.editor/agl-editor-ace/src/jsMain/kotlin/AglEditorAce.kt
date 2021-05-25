@@ -16,9 +16,10 @@
 
 package net.akehurst.language.editor.ace
 
+import kotlinx.browser.window
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.analyser.AsmElementSimple
-import net.akehurst.language.api.analyser.SyntaxAnalyserException
+import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
+import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.style.AglStyle
@@ -28,8 +29,9 @@ import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.comon.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import org.w3c.dom.Window
 import org.w3c.dom.asList
-import kotlin.browser.window
+
 import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.collections.associate
@@ -160,7 +162,7 @@ class AglEditorAce(
     override fun setStyle(css: String?) {
         if (null != css && css.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule> = Agl.styleProcessor.process(css)
+            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class,css)
             var mappedCss = ""
             rules.forEach { rule ->
                 val cssClass = '.' + this.languageId + ' ' + ".ace_" + this.agl.styleHandler.mapClass(rule.selector);
@@ -200,7 +202,7 @@ class AglEditorAce(
         val proc = this.agl.processor
         if (null != proc) {
             val pos = this.aceEditor.getSelection().getCursor();
-            val formattedText: String = proc.formatText<AsmElementSimple>(this.text as CharSequence);
+            val formattedText: String = proc.formatText<AsmElementSimple>(AsmElementSimple::class,this.text);
             this.aceEditor.setValue(formattedText, -1);
         }
     }
@@ -300,7 +302,7 @@ class AglEditorAce(
         val sppt = this.agl.sppt
         if (null != proc && null != sppt) {
             try {
-                this.agl.asm = proc.process(sppt)
+                this.agl.asm = proc.process(Any::class,sppt)
                 val event = ProcessEventSuccess(this.agl.asm!!)
                 this.notifyProcess(event)
             } catch (e: SyntaxAnalyserException) {

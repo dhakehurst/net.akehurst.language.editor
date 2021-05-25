@@ -33,6 +33,8 @@ grammar English {
 
     skip WHITESPACE = "\s+" ;
 
+    text = sentence* ;
+
     sentence
         = simple-sentence
         || compound-sentence
@@ -202,7 +204,7 @@ grammar English {
 
 
     //TODO: these should come from a dictionary not be listed here
-    ADJECTIVE_POSITIVE = 'new' | 'yellow' | 'pretty' | 'useful' | 'declarative' ;
+    ADJECTIVE_POSITIVE = 'new' | 'yellow' | 'green' | 'red' | 'blue' | 'pretty' | 'useful' | 'declarative' ;
     ADJECTIVE_COMPARATIVE = 'newer' | 'yellower' | 'prettier' ;
     ADJECTIVE_SUPERLATIVE = 'newest' | 'yellowest' | 'prettiest' ;
     ARTICLE = 'a' | 'an' | 'the' ; //TODO: definite or indefinite

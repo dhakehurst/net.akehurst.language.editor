@@ -16,9 +16,9 @@ val version_kaf:String by project
 val version_ktor:String by project
 dependencies {
     // need this so that the gradle application-plugin can find the module built by the kotlin-plugin
-    runtime( project(path=":application-editor-web-server", configuration="jvm8RuntimeElements") )
+    runtimeOnly( project(path=":application-editor-web-server", configuration="jvm8RuntimeElements") )
 
-    jvm8MainImplementation(project(":application-client-angular"))
+    jvm8MainImplementation(project(":application-client-web"))
 
     // ktor server modules
     jvm8MainImplementation("io.ktor:ktor-websockets:$version_ktor")

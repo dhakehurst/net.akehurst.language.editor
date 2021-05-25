@@ -17,7 +17,8 @@
 package net.akehurst.language.editor.application.client.web
 
 import net.akehurst.kotlin.html5.create
-import net.akehurst.language.api.analyser.AsmElementSimple
+import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
+import net.akehurst.language.editor.demo.BuildConfig
 import net.akehurst.language.editor.ace.AglEditorAce
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.monaco.AglEditorMonaco
@@ -67,7 +68,7 @@ fun createBaseDom(appDivSelector: String) {
         header {
             section {
                 class_.add("agl-menubar")
-                h2 { content = "Version ${BuildInfo.version}" }
+                h2 { content = "Version ${BuildConfig.version}" }
                 nav {
                     val about = dialog {
                         val thisDialog = this.element as HTMLDialogElement
@@ -77,10 +78,10 @@ fun createBaseDom(appDivSelector: String) {
                         article {
                             header { h2 { content="About" } }
                             section {
-                                p { content = "Ace version 1.4.8, Licence BSD" }
+                                p { content = "Ace version 1.4.11, Licence BSD" }
                                 p { content = "Monaco version 0.20.0, Licence MIT" }
                                 p { content = "AGL version ${Agl.version}, Licence Apache 2.0" }
-                                p { content = "Kotlin version 1.3.71, Licence Apache 2.0" }
+                                p { content = "Kotlin version 1.5.10, Licence Apache 2.0" }
                             }
                             footer {
                                 button {

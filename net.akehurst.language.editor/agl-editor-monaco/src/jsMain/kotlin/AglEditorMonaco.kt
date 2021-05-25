@@ -21,7 +21,7 @@ import monaco.editor
 import monaco.editor.IStandaloneCodeEditor
 import monaco.languages
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.analyser.SyntaxAnalyserException
+import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.style.AglStyle
@@ -32,8 +32,8 @@ import net.akehurst.language.editor.comon.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.asList
-import kotlin.browser.document
-import kotlin.browser.window
+import kotlinx.browser.document
+import kotlinx.browser.window
 
 class AglEditorMonaco(
         val element: Element,
@@ -177,7 +177,7 @@ class AglEditorMonaco(
     override fun setStyle(css: String?) {
         if (null != css && css.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule> = Agl.styleProcessor.process(css)
+            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class,css)
             var mappedCss = ""
             rules.forEach { rule ->
                 val cssClass = '.' + this.languageId + ' ' + ".monaco_" + this.agl.styleHandler.mapClass(rule.selector);
@@ -330,7 +330,7 @@ class AglEditorMonaco(
         val sppt = this.agl.sppt
         if (null != proc && null != sppt) {
             try {
-                this.agl.asm = proc.process(sppt)
+                this.agl.asm = proc.process(Any::class,sppt)
                 val event = ProcessEventSuccess(this.agl.asm!!)
                 this.notifyProcess(event)
             } catch (e: SyntaxAnalyserException) {
