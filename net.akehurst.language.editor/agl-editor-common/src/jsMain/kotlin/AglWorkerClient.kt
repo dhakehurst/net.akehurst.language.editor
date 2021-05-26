@@ -63,8 +63,8 @@ class AglWorkerClient(
         //worker.port.start()
     }
 
-    fun sendToWorker(msg: Any, transferables: Array<dynamic> = emptyArray()) {
-        this.worker.postMessage(msg, transferables)
+    fun sendToWorker(msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
+        this.worker.postMessage(msg.toObjectJS(), transferables)
     }
 
     fun createProcessor(languageId: String, editorId: String, grammarStr: String?) {

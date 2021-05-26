@@ -47,4 +47,6 @@ val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {
 tasks.getByName("jsBrowserDistribution").dependsOn(workerTask)
 tasks.getByName("jsBrowserDevelopmentRun").dependsOn(workerTask)
 tasks.getByName("jsBrowserProductionRun").dependsOn(workerTask)
+tasks.getByName("jsBrowserProductionWebpack").dependsOn(workerTask)
+tasks.getByName("jsProductionExecutableCompileSync").dependsOn(workerTask)
 tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserProductionWebpack")

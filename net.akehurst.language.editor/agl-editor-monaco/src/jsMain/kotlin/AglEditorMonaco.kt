@@ -34,6 +34,7 @@ import org.w3c.dom.Element
 import org.w3c.dom.asList
 import kotlinx.browser.document
 import kotlinx.browser.window
+import net.akehurst.language.editor.common.objectJS
 
 class AglEditorMonaco(
         val element: Element,
@@ -106,14 +107,18 @@ class AglEditorMonaco(
     private fun init_() {
         try {
             this.workerTokenizer = AglTokenizerByWorkerMonaco(this, this.agl)
-
-            val themeData = js("""
-                {
-                    base: 'vs',
-                    inherit: false,
-                    rules: []
-                }
-            """)
+            val themeData = objectJS {
+                base = "vs"
+                inherit = false
+                rules = kotlin.arrayOf()
+            }
+            //val themeData = js("""
+            //    {
+            //        base: 'vs',
+            //        inherit: false,
+            //        rules: []
+            //    }
+            //""")
             // https://github.com/Microsoft/monaco-editor/issues/338
             // all editors on the same page must share the same theme!
             // hence we create a global theme and modify it as needed.
@@ -123,10 +128,14 @@ class AglEditorMonaco(
                 override val id = languageId
             })
             this.agl.goalRule = goalRule
-            val languageId = this.languageId
-            val initialContent = ""
-            val theme = aglGlobalTheme
-            val editorOptions = js("{language: languageId, value: initialContent, theme: theme, wordBasedSuggestions:false}")
+            //val languageId = this.languageId
+            //val editorOptions = js("{language: languageId, value: initialContent, theme: theme, wordBasedSuggestions:false}")
+            val editorOptions = objectJS {
+                language = languageId
+                value = ""
+                theme = aglGlobalTheme
+                wordBasedSuggestions = false
+            }
             this.monacoEditor = monaco.editor.create(this.element, editorOptions, null)
             monaco.languages.setTokensProvider(this.languageId, this.workerTokenizer);
             monaco.languages.registerCompletionItemProvider(this.languageId, AglCompletionProvider(this.agl))

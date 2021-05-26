@@ -69,10 +69,14 @@ class AglWorker {
         }
     }
 
+    private fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
+        port.postMessage(msg.toObjectJS(), transferables)
+    }
+
     fun createProcessor(port: dynamic, languageId: String, editorId: String, grammarStr: String?) {
         if (null == grammarStr) {
             this.processor = null
-            port.postMessage(MessageProcessorCreateSuccess(languageId, editorId, "reset"))
+            sendMessage(port, MessageProcessorCreateSuccess(languageId, editorId, "reset"))
         } else {
             try {
                 //cheet because I don't want to serialise grammars
@@ -82,9 +86,9 @@ class AglWorker {
                     "@Agl.formatProcessor@" -> createAgl(languageId, Agl.formatProcessor)
                     else -> createAgl(languageId, Agl.processor(grammarStr))
                 }
-                port.postMessage(MessageProcessorCreateSuccess(languageId, editorId, "OK"))
+                sendMessage(port, MessageProcessorCreateSuccess(languageId, editorId, "OK"))
             } catch (t: Throwable) {
-                port.postMessage(MessageProcessorCreateFailure(languageId, editorId, t.message!!))
+                sendMessage(port, MessageProcessorCreateFailure(languageId, editorId, t.message!!))
             }
         }
     }
@@ -108,39 +112,39 @@ class AglWorker {
             rules.forEach { rule ->
                 style.mapClass(rule.selector)
             }
-            port.postMessage(MessageSetStyleResult(languageId, editorId, true, "OK"))
+            sendMessage(port,MessageSetStyleResult(languageId, editorId, true, "OK"))
         } catch (t: Throwable) {
-            port.postMessage(MessageSetStyleResult(languageId, editorId, false, t.message!!))
+            sendMessage(port,MessageSetStyleResult(languageId, editorId, false, t.message!!))
         }
     }
 
     fun parse(port: dynamic, languageId: String, editorId: String, sentence: String) {
         try {
-            self.postMessage(MessageParseStart(languageId, editorId))
+            sendMessage(port,MessageParseStart(languageId, editorId))
             val proc = this.processor ?: throw RuntimeException("Processor for $languageId not found")
             val sppt = proc.parse(sentence)
             val tree = createParseTree(sppt.root)
-            self.postMessage(MessageParseSuccess(languageId, editorId, tree))
+            sendMessage(port,MessageParseSuccess(languageId, editorId, tree))
             this.sendParseLineTokens(port, languageId, editorId, sppt)
             this.process(port, languageId, editorId, sppt)
         } catch (e: ParseFailedException) {
             val sppt = e.longestMatch
             val tree = createParseTree(sppt!!.root)
-            port.postMessage(MessageParseFailure(languageId, editorId, e.message!!, e.location, e.expected.toTypedArray(), tree))
+            sendMessage(port,MessageParseFailure(languageId, editorId, e.message!!, e.location, e.expected.toTypedArray(), tree))
         } catch (t: Throwable) {
-            port.postMessage(MessageParseFailure(languageId, editorId, t.message!!, null, emptyArray(), null))
+            sendMessage(port,MessageParseFailure(languageId, editorId, t.message!!, null, emptyArray(), null))
         }
     }
 
     fun process(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
         try {
-            self.postMessage(MessageProcessStart(languageId, editorId))
+            sendMessage(port,MessageProcessStart(languageId, editorId))
             val proc = this.processor ?: throw RuntimeException("Processor for $languageId not found")
             val asm = proc.process<Any>(Any::class,sppt)
             val asmTree = createAsmTree(asm) ?: "No Asm"
-            port.postMessage(MessageProcessSuccess(languageId, editorId, asmTree))
+            sendMessage(port,MessageProcessSuccess(languageId, editorId, asmTree))
         } catch (t: Throwable) {
-            port.postMessage(MessageProcessFailure(languageId, editorId, t.message!!))
+            sendMessage(port,MessageProcessFailure(languageId, editorId, t.message!!))
         }
     }
 
@@ -155,21 +159,21 @@ class AglWorker {
             val lt = lineTokens.map {
                 it.toTypedArray()
             }.toTypedArray()
-            port.postMessage(MessageLineTokens(languageId, editorId, lt))
+            sendMessage(port,MessageLineTokens(languageId, editorId, lt))
         }
     }
 
-    fun createParseTree(spptNode: SPPTNode): Any {
+    fun createParseTree(spptNode: SPPTNode): dynamic {
         return when (spptNode) {
-            is SPPTLeaf -> object : Any() {
-                val isBranch = false
-                val name = spptNode.name
-                val nonSkipMatchedText = spptNode.nonSkipMatchedText
+            is SPPTLeaf -> objectJS {
+                 isBranch = false
+                 name = spptNode.name
+                 nonSkipMatchedText = spptNode.nonSkipMatchedText
             }
-            is SPPTBranch -> object : Any() {
-                val isBranch = true
-                val name = spptNode.name
-                val children = spptNode.children.map {
+            is SPPTBranch -> objectJS {
+                 isBranch = true
+                 name = spptNode.name
+                 children = spptNode.children.map {
                     createParseTree(it)
                 }.toTypedArray()
             }
@@ -183,14 +187,14 @@ class AglWorker {
         } else {
             when (asm) {
                 is AsmElementSimple -> {
-                    object : Any() {
-                        val isAsmElementSimple = true
-                        val typeName = asm.typeName
-                        val properties = asm.properties.map {
-                            object : Any() {
-                                val isAsmElementProperty = true
-                                val name = it.name
-                                val value = createAsmTree(it.value)
+                    objectJS {
+                         isAsmElementSimple = true
+                         typeName = asm.typeName
+                         properties = asm.properties.map {
+                             objectJS {
+                                 isAsmElementProperty = true
+                                 name = it.name
+                                 value = createAsmTree(it.value)
                             }
                         }.toTypedArray()
                     }
