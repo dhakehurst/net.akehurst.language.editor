@@ -16,10 +16,10 @@
 
 package net.akehurst.language.editor.monaco
 
+import ResizeObserver
 import monaco.MarkerSeverity
 import monaco.editor
 import monaco.editor.IStandaloneCodeEditor
-import monaco.languages
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
 import net.akehurst.language.api.parser.InputLocation
@@ -39,7 +39,7 @@ class AglEditorMonaco(
         val element: Element,
         editorId: String,
         languageId: String,
-        goalRule: String? = null,
+        private val goalRule: String? = null,
         options: dynamic, //TODO: types for this
         workerScriptName:String
 ) : AglEditorAbstract(languageId, editorId) {
@@ -100,6 +100,10 @@ class AglEditorMonaco(
     var parseTimeout: dynamic = null
 
     init {
+        this.init_()
+    }
+
+    private fun init_() {
         try {
             this.workerTokenizer = AglTokenizerByWorkerMonaco(this, this.agl)
 
@@ -115,7 +119,7 @@ class AglEditorMonaco(
             // hence we create a global theme and modify it as needed.
             monaco.editor.defineTheme(aglGlobalTheme, themeData);
 
-            monaco.languages.register(object : languages.ILanguageExtensionPoint {
+            monaco.languages.register(object : monaco.languages.ILanguageExtensionPoint {
                 override val id = languageId
             })
             this.agl.goalRule = goalRule
@@ -125,7 +129,7 @@ class AglEditorMonaco(
             val editorOptions = js("{language: languageId, value: initialContent, theme: theme, wordBasedSuggestions:false}")
             this.monacoEditor = monaco.editor.create(this.element, editorOptions, null)
             monaco.languages.setTokensProvider(this.languageId, this.workerTokenizer);
-            languages.registerCompletionItemProvider(this.languageId, AglCompletionProvider(this.agl))
+            monaco.languages.registerCompletionItemProvider(this.languageId, AglCompletionProvider(this.agl))
 
             this.onChange {
                 this.workerTokenizer.reset()
@@ -136,8 +140,7 @@ class AglEditorMonaco(
                 }, 500)
             }
 
-            val self = this
-            val resizeObserver: dynamic = js("new ResizeObserver(function(entries) { self.onResize(entries) })")
+            val resizeObserver = ResizeObserver { entries -> onResize(entries) }
             resizeObserver.observe(this.element)
 
             this.aglWorker.initialise()

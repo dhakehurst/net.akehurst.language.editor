@@ -34,9 +34,6 @@ allprojects {
 
 }
 
-fun getProjectProperty(s: String) = project.findProperty(s) as String?
-
-
 subprojects {
 
     apply(plugin="org.jetbrains.kotlin.multiplatform")
@@ -46,6 +43,9 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
+        }
     }
 
     configure<BuildConfigExtension> {
@@ -65,11 +65,15 @@ subprojects {
         jvm("jvm8") {
             val main by compilations.getting {
                 kotlinOptions {
+                    languageVersion = "1.5"
+                    apiVersion = "1.5"
                     jvmTarget = JavaVersion.VERSION_1_8.toString()
                 }
             }
             val test by compilations.getting {
                 kotlinOptions {
+                    languageVersion = "1.5"
+                    apiVersion = "1.5"
                     jvmTarget = JavaVersion.VERSION_1_8.toString()
                 }
             }

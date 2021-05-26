@@ -32,7 +32,7 @@ import net.akehurst.language.editor.information.examples.*
 import org.w3c.dom.HTMLDialogElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLSelectElement
-import kotlin.browser.document
+import kotlinx.browser.document
 
 external var aglScriptBasePath: dynamic = definedExternally
 

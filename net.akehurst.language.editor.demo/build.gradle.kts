@@ -19,6 +19,7 @@ import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 
 plugins {
+    //kotlin("multiplatform") version("1.5.20-RC-179") apply false
     kotlin("multiplatform") version("1.5.10") apply false
     id("com.github.gmazzo.buildconfig") version("3.0.0") apply false
 }
@@ -47,6 +48,9 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
+        }
     }
 
     configure<BuildConfigExtension> {
@@ -66,11 +70,15 @@ subprojects {
         jvm("jvm8") {
             val main by compilations.getting {
                 kotlinOptions {
+                    languageVersion = "1.5"
+                    apiVersion = "1.5"
                     jvmTarget = JavaVersion.VERSION_1_8.toString()
                 }
             }
             val test by compilations.getting {
                 kotlinOptions {
+                    languageVersion = "1.5"
+                    apiVersion = "1.5"
                     jvmTarget = JavaVersion.VERSION_1_8.toString()
                 }
             }

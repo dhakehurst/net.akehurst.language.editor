@@ -18,12 +18,11 @@ package net.akehurst.language.editor.monaco
 
 import monaco.IRange
 import monaco.editor
-import monaco.languages
+
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglLineState
 import net.akehurst.language.editor.common.AglToken
 import net.akehurst.language.editor.common.AglTokenizer
-import net.akehurst.language.editor.comon.AglWorkerClient
 
 class ModelDecorationOptions(
         override val afterContentClassName: String? = null,
@@ -46,7 +45,7 @@ class ModelDecorationOptions(
 class AglTokenizerByWorkerMonaco(
         val aglEditor: AglEditorMonaco,
         val agl: AglComponents
-) : languages.TokensProvider {
+) : monaco.languages.TokensProvider {
 
     val aglTokenizer = AglTokenizer(agl)
     var acceptingTokens = false
@@ -68,11 +67,11 @@ class AglTokenizerByWorkerMonaco(
 
     // --- monaco.langugaes.Tokenizer ---
 
-    override fun getInitialState(): languages.IState {
+    override fun getInitialState(): monaco.languages.IState {
         return AglLineStateMonaco(0, "")
     }
 
-    override fun tokenize(line: String, pState: languages.IState): languages.ILineTokens {
+    override fun tokenize(line: String, pState: monaco.languages.IState): monaco.languages.ILineTokens {
         val mcState = pState as AglLineStateMonaco
         val row = mcState.lineNumber+1
         val tokens = this.tokensByLine[row-1]
@@ -87,7 +86,7 @@ class AglTokenizerByWorkerMonaco(
                         it.column
                 )
             }
-            val lt: Array<languages.IToken> = lineTokens.toTypedArray()
+            val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
             AglLineTokensMonaco(
                     AglLineStateMonaco(row, ""),
                     lt
@@ -100,7 +99,7 @@ class AglTokenizerByWorkerMonaco(
                         it.column
                 )
             }
-            val lt: Array<languages.IToken> = lineTokens.toTypedArray()
+            val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
             AglLineTokensMonaco(
                     AglLineStateMonaco(row, ""),
                     lt

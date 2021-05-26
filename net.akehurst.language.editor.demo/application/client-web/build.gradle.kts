@@ -22,25 +22,29 @@ dependencies {
 
 }
 
-val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {
-    dependsOn(":application-agl-editor-worker:jsBrowserProductionWebpack")
-    dependsOn("jsProcessResources")
-    from("$buildDir/../application-agl-editor-worker/distributions") {
-        include("application-agl-editor-worker.js")
-    }
-    into(file("$buildDir/processedResources/js/main"))
-
-}
-
-tasks.getByName("jsBrowserDistributeResources").dependsOn(workerTask)
-tasks.getByName("jsBrowserDevelopmentRun").dependsOn(workerTask)
-tasks.getByName("jsBrowserProductionRun").dependsOn(workerTask)
-tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserProductionWebpack")
-
 kotlin {
+    js("js") {
+        binaries.executable()
+    }
     sourceSets {
         val jvm8Main by getting {
             resources.srcDir("$buildDir/distributions")
         }
     }
 }
+
+val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {
+    dependsOn(":application-agl-editor-worker:jsBrowserProductionWebpack")
+    dependsOn("jsProcessResources")
+    from("$buildDir/../application-agl-editor-worker/distributions") {
+        include("application-agl-editor-worker.js")
+        include("application-agl-editor-worker.js.map")
+    }
+    into(file("$buildDir/processedResources/js/main"))
+
+}
+
+tasks.getByName("jsBrowserDistribution").dependsOn(workerTask)
+tasks.getByName("jsBrowserDevelopmentRun").dependsOn(workerTask)
+tasks.getByName("jsBrowserProductionRun").dependsOn(workerTask)
+tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserProductionWebpack")

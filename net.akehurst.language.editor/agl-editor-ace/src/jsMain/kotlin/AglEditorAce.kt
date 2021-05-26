@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.ace
 
+import ResizeObserver
 import kotlinx.browser.window
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
@@ -26,10 +27,10 @@ import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
+import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.comon.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.Window
 import org.w3c.dom.asList
 
 import kotlin.collections.List
@@ -42,6 +43,7 @@ import kotlin.collections.mutableMapOf
 import kotlin.collections.set
 import kotlin.collections.toMutableMap
 import kotlin.collections.toTypedArray
+import kotlin.js.Date
 
 class AglErrorAnnotation(
         val line: Int,
@@ -107,6 +109,10 @@ class AglEditorAce(
     var parseTimeout: dynamic = null
 
     init {
+        this.init_()
+    }
+
+    fun init_(){
         this.workerTokenizer = AglTokenizerByWorkerAce(this.agl)
 
         this.aceEditor.getSession().bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer, this.aceEditor)
@@ -124,8 +130,7 @@ class AglEditorAce(
             }, 500)
         }
 
-        val self = this
-        val resizeObserver: dynamic = js("new ResizeObserver(function(entries) { self.onResize(entries) })")
+        val resizeObserver = ResizeObserver { entries -> onResize(entries) }
         resizeObserver.observe(this.element)
 
         this.aglWorker.initialise()
@@ -182,8 +187,13 @@ class AglEditorAce(
                 }.toMutableMap()
                 mappedCss = mappedCss + "\n" + mappedRule.toCss()
             }
-            val cssText: String = mappedCss
-            val module = js(" { cssClass: this.languageId, cssText: cssText, _v: Date.now() }") // _v:Date added in order to force use of new module definition
+            //val cssText: String = mappedCss
+            val module = objectJS {
+                cssClass = languageId
+                cssText = mappedCss
+                _v = Date.now()
+            }
+            //val module = js(" { cssClass: this.languageId, cssText: cssText, _v: Date.now() }") // _v:Date added in order to force use of new module definition
             // remove the current style element for 'languageId' (which is used as the theme name) from the container
             // else the theme css is not reapplied
             val curStyle = this.element.ownerDocument?.querySelector("style#" + this.languageId)
