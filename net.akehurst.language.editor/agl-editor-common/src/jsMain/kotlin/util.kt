@@ -17,7 +17,13 @@
 package net.akehurst.language.editor.common
 
 inline fun objectJS(init: dynamic.() -> Unit): dynamic {
-    val o:dynamic = object{}
+    val o:dynamic = js("{}")
+    init(o)
+    return o
+}
+
+inline  fun <T> objectJSTyped(init: T.() -> Unit): dynamic {
+    val o:dynamic =  js("{}")
     init(o)
     return o
 }

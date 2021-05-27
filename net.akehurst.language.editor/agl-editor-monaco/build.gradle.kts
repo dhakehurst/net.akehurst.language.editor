@@ -7,7 +7,7 @@ dependencies {
 
     jsMainApi(project(":agl-editor-common"))
 
-    jsMainImplementation(npm("monaco-editor", "$version_monaco"))
+    jsMainImplementation(npm("monaco-editor", version_monaco))
 
     //commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$version_coroutines")
 

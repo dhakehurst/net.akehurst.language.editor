@@ -73,7 +73,12 @@ class AglEditorAce(
                     element.removeChild(element.firstChild!!)
                 }
                 val id = element.getAttribute("id")!!
-                val editor = AglEditorAce(element, id, id, null, workerScriptName)
+                val options = objectJS {
+                        enableBasicAutocompletion= true
+                        enableSnippets= true
+                        enableLiveAutocompletion= false
+                }
+                val editor = AglEditorAce(element, id, id, options, workerScriptName)
                 map[id] = editor
             }
             return map
@@ -109,17 +114,17 @@ class AglEditorAce(
     var parseTimeout: dynamic = null
 
     init {
-        this.init_()
+        this.init_(options)
     }
 
-    fun init_(){
+    fun init_(options:dynamic){
         this.workerTokenizer = AglTokenizerByWorkerAce(this.agl)
 
+        this.aceEditor.setOptions(options)
         this.aceEditor.getSession().bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer, this.aceEditor)
         this.aceEditor.getSession().bgTokenizer.setDocument(this.aceEditor.getSession().getDocument())
         this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
         this.aceEditor.completers = arrayOf(AglCodeCompleter(this.languageId, this.agl))
-        //this.aceEditor.commands.addCommand(autocomplete.Autocomplete.startCommand)
 
         this.aceEditor.on("change") { event ->
             this.workerTokenizer.reset()

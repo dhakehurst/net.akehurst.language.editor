@@ -17,157 +17,115 @@
 @file:JsModule("monaco-editor/esm/vs/editor/editor.api")
 @file:JsNonModule
 
-package monaco
+@file:JsQualifier("editor")
 
+package monaco.editor
+
+import monaco.IDisposable
+import monaco.IPosition
+import monaco.IRange
+import monaco.MarkerSeverity
 import org.w3c.dom.Element
 
-external interface IEvent<T> {
-    //val listener: (e: T) -> Any, thisArg?: any): IDisposable;
+
+external fun create(element: Element, options: IStandaloneEditorConstructionOptions?, override: IEditorOverrideServices?): IStandaloneCodeEditor
+
+external fun defineTheme(themeName: String, themeData: IStandaloneThemeData)
+
+external fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>)
+
+
+external enum class EndOfLinePreference {
+    TextDefined,
+    LF,
+    CRLF
 }
 
-external interface IDisposable
-
-external interface CancellationToken {
-    val isCancellationRequested: Boolean
-
-    /**
-     * An event emitted when cancellation is requested
-     * @event
-     */
-    val onCancellationRequested: IEvent<Any>
+external interface IModelDecorationOptions {
+    var afterContentClassName: String?
+    var beforeContentClassName: String?
+    var className: String?
+    var glyphMarginClassName: String?
+    var glyphMarginHoverMessage: dynamic  //IMarkdownString | IMarkdownString[] | null
+    var hoverMessage: dynamic  //IMarkdownString | IMarkdownString[] | null
+    var inlineClassName: String?
+    var inlineClassNameAffectsLetterSpacing: Boolean?
+    var isWholeLine: Boolean?
+    var linesDecorationsClassName: String?
+    var marginClassName: String?
+    var minimap: dynamic
+    var overviewRuler: dynamic
+    var stickiness: dynamic
+    var zindex: dynamic
 }
 
-external object MarkerSeverity {
-    val Hint: MarkerSeverity = definedExternally
-    val Info: MarkerSeverity = definedExternally
-    val Warning: MarkerSeverity = definedExternally
-    val Error: MarkerSeverity = definedExternally
+external interface IModelDeltaDecoration {
+    var range: IRange
+    var options: IModelDecorationOptions
 }
 
-external interface IPosition {
-    /**
-     * line number (starts at 1)
-     */
-    val lineNumber: Int;
-
-    /**
-     * column (the first character in a line is between column 1 and column 2)
-     */
-    val column: Int;
+external interface IEditor {
+    fun layout(dimension: IDimension? = definedExternally)
 }
 
-external interface IRange {
-    val endColumn: Int
-    val endLineNumber: Int
-    val startColumn: Int
-    val startLineNumber: Int
+external interface ICodeEditor : IEditor {
+    fun getModel(): ITextModel
 
+    fun onDidChangeModelContent(listener: (IModelContentChangedEvent) -> Unit): IDisposable
+    fun deltaDecorations(oldDecorations: Array<String>, newDecorations: Array<IModelDeltaDecoration>): Array<String>
+    fun getLineDecorations(lineNum: Int): dynamic
 }
 
-external class Position(
-        lineNumber: Int,
-        column: Int
-) : IPosition {
-    override val lineNumber: Int
-    override val column: Int
-    //...
+external interface IStandaloneCodeEditor : ICodeEditor
+
+external interface IStandaloneEditorConstructionOptions {
+    var language: String
+    var value: String
+    var theme: String
+    var wordBasedSuggestions: Boolean
 }
 
-external object editor {
+external interface IEditorOverrideServices
 
-    fun create(element: Element, options: IStandaloneEditorConstructionOptions?, override: IEditorOverrideServices?): IStandaloneCodeEditor
-
-    fun defineTheme(themeName: String, themeData: IStandaloneThemeData)
-
-    fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>)
-
-
-    enum class EndOfLinePreference {
-        TextDefined,
-        LF,
-        CRLF
-    }
-
-    interface IModelDecorationOptions {
-        val afterContentClassName: String?
-        val beforeContentClassName: String?
-        val className: String?
-        val glyphMarginClassName: String?
-        val glyphMarginHoverMessage: dynamic  //IMarkdownString | IMarkdownString[] | null
-        val hoverMessage: dynamic  //IMarkdownString | IMarkdownString[] | null
-        val inlineClassName: String?
-        val inlineClassNameAffectsLetterSpacing: Boolean?
-        val isWholeLine: Boolean?
-        val linesDecorationsClassName: String?
-        val marginClassName: String?
-        val minimap: dynamic
-        val overviewRuler: dynamic
-        val stickiness: dynamic
-        val zindex: dynamic
-    }
-
-    interface IModelDeltaDecoration {
-        val range: IRange
-        val options: IModelDecorationOptions
-    }
-
-    interface IEditor {
-        fun layout(dimension: IDimension? = definedExternally)
-    }
-
-    interface ICodeEditor : IEditor {
-        fun getModel(): ITextModel
-
-        fun onDidChangeModelContent(listener: (IModelContentChangedEvent) -> Unit): IDisposable
-        fun deltaDecorations(oldDecorations: Array<String>, newDecorations: Array<IModelDeltaDecoration>) : Array<String>
-        fun getLineDecorations(lineNum: Int): dynamic
-    }
-
-    interface IStandaloneCodeEditor : ICodeEditor
-
-    interface IStandaloneEditorConstructionOptions
-
-    interface IEditorOverrideServices
-
-    interface IStandaloneThemeData {
-        val base: Any
-        val inherit: Boolean;
-        val rules: Array<ITokenThemeRule>
-        //val encodedTokensColors: Array<String>?
-        //val colors: IColors
-    }
-
-    interface IModelContentChangedEvent
-
-    interface IDimension
-
-    interface ITextModel {
-        fun getValue(eol: EndOfLinePreference? = definedExternally, preserveBOM: Boolean? = definedExternally): String
-        fun setValue(newValue: String)
-
-        fun getOffsetAt(position: IPosition): Int
-
-        fun resetTokenization()
-    }
-
-    interface ITokenThemeRule {
-        val token: String
-        val foreground: String?
-        val background: String?
-        val fontStyle: String?
-    }
-
-    interface IMarkerData {
-        val code: String?
-        val severity: MarkerSeverity;
-        val message: String
-        val source: String?
-        val startLineNumber: Int
-        val startColumn: Int
-        val endLineNumber: Int
-        val endColumn: Int
-        //val relatedInformation: Array<IRelatedInformation>?
-        //val tags: Array<MarkerTag>?
-    }
+external interface IStandaloneThemeData {
+    var base: Any
+    var inherit: Boolean;
+    var rules: Array<ITokenThemeRule>
+    //val encodedTokensColors: Array<String>?
+    //val colors: IColors
 }
+
+external interface IModelContentChangedEvent
+
+external interface IDimension
+
+external interface ITextModel {
+    fun getValue(eol: EndOfLinePreference? = definedExternally, preserveBOM: Boolean? = definedExternally): String
+    fun setValue(newValue: String)
+
+    fun getOffsetAt(position: IPosition): Int
+
+    fun resetTokenization()
+}
+
+external interface ITokenThemeRule {
+    val token: String
+    val foreground: String?
+    val background: String?
+    val fontStyle: String?
+}
+
+external interface IMarkerData {
+    var code: String?
+    var severity: MarkerSeverity;
+    var message: String
+    var source: String?
+    var startLineNumber: Int
+    var startColumn: Int
+    var endLineNumber: Int
+    var endColumn: Int
+    //val relatedInformation: Array<IRelatedInformation>?
+    //val tags: Array<MarkerTag>?
+}
+
 

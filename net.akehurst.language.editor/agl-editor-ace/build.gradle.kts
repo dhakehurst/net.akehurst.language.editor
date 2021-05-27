@@ -16,6 +16,11 @@ dependencies {
     //commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$version_coroutines")
 }
 
+kotlin {
+    js("js") {
+        binaries.library()
+    }
+}
 
 //tasks.withType<ProcessResources>  {
 //    val map = project.properties.toMutableMap()

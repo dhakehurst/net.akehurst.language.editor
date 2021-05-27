@@ -2,6 +2,7 @@ package net.akehurst.language.editor.ace
 
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.editor.common.AglComponents
+import net.akehurst.language.editor.common.objectJS
 
 
 class AglCodeCompleter(
@@ -14,10 +15,10 @@ class AglCodeCompleter(
         val posn = session.getDocument().positionToIndex(pos, 0)
         val wordList = this.getCompletionItems(editor, posn)
         val aceCi = wordList.map { ci ->
-            object : Any() {
-                val caption = ci.text
-                val value = ci.text
-                val meta = "(${ci.rule.name})"
+            objectJS {
+                caption = ci.text
+                value = ci.text
+                meta = "(${ci.rule.name})"
             }
         }.toTypedArray()
         callback(null, aceCi)

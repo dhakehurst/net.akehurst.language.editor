@@ -18,7 +18,6 @@ package net.akehurst.language.editor.monaco
 
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.AglToken
 
 
 class AglLineStateMonaco(
