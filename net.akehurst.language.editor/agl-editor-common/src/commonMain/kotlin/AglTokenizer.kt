@@ -81,7 +81,7 @@ class AglTokenizer(
             val cssClasses = this.mapToCssClasses(leaf)
             var beforeEOL = leaf.matchedText
             val eolIndex = leaf.matchedText.indexOf('\n');
-            if (-1 !== eolIndex) {
+            if (-1 != eolIndex) {
                 beforeEOL = leaf.matchedText.substring(0, eolIndex);
             }
             AglToken(
@@ -115,13 +115,13 @@ class AglTokenizer(
 
     fun getLineTokensByParse(lineText: String, state: AglLineState, row: Int): AglLineState {
         val sppt = this.agl.sppt!!
-        val leafs = sppt.tokensByLine(row)
-        return if (null != leafs) {
+        val leafs = sppt.tokensByLine(row) //TODO: find more efficient way to do this, i.e. using lineText and state
+        //return if (null != leafs) {
             val tokens = transformToTokens(leafs)
             val endState = AglLineState(row, "", tokens)
             return endState
-        } else {
-            AglLineState(row, "", emptyList())
-        }
+        //} else {
+        //    AglLineState(row, "", emptyList())
+        //}
     }
 }

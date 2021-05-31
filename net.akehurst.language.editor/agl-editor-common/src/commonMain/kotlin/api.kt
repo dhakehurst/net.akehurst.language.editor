@@ -32,10 +32,10 @@ interface AglEditor {
     fun setStyle(css: String?)
 
     @JsName("onParse")
-    fun onParse(function: (ParseEvent) -> Unit)
+    fun onParse(handler: (ParseEvent) -> Unit)
 
     @JsName("onProcess")
-    fun onProcess(function: (ProcessEvent) -> Unit)
+    fun onProcess(handler: (ProcessEvent) -> Unit)
 
     @JsName("clearErrorMarkers")
     fun clearErrorMarkers()
