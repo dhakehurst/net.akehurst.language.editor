@@ -14,9 +14,17 @@ external class EditSession {
     fun clearAnnotations()
 
     fun removeMarker(id:Int)
-    fun setAnnotations(errors: Any)
+    fun setAnnotations(errors: Array<AceAnnotation>)
     fun getDocument(): dynamic
     fun addMarker(range: Range, cls: String, type: String): Int
+}
+
+external interface AceAnnotation {
+    var row: Int
+    var column: Int
+    var text: String
+    var type: String
+    var raw: String?
 }
 
 @JsModule("net.akehurst.language.editor-kotlin-ace-loader!?id=ace/range&name=Range")

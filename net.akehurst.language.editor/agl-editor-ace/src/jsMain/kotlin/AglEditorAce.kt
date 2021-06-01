@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.ace
 
 import ResizeObserver
+import ace.AceAnnotation
 import kotlinx.browser.window
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
@@ -28,6 +29,7 @@ import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.objectJS
+import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.comon.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -54,6 +56,9 @@ class AglErrorAnnotation(
 ) {
     val row = line - 1
 }
+
+
+
 
 class AglEditorAce(
         val element: Element,
@@ -354,13 +359,14 @@ class AglEditorAce(
                 else -> "Syntax Error, expected one of: $expected"
             }
             val errors = listOf(
-                    AglErrorAnnotation(
-                            location.line,
-                            location.column - 1,
-                            errMsg,
-                            "error",
-                            null
-                    ))
+                objectJSTyped<AceAnnotation> {
+                    row = location.line-1
+                    column = location.column - 1
+                    text = errMsg
+                    type = "error"
+                    raw = null
+                }
+            )
             this.aceEditor.getSession().setAnnotations(errors.toTypedArray())
             errors.forEach { err ->
                 val range = ace.Range(err.row, err.column, err.row, err.column + 1)

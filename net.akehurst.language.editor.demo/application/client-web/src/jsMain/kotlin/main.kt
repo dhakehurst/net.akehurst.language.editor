@@ -319,6 +319,8 @@ class Demo(
                                 null == v -> "${it.name} = null"
                                 v is Array<*> -> "${it.name} : List"
                                 v.isAsmElementSimple -> "${it.name} : ${v.typeName}"
+                                it.name == "'${v}'" -> "${it.name}"
+                                v is String -> "${it.name} = '${v}'"
                                 else -> "${it.name} = ${v}"
                             }
                         }
