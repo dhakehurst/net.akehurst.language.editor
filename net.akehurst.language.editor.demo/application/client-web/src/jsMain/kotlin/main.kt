@@ -188,6 +188,8 @@ fun initialiseExamples() {
     Examples.add(SText.example)
     Examples.add(Java8.example)
     Examples.add(English.example)
+    Examples.add(TraceabilityQuery.example)
+    Examples.add(MScript.example)
 
     Examples.map.forEach { eg ->
         val option = document.createElement("option")
