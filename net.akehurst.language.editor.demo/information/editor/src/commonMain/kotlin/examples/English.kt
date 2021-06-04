@@ -21,8 +21,19 @@ import net.akehurst.language.editor.information.Example
 object English {
     val id = "english"
     val label = "English (Natural Language)"
+    /*
     val sentence = """
-
+In the beginning was the Word, and the Word was with God, and the Word was God.
+He was with God in the beginning.
+Through him all things were made; without him nothing was made that has been made.
+In him was life, and that life was the light of all mankind.
+The light shines in the darkness, and the darkness has not overcome it.
+    """.trimIndent()
+     */
+    val sentence = """
+I am.
+John should not be in America.
+Who are they?        
     """.trimIndent()
     val grammar = """
 // based on [https://www.scientificpsychic.com/grammar/enggram1.html]
@@ -33,16 +44,18 @@ grammar English {
 
     skip WHITESPACE = "\s+" ;
 
+    text = sentence* ;
+
     sentence
         = simple-sentence
         || compound-sentence
         ;
 
     simple-sentence
-        = declarative-sentence
-        || interrogative-sentence
-        || imperative-sentence
-        || conditional-sentence
+        = declarative-sentence '.'
+        || interrogative-sentence '?'
+        || imperative-sentence '.'
+        || conditional-sentence '.'
         ;
 
     compound-sentence
@@ -52,14 +65,14 @@ grammar English {
         ;
 
     interrogative-sentence
-        = declarative-sentence '?'
-        || 'Who' predicate '?'
-        || ('What' | 'Which') (ADVERB* adjective)? noun predicate '?'
-        || ('What' | 'When' | 'Where' | 'Who' | 'To whom' | 'Why')?  ('do' |'does' |'don\'t' |'doesn\'t' |'did' |'didn\'t') subject predicate '?'
-        || 'Which'  noun-phrase? ('do' |'does' |'don\'t' |'doesn\'t' |'did' |'didn\'t') subject predicate '?'
-        || ('What' |'Which' |'When' |'Where' |'Who' |'To whom' | 'Why')? ('will' |'won\'t') subject predicate1 '?'
-        || ('What' |'Which' |'When' |'Where' |'Who' |'To whom' | 'Why')? ('has' |'have' |'hasn\'t' |'haven\'t') subject predicate2 '?'
-        || ('What' |'Which' |'When' |'Where' |'Who' |'To whom' | 'Why')? ('are' |'is' |'was' |'were' |  'aren\'t' |'isn\'t' |'wasn\'t' |'weren\'t') subject (ADVERB* adjective | prepositional-phrase* | predicate3)? '?'
+        = declarative-sentence
+        || 'Who' predicate
+        || ('What' | 'Which') (ADVERB* adjective)? noun predicate
+        || ('What' | 'When' | 'Where' | 'Who' | 'To whom' | 'Why')?  ('do' |'does' |'don\'t' |'doesn\'t' |'did' |'didn\'t') subject predicate
+        || 'Which'  noun-phrase? ('do' |'does' |'don\'t' |'doesn\'t' |'did' |'didn\'t') subject predicate
+        || ('What' |'Which' |'When' |'Where' |'Who' |'To whom' | 'Why')? ('will' |'won\'t') subject predicate
+        || ('What' |'Which' |'When' |'Where' |'Who' |'To whom' | 'Why')? ('has' |'have' |'hasn\'t' |'haven\'t') subject predicate2
+        || ('What' |'Which' |'When' |'Where' |'Who' |'To whom' | 'Why')? ('are' |'is' |'was' |'were' |  'aren\'t' |'isn\'t' |'wasn\'t' |'weren\'t') subject (ADVERB* adjective | prepositional-phrase* | predicate3)?
         ;
 
     imperative-sentence =  imperative-predicate ;
@@ -202,7 +215,7 @@ grammar English {
 
 
     //TODO: these should come from a dictionary not be listed here
-    ADJECTIVE_POSITIVE = 'new' | 'yellow' | 'pretty' | 'useful' | 'declarative' ;
+    ADJECTIVE_POSITIVE = 'new' | 'yellow' | 'green' | 'red' | 'blue' | 'pretty' | 'useful' | 'declarative' ;
     ADJECTIVE_COMPARATIVE = 'newer' | 'yellower' | 'prettier' ;
     ADJECTIVE_SUPERLATIVE = 'newest' | 'yellowest' | 'prettiest' ;
     ARTICLE = 'a' | 'an' | 'the' ; //TODO: definite or indefinite
@@ -232,7 +245,7 @@ grammar English {
     VERB_3p_PAST            = 'were'  | 'started' | 'used' ;
 
 
-    NOMINATIVE_PERSONAL_PRONOUN = 'I' | 'you' | 'he' | 'she' | 'it' | 'we' | 'they' ;
+    NOMINATIVE_PERSONAL_PRONOUN = 'I' | 'you' | 'He' | 'he' | 'she' | 'it' | 'we' | 'they' ;
     NON_PERSONAL_PRONOUN = 'someone' | 'anyone' | 'this' ;
     DEMONSTRATIVE_PRONOUN = 'this' | 'that' | 'such' ;
     INTERROGATIVE_PRONOUN = 'who' | 'which' ;

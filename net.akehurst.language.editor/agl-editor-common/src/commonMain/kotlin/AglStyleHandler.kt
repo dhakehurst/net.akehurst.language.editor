@@ -50,7 +50,7 @@ class AglStyleHandler(
             val cssClasses = this.mapToCssClasses(leaf)
             var beforeEOL = leaf.matchedText
             val eolIndex = leaf.matchedText.indexOf('\n');
-            if (-1 !== eolIndex) {
+            if (-1 != eolIndex) {
                 beforeEOL = leaf.matchedText.substring(0, eolIndex);
             }
             AglToken(

@@ -17,36 +17,32 @@
 package net.akehurst.language.editor.monaco
 
 import monaco.IRange
-import monaco.editor
-import monaco.languages
-import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.AglLineState
-import net.akehurst.language.editor.common.AglToken
-import net.akehurst.language.editor.common.AglTokenizer
-import net.akehurst.language.editor.comon.AglWorkerClient
+import monaco.editor.IModelDecorationOptions
+import monaco.editor.IModelDeltaDecoration
+import net.akehurst.language.editor.common.*
 
 class ModelDecorationOptions(
-        override val afterContentClassName: String? = null,
-        override val beforeContentClassName: String? = null,
-        override val className: String? = null,
-        override val glyphMarginClassName: String? = null,
-        override val glyphMarginHoverMessage: dynamic = null,
-        override val hoverMessage: dynamic = null,
-        override val inlineClassName: String? = null,
-        override val inlineClassNameAffectsLetterSpacing: Boolean? = null,
-        override val isWholeLine: Boolean? = null,
-        override val linesDecorationsClassName: String? = null,
-        override val marginClassName: String? = null,
-        override val minimap: dynamic = null,
-        override val overviewRuler: dynamic = null,
-        override val stickiness: dynamic = null,
-        override val zindex: dynamic = null
-) : editor.IModelDecorationOptions
+    override var afterContentClassName: String? = null,
+    override var beforeContentClassName: String? = null,
+    override var className: String? = null,
+    override var glyphMarginClassName: String? = null,
+    override var glyphMarginHoverMessage: dynamic = null,
+    override var hoverMessage: dynamic = null,
+    override var inlineClassName: String? = null,
+    override var inlineClassNameAffectsLetterSpacing: Boolean? = null,
+    override var isWholeLine: Boolean? = null,
+    override var linesDecorationsClassName: String? = null,
+    override var marginClassName: String? = null,
+    override var minimap: dynamic = null,
+    override var overviewRuler: dynamic = null,
+    override var stickiness: dynamic = null,
+    override var zindex: dynamic = null
+) : IModelDecorationOptions
 
 class AglTokenizerByWorkerMonaco(
-        val aglEditor: AglEditorMonaco,
-        val agl: AglComponents
-) : languages.TokensProvider {
+    val aglEditor: AglEditorMonaco,
+    val agl: AglComponents
+) : monaco.languages.TokensProvider {
 
     val aglTokenizer = AglTokenizer(agl)
     var acceptingTokens = false
@@ -68,57 +64,57 @@ class AglTokenizerByWorkerMonaco(
 
     // --- monaco.langugaes.Tokenizer ---
 
-    override fun getInitialState(): languages.IState {
+    override fun getInitialState(): monaco.languages.IState {
         return AglLineStateMonaco(0, "")
     }
 
-    override fun tokenize(line: String, pState: languages.IState): languages.ILineTokens {
+    override fun tokenize(line: String, pState: monaco.languages.IState): monaco.languages.ILineTokens {
         val mcState = pState as AglLineStateMonaco
-        val row = mcState.lineNumber+1
-        val tokens = this.tokensByLine[row-1]
+        val row = mcState.lineNumber + 1
+        val tokens = this.tokensByLine[row - 1]
         return if (null == tokens) {
             // no tokens received from worker, try local scan
             val stateAgl = AglLineState(mcState.lineNumber, mcState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
             val ltokens = this.aglTokenizer.getLineTokensByScan(line, stateAgl, row)
-            this.decorateLine(row,ltokens.tokens)
+            this.decorateLine(row, ltokens.tokens)
             val lineTokens: List<AglTokenMonaco> = ltokens.tokens.map {
                 AglTokenMonaco(
-                        it.styles.firstOrNull() ?: "",
-                        it.column
+                    it.styles.firstOrNull() ?: "",
+                    it.column
                 )
             }
-            val lt: Array<languages.IToken> = lineTokens.toTypedArray()
+            val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
             AglLineTokensMonaco(
-                    AglLineStateMonaco(row, ""),
-                    lt
+                AglLineStateMonaco(row, ""),
+                lt
             )
         } else {
-            this.decorateLine(row,tokens)
+            this.decorateLine(row, tokens)
             val lineTokens: List<AglTokenMonaco> = tokens.map {
                 AglTokenMonaco(
-                        it.styles.firstOrNull() ?: "",
-                        it.column
+                    it.styles.firstOrNull() ?: "",
+                    it.column
                 )
             }
-            val lt: Array<languages.IToken> = lineTokens.toTypedArray()
+            val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
             AglLineTokensMonaco(
-                    AglLineStateMonaco(row, ""),
-                    lt
+                AglLineStateMonaco(row, ""),
+                lt
             )
         }
     }
 
-    fun decorateLine(lineNum:Int, tokens: List<AglToken>) {
-        val decs: Array<editor.IModelDeltaDecoration> = tokens.map { aglTok ->
-            object : editor.IModelDeltaDecoration {
-                override val range = object : IRange {
-                    override val startColumn = aglTok.column
-                    override val endColumn = aglTok.column + aglTok.value.length
-                    override val startLineNumber = aglTok.line
-                    override val endLineNumber = aglTok.line
+    fun decorateLine(lineNum: Int, tokens: List<AglToken>) {
+        val decs: Array<IModelDeltaDecoration> = tokens.map { aglTok ->
+            objectJSTyped<IModelDeltaDecoration> {
+                range = objectJSTyped<IRange> {
+                    startColumn = aglTok.column
+                    endColumn = aglTok.column + aglTok.value.length
+                    startLineNumber = aglTok.line
+                    endLineNumber = aglTok.line
                 }
-                override val options = ModelDecorationOptions(
-                        inlineClassName = aglTok.styles.joinToString(separator = " ") { "monaco_${it}" }
+                options = ModelDecorationOptions(
+                    inlineClassName = aglTok.styles.joinToString(separator = " ") { "monaco_${it}" }
                 )
             }
         }.toTypedArray()

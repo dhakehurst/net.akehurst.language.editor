@@ -36,12 +36,12 @@ namespace net.akehurst.language.java8
 
 grammar Base {
     skip leaf WHITESPACE = "\s+" ;
-    skip leaf COMMENT_SINGLE_LINE = "//[^\n]*${'$'}" ;
+    skip leaf COMMENT_SINGLE_LINE = "//[^\r\n]*" ;
     skip leaf COMMENT_MULTI_LINE = "/\*[^*]*\*+([^*/][^*]*\*+)*/" ;
 
     leaf IDENTIFIER = JAVA_LETTER JAVA_LETTER_OR_DIGIT* ;
     leaf JAVA_LETTER_OR_DIGIT = JAVA_LETTER | "[0-9]" ;
-    leaf JAVA_LETTER= UNICODE_LETTER | '${'$'}' | '_' ;
+    leaf JAVA_LETTER= UNICODE_LETTER | '$' | '_' ;
     leaf UNICODE_LETTER = "[A-Za-z]" ; //TODO: add unicode chars !
 
     QualifiedName = [ IDENTIFIER / '.' ]+ ;

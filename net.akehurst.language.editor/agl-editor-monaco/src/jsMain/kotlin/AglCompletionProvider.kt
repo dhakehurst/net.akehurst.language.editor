@@ -18,8 +18,7 @@ package net.akehurst.language.editor.monaco
 
 import monaco.CancellationToken
 import monaco.Position
-import monaco.editor
-import monaco.languages
+import monaco.editor.ITextModel
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.editor.common.AglComponents
 
@@ -28,27 +27,27 @@ class AglCompletionProvider(
 ) : monaco.languages.CompletionItemProvider {
     override val triggerCharacters: Array<String>? = null
 
-    override fun provideCompletionItems(model: editor.ITextModel, position: Position, context: languages.CompletionContext, token: CancellationToken): languages.CompletionList? {
+    override fun provideCompletionItems(model: ITextModel, position: Position, context: monaco.languages.CompletionContext, token: CancellationToken): monaco.languages.CompletionList? {
         val posn = model.getOffsetAt(position)
         val wordList = this.getCompletionItems(model, posn);
         val cil = wordList.map { ci ->
-            object : languages.CompletionItem {
+            object : monaco.languages.CompletionItem {
                 override val label: String = "${ci.text} (${ci.rule.name})"
                 override val insertText: String = ci.text
-                override val kind: languages.CompletionItemKind = languages.CompletionItemKind.Text
+                override val kind: monaco.languages.CompletionItemKind = monaco.languages.CompletionItemKind.Text
             }
         }
-        return object : languages.CompletionList {
+        return object : monaco.languages.CompletionList {
             override val incomplete = false
-            override val suggestions: Array<languages.CompletionItem> = cil.toTypedArray()
+            override val suggestions: Array<monaco.languages.CompletionItem> = cil.toTypedArray()
         }
     }
 
-    override fun resolveCompletionItem(model: editor.ITextModel, position: Position, item: languages.CompletionItem, token: CancellationToken): languages.CompletionList? {
+    override fun resolveCompletionItem(model: ITextModel, position: Position, item: monaco.languages.CompletionItem, token: CancellationToken): monaco.languages.CompletionList? {
         return null
     }
 
-    private fun getCompletionItems(model: editor.ITextModel, offset: Int): List<CompletionItem> {
+    private fun getCompletionItems(model: ITextModel, offset: Int): List<CompletionItem> {
         val text = model.getValue()
         val proc = this.agl.processor
         val goalRule = this.agl.goalRule

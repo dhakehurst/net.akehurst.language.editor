@@ -9,6 +9,7 @@ dependencies {
 
 kotlin {
     js("js") {
+        binaries.executable()
         nodejs()
         browser {
             webpackTask {

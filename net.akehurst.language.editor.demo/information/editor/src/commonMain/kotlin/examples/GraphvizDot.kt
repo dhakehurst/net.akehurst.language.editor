@@ -79,7 +79,7 @@ namespace net.akehurst.language.example.dot
 
 grammar Xml {
 
-	skip leaf COMMENT = "<!-- [.]* -->" ;
+	skip COMMENT = "<!-- [.]* -->" ;
 
 	file = element? ;
 
@@ -92,20 +92,20 @@ grammar Xml {
 	content = (CHARDATA | element)* ;
 
 	attribute = NAME WS? '=' WS? string WS? ;
-	leaf string = DOUBLE_QUOTE_STRING | SINGLE_QUOTE_STRING ;
-	leaf WS = "\s+" ;
-	leaf CHARDATA = "[^<]+" ;
-	leaf NAME = "[a-zA-Z][a-zA-Z0-9]*" ;
-	leaf DOUBLE_QUOTE_STRING = "[\"][^\"]*[\"]" ;
-	leaf SINGLE_QUOTE_STRING = "['][^']*[']" ;
+	string = DOUBLE_QUOTE_STRING | SINGLE_QUOTE_STRING ;
+	WS = "\s+" ;
+	CHARDATA = "[^<]+" ;
+	NAME = "[a-zA-Z][a-zA-Z0-9]*" ;
+	DOUBLE_QUOTE_STRING = "\"([^\"\\]|\.)*\"" ;
+	SINGLE_QUOTE_STRING = "['][^']*[']" ;
 }
 
 grammar Dot  {
 
     skip leaf WHITESPACE = "\s+" ;
-	skip leaf MULTI_LINE_COMMENT = "/\*[^*]*\*+(?:[^*/][^*]*\*+)*/" ;
-	skip leaf SINGLE_LINE_COMMENT = "//.*?${'$'}" ;
-	skip leaf C_PREPROCESSOR = "#.*?${'$'}" ;
+	skip leaf MULTI_LINE_COMMENT = "/\*[^*]*\*+([^*/][^*]*\*+)*/" ;
+	skip leaf SINGLE_LINE_COMMENT = "//[^\n\r]*" ;
+	skip leaf C_PREPROCESSOR = "#[^\n\r]*" ;
 
 	graph =
 	  STRICT? type ID? '{' stmt_list '}'
@@ -163,8 +163,8 @@ grammar Dot  {
 
 	leaf ALPHABETIC_ID = "[a-zA-Z_][a-zA-Z_0-9]*" ; //"[a-zA-Z\200-\377_][a-zA-Z\200-\377_0-9]*" ;
 
-	leaf NUMERAL = "[-+]?([0-9]*(.[0-9]+)?)" ;
-	leaf DOUBLE_QUOTE_STRING = "\"(?:\\?.)*?\"" ;
+	leaf NUMERAL = "[-+]?([0-9]+([.][0-9]+)?|([.][0-9]+))" ;
+	leaf DOUBLE_QUOTE_STRING = "\"(?:[^\"\\]|\\.)*\"" ;
 	HTML = '<' Xml.elementContent '>' ;
 }
     """.trimIndent()

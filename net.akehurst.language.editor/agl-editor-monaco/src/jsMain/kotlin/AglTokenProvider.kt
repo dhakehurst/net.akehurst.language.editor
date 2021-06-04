@@ -16,17 +16,15 @@
 
 package net.akehurst.language.editor.monaco
 
-import monaco.languages
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.AglToken
 
 
 class AglLineStateMonaco(
         val lineNumber: Int,
         val leftOverText: String
-) : languages.IState {
-    override fun clone(): languages.IState {
+) : monaco.languages.IState {
+    override fun clone(): monaco.languages.IState {
         return AglLineStateMonaco(lineNumber, leftOverText)
     }
 
@@ -41,22 +39,22 @@ class AglLineStateMonaco(
 class AglTokenMonaco(
         style: String,
         column: Int
-) : languages.IToken {
+) : monaco.languages.IToken {
     override val scopes: String = style
     override val startIndex: Int = column - 1
 }
 
 class AglLineTokensMonaco(
         override val endState: AglLineStateMonaco,
-        override val tokens: Array<languages.IToken>
-) : languages.ILineTokens {
+        override val tokens: Array<monaco.languages.IToken>
+) : monaco.languages.ILineTokens {
 
 }
 
 class AglTokenProvider(
         val tokenPrefix: String,
         val agl: AglComponents
-) : languages.TokensProvider {
+) : monaco.languages.TokensProvider {
 
     companion object {
         fun NO_TOKENS(nextLineNumber: Int) = AglLineTokensMonaco(
@@ -65,11 +63,11 @@ class AglTokenProvider(
         )
     }
 
-    override fun getInitialState(): languages.IState {
+    override fun getInitialState(): monaco.languages.IState {
         return AglLineStateMonaco(0, "")
     }
 
-    override fun tokenize(line: String, state: languages.IState): languages.ILineTokens {
+    override fun tokenize(line: String, state: monaco.languages.IState): monaco.languages.ILineTokens {
         try {
             if (null == this.agl.sppt) {
                 return this.getLineTokensByScan(line, state)
@@ -82,7 +80,7 @@ class AglTokenProvider(
         }
     }
 
-    private fun getLineTokensByScan(line: String, pState: languages.IState): languages.ILineTokens {
+    private fun getLineTokensByScan(line: String, pState: monaco.languages.IState): monaco.languages.ILineTokens {
         val state = pState as AglLineStateMonaco
         val proc = this.agl.processor
         val nextLineNumber = state.lineNumber + 1
@@ -90,7 +88,7 @@ class AglTokenProvider(
             val text = state.leftOverText + line
             val leafs = proc.scan(text);
             val tokens = leafs.map { leaf ->
-                object : languages.IToken {
+                object : monaco.languages.IToken {
                     override val scopes = tokenPrefix + leaf.name //:FIXME: monaco doesn't support multiple classes on a token //mapToCssClasses(leaf).joinToString(separator = ".") { tokenPrefix+it }
                     override val startIndex = leaf.location.column - 1
                 }
@@ -103,16 +101,16 @@ class AglTokenProvider(
                 val leftOverText = line.substring(endOfLastLeaf, line.length)
                 AglLineStateMonaco(nextLineNumber, leftOverText)
             }
-            return object : languages.ILineTokens {
+            return object : monaco.languages.ILineTokens {
                 override val endState = endState
-                override val tokens: Array<languages.IToken> = tokens.toTypedArray()
+                override val tokens: Array<monaco.languages.IToken> = tokens.toTypedArray()
             }
         } else {
             return NO_TOKENS(nextLineNumber)
         }
     }
 
-    private fun getLineTokensByParse(line: String, pState: languages.IState): languages.ILineTokens {
+    private fun getLineTokensByParse(line: String, pState: monaco.languages.IState): monaco.languages.ILineTokens {
         val state = pState as AglLineStateMonaco
         val nextLineNumber = state.lineNumber + 1
         val sppt = this.agl.sppt!!

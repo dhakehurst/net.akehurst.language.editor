@@ -5,3 +5,18 @@
  d. note class class ....keywords as identifiers not an issue
  c. note colouring....esp scan vs parse colouring
 2. It is all done browser side, there is no backend (in the demo)
+3. GLR based algorithm...not restrictions on grammar rules (left/right recursive)
+4. context sensitive scanning ... no keyword restrictions
+5. ambiguous grammars are slow!
+6. unambiguous grammars parse in linear time
+7. Integration with Ace and Monaco...not hard to integrate with other editors if required.
+8. All done at runtime...first time use is slower (needs to build the parser)
+9. Flexibility...easy to modify the grammar or styling at runtime.
+10. Two forms of grammar composition, extension and embedding
+11. Maturity:
+ - Current Implementation is 5 years in development, though its based on previous work that goes back 15 years.
+ - used in 1 research project, 1 customer prototype project, in itemis YMV product.
+12. Future Plans:
+ - Formatter
+ - Performance improvements
+ - Semantic Analyser
