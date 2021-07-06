@@ -58,7 +58,7 @@ class AglCompletionProvider(
                 val list = proc.expectedAt(text, offset, 1);
                 list
             } else {
-                val list = proc.expectedAt(goalRule, text, offset, 1);
+                val list = proc.expectedAtForGoal(goalRule, text, offset, 1);
                 list
             }
         }

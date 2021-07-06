@@ -21,7 +21,7 @@ import net.akehurst.language.api.parser.InputLocation
 abstract class AglWorkerMessage(
     val action: String
 ) {
-    abstract fun toObjectJS(): Any
+    abstract fun toObjectJS(): dynamic
 }
 
 class MessageProcessorCreate(
@@ -29,12 +29,12 @@ class MessageProcessorCreate(
     val editorId: String,
     val grammarStr: String?
 ) : AglWorkerMessage("MessageProcessorCreate") {
-        override fun toObjectJS(): Any = objectJS {
+        override fun toObjectJS(): dynamic = objectJS {
             this["action"] = action
             this["languageId"]=languageId
             this["editorId"]=editorId
             this["grammarStr"]=grammarStr
-        } as Any
+        }
 }
 
 class MessageProcessorCreateSuccess(
@@ -42,12 +42,12 @@ class MessageProcessorCreateSuccess(
     val editorId: String,
     val message: String
 ) : AglWorkerMessage("MessageProcessorCreateSuccess") {
-        override fun toObjectJS(): Any = objectJS {
+        override fun toObjectJS(): dynamic = objectJS {
             this["action"] = action
             this["languageId"]=languageId
             this["editorId"]=editorId
             this["message"]=message
-        } as Any
+        }
 }
 
 class MessageProcessorCreateFailure(
@@ -55,12 +55,12 @@ class MessageProcessorCreateFailure(
     val editorId: String,
     val message: String
 ) : AglWorkerMessage("MessageProcessorCreateFailure") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["message"]=message
-    } as Any
+    }
 }
 
 
@@ -69,12 +69,12 @@ class MessageParseRequest(
     val editorId: String,
     val text: String
 ) : AglWorkerMessage("MessageParseRequest") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["text"]=text
-    } as Any
+    }
 }
 
 
@@ -82,11 +82,11 @@ class MessageParseStart(
     val languageId: String,
     val editorId: String
 ) : AglWorkerMessage("MessageParseStart") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
-    } as Any
+    }
 }
 
 
@@ -95,12 +95,12 @@ class MessageParseSuccess(
     val editorId: String,
     val tree: Any
 ) : AglWorkerMessage("MessageParseSuccess") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["tree"]=tree
-    } as Any
+    }
 }
 
 
@@ -112,7 +112,7 @@ class MessageParseFailure(
     val expected: Array<String>,
     val tree: Any?
 ) : AglWorkerMessage("MessageParseFailure") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
@@ -120,7 +120,7 @@ class MessageParseFailure(
         this["location"]=location
         this["expected"]=expected
         this["tree"]=tree
-    } as Any
+    }
 }
 
 
@@ -129,12 +129,12 @@ class MessageParserInterruptRequest(
     val editorId: String,
     val reason: String
 ) : AglWorkerMessage("MessageParserInterruptRequest") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["reason"]=reason
-    } as Any
+    }
 }
 
 
@@ -143,12 +143,12 @@ class MessageLineTokens(
     val editorId: String,
     val lineTokens: Array<Array<AglToken>>
 ) : AglWorkerMessage("MessageLineTokens") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["lineTokens"]=lineTokens
-    } as Any
+    }
 }
 
 
@@ -157,12 +157,12 @@ class MessageSetStyle(
     val editorId: String,
     val css: String
 ) : AglWorkerMessage("MessageSetStyle") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["css"]=css
-    } as Any
+    }
 }
 
 
@@ -172,13 +172,13 @@ class MessageSetStyleResult(
     val success: Boolean,
     val message: String
 ) : AglWorkerMessage("MessageSetStyleResult") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["success"]=success
         this["message"]=message
-    } as Any
+    }
 }
 
 
@@ -186,11 +186,11 @@ class MessageProcessStart(
     val languageId: String,
     val editorId: String
 ) : AglWorkerMessage("MessageProcessStart") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
-    } as Any
+    }
 }
 
 
@@ -199,12 +199,12 @@ class MessageProcessSuccess(
     val editorId: String,
     val asm: Any
 ) : AglWorkerMessage("MessageProcessSuccess") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["asm"]=asm
-    } as Any
+    }
 }
 
 
@@ -213,10 +213,10 @@ class MessageProcessFailure(
     val editorId: String,
     val message: String
 ) : AglWorkerMessage("MessageProcessFailure") {
-    override fun toObjectJS(): Any = objectJS {
+    override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["message"]=message
-    } as Any
+    }
 }

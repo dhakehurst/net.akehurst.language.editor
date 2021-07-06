@@ -26,11 +26,11 @@ import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.editor.api.*
+import net.akehurst.language.editor.common.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
-import net.akehurst.language.editor.comon.AglWorkerClient
+import net.akehurst.language.editor.common.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.asList
@@ -56,8 +56,6 @@ class AglErrorAnnotation(
 ) {
     val row = line - 1
 }
-
-
 
 
 class AglEditorAce(
@@ -238,7 +236,7 @@ class AglEditorAce(
                     "@Agl.grammarProcessor@" -> this.agl.processor = Agl.grammarProcessor
                     "@Agl.styleProcessor@" -> this.agl.processor = Agl.styleProcessor
                     "@Agl.formatProcessor@" -> this.agl.processor = Agl.formatProcessor
-                    else -> this.agl.processor = Agl.processor(grammarStr)
+                    else -> this.agl.processor = Agl.processorFromString(grammarStr)
                 }
             } catch (t: Throwable) {
                 this.agl.processor = null
@@ -306,7 +304,7 @@ class AglEditorAce(
                 val sppt = if (null == goalRule) {
                     proc.parse(this.text)
                 } else {
-                    proc.parse(goalRule, this.text)
+                    proc.parseForGoal(goalRule, this.text)
                 }
                 this.parseSuccess(sppt)
             } catch (e: ParseFailedException) {
@@ -322,7 +320,7 @@ class AglEditorAce(
         val sppt = this.agl.sppt
         if (null != proc && null != sppt) {
             try {
-                this.agl.asm = proc.process(Any::class,sppt)
+                this.agl.asm = proc.processFromSPPT(Any::class,sppt)
                 val event = ProcessEventSuccess(this.agl.asm!!)
                 this.notifyProcess(event)
             } catch (e: SyntaxAnalyserException) {

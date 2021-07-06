@@ -56,17 +56,17 @@ class AglTokenizer(
         }
     }
 
-    private fun mapTokenTypeToClass(tokenType: String): String? {
-        var cssClass = this.agl.styleHandler.tokenToClassMap.get(tokenType)
+    private fun mapTokenTypeToClass(tokenType: String): String {
+        val cssClass = this.agl.styleHandler.mapClass(tokenType)// this.agl.styleHandler.tokenToClassMap.get(tokenType)
         return cssClass
     }
 
     private fun mapToCssClasses(leaf: SPPTLeaf): List<String> {
-        val metaTagClasses = leaf.metaTags.mapNotNull { this.mapTokenTypeToClass(it) }
+        val metaTagClasses = leaf.metaTags.map { this.mapTokenTypeToClass(it) }
         val otherClasses = if (!leaf.tagList.isEmpty()) {
-            leaf.tagList.mapNotNull { this.mapTokenTypeToClass(it) }
+            leaf.tagList.map { this.mapTokenTypeToClass(it) }
         } else {
-            listOf(this.mapTokenTypeToClass(leaf.name)).mapNotNull { it }
+            listOf(this.mapTokenTypeToClass(leaf.name)).map { it }
         }
         val classes = metaTagClasses + otherClasses
         return if (classes.isEmpty()) {

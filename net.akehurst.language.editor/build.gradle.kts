@@ -18,14 +18,17 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 plugins {
-    kotlin("multiplatform") version("1.5.10") apply false
-    id("com.github.gmazzo.buildconfig") version("3.0.0") apply false
+    kotlin("multiplatform") version ("1.5.255-SNAPSHOT") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.2.0") apply false
+    //id("org.jetbrains.dokka") version ("1.4.32") apply false
+    id("com.github.gmazzo.buildconfig") version ("3.0.0") apply false
+    id("nu.studer.credentials") version ("2.1")
 }
 
 allprojects {
 
     val version_project: String by project
-    val group_project = "${rootProject.name}"
+    val group_project = rootProject.name
 
     group = group_project
     version = version_project
@@ -36,16 +39,15 @@ allprojects {
 
 subprojects {
 
-    apply(plugin="org.jetbrains.kotlin.multiplatform")
+    apply(plugin = "org.jetbrains.kotlin.multiplatform")
     apply(plugin = "maven-publish")
+    apply(plugin = "signing")
+    //apply(plugin = "org.jetbrains.dokka")
     apply(plugin = "com.github.gmazzo.buildconfig")
 
     repositories {
         mavenLocal()
         mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
-        }
     }
 
     configure<BuildConfigExtension> {
@@ -96,6 +98,10 @@ subprojects {
         }
     }
 
+    val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
+        archiveClassifier.set("javadoc")
+    }
+    tasks.named("publish").get().dependsOn("javadocJar")
 
     dependencies {
         "commonTestImplementation"(kotlin("test"))
@@ -106,4 +112,55 @@ subprojects {
         "jsTestImplementation"(kotlin("test-js"))
     }
 
+    fun getProjectProperty(s: String) = project.findProperty(s) as String?
+
+    val creds = project.properties["credentials"] as nu.studer.gradle.credentials.domain.CredentialsContainer
+    val sonatype_pwd = creds.propertyMissing("SONATYPE_PASSWORD") as String?
+        ?: getProjectProperty("SONATYPE_PASSWORD")
+        ?: error("Must set project property with Sonatype Password (-P SONATYPE_PASSWORD=<...> or set in ~/.gradle/gradle.properties)")
+    project.ext.set("signing.password", sonatype_pwd)
+
+    configure<PublishingExtension> {
+        repositories {
+            maven {
+                name = "sonatype"
+                setUrl("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                credentials {
+                    username = getProjectProperty("SONATYPE_USERNAME")
+                        ?: error("Must set project property with Sonatype Username (-P SONATYPE_USERNAME=<...> or set in ~/.gradle/gradle.properties)")
+                    password = sonatype_pwd
+                }
+            }
+        }
+        publications.withType<MavenPublication> {
+            artifact(javadocJar.get())
+
+            pom {
+                name.set("AGL Processor integration with Editor")
+                description.set("Dynamic, scan-on-demand, parsing; when a regular expression is just not enough")
+                url.set("https://medium.com/@dr.david.h.akehurst/a-kotlin-multi-platform-parser-usable-from-a-jvm-or-javascript-59e870832a79")
+
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        name.set("Dr. David H. Akehurst")
+                        email.set("dr.david.h@akehurst.net")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/dhakehurst/net.akehurst.language.editor")
+                }
+            }
+        }
+    }
+
+    configure<SigningExtension> {
+        val publishing = project.properties["publishing"] as PublishingExtension
+        sign(publishing.publications)
+    }
 }

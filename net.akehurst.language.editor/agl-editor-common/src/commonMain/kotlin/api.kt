@@ -14,33 +14,23 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.api
-
-import net.akehurst.language.api.processor.LanguageProcessor
-import net.akehurst.language.api.sppt.SharedPackedParseTree
-import kotlin.js.JsName
+package net.akehurst.language.editor.common.api
 
 interface AglEditor {
 
     val editorId:String
     var text:String
 
-    @JsName("setProcessor")
     fun setProcessor(grammarStr: String?)
 
-    @JsName("setStyle")
     fun setStyle(css: String?)
 
-    @JsName("onParse")
     fun onParse(handler: (ParseEvent) -> Unit)
 
-    @JsName("onProcess")
     fun onProcess(handler: (ProcessEvent) -> Unit)
 
-    @JsName("clearErrorMarkers")
     fun clearErrorMarkers()
 
-    @JsName("finalize")
     fun finalize()
 }
 

@@ -21,9 +21,9 @@ class AglStyleHandler(
         val languageId:String,
         val cssClassPrefixStart:String = "agl"
 ) {
-    var nextCssClassNum = 1
-    val cssClassPrefix:String = "${cssClassPrefixStart}-${languageId}-"
-    val tokenToClassMap = mutableMapOf<String, String>()
+    private var nextCssClassNum = 1
+    private val cssClassPrefix:String = "${cssClassPrefixStart}-${languageId}-"
+    private val tokenToClassMap = mutableMapOf<String, String>()
 
     private fun mapTokenTypeToClass(tokenType: String): String? {
         var cssClass = this.tokenToClassMap.get(tokenType)

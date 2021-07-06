@@ -15,9 +15,9 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.ParseEvent
-import net.akehurst.language.editor.api.ProcessEvent
+import net.akehurst.language.editor.common.api.AglEditor
+import net.akehurst.language.editor.common.api.ParseEvent
+import net.akehurst.language.editor.common.api.ProcessEvent
 
 abstract class AglEditorAbstract(
         val languageId: String,
@@ -26,8 +26,8 @@ abstract class AglEditorAbstract(
 
     protected val agl = AglComponents(languageId)
 
-    protected val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
-    protected val _onProcessHandler = mutableListOf<(ProcessEvent) -> Unit>()
+    private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
+    private val _onProcessHandler = mutableListOf<(ProcessEvent) -> Unit>()
 
     override fun onParse(handler: (ParseEvent) -> Unit) {
         this._onParseHandler.add(handler)

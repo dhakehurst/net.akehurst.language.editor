@@ -8,9 +8,30 @@ dependencies {
 kotlin {
     js("js") {
         binaries.library()
+        compilations["main"].packageJson {
+            customField("author", mapOf(
+                "name" to "Dr. David H. Akehurst",
+                "email" to "dr.david.h@akehurst.net",
+                "url" to "https://medium.com/@dr.david.h.akehurst"
+            ))
+            customField("license", "Apache-2.0")
+            customField("keywords", listOf("ace","webpack","loader"))
+            customField("homepage", "https://github.com/dhakehurst/net.akehurst.language.editor")
+            customField("description:", "Webpack loader for using Ace Editor with kotlin")
+        }
     }
 }
 
-tasks.named<Jar>("jsJar") {
-    duplicatesStrategy = DuplicatesStrategy.WARN
+tasks.named<Copy>("jsProductionLibraryCompileSync") {
+   duplicatesStrategy = DuplicatesStrategy.WARN
+}
+tasks.named<Copy>("jsBrowserProductionLibraryPrepare") {
+   duplicatesStrategy = DuplicatesStrategy.WARN
+}
+configure<PublishingExtension> {
+    publications.withType<MavenPublication> {
+        pom {
+            name.set("AGL Processor Editor integration: Ace Loader for webpack")
+        }
+    }
 }

@@ -20,7 +20,7 @@ import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglLineState
 import net.akehurst.language.editor.common.AglToken
 import net.akehurst.language.editor.common.AglTokenizer
-import net.akehurst.language.editor.comon.AglWorkerClient
+import net.akehurst.language.editor.common.AglWorkerClient
 
 class AglTokenizerByWorkerAce(
         val agl:AglComponents

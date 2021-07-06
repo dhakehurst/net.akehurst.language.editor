@@ -32,7 +32,7 @@ class AglCodeCompleter(
                 val list = proc.expectedAt(editor.getValue(), pos, 1);
                 list
             } else {
-                val list = proc.expectedAt(goalRule, editor.getValue(), pos, 1);
+                val list = proc.expectedAtForGoal(goalRule, editor.getValue(), pos, 1);
                 list
             }
         } else {

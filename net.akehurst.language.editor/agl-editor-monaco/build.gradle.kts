@@ -1,7 +1,11 @@
-val version_kotlin:String by project
+//val version_kotlin:String by project
 val version_agl:String by project
 val version_monaco:String by project
 val version_coroutines:String by project
+
+plugins {
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic")
+}
 
 dependencies {
 
@@ -19,12 +23,16 @@ dependencies {
     jsMainImplementation(npm("file-loader", "5.0.2"))
 }
 
-//tasks.withType<ProcessResources>  {
-//    val map = project.properties.toMutableMap()
-//    map["version_kotlin"] = version_kotlin
-//    map["version_agl"] = version_agl
-//    map["version_monaco"] = version_monaco
-//    filesMatching("**/package.json") {
-//        expand(map)
-//    }
-//}
+kotlin {
+    js("js") {
+        binaries.library()
+    }
+}
+
+configure<PublishingExtension> {
+   publications.withType<MavenPublication> {
+        pom {
+            name.set("AGL Processor Editor integration: Monaco Editor")
+        }
+    }
+}

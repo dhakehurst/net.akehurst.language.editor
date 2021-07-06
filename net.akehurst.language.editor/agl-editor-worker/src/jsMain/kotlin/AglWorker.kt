@@ -34,8 +34,8 @@ external val self: DedicatedWorkerGlobalScope
 
 class AglWorker {
 
-    var processor: LanguageProcessor? = null
-    var styleHandler: AglStyleHandler? = null
+    private var processor: LanguageProcessor? = null
+    private var styleHandler: AglStyleHandler? = null
 
     init {
         start()
@@ -52,7 +52,7 @@ class AglWorker {
             }
         }
     }
-
+/*
     fun startShared() {
         (self as SharedWorkerGlobalScope).onconnect = { e ->
             val port = e.asDynamic().ports[0] as MessagePort
@@ -68,12 +68,12 @@ class AglWorker {
             true //onconnect insists on having a return value!
         }
     }
-
+*/
     private fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
         port.postMessage(msg.toObjectJS(), transferables)
     }
 
-    fun createProcessor(port: dynamic, languageId: String, editorId: String, grammarStr: String?) {
+    private fun createProcessor(port: dynamic, languageId: String, editorId: String, grammarStr: String?) {
         if (null == grammarStr) {
             this.processor = null
             sendMessage(port, MessageProcessorCreateSuccess(languageId, editorId, "reset"))
@@ -84,7 +84,7 @@ class AglWorker {
                     "@Agl.grammarProcessor@" -> createAgl(languageId, Agl.grammarProcessor)
                     "@Agl.styleProcessor@" -> createAgl(languageId, Agl.styleProcessor)
                     "@Agl.formatProcessor@" -> createAgl(languageId, Agl.formatProcessor)
-                    else -> createAgl(languageId, Agl.processor(grammarStr))
+                    else -> createAgl(languageId, Agl.processorFromString(grammarStr))
                 }
                 sendMessage(port, MessageProcessorCreateSuccess(languageId, editorId, "OK"))
             } catch (t: Throwable) {
@@ -93,18 +93,18 @@ class AglWorker {
         }
     }
 
-    fun createAgl(langId: String, proc: LanguageProcessor) {
+    private fun createAgl(langId: String, proc: LanguageProcessor) {
         this.processor = proc
     }
 
-    fun interrupt(port: dynamic, languageId: String, editorId: String, reason: String) {
+    private fun interrupt(port: dynamic, languageId: String, editorId: String, reason: String) {
         val proc = this.processor
         if (proc != null) {
             proc.interrupt(reason)
         }
     }
 
-    fun setStyle(port: dynamic, languageId: String, editorId: String, css: String) {
+    private fun setStyle(port: dynamic, languageId: String, editorId: String, css: String) {
         try {
             val style = AglStyleHandler(languageId)
             this.styleHandler = style
@@ -118,7 +118,7 @@ class AglWorker {
         }
     }
 
-    fun parse(port: dynamic, languageId: String, editorId: String, sentence: String) {
+    private fun parse(port: dynamic, languageId: String, editorId: String, sentence: String) {
         try {
             sendMessage(port,MessageParseStart(languageId, editorId))
             val proc = this.processor ?: throw RuntimeException("Processor for $languageId not found")
@@ -136,11 +136,11 @@ class AglWorker {
         }
     }
 
-    fun process(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
+    private fun process(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
         try {
             sendMessage(port,MessageProcessStart(languageId, editorId))
             val proc = this.processor ?: throw RuntimeException("Processor for $languageId not found")
-            val asm = proc.process<Any>(Any::class,sppt)
+            val asm = proc.processFromSPPT<Any>(Any::class,sppt)
             val asmTree = createAsmTree(asm) ?: "No Asm"
             sendMessage(port,MessageProcessSuccess(languageId, editorId, asmTree))
         } catch (t: Throwable) {
@@ -148,7 +148,7 @@ class AglWorker {
         }
     }
 
-    fun sendParseLineTokens(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
+    private fun sendParseLineTokens(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
         if (null == sppt) {
             //nothing
         } else {
@@ -163,7 +163,7 @@ class AglWorker {
         }
     }
 
-    fun createParseTree(spptNode: SPPTNode): dynamic {
+    private fun createParseTree(spptNode: SPPTNode): dynamic {
         return when (spptNode) {
             is SPPTLeaf -> objectJS {
                  isBranch = false
@@ -181,7 +181,7 @@ class AglWorker {
         }
     }
 
-    fun createAsmTree(asm: Any?): Any? {
+    private fun createAsmTree(asm: Any?): Any? {
         return if (null == asm) {
             null
         } else {
