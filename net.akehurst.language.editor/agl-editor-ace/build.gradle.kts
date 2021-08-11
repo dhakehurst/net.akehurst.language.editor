@@ -10,6 +10,7 @@ plugins {
 dependencies {
 
     "jsMainApi"(project(":agl-editor-common"))
+    "jsMainApi"(project(":agl-editor-worker"))
 
     "jsMainImplementation"(npm("ace-builds", version_ace))
 

@@ -15,9 +15,9 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.editor.common.api.AglEditor
-import net.akehurst.language.editor.common.api.ParseEvent
-import net.akehurst.language.editor.common.api.ProcessEvent
+import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.ParseEvent
+import net.akehurst.language.editor.api.ProcessEvent
 
 abstract class AglEditorAbstract(
         val languageId: String,

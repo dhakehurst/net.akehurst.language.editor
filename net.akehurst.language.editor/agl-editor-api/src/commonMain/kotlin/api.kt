@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.common.api
+package net.akehurst.language.editor.api
 
 interface AglEditor {
 

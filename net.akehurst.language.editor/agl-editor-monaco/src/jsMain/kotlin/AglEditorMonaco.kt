@@ -29,7 +29,7 @@ import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
-import net.akehurst.language.editor.common.api.*
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped

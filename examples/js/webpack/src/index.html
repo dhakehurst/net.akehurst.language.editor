@@ -5,21 +5,14 @@
     <title>Agl Editor Example (Ace)</title>
 </head>
 <body>
+    <main>
 
-<main>
+        <textarea id='grammarEditor'></textarea>
 
-        <textarea id='grammarEditor'>
-namespace test
-grammar Test {
-    skip WS = "\s+" ;
-    greeting = 'Hello' 'World!' ;
-}
-        </textarea>
-    
-    <agl-editor id='sentenceEditor'> </agl-editor>
-    
-</main>
+        <agl-editor id='sentenceEditor'> </agl-editor>
 
+        <textarea id='result'></textarea>
+
+    </main>
 </body>
-
 </html>
