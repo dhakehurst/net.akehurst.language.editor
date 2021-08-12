@@ -1,4 +1,4 @@
-<--
+<!--
 [![Build Status](https://travis-ci.org/dhakehurst/net.akehurst.language.editor.svg?branch=master)](https://travisci.org/dhakehurst/net.akehurst.language.editor)
 -->
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.akehurst.language.editor/agl-editor-common/badge.svg?gav=true)](https://maven-badges.herokuapp.com/maven-central/net.akehurst.language.editor/agl-editor-common)
