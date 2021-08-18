@@ -19,11 +19,21 @@ package net.akehurst.language.editor.api
 interface AglEditor {
 
     val editorId:String
+
+    /**
+     * the content of the editor
+     */
     var text:String
 
-    fun setProcessor(grammarStr: String?)
+    /**
+     * the grammar for the editor as a string
+     */
+    var grammarStr:String?
 
-    fun setStyle(css: String?)
+    /**
+     * CSS styles as a string
+     */
+    var styleStr: String?
 
     fun onParse(handler: (ParseEvent) -> Unit)
 

@@ -4,7 +4,7 @@ val version_monaco:String by project
 val version_coroutines:String by project
 
 plugins {
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic")
+   // id("net.akehurst.kotlin.gradle.plugin.exportPublic")
 }
 
 dependencies {

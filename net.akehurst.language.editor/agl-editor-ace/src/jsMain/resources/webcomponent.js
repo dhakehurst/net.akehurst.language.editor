@@ -12,23 +12,7 @@ class AglEditorAceWebComponent extends HTMLElement {
 
   constructor() {
     super();
-
-    //Auto create properties for attributes
-    if (this.constructor.observedAttributes && this.constructor.observedAttributes.length) {
-      for(const attribute of this.constructor.observedAttributes) {
-        Object.defineProperty(this, attribute, {
-          get() { return this.getAttribute(attribute); },
-          set(attrValue) {
-            if (attrValue) {
-              this.setAttribute(attribute, attrValue);
-            } else {
-              this.removeAttribute(attribute);
-            }
-          }
-        });
-      }
-    }
-
+    this.aglAceEditor = null;
     if (!this.editorId) this.editorId = this.getAttribute('id');
     if (!this.languageId) this.languageId = this.editorId;
     if (!this.options) this.options = '{}';
@@ -42,7 +26,7 @@ class AglEditorAceWebComponent extends HTMLElement {
     shadowRoot.style='display: grid; grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);';
     element.style='height:100%';
     const options = JSON.parse(this.options);
-    const editor = new AglEditorAce(element, this.languageId, this.editorId, options, this.workerScript);
+    this.aglAceEditor = new AglEditorAce(element, this.languageId, this.editorId, options, this.workerScript);
   }
 
   attributeChangedCallback(attrName, oldValue, newValue) {
@@ -51,6 +35,26 @@ class AglEditorAceWebComponent extends HTMLElement {
     }
   }
 
+  get languageId() { return this.getAttribute('languageId'); }
+  set languageId(newValue) { if(newValue) this.setAttribute('languageId', newValue); else this.removeAttribute('languageId'); }
+
+  get editorId() { return this.getAttribute('editorId'); }
+  set editorId(newValue) { if(newValue) this.setAttribute('editorId', newValue); else this.removeAttribute('editorId'); }
+
+  get options() { return this.getAttribute('options'); }
+  set options(newValue) { if(newValue) this.setAttribute('options', newValue); else this.removeAttribute('options'); }
+
+  get workerScript() { return this.getAttribute('workerScript'); }
+  set workerScript(newValue) { if(newValue) this.setAttribute('workerScript', newValue); else this.removeAttribute('workerScript'); }
+
+  get text() { return this.aglAceEditor.text; }
+  set text(newValue) { if(newValue) this.setAttribute('text', newValue); else this.removeAttribute('text'); }
+
+  get grammarStr() { return this.aglAceEditor.grammarStr; }
+  set grammarStr(newValue) { this.aglAceEditor.grammarStr = newValue; }
+
+  get styleStr() { return this.aglAceEditor.styleStr; }
+  set styleStr(newValue) { this.aglAceEditor.styleStr = newValue; }
 }
 
 customElements.define('agl-editor-ace', AglEditorAceWebComponent);

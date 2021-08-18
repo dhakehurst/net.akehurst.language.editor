@@ -28,6 +28,15 @@ abstract class AglEditorAbstract(
 
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
     private val _onProcessHandler = mutableListOf<(ProcessEvent) -> Unit>()
+    private var _styleStr_cache:String? = null
+
+    override var grammarStr: String?
+        get() = this.agl.processor?.grammar?.toString()
+        set(value) { this.setGrammar(value) }
+
+    override var styleStr: String?
+        get() = _styleStr_cache
+        set(value) { _styleStr_cache = value; this.setStyle(value) }
 
     override fun onParse(handler: (ParseEvent) -> Unit) {
         this._onParseHandler.add(handler)
@@ -48,4 +57,7 @@ abstract class AglEditorAbstract(
             it.invoke(event)
         }
     }
+
+    protected abstract fun setGrammar(str:String?)
+    protected abstract fun setStyle(str:String?)
 }

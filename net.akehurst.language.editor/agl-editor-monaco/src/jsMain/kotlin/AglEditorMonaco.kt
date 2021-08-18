@@ -183,10 +183,10 @@ class AglEditorMonaco(
         this.aglWorker.worker.terminate()
     }
 
-    override fun setStyle(css: String?) {
-        if (null != css && css.isNotEmpty()) {
+    override fun setStyle(str: String?) {
+        if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class, css)
+            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class, str)
             var mappedCss = ""
             rules.forEach { rule ->
                 val cssClass = '.' + this.languageId + ' ' + ".monaco_" + this.agl.styleHandler.mapClass(rule.selector);
@@ -220,22 +220,22 @@ class AglEditorMonaco(
             this.element.ownerDocument?.querySelector("head")?.appendChild(
                 styleElement
             )
-            this.aglWorker.setStyle(languageId, editorId, css)
+            this.aglWorker.setStyle(languageId, editorId, str)
         }
     }
 
-    override fun setProcessor(grammarStr: String?) {
+    override fun setGrammar(str: String?) {
         this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageId, editorId, grammarStr)
-        if (null == grammarStr || grammarStr.trim().isEmpty()) {
+        this.aglWorker.createProcessor(languageId, editorId, str)
+        if (null == str || str.trim().isEmpty()) {
             this.agl.processor = null
         } else {
             try {
-                when (grammarStr) {
+                when (str) {
                     "@Agl.grammarProcessor@" -> this.agl.processor = Agl.grammarProcessor
                     "@Agl.styleProcessor@" -> this.agl.processor = Agl.styleProcessor
                     "@Agl.formatProcessor@" -> this.agl.processor = Agl.formatProcessor
-                    else -> this.agl.processor = Agl.processorFromString(grammarStr)
+                    else -> this.agl.processor = Agl.processorFromString(str)
                 }
             } catch (t: Throwable) {
                 this.agl.processor = null
