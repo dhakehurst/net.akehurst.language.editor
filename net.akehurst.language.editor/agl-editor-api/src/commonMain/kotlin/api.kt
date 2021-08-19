@@ -16,6 +16,8 @@
 
 package net.akehurst.language.editor.api
 
+import kotlin.js.JsExport
+
 interface AglEditor {
 
     val editorId:String
@@ -43,6 +45,7 @@ interface AglEditor {
 
     fun finalize()
 }
+
 
 sealed class ParseEvent(val message: String )
 class ParseEventStart(): ParseEvent("Parse started")

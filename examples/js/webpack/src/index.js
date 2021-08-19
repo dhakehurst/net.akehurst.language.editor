@@ -43,6 +43,8 @@ const result = document.getElementById("result");
 
 
 grammarEditor.onblur = ()=>sentenceEditor.setProcessor(grammarEditor.value);
+grammarEditor.grammarStr = '@Agl.grammarProcessor@';
+grammarEditor.styleStr = AglLanguage.grammar.style;
 grammarEditor.value = `
 namespace test
 grammar Test {
@@ -50,14 +52,20 @@ grammar Test {
     greeting = 'Hello' 'World!' ;
 }
 `;
-sentenceEditor.setProcessor(grammarEditor.value);
-sentenceEditor.setStyle(`
+
+sentenceEditor.options = `
+{
+    enableBasicAutocompletion: true,
+    enableSnippets: true,
+    enableLiveAutocompletion: false
+}`;
+sentenceEditor.grammarStr = grammarEditor.text;
+sentenceEditor.styleStr = `
 $keyword {
     foreground: blue;
     font-style: bold;
 }
-`);
-
+`;
 sentenceEditor.text = 'Hello World!';
 
 sentenceEditor.onParse( (e) =>{

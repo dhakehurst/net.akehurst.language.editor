@@ -1,13 +1,13 @@
 'use strict';
 
-import './agl-ace.css';
+import agl_ace_css from '!!css-loader!./agl-ace.css';
 import agl_editor_ace from './net.akehurst.language.editor-agl-editor-ace.js';
 const AglEditorAce = agl_editor_ace.net.akehurst.language.editor.ace.AglEditorAce;
 
 class AglEditorAceWebComponent extends HTMLElement {
 
   static get observedAttributes() {
-    return ['languageId', 'editorId', 'options', 'workerScript'];
+    return ['languageId', 'editorId', 'options', 'workerScript', 'grammarStr', 'styleStr'];
   }
 
   constructor() {
@@ -21,12 +21,29 @@ class AglEditorAceWebComponent extends HTMLElement {
 
   connectedCallback() {
     const shadowRoot = this.attachShadow({mode: 'open'});
+    const style = document.createElement('style');
+    shadowRoot.appendChild(style);
+    style.textContent = `:host {
+    display: flex;
+    min-height: 1em;
+    flex-direction: column;
+}
+#ace_div {
+  flex: 1;
+  height:100%;
+}
+`;
+
+    const aceStyle = document.createElement('style');
+    aceStyle.innerHTML = agl_ace_css;
+    shadowRoot.appendChild(aceStyle);
+
     const element = document.createElement('div');
+    element.id = 'ace_div';
     shadowRoot.appendChild(element);
-    shadowRoot.style='display: grid; grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);';
-    element.style='height:100%';
     const options = JSON.parse(this.options);
     this.aglAceEditor = new AglEditorAce(element, this.languageId, this.editorId, options, this.workerScript);
+    this.aglAceEditor.aceEditor.renderer.attachToShadowRoot();
   }
 
   attributeChangedCallback(attrName, oldValue, newValue) {
@@ -48,13 +65,41 @@ class AglEditorAceWebComponent extends HTMLElement {
   set workerScript(newValue) { if(newValue) this.setAttribute('workerScript', newValue); else this.removeAttribute('workerScript'); }
 
   get text() { return this.aglAceEditor.text; }
-  set text(newValue) { if(newValue) this.setAttribute('text', newValue); else this.removeAttribute('text'); }
+  set text(newValue) {
+    if(typeof(newValue)==='string') {
+      this.aglAceEditor.text = newValue;
+    } else {
+      this.aglAceEditor.text = '';
+    }
+  }
 
   get grammarStr() { return this.aglAceEditor.grammarStr; }
-  set grammarStr(newValue) { this.aglAceEditor.grammarStr = newValue; }
+  set grammarStr(newValue) {
+    if(typeof(newValue)==='string') {
+      //this.setAttribute('grammarStr', newValue);
+      this.aglAceEditor.grammarStr = newValue;
+    } else {
+      //this.removeAttribute('grammarStr');
+      this.aglAceEditor.grammarStr = null;
+    }
+  }
 
   get styleStr() { return this.aglAceEditor.styleStr; }
-  set styleStr(newValue) { this.aglAceEditor.styleStr = newValue; }
+  set styleStr(newValue) {
+    if(typeof(newValue)==='string') {
+      //this.setAttribute('styleStr', newValue);
+      this.aglAceEditor.styleStr = newValue;
+    } else {
+      //this.removeAttribute('styleStr');
+      this.aglAceEditor.styleStr = null;
+    }
+  }
+
+
+  onParse(handler) {
+    this.aglAceEditor.onParse(handler);
+  }
+
 }
 
 customElements.define('agl-editor-ace', AglEditorAceWebComponent);

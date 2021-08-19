@@ -29,5 +29,11 @@ textarea {
 }
 
 agl-editor {
+    display: flex;
     flex: 1;
+}
+
+agl-editor > div {
+    flex: 1;
+    height: 100%;
 }

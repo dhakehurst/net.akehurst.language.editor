@@ -2,7 +2,7 @@
 val version_agl:String by project
 
 plugins {
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic")
+   id("net.akehurst.kotlin.gradle.plugin.exportPublic")
 }
 
 dependencies {
