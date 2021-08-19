@@ -10,20 +10,27 @@ class AglEditorAceWebComponent extends HTMLElement {
     return ['languageId', 'editorId', 'options', 'workerScript', 'grammarStr', 'styleStr'];
   }
 
+  _initialised = false;
+
   constructor() {
     super();
     this.aglAceEditor = null;
-    if (!this.editorId) this.editorId = this.getAttribute('id');
-    if (!this.languageId) this.languageId = this.editorId;
-    if (!this.options) this.options = '{}';
-    if (!this.workerScript) this.workerScript = 'net.akehurst.language.editor-agl-editor-worker.js';
   }
 
   connectedCallback() {
-    const shadowRoot = this.attachShadow({mode: 'open'});
-    const style = document.createElement('style');
-    shadowRoot.appendChild(style);
-    style.textContent = `:host {
+    if (this._initialised) {
+      // nothing
+    } else {
+      if (!this.editorId) this.editorId = this.getAttribute('id');
+      if (!this.languageId) this.languageId = this.editorId;
+      if (!this.options) this.options = '{}';
+      if (!this.workerScript) this.workerScript = 'net.akehurst.language.editor-agl-editor-worker.js';
+      if (this.hasAttribute('grammarStr')) this.grammarStr = this.getAttribute('grammarStr');
+      if (this.hasAttribute('styleStr')) this.styleStr = this.getAttribute('styleStr');
+      const shadowRoot = this.attachShadow({mode: 'open'});
+      const style = document.createElement('style');
+      shadowRoot.appendChild(style);
+      style.textContent = `:host {
     display: flex;
     min-height: 1em;
     flex-direction: column;
@@ -34,16 +41,22 @@ class AglEditorAceWebComponent extends HTMLElement {
 }
 `;
 
-    const aceStyle = document.createElement('style');
-    aceStyle.innerHTML = agl_ace_css;
-    shadowRoot.appendChild(aceStyle);
+      const aceStyle = document.createElement('style');
+      aceStyle.innerHTML = agl_ace_css;
+      shadowRoot.appendChild(aceStyle);
 
-    const element = document.createElement('div');
-    element.id = 'ace_div';
-    shadowRoot.appendChild(element);
-    const options = JSON.parse(this.options);
-    this.aglAceEditor = new AglEditorAce(element, this.languageId, this.editorId, options, this.workerScript);
-    this.aglAceEditor.aceEditor.renderer.attachToShadowRoot();
+      const element = document.createElement('div');
+      element.id = 'ace_div';
+      shadowRoot.appendChild(element);
+      const options = JSON.parse(this.options);
+      this.aglAceEditor = new AglEditorAce(element, this.languageId, this.editorId, options, this.workerScript);
+      this.aglAceEditor.aceEditor.renderer.attachToShadowRoot();
+      this._initialised = true;
+    }
+  }
+
+  disconnectedCallback() {
+    this.aglAceEditor.finalize();
   }
 
   attributeChangedCallback(attrName, oldValue, newValue) {
@@ -95,10 +108,11 @@ class AglEditorAceWebComponent extends HTMLElement {
     }
   }
 
+  clearErrorMarkers() { this.aglAceEditor.clearErrorMarkers(); }
 
-  onParse(handler) {
-    this.aglAceEditor.onParse(handler);
-  }
+  onParse(handler) { this.aglAceEditor.onParse(handler); }
+
+  onProcess(handler) { this.aglAceEditor.onProcess(handler); }
 
 }
 

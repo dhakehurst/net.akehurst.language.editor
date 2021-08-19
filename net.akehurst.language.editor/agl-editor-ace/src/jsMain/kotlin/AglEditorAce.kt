@@ -33,6 +33,7 @@ import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.common.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import org.w3c.dom.ParentNode
 import org.w3c.dom.asList
 
 import kotlin.collections.List
@@ -201,17 +202,23 @@ class AglEditorAce(
                 cssText = mappedCss
                 _v = Date.now()
             }
+            module["\$id"] = languageId
             //val module = js(" { cssClass: this.languageId, cssText: cssText, _v: Date.now() }") // _v:Date added in order to force use of new module definition
             // remove the current style element for 'languageId' (which is used as the theme name) from the container
             // else the theme css is not reapplied
-            val curStyle = this.element.ownerDocument?.querySelector("style#" + this.languageId)
+            val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#" + this.languageId)
             if (null != curStyle) {
-                curStyle.parentElement?.removeChild(curStyle);
+                curStyle.remove()
+                //curStyle.parentElement?.removeChild(curStyle);
             }
 
             // the use of an object instead of a string is undocumented but seems to work
             this.aceEditor.setOption("theme", module); //not sure but maybe this is better than setting on renderer direct
             this.aglWorker.setStyle(languageId, editorId, str)
+
+            // need to reset because token style types may have changed, not just their attributes
+            this.workerTokenizer.reset()
+            this.resetTokenization()
         }
     }
 
