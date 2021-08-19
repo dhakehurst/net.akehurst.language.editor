@@ -1,0 +1,19 @@
+{
+  "name": "example-js-webpack-ace-webcomponent",
+  "version": "1.0.0",
+  "scripts": {},
+  "private": true,
+  "dependencies": {
+    "net.akehurst.language.editor-agl-editor-ace": "file:../../../net.akehurst.language.editor/.gradle-build/agl-editor-ace/productionLibrary",
+    "net.akehurst.language.editor-agl-editor-worker": "file:../../../net.akehurst.language.editor/.gradle-build/agl-editor-worker/productionLibrary"
+  },
+  "devDependencies": {
+    "css-loader": "6.2.0",
+    "file-loader": "5.0.2",
+    "html-loader": "2.1.2",
+    "html-webpack-plugin": "5.3.2",
+    "style-loader": "3.2.1",
+    "webpack": "5.50.0",
+    "webpack-cli": "4.7.2"
+  }
+}
