@@ -130,14 +130,7 @@ class AglEditorAce(
         this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
         this.aceEditor.completers = arrayOf(AglCodeCompleter(this.languageId, this.agl))
 
-        this.aceEditor.on("change") { event ->
-            this.workerTokenizer.reset()
-            window.clearTimeout(parseTimeout)
-            this.parseTimeout = window.setTimeout({
-                this.workerTokenizer.acceptingTokens = true
-                this.doBackgroundTryParse()
-            }, 500)
-        }
+        this.aceEditor.on("change") { event -> this.update() }
 
         val resizeObserver = ResizeObserver { entries -> onResize(entries) }
         resizeObserver.observe(this.element)
@@ -217,8 +210,7 @@ class AglEditorAce(
             this.aglWorker.setStyle(languageId, editorId, str)
 
             // need to reset because token style types may have changed, not just their attributes
-            this.workerTokenizer.reset()
-            this.resetTokenization()
+            this.update()
         }
     }
 
@@ -251,6 +243,15 @@ class AglEditorAce(
         }
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
+    }
+
+    private fun update() {
+        this.workerTokenizer.reset()
+        window.clearTimeout(parseTimeout)
+        this.parseTimeout = window.setTimeout({
+            this.workerTokenizer.acceptingTokens = true
+            this.doBackgroundTryParse()
+        }, 500)
     }
 
     private fun processorCreateSuccess(message: String) {
@@ -290,12 +291,12 @@ class AglEditorAce(
          */
     }
 
-    fun resetTokenization() {
+    private fun resetTokenization() {
         this.aceEditor.renderer.updateText();
         this.aceEditor.getSession().bgTokenizer.start(0);
     }
 
-    fun doBackgroundTryParse() {
+    private fun doBackgroundTryParse() {
         this.clearErrorMarkers()
         this.aglWorker.interrupt(languageId, editorId)
         this.notifyParse(ParseEventStart())
