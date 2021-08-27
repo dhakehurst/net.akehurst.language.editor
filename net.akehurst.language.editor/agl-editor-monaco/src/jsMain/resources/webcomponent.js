@@ -1,10 +1,10 @@
 'use strict';
 
 import agl_ace_css from '!!css-loader!./agl-ace.css';
-import agl_editor_ace from './net.akehurst.language.editor-agl-editor-ace.js';
-const AglEditorAce = agl_editor_ace.net.akehurst.language.editor.ace.AglEditorAce;
+import agl_editor_monaco from './net.akehurst.language.editor-agl-editor-monaco.js';
+const AglEditorMonaco = agl_editor_monaco.net.akehurst.language.editor.monaco.AglEditorMonaco;
 
-class AglEditorAceWebComponent extends HTMLElement {
+class AglEditorMonacoWebComponent extends HTMLElement {
 
   static get observedAttributes() {
     return ['languageId', 'editorId', 'options', 'workerScript', 'grammarStr', 'styleStr'];
@@ -43,15 +43,15 @@ class AglEditorAceWebComponent extends HTMLElement {
 `;
 
       const edStyle = document.createElement('style');
-      edStyle.innerHTML = agl_ace_css;
+      edStyle.innerHTML = agl_mon_css;
       shadowRoot.appendChild(edStyle);
 
       const element = document.createElement('div');
       element.id = 'editor_div';
       shadowRoot.appendChild(element);
       const options = JSON.parse(this.options);
-      this.aglEditor = new AglEditorAce(element, this.languageId, this.editorId, options, this.workerScript);
-      this.aglEditor.aceEditor.renderer.attachToShadowRoot();
+      this.aglEditor = new AglEditorMonaco(element, this.languageId, this.editorId, options, this.workerScript);
+
       this._initialised = true;
     }
   }
@@ -110,4 +110,4 @@ class AglEditorAceWebComponent extends HTMLElement {
 
 }
 
-customElements.define('agl-editor-ace', AglEditorAceWebComponent);
+customElements.define('agl-editor-monaco', AglEditorMonacoWebComponent);

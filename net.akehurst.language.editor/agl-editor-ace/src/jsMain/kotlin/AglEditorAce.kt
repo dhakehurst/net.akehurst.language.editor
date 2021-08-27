@@ -189,27 +189,24 @@ class AglEditorAce(
                 }.toMutableMap()
                 mappedCss = mappedCss + "\n" + mappedRule.toCss()
             }
-            //val cssText: String = mappedCss
+
             val module = objectJS {
                 cssClass = languageId
                 cssText = mappedCss
-                _v = Date.now()
+                _v = Date.now() // _v:Date added in order to force use of new module definition
             }
             module["\$id"] = languageId
-            //val module = js(" { cssClass: this.languageId, cssText: cssText, _v: Date.now() }") // _v:Date added in order to force use of new module definition
+
             // remove the current style element for 'languageId' (which is used as the theme name) from the container
             // else the theme css is not reapplied
             val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#" + this.languageId)
-            if (null != curStyle) {
-                curStyle.remove()
-                //curStyle.parentElement?.removeChild(curStyle);
-            }
+            curStyle?.remove()
 
             // the use of an object instead of a string is undocumented but seems to work
             this.aceEditor.setOption("theme", module); //not sure but maybe this is better than setting on renderer direct
             this.aglWorker.setStyle(languageId, editorId, str)
 
-            // need to reset because token style types may have changed, not just their attributes
+            // need to update because token style types may have changed, not just their attributes
             this.update()
         }
     }

@@ -20,6 +20,8 @@ function toString(node, indent) {
             str+= toString(child, indent+'  ') + '\n';
         }
         str += indent + '}';
+    } if (node.isEmpty) {
+        str += indent + '$empty';
     } else {
         str += indent + "'"+node.nonSkipMatchedText+"'";
     }

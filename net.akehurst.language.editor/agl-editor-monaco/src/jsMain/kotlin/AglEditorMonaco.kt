@@ -36,6 +36,7 @@ import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.common.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import org.w3c.dom.ParentNode
 import org.w3c.dom.asList
 
 class AglEditorMonaco(
@@ -137,14 +138,7 @@ class AglEditorMonaco(
             monaco.languages.setTokensProvider(this.languageId, this.workerTokenizer);
             monaco.languages.registerCompletionItemProvider(this.languageId, AglCompletionProvider(this.agl))
 
-            this.onChange {
-                this.workerTokenizer.reset()
-                window.clearTimeout(parseTimeout)
-                this.parseTimeout = window.setTimeout({
-                    this.workerTokenizer.acceptingTokens = true
-                    this.doBackgroundTryParse()
-                }, 500)
-            }
+            this.onChange { this.update() }
 
             val resizeObserver = ResizeObserver { entries -> onResize(entries) }
             resizeObserver.observe(this.element)
@@ -209,10 +203,9 @@ class AglEditorMonaco(
             val cssText: String = mappedCss
             // remove the current style element for 'languageId' (which is used as the theme name) from the container
             // else the theme css is not reapplied
-            val curStyle = this.element.ownerDocument?.querySelector("style#" + this.languageId)
-            if (null != curStyle) {
-                curStyle.parentElement?.removeChild(curStyle)
-            }
+            val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#" + this.languageId)
+            curStyle?.remove()
+
             //add style element
             val styleElement = this.element.ownerDocument?.createElement("style")!!
             styleElement.setAttribute("id", this.languageId)
@@ -221,6 +214,9 @@ class AglEditorMonaco(
                 styleElement
             )
             this.aglWorker.setStyle(languageId, editorId, str)
+
+            // need to update because token style types may have changed, not just their attributes
+            this.update()
         }
     }
 
@@ -244,6 +240,15 @@ class AglEditorMonaco(
         }
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
+    }
+
+    private fun update() {
+        this.workerTokenizer.reset()
+        window.clearTimeout(parseTimeout)
+        this.parseTimeout = window.setTimeout({
+            this.workerTokenizer.acceptingTokens = true
+            this.doBackgroundTryParse()
+        }, 500)
     }
 
     private fun processorCreateSuccess(message: String) {
