@@ -16,8 +16,6 @@
 
 package net.akehurst.language.editor.api
 
-import kotlin.js.JsExport
-
 interface AglEditor {
 
     val editorId:String
@@ -33,6 +31,12 @@ interface AglEditor {
     var grammarStr:String?
 
     /**
+     * The name of a rule in the grammar from which to start the parse.
+     * If null, the first non-skip rule will be used
+     */
+    var goalRuleName: String?
+
+    /**
      * CSS styles as a string
      */
     var styleStr: String?
@@ -44,27 +48,34 @@ interface AglEditor {
     fun clearErrorMarkers()
 
     fun finalize()
+
+    fun destroy()
 }
 
 
-sealed class ParseEvent(val message: String )
+sealed class ParseEvent(val message: String ) {
+    open val success:Boolean = false
+    open val tree:Any?=null
+}
 class ParseEventStart(): ParseEvent("Parse started")
 class ParseEventSuccess(
-        val tree:Any
-) : ParseEvent("Parse success")
+    override val tree:Any
+) : ParseEvent("Parse success") {
+    override val success = true
+}
 class ParseEventFailure(
-        message: String,
-        val tree:Any?
+    message: String,
+    override val tree:Any?
 ): ParseEvent(message)
 
 sealed class ProcessEvent(
-        val message: String
+    val message: String
 )
 class ProcessEventStart() : ProcessEvent("Process started")
 class ProcessEventSuccess(
-        val tree:Any
+    val tree:Any
 ) : ProcessEvent("Process success")
 class ProcessEventFailure(
         message: String,
-        val tree:Any?
+    val tree:Any?
 ) : ProcessEvent(message)

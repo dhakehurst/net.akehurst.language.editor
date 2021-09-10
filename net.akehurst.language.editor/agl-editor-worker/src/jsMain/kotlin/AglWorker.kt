@@ -47,7 +47,7 @@ class AglWorker {
             when (msg.action) {
                 "MessageProcessorCreate" -> this.createProcessor(self, msg.languageId, msg.editorId, msg.grammarStr)
                 "MessageParserInterruptRequest" -> this.interrupt(self, msg.languageId, msg.editorId, msg.reason)
-                "MessageParseRequest" -> this.parse(self, msg.languageId, msg.editorId, msg.text)
+                "MessageParseRequest" -> this.parse(self, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
                 "MessageSetStyle" -> this.setStyle(self, msg.languageId, msg.editorId, msg.css)
             }
         }
@@ -118,11 +118,11 @@ class AglWorker {
         }
     }
 
-    private fun parse(port: dynamic, languageId: String, editorId: String, sentence: String) {
+    private fun parse(port: dynamic, languageId: String, editorId: String, goalRuleName:String?, sentence: String) {
         try {
             sendMessage(port,MessageParseStart(languageId, editorId))
             val proc = this.processor ?: throw RuntimeException("Processor for $languageId not found")
-            val sppt = proc.parse(sentence)
+            val sppt = if(null==goalRuleName) proc.parse(sentence) else proc.parseForGoal(goalRuleName, sentence)
             val tree = createParseTree(sppt.root)
             sendMessage(port,MessageParseSuccess(languageId, editorId, tree))
             this.sendParseLineTokens(port, languageId, editorId, sppt)

@@ -42,6 +42,12 @@ abstract class AglEditorAbstract(
             this.setGrammar(value)
         }
 
+    override var goalRuleName: String?
+        get() = this.agl.goalRule
+        set(value) {
+            this.agl.goalRule = value
+        }
+
     override var styleStr: String?
         get() = _styleStr_cache
         set(value) {

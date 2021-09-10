@@ -67,12 +67,14 @@ class MessageProcessorCreateFailure(
 class MessageParseRequest(
     val languageId: String,
     val editorId: String,
+    val goalRuleName:String?,
     val text: String
 ) : AglWorkerMessage("MessageParseRequest") {
     override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
+        this["goalRuleName"]=goalRuleName
         this["text"]=text
     }
 }

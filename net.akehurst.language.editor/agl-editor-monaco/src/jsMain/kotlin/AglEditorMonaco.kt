@@ -31,9 +31,9 @@ import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
+import net.akehurst.language.editor.common.AglWorkerClient
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
-import net.akehurst.language.editor.common.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
@@ -43,7 +43,6 @@ class AglEditorMonaco(
     val element: Element,
     editorId: String,
     languageId: String,
-    private val goalRule: String? = null,
     options: dynamic, //TODO: types for this
     workerScriptName: String
 ) : AglEditorAbstract(languageId, editorId) {
@@ -75,7 +74,7 @@ class AglEditorMonaco(
                     element.removeChild(element.firstChild!!)
                 }
                 val id = element.getAttribute("id")!!
-                val editor = AglEditorMonaco(element, id, id, null, null, workerScriptName)
+                val editor = AglEditorMonaco(element, id, id, null, workerScriptName)
                 map[id] = editor
             }
             return map
@@ -125,7 +124,6 @@ class AglEditorMonaco(
             monaco.languages.register(objectJSTyped<monaco.languages.ILanguageExtensionPoint> {
                 id = languageId
             })
-            this.agl.goalRule = goalRule
             //val languageId = this.languageId
             //val editorOptions = js("{language: languageId, value: initialContent, theme: theme, wordBasedSuggestions:false}")
             val editorOptions = objectJSTyped<monaco.editor.IStandaloneEditorConstructionOptions> {
@@ -171,6 +169,11 @@ class AglEditorMonaco(
         } catch (t: Throwable) {
             console.error(t.message)
         }
+    }
+
+    override fun destroy() {
+        this.aglWorker.worker.terminate()
+        //this.monacoEditor.destroy()
     }
 
     override fun finalize() {
@@ -295,7 +298,7 @@ class AglEditorMonaco(
     fun doBackgroundTryParse() {
         this.clearErrorMarkers()
         this.aglWorker.interrupt(languageId, editorId)
-        this.aglWorker.tryParse(languageId, editorId, this.text)
+        this.aglWorker.tryParse(languageId, editorId, this.agl.goalRule, this.text)
     }
 
     private fun tryParse() {

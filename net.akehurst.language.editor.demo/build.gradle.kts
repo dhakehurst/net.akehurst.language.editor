@@ -48,9 +48,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
-        }
     }
 
     configure<BuildConfigExtension> {
@@ -83,7 +80,7 @@ subprojects {
                 }
             }
         }
-        js("js") {
+        js("js",IR) {
             nodejs()
             browser {
                 webpackTask {
@@ -94,20 +91,11 @@ subprojects {
         //macosX64("macosX64") {
         // uncomment stuff below too
         //}
-        sourceSets {
-            val commonMain by getting {
-                kotlin.srcDir("$buildDir/generated/kotlin")
-            }
-        }
     }
 
     dependencies {
         "commonTestImplementation"(kotlin("test"))
         "commonTestImplementation"(kotlin("test-annotations-common"))
-
-        "jvm8TestImplementation"(kotlin("test-junit"))
-
-        "jsTestImplementation"(kotlin("test-js"))
     }
 
 }

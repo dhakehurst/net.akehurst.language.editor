@@ -26,13 +26,14 @@ import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.agl.processor.AglLanguage
+
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.information.examples.*
 import org.w3c.dom.HTMLDialogElement
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLSelectElement
 import kotlinx.browser.document
+import net.akehurst.language.api.processor.AglLanguage
 
 external var aglScriptBasePath: dynamic = definedExternally
 
@@ -232,12 +233,12 @@ class Demo(
     }
 
     fun connectEditors() {
-        grammarEditor.setProcessor("@Agl.grammarProcessor@")
-        styleEditor.setProcessor("@Agl.styleProcessor@")
+        grammarEditor.grammarStr="@Agl.grammarProcessor@"
+        styleEditor.grammarStr="@Agl.styleProcessor@"
         //formatEditor.setProcessor("@Agl.formatProcessor@")
 
-        grammarEditor.setStyle(AglLanguage.grammar.style)
-        styleEditor.setStyle(AglLanguage.style.style)
+        grammarEditor.styleStr=(AglLanguage.grammar.style)
+        styleEditor.styleStr=(AglLanguage.style.style)
 
         grammarEditor.onParse { event ->
             when(event) {
@@ -247,14 +248,14 @@ class Demo(
                 is ParseEventSuccess ->{
                     try {
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
-                        sentenceEditor.setProcessor(grammarEditor.text)
+                        sentenceEditor.grammarStr=(grammarEditor.text)
                     } catch (t: Throwable) {
-                        sentenceEditor.setProcessor(null)
+                        sentenceEditor.grammarStr=(null)
                         console.error(grammarEditor.editorId + ": " + t.message)
                     }
                 }
                 is ParseEventFailure ->{
-                    sentenceEditor.setProcessor(null)
+                    sentenceEditor.grammarStr=(null)
                     console.error(grammarEditor.editorId + ": " + event.message)
                 }
             }
@@ -268,7 +269,7 @@ class Demo(
                 is ParseEventSuccess ->{
                     try {
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
-                        sentenceEditor.setStyle(styleEditor.text)
+                        sentenceEditor.styleStr=(styleEditor.text)
                     } catch (t: Throwable) {
                         console.error(styleEditor.editorId + ": " + t.message)
                     }
@@ -385,9 +386,9 @@ class Demo(
             val egName = js("event.target.value") as String
             val eg = Examples[egName]
             grammarEditor.text = eg.grammar
-            sentenceEditor.setProcessor(grammarEditor.text) // set this before setting the sentence text
+            sentenceEditor.grammarStr=(grammarEditor.text) // set this before setting the sentence text
             styleEditor.text = eg.style
-            sentenceEditor.setStyle(styleEditor.text)  // set this before setting the sentence text
+            sentenceEditor.styleStr=(styleEditor.text)  // set this before setting the sentence text
             //formatEditor.text = eg.format
             sentenceEditor.text = eg.sentence
         })
@@ -396,9 +397,9 @@ class Demo(
         val eg = Datatypes.example
         (exampleSelect as HTMLSelectElement).value = eg.id
         grammarEditor.text = eg.grammar
-        sentenceEditor.setProcessor(grammarEditor.text) // set this before setting the sentence text
+        sentenceEditor.grammarStr=(grammarEditor.text) // set this before setting the sentence text
         styleEditor.text = eg.style
-        sentenceEditor.setStyle(styleEditor.text)  // set this before setting the sentence text
+        sentenceEditor.styleStr=(styleEditor.text)  // set this before setting the sentence text
         //formatEditor.text = eg.format
         sentenceEditor.text = eg.sentence
     }

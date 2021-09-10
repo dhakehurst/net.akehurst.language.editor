@@ -23,4 +23,5 @@ external class Editor(
     fun resize(force: Boolean)
     fun getSelection(): dynamic //TODO:
 
+    fun destroy()
 }

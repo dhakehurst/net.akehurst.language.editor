@@ -25,7 +25,7 @@ kotlin {
 tasks.named<Copy>("jsProductionLibraryCompileSync") {
    duplicatesStrategy = DuplicatesStrategy.WARN
 }
-tasks.named<Copy>("jsBrowserProductionLibraryPrepare") {
+tasks.named<Copy>("jsDevelopmentLibraryCompileSync") {
    duplicatesStrategy = DuplicatesStrategy.WARN
 }
 configure<PublishingExtension> {

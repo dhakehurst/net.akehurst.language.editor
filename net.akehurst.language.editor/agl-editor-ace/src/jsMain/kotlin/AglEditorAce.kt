@@ -166,6 +166,11 @@ class AglEditorAce(
         this.aglWorker.worker.terminate()
     }
 
+    override fun destroy() {
+        this.aglWorker.worker.terminate()
+        this.aceEditor.destroy()
+    }
+
     override fun setStyle(str: String?) {
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
@@ -297,7 +302,7 @@ class AglEditorAce(
         this.clearErrorMarkers()
         this.aglWorker.interrupt(languageId, editorId)
         this.notifyParse(ParseEventStart())
-        this.aglWorker.tryParse(languageId, editorId, this.text)
+        this.aglWorker.tryParse(languageId, editorId, this.agl.goalRule, this.text)
     }
 
     private fun foregroundParse() {

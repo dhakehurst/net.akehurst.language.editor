@@ -74,8 +74,8 @@ class AglWorkerClient(
         this.sendToWorker(MessageParserInterruptRequest(languageId, editorId, "New parse request"))
     }
 
-    fun tryParse(languageId: String, editorId: String, sentence: String) {
-        this.sendToWorker(MessageParseRequest(languageId, editorId, sentence))
+    fun tryParse(languageId: String, editorId: String, goalRuleName:String?, sentence: String) {
+        this.sendToWorker(MessageParseRequest(languageId, editorId, goalRuleName, sentence))
     }
 
     fun setStyle(languageId: String, editorId: String, css: String) {
