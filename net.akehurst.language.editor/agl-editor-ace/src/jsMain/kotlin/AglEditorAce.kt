@@ -149,23 +149,24 @@ class AglEditorAce(
     }
 
     override fun finalize() {
-        this.aglWorker.worker.terminate()
+        //this.aglWorker.worker.terminate()
     }
 
     override fun destroy() {
-        this.aglWorker.worker.terminate()
+        //this.aglWorker.worker.terminate()
         this.aceEditor.destroy()
     }
 
-    override fun setStyle(str: String?) {
+    override fun updateStyle() {
         val aglStyleClass = "agl_${this.languageId}"
+        val str = this.agl.languageDefinition.style
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
             val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class, str)
             var mappedCss = ""
             rules.forEach { rule ->
                 val ruleClass = this.agl.styleHandler.mapClass(rule.selector)
-                val cssClass = ".$aglStyleClass .agl_$ruleClass"
+                val cssClass = ".$aglStyleClass .ace_$ruleClass"
                 val mappedRule = AglStyleRule(cssClass)
                 mappedRule.styles = rule.styles.values.associate { oldStyle ->
                     val style = when (oldStyle.name) {
@@ -205,7 +206,7 @@ class AglEditorAce(
     }
 
     fun format() {
-        val proc = this.agl.processor
+        val proc = this.agl.languageDefinition.processor
         if (null != proc) {
             val pos = this.aceEditor.getSelection().getCursor();
             val formattedText: String = proc.formatText<AsmElementSimple>(AsmElementSimple::class, this.text);
@@ -213,24 +214,9 @@ class AglEditorAce(
         }
     }
 
-    override fun setGrammar(str: String?) {
+    override fun updateGrammar() {
         this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageId, editorId, str)
-        if (null == str || str.trim().isEmpty()) {
-            this.agl.processor = null
-        } else {
-            try {
-                when (str) {
-                    "@Agl.grammarProcessor@" -> this.agl.processor = Agl.grammarProcessor
-                    "@Agl.styleProcessor@" -> this.agl.processor = Agl.styleProcessor
-                    "@Agl.formatProcessor@" -> this.agl.processor = Agl.formatProcessor
-                    else -> this.agl.processor = Agl.processorFromString(str)
-                }
-            } catch (t: Throwable) {
-                this.agl.processor = null
-                console.error(t.message)
-            }
-        }
+        this.aglWorker.createProcessor(languageId, editorId, this.agl.languageDefinition.grammar)
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
     }
@@ -294,7 +280,7 @@ class AglEditorAce(
     }
 
     private fun foregroundParse() {
-        val proc = this.agl.processor
+        val proc = this.agl.languageDefinition.processor
         if (null != proc) {
             try {
                 val goalRule = this.agl.goalRule
@@ -313,7 +299,7 @@ class AglEditorAce(
     }
 
     private fun tryProcess() {
-        val proc = this.agl.processor
+        val proc = this.agl.languageDefinition.processor
         val sppt = this.agl.sppt
         if (null != proc && null != sppt) {
             try {

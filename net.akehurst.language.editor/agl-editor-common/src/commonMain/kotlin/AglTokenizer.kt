@@ -15,6 +15,8 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageProcessor
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.api.sppt.SharedPackedParseTree
@@ -22,9 +24,11 @@ import net.akehurst.language.api.sppt.SharedPackedParseTree
 open class AglComponents(
         val languageId: String
 ) {
+    val languageDefinition : LanguageDefinition by lazy {
+        Agl.registry.findOrNull(languageId) ?: error("Language Defintion not found for identity '$languageId'")
+    }
+    var goalRule: String? = languageDefinition.defaultGoalRule
     val styleHandler = AglStyleHandler(languageId)
-    var processor: LanguageProcessor? = null
-    var goalRule: String? = null
     var sppt: SharedPackedParseTree? = null
     var asm: Any? = null
 }
@@ -94,7 +98,7 @@ class AglTokenizer(
     }
 
     fun getLineTokensByScan(lineText: String, state: AglLineState, row: Int): AglLineState {
-        val proc = this.agl.processor
+        val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val text = state.leftOverText + lineText
             val leafs = proc.scan(text);

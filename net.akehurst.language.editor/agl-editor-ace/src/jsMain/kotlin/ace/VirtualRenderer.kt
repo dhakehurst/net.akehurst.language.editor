@@ -8,8 +8,9 @@ import org.w3c.dom.Element
 @JsModule("net.akehurst.language.editor-kotlin-ace-loader!?id=ace/virtual_renderer&name=VirtualRenderer")
 @JsNonModule
 external class VirtualRenderer(
-        container: Element,
-        theme: String?
+    container: Element,
+    theme: String?
 ) {
-
+    //TODO:
+    fun setPadding(padding: Int)
 }

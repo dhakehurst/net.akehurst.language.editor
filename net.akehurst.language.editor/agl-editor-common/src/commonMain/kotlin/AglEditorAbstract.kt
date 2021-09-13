@@ -15,12 +15,14 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.ParseEvent
 import net.akehurst.language.editor.api.ProcessEvent
 
 abstract class AglEditorAbstract(
-    val languageId: String,
+    override var languageId: String,
     override val editorId: String
 ) : AglEditor {
 
@@ -28,30 +30,11 @@ abstract class AglEditorAbstract(
 
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
     private val _onProcessHandler = mutableListOf<(ProcessEvent) -> Unit>()
-    private var _styleStr_cache: String? = null
-
-    override var grammarStr: String?
-        get() {
-            try {
-                return this.agl.processor?.grammar?.toString()
-            } catch (t: Throwable) {
-                throw RuntimeException("Failed to set text in editor")
-            }
-        }
-        set(value) {
-            this.setGrammar(value)
-        }
 
     override var goalRuleName: String?
         get() = this.agl.goalRule
         set(value) {
             this.agl.goalRule = value
-        }
-
-    override var styleStr: String?
-        get() = _styleStr_cache
-        set(value) {
-            _styleStr_cache = value; this.setStyle(value)
         }
 
     override fun onParse(handler: (ParseEvent) -> Unit) {
@@ -74,6 +57,6 @@ abstract class AglEditorAbstract(
         }
     }
 
-    protected abstract fun setGrammar(str: String?)
-    protected abstract fun setStyle(str: String?)
+    protected abstract fun updateGrammar()
+    protected abstract fun updateStyle()
 }

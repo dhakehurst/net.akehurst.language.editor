@@ -21,14 +21,9 @@ interface AglEditor {
     val editorId:String
 
     /**
-     * the content of the editor
+     * the language identity for this editor
      */
-    var text:String
-
-    /**
-     * the grammar for the editor as a string
-     */
-    var grammarStr:String?
+    var languageId:String
 
     /**
      * The name of a rule in the grammar from which to start the parse.
@@ -37,9 +32,9 @@ interface AglEditor {
     var goalRuleName: String?
 
     /**
-     * CSS styles as a string
+     * the content of the editor
      */
-    var styleStr: String?
+    var text:String
 
     fun onParse(handler: (ParseEvent) -> Unit)
 

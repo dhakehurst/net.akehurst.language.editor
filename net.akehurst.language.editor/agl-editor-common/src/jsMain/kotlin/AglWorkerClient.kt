@@ -23,7 +23,7 @@ class AglWorkerClient(
         val workerScriptName: String
 ) {
 
-    lateinit var worker: Worker
+    lateinit var worker: SharedWorker
     var setStyleResult: (success: Boolean, message: String) -> Unit = { _, _ -> }
     var processorCreateSuccess: (message: String) -> Unit = { _ -> }
     var processorCreateFailure: (message: String) -> Unit = { _ -> }
@@ -37,12 +37,12 @@ class AglWorkerClient(
 
     fun initialise() {
         // currently can't make SharedWorker work
-        //this.worker = SharedWorker(workerScriptName, options=WorkerOptions(type = WorkerType.MODULE))
-        this.worker = Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+        this.worker = SharedWorker(workerScriptName, options=WorkerOptions(type = WorkerType.MODULE))
+        //this.worker = Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
         this.worker.onerror = {
             console.error(it)
         }
-        worker.onmessage = {
+        worker.port.onmessage = {
             val msg = it.data.asDynamic()
             when (msg.action) {
                 "MessageSetStyleResult" -> this.setStyleResult(msg.success, msg.message)
@@ -58,12 +58,10 @@ class AglWorkerClient(
                 else -> error("Unknown Message type")
             }
         }
-        //worker.port.onmessageerror
-        //worker.port.start()
     }
 
     fun sendToWorker(msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
-        this.worker.postMessage(msg.toObjectJS(), transferables)
+        this.worker.port.postMessage(msg.toObjectJS(), transferables)
     }
 
     fun createProcessor(languageId: String, editorId: String, grammarStr: String?) {

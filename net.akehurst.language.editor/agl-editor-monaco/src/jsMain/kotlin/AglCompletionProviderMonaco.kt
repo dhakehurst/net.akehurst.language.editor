@@ -22,7 +22,7 @@ import monaco.editor.ITextModel
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.editor.common.AglComponents
 
-class AglCompletionProvider(
+class AglCompletionProviderMonaco(
         val agl: AglComponents
 ) : monaco.languages.CompletionItemProvider {
     override val triggerCharacters: Array<String>? = null
@@ -49,7 +49,7 @@ class AglCompletionProvider(
 
     private fun getCompletionItems(model: ITextModel, offset: Int): List<CompletionItem> {
         val text = model.getValue()
-        val proc = this.agl.processor
+        val proc = this.agl.languageDefinition.processor
         val goalRule = this.agl.goalRule
         return if (null == proc) {
             emptyList()

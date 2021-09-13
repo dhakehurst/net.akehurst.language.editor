@@ -134,7 +134,7 @@ class AglEditorMonaco(
             }
             this.monacoEditor = monaco.editor.create(this.element, editorOptions, null)
             monaco.languages.setTokensProvider(this.languageId, this.workerTokenizer);
-            monaco.languages.registerCompletionItemProvider(this.languageId, AglCompletionProvider(this.agl))
+            monaco.languages.registerCompletionItemProvider(this.languageId, AglCompletionProviderMonaco(this.agl))
 
             this.onChange { this.update() }
 
@@ -172,15 +172,16 @@ class AglEditorMonaco(
     }
 
     override fun destroy() {
-        this.aglWorker.worker.terminate()
+        //this.aglWorker.worker.terminate()
         //this.monacoEditor.destroy()
     }
 
     override fun finalize() {
-        this.aglWorker.worker.terminate()
+        //this.aglWorker.worker.terminate()
     }
 
-    override fun setStyle(str: String?) {
+    override fun updateStyle() {
+        val str = this.agl.languageDefinition.style
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
             val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class, str)
@@ -223,24 +224,9 @@ class AglEditorMonaco(
         }
     }
 
-    override fun setGrammar(str: String?) {
+    override fun updateGrammar() {
         this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageId, editorId, str)
-        if (null == str || str.trim().isEmpty()) {
-            this.agl.processor = null
-        } else {
-            try {
-                when (str) {
-                    "@Agl.grammarProcessor@" -> this.agl.processor = Agl.grammarProcessor
-                    "@Agl.styleProcessor@" -> this.agl.processor = Agl.styleProcessor
-                    "@Agl.formatProcessor@" -> this.agl.processor = Agl.formatProcessor
-                    else -> this.agl.processor = Agl.processorFromString(str)
-                }
-            } catch (t: Throwable) {
-                this.agl.processor = null
-                console.error(t.message)
-            }
-        }
+        this.aglWorker.createProcessor(languageId, editorId, this.agl.languageDefinition.grammar)
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
     }
@@ -302,7 +288,7 @@ class AglEditorMonaco(
     }
 
     private fun tryParse() {
-        val proc = this.agl.processor
+        val proc = this.agl.languageDefinition.processor
         if (null != proc) {
             try {
 
@@ -343,7 +329,7 @@ class AglEditorMonaco(
     }
 
     private fun tryProcess() {
-        val proc = this.agl.processor
+        val proc = this.agl.languageDefinition.processor
         val sppt = this.agl.sppt
         if (null != proc && null != sppt) {
             try {

@@ -27,10 +27,11 @@ import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.agl.processor.Agl
 import org.w3c.dom.DedicatedWorkerGlobalScope
+import org.w3c.dom.MessageEvent
 import org.w3c.dom.MessagePort
 import org.w3c.dom.SharedWorkerGlobalScope
 
-external val self: DedicatedWorkerGlobalScope
+external val self: SharedWorkerGlobalScope//DedicatedWorkerGlobalScope
 
 class AglWorker {
 
@@ -42,14 +43,18 @@ class AglWorker {
     }
 
     fun start() {
-        self.onmessage = {
-            val msg: dynamic = it.data
-            when (msg.action) {
-                "MessageProcessorCreate" -> this.createProcessor(self, msg.languageId, msg.editorId, msg.grammarStr)
-                "MessageParserInterruptRequest" -> this.interrupt(self, msg.languageId, msg.editorId, msg.reason)
-                "MessageParseRequest" -> this.parse(self, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
-                "MessageSetStyle" -> this.setStyle(self, msg.languageId, msg.editorId, msg.css)
+        self.onconnect = { e ->
+            val port = (e as MessageEvent).ports[0]
+            port.onmessage = { it ->
+                val msg: dynamic = it.data
+                when (msg.action) {
+                    "MessageProcessorCreate" -> this.createProcessor(self, msg.languageId, msg.editorId, msg.grammarStr)
+                    "MessageParserInterruptRequest" -> this.interrupt(self, msg.languageId, msg.editorId, msg.reason)
+                    "MessageParseRequest" -> this.parse(self, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
+                    "MessageSetStyle" -> this.setStyle(self, msg.languageId, msg.editorId, msg.css)
+                }
             }
+            Unit
         }
     }
 /*

@@ -25,7 +25,8 @@ class AglCodeCompleter(
     }
 
     fun getCompletionItems(editor: ace.Editor, pos: Int): List<CompletionItem> {
-        val proc = this.agl.processor
+        //TODO: get worker to provide this
+        val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val goalRule = this.agl.goalRule
             if (null == goalRule) {

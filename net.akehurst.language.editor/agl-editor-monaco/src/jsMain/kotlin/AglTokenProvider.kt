@@ -82,7 +82,7 @@ class AglTokenProvider(
 
     private fun getLineTokensByScan(line: String, pState: monaco.languages.IState): monaco.languages.ILineTokens {
         val state = pState as AglLineStateMonaco
-        val proc = this.agl.processor
+        val proc = this.agl.languageDefinition.processor
         val nextLineNumber = state.lineNumber + 1
         if (null != proc) {
             val text = state.leftOverText + line
