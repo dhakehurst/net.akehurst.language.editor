@@ -146,6 +146,9 @@ class AglEditorAce(
         this.aglWorker.processFailure = { message ->
             this.notifyProcess(ProcessEventFailure(message, "No Asm"))
         }
+
+        this.updateStyle()
+        this.updateGrammar()
     }
 
     override fun finalize() {
