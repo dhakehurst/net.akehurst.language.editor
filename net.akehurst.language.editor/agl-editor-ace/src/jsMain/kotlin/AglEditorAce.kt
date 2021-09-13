@@ -18,53 +18,43 @@ package net.akehurst.language.editor.ace
 
 import ResizeObserver
 import ace.AceAnnotation
+import ace.AceOptions
 import kotlinx.browser.window
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
-import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
+import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
+import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
+import net.akehurst.language.editor.common.AglWorkerClient
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
-import net.akehurst.language.editor.common.AglWorkerClient
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 import org.w3c.dom.asList
-
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.associate
-import kotlin.collections.forEach
-import kotlin.collections.listOf
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
-import kotlin.collections.toMutableMap
-import kotlin.collections.toTypedArray
 import kotlin.js.Date
 
 class AglErrorAnnotation(
-        val line: Int,
-        val column: Int,
-        val text: String,
-        val type: String,
-        val raw: String?
+    val line: Int,
+    val column: Int,
+    val text: String,
+    val type: String,
+    val raw: String?
 ) {
     val row = line - 1
 }
 
-
 class AglEditorAce(
-        val element: Element,
-        languageId: String,
-        editorId: String,
-        options: dynamic, //TODO: types for this
-        workerScriptName: String
+    val element: Element,
+    languageId: String,
+    editorId: String,
+    options: AceOptions, //TODO: types for this
+    workerScriptName: String
 ) : AglEditorAbstract(languageId, editorId) {
 
     companion object {
@@ -78,9 +68,9 @@ class AglEditorAce(
                 }
                 val id = element.getAttribute("id")!!
                 val options = objectJS {
-                        enableBasicAutocompletion= true
-                        enableSnippets= true
-                        enableLiveAutocompletion= false
+                //    enableBasicAutocompletion = true
+                //    enableSnippets = true
+                //    enableLiveAutocompletion = false
                 }
                 val editor = AglEditorAce(element, id, id, options, workerScriptName)
                 map[id] = editor
@@ -93,9 +83,9 @@ class AglEditorAce(
     private val errorProcessMarkerIds = mutableListOf<Int>()
 
     val aceEditor: ace.Editor = ace.Editor(
-            ace.VirtualRenderer(this.element, null),
-            ace.Ace.createEditSession(""),
-            options
+        ace.VirtualRenderer(this.element, null),
+        ace.Ace.createEditSession(""),
+        objectJS {  } //options are set later in init_
     )
     override var text: String
         get() {
@@ -121,10 +111,12 @@ class AglEditorAce(
         this.init_(options)
     }
 
-    fun init_(options:dynamic){
+    fun init_(options: AceOptions) {
         this.workerTokenizer = AglTokenizerByWorkerAce(this.agl)
 
-        this.aceEditor.setOptions(options)
+        this.aceEditor.setOptions(options.editor)
+        this.aceEditor.renderer.setOptions(options.renderer)
+        //TODO: set session and mouseHandler options
         this.aceEditor.getSession().bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer, this.aceEditor)
         this.aceEditor.getSession().bgTokenizer.setDocument(this.aceEditor.getSession().getDocument())
         this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
@@ -136,13 +128,7 @@ class AglEditorAce(
         resizeObserver.observe(this.element)
 
         this.aglWorker.initialise()
-        this.aglWorker.setStyleResult = { success, message ->
-            if (success) {
-                this.resetTokenization()
-            } else {
-                console.error("Error: $message")
-            }
-        }
+        this.aglWorker.setStyleResult = { success, message -> if (success) this.resetTokenization() else console.error("Error: $message") }
         this.aglWorker.processorCreateSuccess = this::processorCreateSuccess
         this.aglWorker.processorCreateFailure = { msg -> console.error("Failed to create processor $msg") }
         this.aglWorker.parseStart = { this.notifyParse(ParseEventStart()) }
@@ -172,12 +158,14 @@ class AglEditorAce(
     }
 
     override fun setStyle(str: String?) {
+        val aglStyleClass = "agl_${this.languageId}"
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class,str)
+            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class, str)
             var mappedCss = ""
             rules.forEach { rule ->
-                val cssClass = '.' + this.languageId + ' ' + ".ace_" + this.agl.styleHandler.mapClass(rule.selector);
+                val ruleClass = this.agl.styleHandler.mapClass(rule.selector)
+                val cssClass = ".$aglStyleClass .agl_$ruleClass"
                 val mappedRule = AglStyleRule(cssClass)
                 mappedRule.styles = rule.styles.values.associate { oldStyle ->
                     val style = when (oldStyle.name) {
@@ -196,15 +184,15 @@ class AglEditorAce(
             }
 
             val module = objectJS {
-                cssClass = languageId
+                cssClass = aglStyleClass
                 cssText = mappedCss
                 _v = Date.now() // _v:Date added in order to force use of new module definition
             }
-            module["\$id"] = languageId
+            module["\$id"] = aglStyleClass
 
             // remove the current style element for 'languageId' (which is used as the theme name) from the container
             // else the theme css is not reapplied
-            val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#" + this.languageId)
+            val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#$aglStyleClass")
             curStyle?.remove()
 
             // the use of an object instead of a string is undocumented but seems to work
@@ -220,7 +208,7 @@ class AglEditorAce(
         val proc = this.agl.processor
         if (null != proc) {
             val pos = this.aceEditor.getSelection().getCursor();
-            val formattedText: String = proc.formatText<AsmElementSimple>(AsmElementSimple::class,this.text);
+            val formattedText: String = proc.formatText<AsmElementSimple>(AsmElementSimple::class, this.text);
             this.aceEditor.setValue(formattedText, -1);
         }
     }
@@ -329,7 +317,7 @@ class AglEditorAce(
         val sppt = this.agl.sppt
         if (null != proc && null != sppt) {
             try {
-                this.agl.asm = proc.processFromSPPT(Any::class,sppt)
+                this.agl.asm = proc.processFromSPPT(Any::class, sppt)
                 val event = ProcessEventSuccess(this.agl.asm!!)
                 this.notifyProcess(event)
             } catch (e: SyntaxAnalyserException) {
@@ -367,7 +355,7 @@ class AglEditorAce(
             }
             val errors = listOf(
                 objectJSTyped<AceAnnotation> {
-                    row = location.line-1
+                    row = location.line - 1
                     column = location.column - 1
                     text = errMsg
                     type = "error"
