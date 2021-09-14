@@ -18,12 +18,14 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.parser.InputLocation
 import org.w3c.dom.*
+import org.w3c.dom.events.EventTarget
 
 class AglWorkerClient(
-        val workerScriptName: String
+        val workerScriptName: String,
+        val sharedWorker:Boolean
 ) {
 
-    lateinit var worker: SharedWorker
+    lateinit var worker: AbstractWorker
     var setStyleResult: (success: Boolean, message: String) -> Unit = { _, _ -> }
     var processorCreateSuccess: (message: String) -> Unit = { _ -> }
     var processorCreateFailure: (message: String) -> Unit = { _ -> }
@@ -37,13 +39,17 @@ class AglWorkerClient(
 
     fun initialise() {
         // currently can't make SharedWorker work
-        this.worker = SharedWorker(workerScriptName, options=WorkerOptions(type = WorkerType.MODULE))
-        //this.worker = Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+        this.worker = if(this.sharedWorker) {
+            SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+        } else {
+            Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+        }
         this.worker.onerror = {
             console.error(it)
         }
-        worker.port.onmessage = {
-            val msg = it.data.asDynamic()
+        val tgt:EventTarget = if(this.sharedWorker) (this.worker as SharedWorker).port else this.worker as Worker
+        tgt.addEventListener("message", { ev ->
+            val msg = (ev as MessageEvent).data.asDynamic()
             when (msg.action) {
                 "MessageSetStyleResult" -> this.setStyleResult(msg.success, msg.message)
                 "MessageProcessorCreateSuccess" -> this.processorCreateSuccess(msg.message)
@@ -57,11 +63,21 @@ class AglWorkerClient(
                 "MessageProcessFailure" -> this.processFailure(msg.message)
                 else -> error("Unknown Message type")
             }
+        }, objectJS {  })
+        //need to explicitly start because used addEventListener
+        if(this.sharedWorker) {
+            (this.worker as SharedWorker).port.start()
+        } else {
+            this.worker as Worker
         }
     }
 
     fun sendToWorker(msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
-        this.worker.port.postMessage(msg.toObjectJS(), transferables)
+        if(this.sharedWorker) {
+            (this.worker as SharedWorker).port.postMessage(msg.toObjectJS(), transferables)
+        } else {
+            (this.worker as Worker).postMessage(msg.toObjectJS(), transferables)
+        }
     }
 
     fun createProcessor(languageId: String, editorId: String, grammarStr: String?) {

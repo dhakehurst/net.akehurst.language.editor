@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ * Copyright (C) 2021 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,49 +29,35 @@ import net.akehurst.language.editor.common.*
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.SharedWorkerGlobalScope
+import org.w3c.dom.WorkerGlobalScope
 
-
-
-class AglWorker {
+class AglSharedWorker {
 
     private var processor: LanguageProcessor? = null
     private var styleHandler: AglStyleHandler? = null
-    private var _selfDedicated: dynamic? = null
+    private var _selfShared: dynamic? = null
 
     init {
         start()
-        _selfDedicated = self //as DedicatedWorkerGlobalScope
+        this._selfShared = self // as SharedWorkerGlobalScope
     }
 
     fun start() {
-        _selfDedicated?.onmessage = {e: MessageEvent ->
-            val msg: dynamic = e.data
-            when (msg.action) {
-                "MessageProcessorCreate" -> this.createProcessor(_selfDedicated, msg.languageId, msg.editorId, msg.grammarStr)
-                "MessageParserInterruptRequest" -> this.interrupt(_selfDedicated, msg.languageId, msg.editorId, msg.reason)
-                "MessageParseRequest" -> this.parse(_selfDedicated, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
-                "MessageSetStyle" -> this.setStyle(_selfDedicated, msg.languageId, msg.editorId, msg.css)
+        _selfShared?.onconnect = { e:MessageEvent ->
+            val port = e.ports[0]
+            port.onmessage = { it ->
+                val msg: dynamic = it.data
+                when (msg.action) {
+                    "MessageProcessorCreate" -> this.createProcessor(port, msg.languageId, msg.editorId, msg.grammarStr)
+                    "MessageParserInterruptRequest" -> this.interrupt(port, msg.languageId, msg.editorId, msg.reason)
+                    "MessageParseRequest" -> this.parse(port, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
+                    "MessageSetStyle" -> this.setStyle(port, msg.languageId, msg.editorId, msg.css)
+                }
             }
+            true //onconnect insists on having a return value!
         }
     }
 
-    /*
-        fun startShared() {
-            (self as SharedWorkerGlobalScope).onconnect = { e ->
-                val port = e.asDynamic().ports[0] as MessagePort
-                port.onmessage = {
-                    val msg: dynamic = it.data
-                    when (msg.action) {
-                        "MessageProcessorCreate" -> this.createProcessor(port, msg.languageId, msg.editorId, msg.grammarStr)
-                        "MessageParserInterruptRequest" -> this.interrupt(port, msg.languageId, msg.editorId, msg.reason)
-                        "MessageParseRequest" -> this.parse(port, msg.languageId, msg.editorId, msg.text)
-                        "MessageSetStyle" -> this.setStyle(port, msg.languageId, msg.editorId, msg.css)
-                    }
-                }
-                true //onconnect insists on having a return value!
-            }
-        }
-    */
     private fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
         port.postMessage(msg.toObjectJS(), transferables)
     }

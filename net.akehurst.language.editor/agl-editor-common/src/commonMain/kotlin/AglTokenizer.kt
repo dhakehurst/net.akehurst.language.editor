@@ -24,9 +24,8 @@ import net.akehurst.language.api.sppt.SharedPackedParseTree
 open class AglComponents(
         val languageId: String
 ) {
-    val languageDefinition : LanguageDefinition by lazy {
-        Agl.registry.findOrNull(languageId) ?: error("Language Defintion not found for identity '$languageId'")
-    }
+    val languageDefinition : LanguageDefinition = Agl.registry.findOrPlaceholder(languageId)
+
     var goalRule: String? = languageDefinition.defaultGoalRule
     val styleHandler = AglStyleHandler(languageId)
     var sppt: SharedPackedParseTree? = null
@@ -98,7 +97,7 @@ class AglTokenizer(
     }
 
     fun getLineTokensByScan(lineText: String, state: AglLineState, row: Int): AglLineState {
-        val proc = this.agl.languageDefinition.processor
+        val proc = this.agl.languageDefinition?.processor
         return if (null != proc) {
             val text = state.leftOverText + lineText
             val leafs = proc.scan(text);

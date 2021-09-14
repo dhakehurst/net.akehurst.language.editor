@@ -32,10 +32,7 @@ import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglWorkerClient
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
-import org.w3c.dom.Document
-import org.w3c.dom.Element
-import org.w3c.dom.ParentNode
-import org.w3c.dom.asList
+import org.w3c.dom.*
 import kotlin.collections.set
 import kotlin.js.Date
 
@@ -54,30 +51,9 @@ class AglEditorAce(
     languageId: String,
     editorId: String,
     options: AceOptions, //TODO: types for this
-    workerScriptName: String
+    workerScriptName: String,
+    sharedWorker: Boolean
 ) : AglEditorAbstract(languageId, editorId) {
-
-    companion object {
-        fun initialise(document: Document, workerScriptName: String, tag: String = "agl-editor"): Map<String, AglEditorAce> {
-            val map = mutableMapOf<String, AglEditorAce>()
-            document.querySelectorAll(tag).asList().forEach { el ->
-                val element = el as Element
-                //delete any current children of element
-                while (element.childElementCount != 0) {
-                    element.removeChild(element.firstChild!!)
-                }
-                val id = element.getAttribute("id")!!
-                val options = objectJS {
-                //    enableBasicAutocompletion = true
-                //    enableSnippets = true
-                //    enableLiveAutocompletion = false
-                }
-                val editor = AglEditorAce(element, id, id, options, workerScriptName)
-                map[id] = editor
-            }
-            return map
-        }
-    }
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
@@ -103,7 +79,7 @@ class AglEditorAce(
             }
         }
 
-    var aglWorker = AglWorkerClient(workerScriptName)
+    var aglWorker = AglWorkerClient(workerScriptName,sharedWorker)
     lateinit var workerTokenizer: AglTokenizerByWorkerAce
     var parseTimeout: dynamic = null
 
@@ -114,8 +90,8 @@ class AglEditorAce(
     fun init_(options: AceOptions) {
         this.workerTokenizer = AglTokenizerByWorkerAce(this.agl)
 
-        this.aceEditor.setOptions(options.editor)
-        this.aceEditor.renderer.setOptions(options.renderer)
+        if (null!=options.editor) this.aceEditor.setOptions(options.editor)
+        if (null!=options.renderer) this.aceEditor.renderer.setOptions(options.renderer)
         //TODO: set session and mouseHandler options
         this.aceEditor.getSession().bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer, this.aceEditor)
         this.aceEditor.getSession().bgTokenizer.setDocument(this.aceEditor.getSession().getDocument())
@@ -162,7 +138,7 @@ class AglEditorAce(
 
     override fun updateStyle() {
         val aglStyleClass = "agl_${this.languageId}"
-        val str = this.agl.languageDefinition.style
+        val str = this.editorSpecificStyleStr
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
             val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class, str)
@@ -209,7 +185,7 @@ class AglEditorAce(
     }
 
     fun format() {
-        val proc = this.agl.languageDefinition.processor
+        val proc = this.agl.languageDefinition?.processor
         if (null != proc) {
             val pos = this.aceEditor.getSelection().getCursor();
             val formattedText: String = proc.formatText<AsmElementSimple>(AsmElementSimple::class, this.text);
@@ -219,7 +195,11 @@ class AglEditorAce(
 
     override fun updateGrammar() {
         this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageId, editorId, this.agl.languageDefinition.grammar)
+        this.aglWorker.createProcessor(languageId, editorId, this.agl.languageDefinition?.grammar)
+
+        TODO("need to indicate to the worker that it can use built in processors!")
+        //maybe create placeholder LanguageDefinition in worker, and  use the lang def id!
+
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
     }
@@ -283,7 +263,7 @@ class AglEditorAce(
     }
 
     private fun foregroundParse() {
-        val proc = this.agl.languageDefinition.processor
+        val proc = this.agl.languageDefinition?.processor
         if (null != proc) {
             try {
                 val goalRule = this.agl.goalRule
@@ -302,7 +282,7 @@ class AglEditorAce(
     }
 
     private fun tryProcess() {
-        val proc = this.agl.languageDefinition.processor
+        val proc = this.agl.languageDefinition?.processor
         val sppt = this.agl.sppt
         if (null != proc && null != sppt) {
             try {

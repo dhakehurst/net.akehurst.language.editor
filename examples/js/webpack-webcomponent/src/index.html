@@ -7,9 +7,9 @@
 <body>
     <main>
 
-        <agl-editor-ace id='grammarEditor'  workerScript='worker.js'></agl-editor-ace>
+        <agl-editor-ace id='grammarEditor' languageId='net.akehurst.language.agl.AglGrammar' workerScript='worker.js' sharedWorker></agl-editor-ace>
 
-        <agl-editor-ace id='styleEditor' workerScript='worker.js'></agl-editor-ace>
+        <agl-editor-ace id='styleEditor' languageId='net.akehurst.language.agl.AglStyle' workerScript='worker.js' sharedWorker></agl-editor-ace>
 
         <agl-editor-ace id='sentenceEditor' workerScript='worker.js'></agl-editor-ace>
         

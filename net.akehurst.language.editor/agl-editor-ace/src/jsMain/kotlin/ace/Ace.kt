@@ -162,8 +162,8 @@ external interface AceSessionOptions {
 
 //not actually defined/used by Ace, but used by AglEditorAce
 external interface AceOptions {
-    var editor: AceEditorOptions;
-    var renderer: AceRendererOptions;
-    var mouseHandler: AceMouseHandlerOptions;
-    var session: AceSessionOptions;
+    var editor: AceEditorOptions?
+    var renderer: AceRendererOptions?
+    var mouseHandler: AceMouseHandlerOptions?
+    var session: AceSessionOptions?
 }

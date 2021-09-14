@@ -18,12 +18,12 @@ package net.akehurst.language.editor.api
 
 interface AglEditor {
 
-    val editorId:String
+    val editorId: String
 
     /**
      * the language identity for this editor
      */
-    var languageId:String
+    var languageId: String
 
     /**
      * The name of a rule in the grammar from which to start the parse.
@@ -32,9 +32,15 @@ interface AglEditor {
     var goalRuleName: String?
 
     /**
+     * Set style specific to this editor (rather than using the one from LanguageDefinition associated with the languageId).
+     * If null, then the style from the LanguageDefinition is used. (default is null)
+     */
+    var editorSpecificStyleStr: String?
+
+    /**
      * the content of the editor
      */
-    var text:String
+    var text: String
 
     fun onParse(handler: (ParseEvent) -> Unit)
 
@@ -48,29 +54,33 @@ interface AglEditor {
 }
 
 
-sealed class ParseEvent(val message: String ) {
-    open val success:Boolean = false
-    open val tree:Any?=null
+sealed class ParseEvent(val message: String) {
+    open val success: Boolean = false
+    open val tree: Any? = null
 }
-class ParseEventStart(): ParseEvent("Parse started")
+
+class ParseEventStart() : ParseEvent("Parse started")
 class ParseEventSuccess(
-    override val tree:Any
+    override val tree: Any
 ) : ParseEvent("Parse success") {
     override val success = true
 }
+
 class ParseEventFailure(
     message: String,
-    override val tree:Any?
-): ParseEvent(message)
+    override val tree: Any?
+) : ParseEvent(message)
 
 sealed class ProcessEvent(
     val message: String
 )
+
 class ProcessEventStart() : ProcessEvent("Process started")
 class ProcessEventSuccess(
-    val tree:Any
+    val tree: Any
 ) : ProcessEvent("Process success")
+
 class ProcessEventFailure(
-        message: String,
-    val tree:Any?
+    message: String,
+    val tree: Any?
 ) : ProcessEvent(message)

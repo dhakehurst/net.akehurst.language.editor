@@ -15,8 +15,6 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.ParseEvent
 import net.akehurst.language.editor.api.ProcessEvent
@@ -28,13 +26,26 @@ abstract class AglEditorAbstract(
 
     protected val agl = AglComponents(languageId)
 
+    init {
+        this.agl.languageDefinition.grammarObservers.add { _,_ -> this.updateGrammar() }
+        this.agl.languageDefinition.styleObservers.add { _,_ -> this.updateStyle() }
+    }
+
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
     private val _onProcessHandler = mutableListOf<(ProcessEvent) -> Unit>()
+    private var _editorSpecificStyleStr: String? = null
 
     override var goalRuleName: String?
         get() = this.agl.goalRule
         set(value) {
             this.agl.goalRule = value
+        }
+
+    override var editorSpecificStyleStr: String?
+        get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.style
+        set(value) {
+            this._editorSpecificStyleStr = value
+            this.updateStyle()
         }
 
     override fun onParse(handler: (ParseEvent) -> Unit) {

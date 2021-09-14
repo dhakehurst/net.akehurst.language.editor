@@ -7,11 +7,11 @@ const AglEditorAce = agl_editor_ace.net.akehurst.language.editor.ace.AglEditorAc
 class AglEditorAceWebComponent extends HTMLElement {
 
   static get observedAttributes() {
-    return ['languageId', 'editorId', 'options', 'workerScript', 'grammarStr', 'styleStr'];
+    return ['languageId', 'editorId', 'options', 'workerScript', 'sharedWorker', 'grammarStr', 'styleStr'];
   }
 
   aglEditor = null;
-  options = "{}";
+  options = {};
   _initialised = false;
 
   constructor() {
@@ -25,7 +25,7 @@ class AglEditorAceWebComponent extends HTMLElement {
       if (!this.editorId) this.editorId = this.getAttribute('id');
       if (!this.languageId) this.languageId = this.editorId;
       if (!this.workerScript) this.workerScript = 'net.akehurst.language.editor-agl-editor-worker.js';
-      if (this.hasAttribute('options')) this.options = this.getAttribute('options');
+      if (this.hasAttribute('options')) this.options = JSON.parse(this.getAttribute('options'));
       if (this.hasAttribute('grammarStr')) this.grammarStr = this.getAttribute('grammarStr');
       if (this.hasAttribute('styleStr')) this.styleStr = this.getAttribute('styleStr');
       const shadowRoot = this.attachShadow({mode: 'open'});
@@ -49,8 +49,7 @@ class AglEditorAceWebComponent extends HTMLElement {
       const element = document.createElement('div');
       element.id = 'editor_div';
       shadowRoot.appendChild(element);
-      const options = JSON.parse(this.options);
-      this.aglEditor = new AglEditorAce(element, this.languageId, this.editorId, options, this.workerScript);
+      this.aglEditor = new AglEditorAce(element, this.languageId, this.editorId, this.options, this.workerScript, this.sharedWorker);
       this.aglEditor.aceEditor.renderer.attachToShadowRoot();
       this._initialised = true;
     }
@@ -74,6 +73,10 @@ class AglEditorAceWebComponent extends HTMLElement {
 
   get workerScript() { return this.getAttribute('workerScript'); }
   set workerScript(newValue) { if(newValue) this.setAttribute('workerScript', newValue); else this.removeAttribute('workerScript'); }
+
+  get sharedWorker() { return this.hasAttribute('sharedWorker'); }
+  set sharedWorker(newValue) { if(newValue) this.setAttribute('sharedWorker', newValue); else this.removeAttribute('sharedWorker'); }
+
 
   get text() { return this.aglEditor.text; }
   set text(newValue) {

@@ -4,11 +4,29 @@ import 'net.akehurst.language.editor-agl-editor-ace/webcomponent.js'
 
 import './index.css'
 import agl from 'net.akehurst.language.editor-agl-editor-ace/net.akehurst.language.editor-agl-editor-ace.js'
+const Agl = agl.net.akehurst.language.agl.processor.Agl;
 const AglLanguage = agl.net.akehurst.language.api.processor.AglLanguage;
 const AglEditorAce = agl.net.akehurst.language.editor.ace.AglEditorAce;
 const ParseEventStart = agl.net.akehurst.language.editor.api.ParseEventStart;
 const ParseEventSuccess = agl.net.akehurst.language.editor.api.ParseEventSuccess;
 const ParseEventFailure = agl.net.akehurst.language.editor.api.ParseEventFailure;
+
+const sentenceEditorId = 'sentenceEditor';
+const sentenceEditor = document.getElementById(sentenceEditorId);
+const grammarEditor = document.getElementById("grammarEditor");
+const styleEditor = document.getElementById("styleEditor");
+const result = document.getElementById("result");
+
+// create placeholder language definition, so that editor can reference it
+const userLang = Agl.registry.register(
+    sentenceEditorId,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+);
 
 
 function toString(node, indent) {
@@ -29,26 +47,14 @@ function toString(node, indent) {
     return str;
 }
 
-const grammarEditor = document.getElementById("grammarEditor");
-const sentenceEditor = document.getElementById("sentenceEditor");
-//const sentenceEl = document.getElementById("sentenceEditor");
-//const sentenceEditor = new AglEditorAce(sentenceEl);
-const result = document.getElementById("result");
 
-grammarEditor.options = `{
-    enableBasicAutocompletion: true,
-    enableSnippets: true,
-    enableLiveAutocompletion: false
-}`;
-grammarEditor.grammarStr = '@Agl.grammarProcessor@';
-grammarEditor.styleStr = AglLanguage.grammar.style;
-grammarEditor.onParse( (e) =>{
-    if (e instanceof ParseEventFailure) {
-        sentenceEditor.grammarStr = null;
-    } else if (e instanceof ParseEventSuccess) {
-        sentenceEditor.grammarStr = grammarEditor.text;
+grammarEditor.options = {
+    editor: {
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: false
     }
-});
+};
 grammarEditor.text = `namespace test
 grammar Test {
     skip WS = "\\s+" ;
@@ -56,34 +62,45 @@ grammar Test {
 }
 `;
 
-
-styleEditor.options = `{
-    enableBasicAutocompletion: true,
-    enableSnippets: true,
-    enableLiveAutocompletion: false
-}`;
-styleEditor.grammarStr = '@Agl.styleProcessor@';
-styleEditor.styleStr = AglLanguage.style.style;
-styleEditor.onParse( (e) =>{
-    if (e instanceof ParseEventFailure) {
-        sentenceEditor.styleStr = null;
-    } else if (e instanceof ParseEventSuccess) {
-        sentenceEditor.styleStr = styleEditor.text;
+styleEditor.options = {
+    editor: {
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: false
     }
-});
+};
 styleEditor.text = `$keyword {
     foreground: blue;
     font-style: bold;
 }`;
 
+grammarEditor.onParse( (e) =>{
+    if (e instanceof ParseEventFailure) {
+        sentenceEditor.grammarStr = null;
+    } else if (e instanceof ParseEventSuccess) {
+        userLang.grammar = grammarEditor.text;
+    }
+});
 
-sentenceEditor.options = `{
-    enableBasicAutocompletion: true,
-    enableSnippets: true,
-    enableLiveAutocompletion: false
-}`;
-sentenceEditor.grammarStr = grammarEditor.text;
-sentenceEditor.styleStr = styleEditor.text;
+styleEditor.onParse( (e) =>{
+    if (e instanceof ParseEventFailure) {
+        sentenceEditor.styleStr = null;
+    } else if (e instanceof ParseEventSuccess) {
+        userLang.style = styleEditor.text;
+    }
+});
+
+
+
+
+sentenceEditor.options = {
+    editor: {
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: false
+    }
+};
+
 sentenceEditor.onParse( (e) =>{
     if (e instanceof ParseEventFailure) {
         result.value = e.message;

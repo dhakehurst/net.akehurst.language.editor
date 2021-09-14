@@ -44,7 +44,8 @@ class AglEditorMonaco(
     editorId: String,
     languageId: String,
     options: dynamic, //TODO: types for this
-    workerScriptName: String
+    workerScriptName: String,
+    sharedWorker: Boolean
 ) : AglEditorAbstract(languageId, editorId) {
 
     companion object {
@@ -64,21 +65,6 @@ class AglEditorMonaco(
         // hence we create a global theme and modify it as needed.
         private val aglGlobalTheme = "agl-theme"
         val allAglGlobalThemeRules = mutableMapOf<String, ITokenThemeRule>()
-
-        fun initialise(document: Document, workerScriptName: String, tag: String = "agl-editor"): Map<String, AglEditorMonaco> {
-            val map = mutableMapOf<String, AglEditorMonaco>()
-            document.querySelectorAll(tag).asList().forEach { el ->
-                val element = el as Element
-                //delete any current children of element
-                while (element.childElementCount != 0) {
-                    element.removeChild(element.firstChild!!)
-                }
-                val id = element.getAttribute("id")!!
-                val editor = AglEditorMonaco(element, id, id, null, workerScriptName)
-                map[id] = editor
-            }
-            return map
-        }
     }
 
     lateinit var monacoEditor: IStandaloneCodeEditor
@@ -100,7 +86,7 @@ class AglEditorMonaco(
             }
         }
 
-    var aglWorker = AglWorkerClient(workerScriptName)
+    var aglWorker = AglWorkerClient(workerScriptName,sharedWorker)
     lateinit var workerTokenizer: AglTokenizerByWorkerMonaco
     var parseTimeout: dynamic = null
 
