@@ -36,8 +36,8 @@ class AglSharedWorker: AglWorkerAbstract() {
     private var _selfShared: dynamic? = null
 
     init {
-        start()
         this._selfShared = self // as SharedWorkerGlobalScope
+        start()
     }
 
     fun start() {

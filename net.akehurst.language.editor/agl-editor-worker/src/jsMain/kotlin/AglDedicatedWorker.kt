@@ -37,8 +37,8 @@ class AglDedicatedWorker : AglWorkerAbstract() {
     private var _selfDedicated: dynamic? = null
 
     init {
-        start()
         _selfDedicated = self //as DedicatedWorkerGlobalScope
+        start()
     }
 
     fun start() {

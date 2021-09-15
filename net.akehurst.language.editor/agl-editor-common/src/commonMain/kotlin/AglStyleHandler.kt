@@ -18,11 +18,13 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.api.sppt.SPPTLeaf
 
 class AglStyleHandler(
-        val languageId:String,
-        val cssClassPrefixStart:String = "agl"
+    languageId:String,
+    cssClassPrefixStart:String = "agl"
 ) {
+    val cssLanguageId = languageId.replace(Regex("[^a-z0-9A-Z_-]"),"_")
+
     private var nextCssClassNum = 1
-    private val cssClassPrefix:String = "${cssClassPrefixStart}-${languageId}-"
+    private val cssClassPrefix:String = "${cssClassPrefixStart}-${cssLanguageId}-"
     private val tokenToClassMap = mutableMapOf<String, String>()
 
     private fun mapTokenTypeToClass(tokenType: String): String? {

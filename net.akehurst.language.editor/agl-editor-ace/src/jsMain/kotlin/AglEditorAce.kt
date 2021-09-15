@@ -137,7 +137,7 @@ class AglEditorAce(
     }
 
     override fun updateStyle() {
-        val cssLangId = this.languageId.replace("[^a-z0-9A-Z_-]","_")
+        val cssLangId = this.agl.styleHandler.cssLanguageId
         val aglStyleClass = "agl_${cssLangId}"
         val str = this.editorSpecificStyleStr
         if (null != str && str.isNotEmpty()) {
@@ -171,14 +171,14 @@ class AglEditorAce(
             }
             module["\$id"] = aglStyleClass
 
-            // remove the current style element for 'languageId' (which is used as the theme name) from the container
+            // remove the current style element for 'aglStyleClass' (which is used as the theme name) from the container
             // else the theme css is not reapplied
             val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#$aglStyleClass")
             curStyle?.remove()
 
             // the use of an object instead of a string is undocumented but seems to work
             this.aceEditor.setOption("theme", module); //not sure but maybe this is better than setting on renderer direct
-            this.aglWorker.setStyle(cssLangId, editorId, str)
+            this.aglWorker.setStyle(this.languageId, editorId, str)
 
             // need to update because token style types may have changed, not just their attributes
             this.update()
@@ -279,7 +279,7 @@ class AglEditorAce(
         }
     }
 
-    private fun tryProcess() {
+    private fun foregroundProcess() {
         val proc = this.agl.languageDefinition?.processor
         val sppt = this.agl.sppt
         if (null != proc && null != sppt) {
