@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2021 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ * Copyright (C) 2020 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,31 +29,30 @@ import net.akehurst.language.editor.common.*
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.SharedWorkerGlobalScope
-import org.w3c.dom.WorkerGlobalScope
 
-class AglSharedWorker: AglWorkerAbstract() {
 
-    private var _selfShared: dynamic? = null
+
+class AglDedicatedWorker : AglWorkerAbstract() {
+
+    private var _selfDedicated: dynamic? = null
 
     init {
         start()
-        this._selfShared = self // as SharedWorkerGlobalScope
+        _selfDedicated = self //as DedicatedWorkerGlobalScope
     }
 
     fun start() {
-        _selfShared?.onconnect = { e:MessageEvent ->
-            val port = e.ports[0]
-            port.onmessage = { it ->
-                val msg: dynamic = it.data
-                when (msg.action) {
-                    "MessageProcessorCreate" -> this.createProcessor(port, msg.languageId, msg.editorId, msg.grammarStr)
-                    "MessageParserInterruptRequest" -> this.interrupt(port, msg.languageId, msg.editorId, msg.reason)
-                    "MessageParseRequest" -> this.parse(port, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
-                    "MessageSetStyle" -> this.setStyle(port, msg.languageId, msg.editorId, msg.css)
-                }
+        _selfDedicated?.onmessage = {e: MessageEvent ->
+            val msg: dynamic = e.data
+            when (msg.action) {
+                "MessageProcessorCreate" -> this.createProcessor(_selfDedicated, msg.languageId, msg.editorId, msg.grammarStr)
+                "MessageParserInterruptRequest" -> this.interrupt(_selfDedicated, msg.languageId, msg.editorId, msg.reason)
+                "MessageParseRequest" -> this.parse(_selfDedicated, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
+                "MessageSetStyle" -> this.setStyle(_selfDedicated, msg.languageId, msg.editorId, msg.css)
             }
-            true //onconnect insists on having a return value!
         }
     }
+
+
 
 }

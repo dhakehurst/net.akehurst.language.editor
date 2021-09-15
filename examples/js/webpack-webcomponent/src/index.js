@@ -17,6 +17,10 @@ const grammarEditor = document.getElementById("grammarEditor");
 const styleEditor = document.getElementById("styleEditor");
 const result = document.getElementById("result");
 
+// kotlin IR/JS bug, names not correct!
+grammarEditor.languageId = Agl.registry.agl._grammarLanguageIdentity;
+styleEditor.languageId = Agl.registry.agl._styleLanguageIdentity;
+
 // create placeholder language definition, so that editor can reference it
 const userLang = Agl.registry.register(
     sentenceEditorId,

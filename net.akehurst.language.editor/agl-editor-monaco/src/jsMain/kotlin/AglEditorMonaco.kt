@@ -170,7 +170,7 @@ class AglEditorMonaco(
         val str = this.agl.languageDefinition.style
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class, str)
+            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process(List::class, str)
             var mappedCss = ""
             rules.forEach { rule ->
                 val cssClass = '.' + this.languageId + ' ' + ".monaco_" + this.agl.styleHandler.mapClass(rule.selector);

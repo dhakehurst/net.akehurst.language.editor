@@ -137,11 +137,12 @@ class AglEditorAce(
     }
 
     override fun updateStyle() {
-        val aglStyleClass = "agl_${this.languageId}"
+        val cssLangId = this.languageId.replace("[^a-z0-9A-Z_-]","_")
+        val aglStyleClass = "agl_${cssLangId}"
         val str = this.editorSpecificStyleStr
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule> = Agl.styleProcessor.process(List::class, str)
+            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process(List::class, str)
             var mappedCss = ""
             rules.forEach { rule ->
                 val ruleClass = this.agl.styleHandler.mapClass(rule.selector)
@@ -177,7 +178,7 @@ class AglEditorAce(
 
             // the use of an object instead of a string is undocumented but seems to work
             this.aceEditor.setOption("theme", module); //not sure but maybe this is better than setting on renderer direct
-            this.aglWorker.setStyle(languageId, editorId, str)
+            this.aglWorker.setStyle(cssLangId, editorId, str)
 
             // need to update because token style types may have changed, not just their attributes
             this.update()
@@ -195,10 +196,7 @@ class AglEditorAce(
 
     override fun updateGrammar() {
         this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageId, editorId, this.agl.languageDefinition?.grammar)
-
-        TODO("need to indicate to the worker that it can use built in processors!")
-        //maybe create placeholder LanguageDefinition in worker, and  use the lang def id!
+        this.aglWorker.createProcessor(languageId, editorId, this.agl.languageDefinition.grammar)
 
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
