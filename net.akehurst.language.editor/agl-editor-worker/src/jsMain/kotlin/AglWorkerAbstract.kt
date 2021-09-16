@@ -3,7 +3,6 @@ package net.akehurst.language.editor.worker
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.parser.ParseFailedException
 import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.LanguageProcessor
 import net.akehurst.language.api.sppt.SPPTBranch
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.api.sppt.SPPTNode
@@ -14,8 +13,8 @@ import net.akehurst.language.editor.common.*
 
 abstract class AglWorkerAbstract {
 
-    private var _languageDefinition: MutableMap<String,LanguageDefinition> = mutableMapOf()
-    private var _styleHandler: MutableMap<String,AglStyleHandler> = mutableMapOf()
+    private var _languageDefinition: MutableMap<String, LanguageDefinition> = mutableMapOf()
+    private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
 
     private fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
         port.postMessage(msg.toObjectJS(), transferables)
@@ -28,7 +27,7 @@ abstract class AglWorkerAbstract {
         } else {
             try {
                 val ld = Agl.registry.findOrPlaceholder(languageId)
-                if(ld.grammarIsModifiable) {
+                if (ld.grammarIsModifiable) {
                     ld.grammar = grammarStr
                 }
                 _languageDefinition[languageId] = ld
@@ -40,10 +39,7 @@ abstract class AglWorkerAbstract {
     }
 
     protected fun interrupt(port: dynamic, languageId: String, editorId: String, reason: String) {
-        val proc = this._languageDefinition[languageId]?.processor
-        if (proc != null) {
-            proc.interrupt(reason)
-        }
+        _languageDefinition[languageId]?.processor?.interrupt(reason)
     }
 
     protected fun setStyle(port: dynamic, languageId: String, editorId: String, css: String) {
@@ -63,7 +59,8 @@ abstract class AglWorkerAbstract {
     protected fun parse(port: dynamic, languageId: String, editorId: String, goalRuleName: String?, sentence: String) {
         try {
             sendMessage(port, MessageParseStart(languageId, editorId))
-            val proc = this._languageDefinition[languageId]?.processor ?: throw RuntimeException("Processor for $languageId not found")
+            val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '$languageId' not found, was it created corrrectly?")
+            val proc = ld.processor ?: error("Processor for '$languageId' not found, is the grammar correctly set ?")
             val sppt = if (null == goalRuleName) proc.parse(sentence) else proc.parseForGoal(goalRuleName, sentence)
             val tree = createParseTree(sppt.root)
             sendMessage(port, MessageParseSuccess(languageId, editorId, tree))
@@ -81,7 +78,8 @@ abstract class AglWorkerAbstract {
     private fun process(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
         try {
             sendMessage(port, MessageProcessStart(languageId, editorId))
-            val proc = this._languageDefinition[languageId]?.processor ?: throw RuntimeException("Processor for $languageId not found")
+            val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '$languageId' not found, was it created corrrectly?")
+            val proc = ld.processor ?: error("Processor for '$languageId' not found, is the grammar correctly set ?")
             val asm = proc.processFromSPPT<Any>(Any::class, sppt)
             val asmTree = createAsmTree(asm) ?: "No Asm"
             sendMessage(port, MessageProcessSuccess(languageId, editorId, asmTree))
@@ -94,14 +92,18 @@ abstract class AglWorkerAbstract {
         if (null == sppt) {
             //nothing
         } else {
-            val style = this._styleHandler[languageId] ?: throw RuntimeException("StyleHandler for $languageId not found") //TODO: send Error msg not exception
-            val lineTokens = sppt.tokensByLineAll().mapIndexed { lineNum, leaves ->
-                style.transformToTokens(leaves)
+            try {
+                val style = this._styleHandler[languageId] ?: error("StyleHandler for $languageId not found") //TODO: send Error msg not exception
+                val lineTokens = sppt.tokensByLineAll().mapIndexed { lineNum, leaves ->
+                    style.transformToTokens(leaves)
+                }
+                val lt = lineTokens.map {
+                    it.toTypedArray()
+                }.toTypedArray()
+                sendMessage(port, MessageLineTokens(languageId, editorId, true, "Success", lt))
+            } catch (t: Throwable) {
+                sendMessage(port, MessageLineTokens(languageId, editorId, false, t.message!!, emptyArray()))
             }
-            val lt = lineTokens.map {
-                it.toTypedArray()
-            }.toTypedArray()
-            sendMessage(port, MessageLineTokens(languageId, editorId, lt))
         }
     }
 

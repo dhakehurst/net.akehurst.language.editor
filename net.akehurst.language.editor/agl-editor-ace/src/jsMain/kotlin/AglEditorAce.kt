@@ -33,7 +33,6 @@ import net.akehurst.language.editor.common.AglWorkerClient
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import org.w3c.dom.*
-import kotlin.collections.set
 import kotlin.js.Date
 
 class AglErrorAnnotation(
@@ -45,7 +44,7 @@ class AglErrorAnnotation(
 ) {
     val row = line - 1
 }
-
+//FIXME: some inefficiency due to some updates being triggered multiple times
 class AglEditorAce(
     val element: Element,
     languageId: String,
@@ -96,7 +95,7 @@ class AglEditorAce(
         this.aceEditor.getSession().bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer, this.aceEditor)
         this.aceEditor.getSession().bgTokenizer.setDocument(this.aceEditor.getSession().getDocument())
         this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
-        this.aceEditor.completers = arrayOf(AglCodeCompleter(this.languageId, this.agl))
+        this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl))
 
         this.aceEditor.on("change") { event -> this.update() }
 
@@ -111,9 +110,13 @@ class AglEditorAce(
         this.aglWorker.parseSuccess = this::parseSuccess
         this.aglWorker.parseFailure = this::parseFailure
         this.aglWorker.lineTokens = {
-            console.asDynamic().debug("Debug: new line tokens from successful parse of ${editorId}")
-            this.workerTokenizer.receiveTokens(it)
-            this.resetTokenization()
+            if(it.success) {
+                console.asDynamic().debug("Debug: new line tokens from successful parse of ${editorId}")
+                this.workerTokenizer.receiveTokens(it.lineTokens)
+                this.resetTokenization()
+            } else {
+                console.error("LineTokens - ${it.message}")
+            }
         }
         this.aglWorker.processStart = { this.notifyProcess(ProcessEventStart()) }
         this.aglWorker.processSuccess = { tree ->
@@ -123,8 +126,8 @@ class AglEditorAce(
             this.notifyProcess(ProcessEventFailure(message, "No Asm"))
         }
 
-        this.updateStyle()
         this.updateGrammar()
+        this.updateStyle()
     }
 
     override fun finalize() {
@@ -178,10 +181,11 @@ class AglEditorAce(
 
             // the use of an object instead of a string is undocumented but seems to work
             this.aceEditor.setOption("theme", module); //not sure but maybe this is better than setting on renderer direct
-            this.aglWorker.setStyle(this.languageId, editorId, str)
+            this.aglWorker.setStyle(this.languageIdentity, editorId, str)
 
             // need to update because token style types may have changed, not just their attributes
             this.update()
+            this.resetTokenization()
         }
     }
 
@@ -196,7 +200,7 @@ class AglEditorAce(
 
     override fun updateGrammar() {
         this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageId, editorId, this.agl.languageDefinition.grammar)
+        this.aglWorker.createProcessor(this.languageIdentity, editorId, this.agl.languageDefinition.grammar)
 
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
@@ -255,16 +259,16 @@ class AglEditorAce(
 
     private fun doBackgroundTryParse() {
         this.clearErrorMarkers()
-        this.aglWorker.interrupt(languageId, editorId)
+        this.aglWorker.interrupt(this.languageIdentity, editorId)
         this.notifyParse(ParseEventStart())
-        this.aglWorker.tryParse(languageId, editorId, this.agl.goalRule, this.text)
+        this.aglWorker.tryParse(this.languageIdentity, editorId, this.agl.languageDefinition.defaultGoalRule, this.text)
     }
 
     private fun foregroundParse() {
         val proc = this.agl.languageDefinition?.processor
         if (null != proc) {
             try {
-                val goalRule = this.agl.goalRule
+                val goalRule = this.agl.languageDefinition.defaultGoalRule
                 val sppt = if (null == goalRule) {
                     proc.parse(this.text)
                 } else {
@@ -274,7 +278,7 @@ class AglEditorAce(
             } catch (e: ParseFailedException) {
                 this.parseFailure(e.message!!, e.location, e.expected.toTypedArray(), e.longestMatch)
             } catch (t: Throwable) {
-                console.error("Error parsing text in " + this.editorId + " for language " + this.languageId, t.message);
+                console.error("Error parsing text in " + this.editorId + " for language " + this.languageIdentity, t.message);
             }
         }
     }
@@ -292,7 +296,7 @@ class AglEditorAce(
                 val event = ProcessEventFailure(e.message!!, "No Asm")
                 this.notifyProcess(event)
             } catch (t: Throwable) {
-                console.error("Error processing parse result in " + this.editorId + " for language " + this.languageId, t.message)
+                console.error("Error processing parse result in " + this.editorId + " for language " + this.languageIdentity, t.message)
             }
         }
     }

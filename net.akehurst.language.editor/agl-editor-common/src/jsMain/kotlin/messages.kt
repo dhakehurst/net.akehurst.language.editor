@@ -143,12 +143,25 @@ class MessageParserInterruptRequest(
 class MessageLineTokens(
     val languageId: String,
     val editorId: String,
-    val lineTokens: Array<Array<AglToken>>
+    val success: Boolean,
+    val message:String,
+    val lineTokens: Array<Array<AglToken>>,
 ) : AglWorkerMessage("MessageLineTokens") {
+    companion object{
+        fun fromJsObject(jsObj:dynamic):MessageLineTokens =MessageLineTokens(
+            jsObj["languageId"],
+            jsObj["editorId"],
+            jsObj["success"],
+            jsObj["message"],
+            jsObj["lineTokens"]
+        )
+    }
     override fun toObjectJS(): dynamic = objectJS {
         this["action"] = action
         this["languageId"]=languageId
         this["editorId"]=editorId
+        this["success"]=success
+        this["message"]=message
         this["lineTokens"]=lineTokens
     }
 }
@@ -220,5 +233,21 @@ class MessageProcessFailure(
         this["languageId"]=languageId
         this["editorId"]=editorId
         this["message"]=message
+    }
+}
+
+class MessageCodeCompleteRequest(
+    val languageId: String,
+    val editorId: String,
+    val goalRuleName:String?,
+    val text: String,
+    val position:Int
+) : AglWorkerMessage("MessageCodeCompleteRequest") {
+    override fun toObjectJS(): dynamic = objectJS {
+        this["action"] = action
+        this["languageId"]=languageId
+        this["goalRuleName"]=goalRuleName
+        this["text"]=text
+        this["position"]=position
     }
 }

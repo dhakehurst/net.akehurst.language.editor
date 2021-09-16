@@ -5,7 +5,7 @@ import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.objectJS
 
 
-class AglCodeCompleter(
+class AglCodeCompleterByWorker(
         val agl: AglComponents
 ) {
 

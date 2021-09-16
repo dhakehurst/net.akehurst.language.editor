@@ -21,16 +21,8 @@ const result = document.getElementById("result");
 grammarEditor.languageId = Agl.registry.agl._grammarLanguageIdentity;
 styleEditor.languageId = Agl.registry.agl._styleLanguageIdentity;
 
-// create placeholder language definition, so that editor can reference it
-const userLang = Agl.registry.register(
-    sentenceEditorId,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
-);
+// find sentenceEditor language definition, so that editor can reference it
+const userLang = Agl.registry.findOrPlaceholder(sentenceEditorId);
 
 
 function toString(node, indent) {
@@ -80,7 +72,7 @@ styleEditor.text = `$keyword {
 
 grammarEditor.onParse( (e) =>{
     if (e instanceof ParseEventFailure) {
-        sentenceEditor.grammarStr = null;
+        userLang.grammar = null;
     } else if (e instanceof ParseEventSuccess) {
         userLang.grammar = grammarEditor.text;
     }
@@ -88,7 +80,7 @@ grammarEditor.onParse( (e) =>{
 
 styleEditor.onParse( (e) =>{
     if (e instanceof ParseEventFailure) {
-        sentenceEditor.styleStr = null;
+        userLang.style = null;
     } else if (e instanceof ParseEventSuccess) {
         userLang.style = styleEditor.text;
     }
@@ -112,6 +104,8 @@ sentenceEditor.onParse( (e) =>{
         result.value = toString(e.tree, '');
     }
 });
+userLang.grammar = grammarEditor.text
+userLang.style = styleEditor.text
 sentenceEditor.text = 'Hello World!';
 
 

@@ -32,7 +32,7 @@ class AglWorkerClient(
     var parseStart: () -> Unit = {  }
     var parseSuccess: (tree: Any) -> Unit = { _ -> }
     var parseFailure: (message: String, location: InputLocation?, expected: Array<String>, tree: Any?) -> Unit = { _, _, _, _ -> }
-    var lineTokens: (Array<Array<AglToken>>) -> Unit = { _ -> }
+    var lineTokens: (MessageLineTokens) -> Unit = { _ -> }
     var processStart: () -> Unit = {  }
     var processSuccess: (tree: Any) -> Unit = { _ -> }
     var processFailure: (message: String) -> Unit = { _ -> }
@@ -57,7 +57,7 @@ class AglWorkerClient(
                 "MessageParseStart" -> this.parseStart()
                 "MessageParseSuccess" -> this.parseSuccess(msg.tree)
                 "MessageParseFailure" -> this.parseFailure(msg.message, msg.location, msg.expected, msg.tree)
-                "MessageLineTokens" -> this.lineTokens(msg.lineTokens)
+                "MessageLineTokens" -> this.lineTokens(MessageLineTokens.fromJsObject(msg))
                 "MessageProcessStart" -> this.processStart()
                 "MessageProcessSuccess" -> this.processSuccess(msg.asm)
                 "MessageProcessFailure" -> this.processFailure(msg.message)

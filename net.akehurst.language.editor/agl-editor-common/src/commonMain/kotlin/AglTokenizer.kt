@@ -17,19 +17,35 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.LanguageProcessor
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 
-open class AglComponents(
-        val languageId: String
+class AglComponents(
+    languageId: String
 ) {
-    val languageDefinition : LanguageDefinition = Agl.registry.findOrPlaceholder(languageId)
+    private var _languageDefinition: LanguageDefinition = Agl.registry.findOrPlaceholder(languageId)
+    private var _styleHandler = AglStyleHandler(languageId)
 
-    var goalRule: String? = languageDefinition.defaultGoalRule
-    val styleHandler = AglStyleHandler(languageId)
+    val languageDefinition get() = _languageDefinition
+
+    val styleHandler get() = _styleHandler
     var sppt: SharedPackedParseTree? = null
     var asm: Any? = null
+
+    var languageIdentity:String get() = languageDefinition.identity
+    set(value) {
+        val grammarObservers = this._languageDefinition.grammarObservers
+        val styleObservers = this._languageDefinition.styleObservers
+        val formatObservers = this._languageDefinition.formatObservers
+        this._languageDefinition = Agl.registry.findOrPlaceholder(languageIdentity)
+        this._languageDefinition.grammarObservers.addAll(grammarObservers)
+        this._languageDefinition.styleObservers.addAll(styleObservers)
+        this._languageDefinition.formatObservers.addAll(formatObservers)
+
+        this._styleHandler = AglStyleHandler(languageIdentity)
+        this.sppt = null
+        this.asm = null
+    }
 }
 
 class AglLineState(
@@ -97,7 +113,7 @@ class AglTokenizer(
     }
 
     fun getLineTokensByScan(lineText: String, state: AglLineState, row: Int): AglLineState {
-        val proc = this.agl.languageDefinition?.processor
+        val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val text = state.leftOverText + lineText
             val leafs = proc.scan(text);

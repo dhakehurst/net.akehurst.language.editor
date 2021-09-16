@@ -66,7 +66,10 @@ class AglEditorAceWebComponent extends HTMLElement {
   }
 
   get languageId() { return this.getAttribute('languageId'); }
-  set languageId(newValue) { if(newValue) this.setAttribute('languageId', newValue); else this.removeAttribute('languageId'); }
+  set languageId(newValue) {
+    if(newValue) this.setAttribute('languageId', newValue); else this.removeAttribute('languageId');
+    if(null!=this.aglEditor) this.aglEditor.languageIdentity = newValue;
+  }
 
   get editorId() { return this.getAttribute('editorId'); }
   set editorId(newValue) { if(newValue) this.setAttribute('editorId', newValue); else this.removeAttribute('editorId'); }

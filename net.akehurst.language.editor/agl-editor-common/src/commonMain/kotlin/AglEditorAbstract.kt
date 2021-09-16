@@ -15,19 +15,20 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.ParseEvent
 import net.akehurst.language.editor.api.ProcessEvent
 
 abstract class AglEditorAbstract(
-    override var languageId: String,
+    languageId: String,
     override val editorId: String
 ) : AglEditor {
 
     protected val agl = AglComponents(languageId)
 
     init {
-        this.agl.languageDefinition.grammarObservers.add { _,_ -> this.updateGrammar() }
+        this.agl.languageDefinition.grammarObservers.add { _,_ -> this.updateGrammar(); this.updateStyle() }
         this.agl.languageDefinition.styleObservers.add { _,_ -> this.updateStyle() }
     }
 
@@ -35,10 +36,21 @@ abstract class AglEditorAbstract(
     private val _onProcessHandler = mutableListOf<(ProcessEvent) -> Unit>()
     private var _editorSpecificStyleStr: String? = null
 
-    override var goalRuleName: String?
-        get() = this.agl.goalRule
+    override var languageIdentity: String
+        get() = this.agl.languageIdentity
         set(value) {
-            this.agl.goalRule = value
+            this.agl.languageIdentity = value
+            this.updateGrammar()
+            this.updateStyle()
+        }
+
+    override val languageDefinition: LanguageDefinition
+        get() = agl.languageDefinition
+
+    override var goalRuleName: String?
+        get() = this.agl.languageDefinition.defaultGoalRule
+        set(value) {
+            this.agl.languageDefinition.defaultGoalRule = value
         }
 
     override var editorSpecificStyleStr: String?

@@ -16,6 +16,8 @@
 
 package net.akehurst.language.editor.api
 
+import net.akehurst.language.api.processor.LanguageDefinition
+
 interface AglEditor {
 
     val editorId: String
@@ -23,7 +25,12 @@ interface AglEditor {
     /**
      * the language identity for this editor
      */
-    var languageId: String
+    var languageIdentity: String
+
+    /**
+     * The language definition for the editor, found or created using the languageId
+     */
+    val languageDefinition: LanguageDefinition
 
     /**
      * The name of a rule in the grammar from which to start the parse.
