@@ -19,6 +19,8 @@ package net.akehurst.language.editor.monaco
 import ResizeObserver
 import kotlinx.browser.document
 import kotlinx.browser.window
+import kotlinx.dom.addClass
+import kotlinx.dom.removeClass
 import monaco.MarkerSeverity
 import monaco.editor.IMarkerData
 import monaco.editor.IStandaloneCodeEditor
@@ -30,10 +32,7 @@ import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.AglEditorAbstract
-import net.akehurst.language.editor.common.AglWorkerClient
-import net.akehurst.language.editor.common.objectJS
-import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.editor.common.*
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -168,6 +167,21 @@ class AglEditorMonaco(
         //this.aglWorker.worker.terminate()
     }
 
+    override fun updateLanguage(oldId: String?) {
+        if (null!=oldId) {
+            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
+            this.element.removeClass(oldAglStyleClass)
+            this.element.addClass(this.agl.styleHandler.aglStyleClass)
+        }
+    }
+
+    override fun updateGrammar() {
+        this.clearErrorMarkers()
+        this.aglWorker.createProcessor(languageIdentity, editorId, this.agl.languageDefinition.grammar)
+        this.workerTokenizer.reset()
+        this.resetTokenization() //new processor so find new tokens, first by scan
+    }
+
     override fun updateStyle() {
         val str = this.agl.languageDefinition.style
         if (null != str && str.isNotEmpty()) {
@@ -210,13 +224,6 @@ class AglEditorMonaco(
             // need to update because token style types may have changed, not just their attributes
             this.update()
         }
-    }
-
-    override fun updateGrammar() {
-        this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageIdentity, editorId, this.agl.languageDefinition.grammar)
-        this.workerTokenizer.reset()
-        this.resetTokenization() //new processor so find new tokens, first by scan
     }
 
     private fun update() {
@@ -272,7 +279,7 @@ class AglEditorMonaco(
     fun doBackgroundTryParse() {
         this.clearErrorMarkers()
         this.aglWorker.interrupt(languageIdentity, editorId)
-        this.aglWorker.tryParse(languageIdentity, editorId, this.agl.languageDefinition.defaultGoalRule, this.text)
+        this.aglWorker.tryParse(languageIdentity, editorId, this.agl.goalRule, this.text)
     }
 
     private fun tryParse() {
@@ -280,7 +287,7 @@ class AglEditorMonaco(
         if (null != proc) {
             try {
 
-                val goalRule = this.agl.languageDefinition.defaultGoalRule
+                val goalRule = this.agl.goalRule
                 val sppt = if (null == goalRule) {
                     proc.parse(this.text)
                 } else {

@@ -50,7 +50,7 @@ class AglCompletionProviderMonaco(
     private fun getCompletionItems(model: ITextModel, offset: Int): List<CompletionItem> {
         val text = model.getValue()
         val proc = this.agl.languageDefinition.processor
-        val goalRule = this.agl.languageDefinition.defaultGoalRule
+        val goalRule = this.agl.goalRule
         return if (null == proc) {
             emptyList()
         } else {

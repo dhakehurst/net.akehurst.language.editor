@@ -27,6 +27,7 @@ class AglComponents(
     private var _styleHandler = AglStyleHandler(languageId)
 
     val languageDefinition get() = _languageDefinition
+    var goalRule:String? = languageDefinition.defaultGoalRule
 
     val styleHandler get() = _styleHandler
     var sppt: SharedPackedParseTree? = null

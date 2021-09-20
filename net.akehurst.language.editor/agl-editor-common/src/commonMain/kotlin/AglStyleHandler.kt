@@ -18,13 +18,22 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.api.sppt.SPPTLeaf
 
 class AglStyleHandler(
-    languageId:String,
-    cssClassPrefixStart:String = "agl"
+    languageId: String,
+    val cssClassPrefixStart: String = "agl"
 ) {
-    val cssLanguageId = languageId.replace(Regex("[^a-z0-9A-Z_-]"),"_")
+    companion object {
+        fun languageIdToStyleClass(cssClassPrefixStart:String, languageId: String):String {
+            val cssLangId= languageId.replace(Regex("[^a-z0-9A-Z_-]"), "_")
+            return "${cssClassPrefixStart}_${cssLangId}"
+        }
+    }
+
+    // AglStyleHandler is recreated if languageId changes for the editor
+    val cssLanguageId = languageId.replace(Regex("[^a-z0-9A-Z_-]"), "_")
+    val aglStyleClass = languageIdToStyleClass(cssClassPrefixStart, languageId)
 
     private var nextCssClassNum = 1
-    private val cssClassPrefix:String = "${cssClassPrefixStart}-${cssLanguageId}-"
+    private val cssClassPrefix: String = "${aglStyleClass}-"
     private val tokenToClassMap = mutableMapOf<String, String>()
 
     private fun mapTokenTypeToClass(tokenType: String): String? {
@@ -56,10 +65,10 @@ class AglStyleHandler(
                 beforeEOL = leaf.matchedText.substring(0, eolIndex);
             }
             AglToken(
-                    cssClasses.toSet().toTypedArray(),
-                    beforeEOL,
-                    leaf.location.line, //ace first line is 0
-                    leaf.location.column
+                cssClasses.toSet().toTypedArray(),
+                beforeEOL,
+                leaf.location.line, //ace first line is 0
+                leaf.location.column
             )
         }
     }
@@ -69,7 +78,7 @@ class AglStyleHandler(
         nextCssClassNum = 1
     }
 
-    fun mapClass(aglSelector:String) : String {
+    fun mapClass(aglSelector: String): String {
         var cssClass = this.tokenToClassMap.get(aglSelector)
         if (null == cssClass) {
             cssClass = this.cssClassPrefix + this.nextCssClassNum++

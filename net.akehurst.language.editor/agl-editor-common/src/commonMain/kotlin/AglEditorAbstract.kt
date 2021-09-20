@@ -39,8 +39,9 @@ abstract class AglEditorAbstract(
     override var languageIdentity: String
         get() = this.agl.languageIdentity
         set(value) {
+            val oldId = this.agl.languageIdentity
             this.agl.languageIdentity = value
-            this.updateGrammar()
+            this.updateLanguage(oldId)
             this.updateStyle()
         }
 
@@ -48,9 +49,9 @@ abstract class AglEditorAbstract(
         get() = agl.languageDefinition
 
     override var goalRuleName: String?
-        get() = this.agl.languageDefinition.defaultGoalRule
+        get() = this.agl.goalRule
         set(value) {
-            this.agl.languageDefinition.defaultGoalRule = value
+            this.agl.goalRule = value
         }
 
     override var editorSpecificStyleStr: String?
@@ -80,6 +81,7 @@ abstract class AglEditorAbstract(
         }
     }
 
+    protected abstract fun updateLanguage(oldId: String?)
     protected abstract fun updateGrammar()
     protected abstract fun updateStyle()
 }
