@@ -16,79 +16,80 @@ abstract class AglWorkerAbstract {
     private var _languageDefinition: MutableMap<String, LanguageDefinition> = mutableMapOf()
     private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
 
-    private fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
+    protected fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
         port.postMessage(msg.toObjectJS(), transferables)
     }
 
-    protected fun createProcessor(port: dynamic, languageId: String, editorId: String, grammarStr: String?) {
-        if (null == grammarStr) {
-            this._languageDefinition.remove(languageId)
-            sendMessage(port, MessageProcessorCreateSuccess(languageId, editorId, "reset"))
+    protected fun createProcessor(port: dynamic, message:MessageProcessorCreate) {
+        if (null == message.grammarStr) {
+            this._languageDefinition.remove(message.languageId)
+            sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "reset"))
         } else {
             try {
-                val ld = Agl.registry.findOrPlaceholder(languageId)
+                val ld = Agl.registry.findOrPlaceholder(message.languageId)
                 if (ld.grammarIsModifiable) {
-                    ld.grammar = grammarStr
+                    ld.grammar = message.grammarStr
                 }
-                _languageDefinition[languageId] = ld
-                sendMessage(port, MessageProcessorCreateSuccess(languageId, editorId, "OK"))
+                _languageDefinition[message.languageId] = ld
+                sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "OK"))
             } catch (t: Throwable) {
-                sendMessage(port, MessageProcessorCreateFailure(languageId, editorId, t.message!!))
+                sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, false, t.message!!))
             }
         }
     }
 
-    protected fun interrupt(port: dynamic, languageId: String, editorId: String, reason: String) {
-        _languageDefinition[languageId]?.processor?.interrupt(reason)
+    protected fun interrupt(port: dynamic, message:MessageParserInterruptRequest) {
+        _languageDefinition[message.languageId]?.processor?.interrupt(message.reason)
     }
 
-    protected fun setStyle(port: dynamic, languageId: String, editorId: String, css: String) {
+    protected fun setStyle(port: dynamic, message: MessageSetStyle) {
         try {
-            val style = AglStyleHandler(languageId)
-            this._styleHandler[languageId] = style
-            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process(List::class, css)
+            val style = AglStyleHandler(message.languageId)
+            this._styleHandler[message.languageId] = style
+            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process(List::class, message.css)
             rules.forEach { rule ->
                 style.mapClass(rule.selector)
             }
-            sendMessage(port, MessageSetStyleResult(languageId, editorId, true, "OK"))
+            sendMessage(port, MessageSetStyleResult(message.languageId, message.editorId, message.sessionId, true, "OK"))
         } catch (t: Throwable) {
-            sendMessage(port, MessageSetStyleResult(languageId, editorId, false, t.message!!))
+            sendMessage(port, MessageSetStyleResult(message.languageId, message.editorId, message.sessionId, false, t.message!!))
         }
     }
 
-    protected fun parse(port: dynamic, languageId: String, editorId: String, goalRuleName: String?, sentence: String) {
+    protected fun parse(port: dynamic, message:MessageParseRequest) {
         try {
-            sendMessage(port, MessageParseStart(languageId, editorId))
-            val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '$languageId' not found, was it created corrrectly?")
-            val proc = ld.processor ?: error("Processor for '$languageId' not found, is the grammar correctly set ?")
-            val sppt = if (null == goalRuleName) proc.parse(sentence) else proc.parseForGoal(goalRuleName, sentence)
+            sendMessage(port, MessageParseStart(message.languageId, message.editorId, message.sessionId))
+            val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
+            val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
+            val goal = message.goalRuleName
+            val sppt = if (null == goal) proc.parse(message.text) else proc.parseForGoal(goal, message.text)
             val tree = createParseTree(sppt.root)
-            sendMessage(port, MessageParseSuccess(languageId, editorId, tree))
-            this.sendParseLineTokens(port, languageId, editorId, sppt)
-            this.process(port, languageId, editorId, sppt)
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "OK", tree, null, null))
+            this.sendParseLineTokens(port, message.languageId, message.editorId, message.sessionId, sppt)
+            this.process(port, message.languageId, message.editorId, message.sessionId, sppt)
         } catch (e: ParseFailedException) {
             val sppt = e.longestMatch
             val tree = createParseTree(sppt!!.root)
-            sendMessage(port, MessageParseFailure(languageId, editorId, e.message!!, e.location, e.expected.toTypedArray(), tree))
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, false, e.message!!, tree, e.location, e.expected.toTypedArray()))
         } catch (t: Throwable) {
-            sendMessage(port, MessageParseFailure(languageId, editorId, t.message!!, null, emptyArray(), null))
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, false, t.message!!, null, null, emptyArray()))
         }
     }
 
-    private fun process(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
+    private fun process(port: dynamic, languageId: String, editorId: String, sessionId: String, sppt: SharedPackedParseTree) {
         try {
-            sendMessage(port, MessageProcessStart(languageId, editorId))
+            sendMessage(port, MessageProcessStart(languageId, editorId, sessionId))
             val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '$languageId' not found, was it created corrrectly?")
             val proc = ld.processor ?: error("Processor for '$languageId' not found, is the grammar correctly set ?")
             val asm = proc.processFromSPPT<Any>(Any::class, sppt)
             val asmTree = createAsmTree(asm) ?: "No Asm"
-            sendMessage(port, MessageProcessSuccess(languageId, editorId, asmTree))
+            sendMessage(port, MessageProcessResult(languageId, editorId, sessionId, true, "OK", asmTree))
         } catch (t: Throwable) {
-            sendMessage(port, MessageProcessFailure(languageId, editorId, t.message!!))
+            sendMessage(port, MessageProcessResult(languageId, editorId, sessionId, false, t.message!!, null))
         }
     }
 
-    private fun sendParseLineTokens(port: dynamic, languageId: String, editorId: String, sppt: SharedPackedParseTree) {
+    private fun sendParseLineTokens(port: dynamic, languageId: String, editorId: String, sessionId: String, sppt: SharedPackedParseTree) {
         if (null == sppt) {
             //nothing
         } else {
@@ -100,9 +101,9 @@ abstract class AglWorkerAbstract {
                 val lt = lineTokens.map {
                     it.toTypedArray()
                 }.toTypedArray()
-                sendMessage(port, MessageLineTokens(languageId, editorId, true, "Success", lt))
+                sendMessage(port, MessageLineTokens(languageId, editorId, sessionId, true, "Success", lt))
             } catch (t: Throwable) {
-                sendMessage(port, MessageLineTokens(languageId, editorId, false, t.message!!, emptyArray()))
+                sendMessage(port, MessageLineTokens(languageId, editorId, sessionId, false, t.message!!, emptyArray()))
             }
         }
     }

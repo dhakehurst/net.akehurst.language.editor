@@ -16,20 +16,9 @@
 
 package net.akehurst.language.editor.worker
 
-import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.parser.ParseFailedException
-import net.akehurst.language.api.processor.LanguageProcessor
-import net.akehurst.language.api.sppt.SPPTBranch
-import net.akehurst.language.api.sppt.SPPTLeaf
-import net.akehurst.language.api.sppt.SPPTNode
-import net.akehurst.language.api.sppt.SharedPackedParseTree
-import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
 import net.akehurst.language.editor.common.*
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.MessageEvent
-import org.w3c.dom.SharedWorkerGlobalScope
-
 
 
 class AglDedicatedWorker : AglWorkerAbstract() {
@@ -42,17 +31,32 @@ class AglDedicatedWorker : AglWorkerAbstract() {
     }
 
     fun start() {
-        _selfDedicated?.onmessage = {e: MessageEvent ->
-            val msg: dynamic = e.data
-            when (msg.action) {
-                "MessageProcessorCreate" -> this.createProcessor(_selfDedicated, msg.languageId, msg.editorId, msg.grammarStr)
-                "MessageParserInterruptRequest" -> this.interrupt(_selfDedicated, msg.languageId, msg.editorId, msg.reason)
-                "MessageParseRequest" -> this.parse(_selfDedicated, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
-                "MessageSetStyle" -> this.setStyle(_selfDedicated, msg.languageId, msg.editorId, msg.css)
+        _selfDedicated?.onerror = {
+
+        }
+        _selfDedicated?.onmessage = { ev: MessageEvent ->
+            try {
+                val jsObj = (ev as MessageEvent).data.asDynamic()
+                if (null != jsObj) {
+                    val msg: AglWorkerMessage? = AglWorkerMessage.fromJsObject(jsObj)
+                    if (null == msg) {
+                        (_selfDedicated as DedicatedWorkerGlobalScope).postMessage("Worker cannot handle message: $jsObj")
+                    } else {
+                        when (msg) {
+                            is MessageProcessorCreate -> this.createProcessor(_selfDedicated, msg)
+                            is MessageParserInterruptRequest -> this.interrupt(_selfDedicated, msg)
+                            is MessageParseRequest -> this.parse(_selfDedicated, msg)
+                            is MessageSetStyle -> this.setStyle(_selfDedicated, msg)
+                        }
+                    }
+                } else {
+                    //no data, message not handled
+                }
+            } catch (e: Throwable) {
+                (_selfDedicated as DedicatedWorkerGlobalScope).postMessage("Worker error: ${e.message!!}")
             }
         }
     }
-
 
 
 }

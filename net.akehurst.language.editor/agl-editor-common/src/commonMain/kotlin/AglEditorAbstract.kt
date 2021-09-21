@@ -16,19 +16,16 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.LogLevel
-import net.akehurst.language.editor.api.ParseEvent
-import net.akehurst.language.editor.api.ProcessEvent
+import net.akehurst.language.editor.api.*
 
 abstract class AglEditorAbstract(
     languageId: String,
     override val editorId: String
 ) : AglEditor {
 
-    protected val agl = AglComponents(languageId)
+    override val logger = AglEditorLogger()
 
-    override var logger: ((level: LogLevel, message: String) -> Unit)? = null
+    protected val agl = AglComponents(languageId, editorId, logger)
 
     init {
         this.agl.languageDefinition.grammarObservers.add { _, _ -> this.updateGrammar(); this.updateStyle() }
@@ -68,9 +65,7 @@ abstract class AglEditorAbstract(
         this._onParseHandler.add(handler)
     }
 
-    protected fun log(level: LogLevel, message: String) = this.logger?.also {
-        it.invoke(level, message)
-    }
+    protected fun log(level: LogLevel, message: String) = this.logger.log(level, message)
 
     protected fun notifyParse(event: ParseEvent) {
         this._onParseHandler.forEach {

@@ -16,22 +16,10 @@
 
 package net.akehurst.language.editor.worker
 
-import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.parser.ParseFailedException
-import net.akehurst.language.api.processor.LanguageProcessor
-import net.akehurst.language.api.sppt.SPPTBranch
-import net.akehurst.language.api.sppt.SPPTLeaf
-import net.akehurst.language.api.sppt.SPPTNode
-import net.akehurst.language.api.sppt.SharedPackedParseTree
-import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
 import net.akehurst.language.editor.common.*
-import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.MessageEvent
-import org.w3c.dom.SharedWorkerGlobalScope
-import org.w3c.dom.WorkerGlobalScope
 
-class AglSharedWorker: AglWorkerAbstract() {
+class AglSharedWorker : AglWorkerAbstract() {
 
     private var _selfShared: dynamic? = null
 
@@ -41,15 +29,28 @@ class AglSharedWorker: AglWorkerAbstract() {
     }
 
     fun start() {
-        _selfShared?.onconnect = { e:MessageEvent ->
-            val port = e.ports[0]
+        _selfShared?.onconnect = { ev: MessageEvent ->
+            val port = ev.ports[0]
             port.onmessage = { it ->
-                val msg: dynamic = it.data
-                when (msg.action) {
-                    "MessageProcessorCreate" -> this.createProcessor(port, msg.languageId, msg.editorId, msg.grammarStr)
-                    "MessageParserInterruptRequest" -> this.interrupt(port, msg.languageId, msg.editorId, msg.reason)
-                    "MessageParseRequest" -> this.parse(port, msg.languageId, msg.editorId, msg.goalRuleName, msg.text)
-                    "MessageSetStyle" -> this.setStyle(port, msg.languageId, msg.editorId, msg.css)
+                try {
+                    val jsObj = it.data.asDynamic()
+                    if (null != jsObj) {
+                        val msg: AglWorkerMessage? = AglWorkerMessage.fromJsObject(jsObj)
+                        if (null == msg) {
+                            port.postMessage("Worker cannot handle message: $jsObj")
+                        } else {
+                            when (msg) {
+                                is MessageProcessorCreate -> this.createProcessor(port, msg)
+                                is MessageParserInterruptRequest -> this.interrupt(port, msg)
+                                is MessageParseRequest -> this.parse(port, msg)
+                                is MessageSetStyle -> this.setStyle(port, msg)
+                            }
+                        }
+                    } else {
+                        //no data, message not handled
+                    }
+                } catch (e: Throwable) {
+                    port.postMessage("Worker error: ${e.message!!}")
                 }
             }
             true //onconnect insists on having a return value!

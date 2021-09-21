@@ -19,235 +19,281 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.api.parser.InputLocation
 
 abstract class AglWorkerMessage(
-    val action: String
+    val action: String,
+    val languageId: String,
+    val editorId: String,
+    val sessionId: String
 ) {
-    abstract fun toObjectJS(): dynamic
+    companion object {
+        fun <T : AglWorkerMessage> fromJsObject(jsObj: dynamic): T? {
+            val action = jsObj["action"]
+            val languageId = jsObj["languageId"]
+            val editorId = jsObj["editorId"]
+            val sessionId = jsObj["sessionId"]
+            return when (action) {
+                "MessageProcessorCreate" -> MessageProcessorCreate.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageProcessorCreateResponse" -> MessageProcessorCreateResponse.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageParseRequest" -> MessageParseRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageParseStart" -> MessageParseStart.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageParseResult" -> MessageParseResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageParserInterruptRequest" -> MessageParserInterruptRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageLineTokens" -> MessageLineTokens.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageSetStyle" -> MessageSetStyle.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageSetStyleResult" -> MessageSetStyleResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageProcessStart" -> MessageProcessStart.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageProcessResult" -> MessageProcessResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageCodeCompleteRequest" -> MessageCodeCompleteRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageCodeCompleteResult" -> MessageCodeCompleteResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                else -> null
+            }
+        }
+    }
+
+    open fun toObjectJS(): dynamic = objectJS {
+        this["action"] = action
+        this["languageId"] = languageId
+        this["editorId"] = editorId
+        this["sessionId"] = sessionId
+    }
 }
 
 class MessageProcessorCreate(
-    val languageId: String,
-    val editorId: String,
+    languageId: String, editorId: String, sessionId: String,
     val grammarStr: String?
-) : AglWorkerMessage("MessageProcessorCreate") {
-        override fun toObjectJS(): dynamic = objectJS {
-            this["action"] = action
-            this["languageId"]=languageId
-            this["editorId"]=editorId
-            this["grammarStr"]=grammarStr
-        }
-}
+) : AglWorkerMessage("MessageProcessorCreate", languageId, editorId, sessionId) {
 
-class MessageProcessorCreateSuccess(
-    val languageId: String,
-    val editorId: String,
-    val message: String
-) : AglWorkerMessage("MessageProcessorCreateSuccess") {
-        override fun toObjectJS(): dynamic = objectJS {
-            this["action"] = action
-            this["languageId"]=languageId
-            this["editorId"]=editorId
-            this["message"]=message
-        }
-}
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageProcessorCreate =
+            MessageProcessorCreate(languageId, editorId, sessionId, jsObj["grammarStr"])
+    }
 
-class MessageProcessorCreateFailure(
-    val languageId: String,
-    val editorId: String,
-    val message: String
-) : AglWorkerMessage("MessageProcessorCreateFailure") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["message"]=message
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["grammarStr"] = grammarStr
+        return obj
     }
 }
 
+class MessageProcessorCreateResponse(
+    languageId: String, editorId: String, sessionId: String,
+    val success: Boolean,
+    val message: String
+) : AglWorkerMessage("MessageProcessorCreateResponse", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageProcessorCreateResponse =
+            MessageProcessorCreateResponse(languageId, editorId, sessionId, jsObj["success"], jsObj["message"])
+    }
+
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["success"] = success
+        obj["message"] = message
+        return obj
+    }
+}
 
 class MessageParseRequest(
-    val languageId: String,
-    val editorId: String,
-    val goalRuleName:String?,
+    languageId: String, editorId: String, sessionId: String,
+    val goalRuleName: String?,
     val text: String
-) : AglWorkerMessage("MessageParseRequest") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["goalRuleName"]=goalRuleName
-        this["text"]=text
+) : AglWorkerMessage("MessageParseRequest", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageParseRequest =
+            MessageParseRequest(languageId, editorId, sessionId, jsObj["goalRuleName"], jsObj["text"])
+    }
+
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["goalRuleName"] = goalRuleName
+        obj["text"] = text
+        return obj
     }
 }
-
 
 class MessageParseStart(
-    val languageId: String,
-    val editorId: String
-) : AglWorkerMessage("MessageParseStart") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
+    languageId: String, editorId: String, sessionId: String,
+) : AglWorkerMessage("MessageParseStart", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageParseStart =
+            MessageParseStart(languageId, editorId, sessionId)
     }
+
+    override fun toObjectJS(): dynamic = super.toObjectJS()
 }
 
-
-class MessageParseSuccess(
-    val languageId: String,
-    val editorId: String,
-    val tree: Any
-) : AglWorkerMessage("MessageParseSuccess") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["tree"]=tree
-    }
-}
-
-
-class MessageParseFailure(
-    val languageId: String,
-    val editorId: String,
+class MessageParseResult(
+    languageId: String, editorId: String, sessionId: String,
+    val success: Boolean,
     val message: String,
+    val tree: Any?,
     val location: InputLocation?,
-    val expected: Array<String>,
-    val tree: Any?
-) : AglWorkerMessage("MessageParseFailure") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["message"]=message
-        this["location"]=location
-        this["expected"]=expected
-        this["tree"]=tree
+    val expected: Array<String>?
+) : AglWorkerMessage("MessageParseResult", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageParseResult =
+            MessageParseResult(languageId, editorId, sessionId, jsObj["success"], jsObj["message"], jsObj["tree"], jsObj["location"], jsObj["expected"])
+    }
+
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["success"] = success
+        obj["message"] = message
+        obj["tree"] = tree
+        obj["location"] = location
+        obj["expected"] = expected
+        return obj
     }
 }
-
 
 class MessageParserInterruptRequest(
-    val languageId: String,
-    val editorId: String,
+    languageId: String, editorId: String, sessionId: String,
     val reason: String
-) : AglWorkerMessage("MessageParserInterruptRequest") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["reason"]=reason
+) : AglWorkerMessage("MessageParserInterruptRequest", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageParserInterruptRequest =
+            MessageParserInterruptRequest(languageId, editorId, sessionId, jsObj["reason"])
+    }
+
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["reason"] = reason
+        return obj
     }
 }
-
 
 class MessageLineTokens(
-    val languageId: String,
-    val editorId: String,
+    languageId: String, editorId: String, sessionId: String,
     val success: Boolean,
-    val message:String,
+    val message: String,
     val lineTokens: Array<Array<AglToken>>,
-) : AglWorkerMessage("MessageLineTokens") {
-    companion object{
-        fun fromJsObject(jsObj:dynamic):MessageLineTokens =MessageLineTokens(
-            jsObj["languageId"],
-            jsObj["editorId"],
-            jsObj["success"],
-            jsObj["message"],
-            jsObj["lineTokens"]
-        )
+) : AglWorkerMessage("MessageLineTokens", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageLineTokens =
+            MessageLineTokens(languageId, editorId, sessionId, jsObj["success"], jsObj["message"], jsObj["lineTokens"])
     }
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["success"]=success
-        this["message"]=message
-        this["lineTokens"]=lineTokens
+
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["success"] = success
+        obj["message"] = message
+        obj["lineTokens"] = lineTokens
+        return obj
     }
 }
-
 
 class MessageSetStyle(
-    val languageId: String,
-    val editorId: String,
+    languageId: String, editorId: String, sessionId: String,
     val css: String
-) : AglWorkerMessage("MessageSetStyle") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["css"]=css
+) : AglWorkerMessage("MessageSetStyle", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageSetStyle =
+            MessageSetStyle(languageId, editorId, sessionId, jsObj["css"])
+    }
+
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["css"] = css
+        return obj
     }
 }
-
 
 class MessageSetStyleResult(
-    val languageId: String,
-    val editorId: String,
+    languageId: String, editorId: String, sessionId: String,
     val success: Boolean,
     val message: String
-) : AglWorkerMessage("MessageSetStyleResult") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["success"]=success
-        this["message"]=message
+) : AglWorkerMessage("MessageSetStyleResult", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageSetStyleResult =
+            MessageSetStyleResult(languageId, editorId, sessionId, jsObj["success"], jsObj["message"])
+    }
+
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["success"] = success
+        obj["message"] = message
+        return obj
     }
 }
-
 
 class MessageProcessStart(
-    val languageId: String,
-    val editorId: String
-) : AglWorkerMessage("MessageProcessStart") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
+    languageId: String, editorId: String, sessionId: String,
+) : AglWorkerMessage("MessageProcessStart", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageProcessStart =
+            MessageProcessStart(languageId, editorId, sessionId)
     }
+
+    override fun toObjectJS(): dynamic = super.toObjectJS()
 }
 
+class MessageProcessResult(
+    languageId: String, editorId: String, sessionId: String,
+    val success: Boolean,
+    val message: String,
+    val asm: Any?
+) : AglWorkerMessage("MessageProcessResult", languageId, editorId, sessionId) {
 
-class MessageProcessSuccess(
-    val languageId: String,
-    val editorId: String,
-    val asm: Any
-) : AglWorkerMessage("MessageProcessSuccess") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["asm"]=asm
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageProcessResult =
+            MessageProcessResult(languageId, editorId, sessionId, jsObj["success"], jsObj["message"], jsObj["asm"])
     }
-}
 
-
-class MessageProcessFailure(
-    val languageId: String,
-    val editorId: String,
-    val message: String
-) : AglWorkerMessage("MessageProcessFailure") {
     override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["editorId"]=editorId
-        this["message"]=message
+        val obj = super.toObjectJS()
+        obj["success"] = success
+        obj["message"] = asm
+        obj["asm"] = asm
+        return obj
     }
 }
 
 class MessageCodeCompleteRequest(
-    val languageId: String,
-    val editorId: String,
-    val goalRuleName:String?,
+    languageId: String, editorId: String, sessionId: String,
+    val goalRuleName: String?,
     val text: String,
-    val position:Int
-) : AglWorkerMessage("MessageCodeCompleteRequest") {
-    override fun toObjectJS(): dynamic = objectJS {
-        this["action"] = action
-        this["languageId"]=languageId
-        this["goalRuleName"]=goalRuleName
-        this["text"]=text
-        this["position"]=position
+    val position: Int
+) : AglWorkerMessage("MessageCodeCompleteRequest", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageCodeCompleteRequest =
+            MessageCodeCompleteRequest(languageId, editorId, sessionId, jsObj["goalRuleName"], jsObj["text"], jsObj["position"])
+    }
+
+    override fun toObjectJS(): dynamic  {
+        val obj = super.toObjectJS()
+        obj["goalRuleName"] = goalRuleName
+        obj["text"] = text
+        obj["position"] = position
+        return obj
+    }
+}
+
+class MessageCodeCompleteResult(
+    languageId: String, editorId: String, sessionId: String,
+    val success: Boolean,
+    val message: String,
+    val completionItems: Array<Pair<String, String>>?
+) : AglWorkerMessage("MessageCodeCompleteResult", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageCodeCompleteResult =
+            MessageCodeCompleteResult(languageId, editorId, sessionId, jsObj["success"], jsObj["message"], jsObj["completionItems"])
+    }
+
+    override fun toObjectJS(): dynamic {
+        val obj = super.toObjectJS()
+        obj["success"] = success
+        obj["message"] = message
+        obj["completionItems"] = completionItems
+        return obj
     }
 }

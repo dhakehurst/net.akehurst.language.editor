@@ -9,7 +9,8 @@ package ace
 @JsModule("net.akehurst.language.editor-kotlin-ace-loader!?id=ace/edit_session&name=EditSession")
 @JsNonModule
 external class EditSession {
-    var bgTokenizer: BackgroundTokenizer
+    val id: String
+    var bgTokenizer: BackgroundTokenizer?
 
     fun clearAnnotations()
 

@@ -54,7 +54,7 @@ interface AglEditor {
     /**
      * destination for logging messages
      */
-    var logger: ((level:LogLevel, message:String) -> Unit)?
+    val logger: AglEditorLogger
 
     fun onParse(handler: (ParseEvent) -> Unit)
 
@@ -91,10 +91,10 @@ sealed class ProcessEvent(
 
 class ProcessEventStart() : ProcessEvent("Process started")
 class ProcessEventSuccess(
-    val tree: Any
+    val asm: Any
 ) : ProcessEvent("Process success")
 
 class ProcessEventFailure(
     message: String,
-    val tree: Any?
+    val asm: Any?
 ) : ProcessEvent(message)

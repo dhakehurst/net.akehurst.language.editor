@@ -83,7 +83,7 @@ class AglEditorMonaco(
             }
         }
 
-    var aglWorker = AglWorkerClient(workerScriptName,sharedWorker)
+    var aglWorker = AglWorkerClient(this.agl, workerScriptName, sharedWorker)
     lateinit var workerTokenizer: AglTokenizerByWorkerMonaco
     var parseTimeout: dynamic = null
 
@@ -125,20 +125,12 @@ class AglEditorMonaco(
             resizeObserver.observe(this.element)
 
             this.aglWorker.initialise()
-            this.aglWorker.setStyleResult = { success, message ->
-                if (success) {
-                    this.resetTokenization()
-                } else {
-                    console.error("Error: $message")
-                }
-            }
-            this.aglWorker.processorCreateSuccess = this::processorCreateSuccess
-            this.aglWorker.processorCreateFailure = { msg -> console.error("Failed to create processor $msg") }
+            this.aglWorker.setStyleResult = { event -> if (event.success) this.resetTokenization() else console.error("Error: ${event.message}") }
+            this.aglWorker.processorCreateResult = this::processorCreateResult
             this.aglWorker.parseStart = { this.notifyParse(ParseEventStart()) }
-            this.aglWorker.parseSuccess = this::parseSuccess
-            this.aglWorker.parseFailure = this::parseFailure
+            this.aglWorker.parseResult = this::parseResult
             this.aglWorker.lineTokens = {
-                if(it.success) {
+                if (it.success) {
                     console.asDynamic().debug("Debug: new line tokens from successful parse of ${editorId}")
                     this.workerTokenizer.receiveTokens(it.lineTokens)
                     this.resetTokenization()
@@ -147,11 +139,11 @@ class AglEditorMonaco(
                 }
             }
             this.aglWorker.processStart = { this.notifyProcess(ProcessEventStart()) }
-            this.aglWorker.processSuccess = { tree ->
-                this.notifyProcess(ProcessEventSuccess(tree))
-            }
-            this.aglWorker.processFailure = { message ->
-                this.notifyProcess(ProcessEventFailure(message, "No Asm"))
+            this.aglWorker.processResult = { message ->
+                if (message.success)
+                    this.notifyProcess(ProcessEventSuccess(message.asm!!))
+                else
+                    this.notifyProcess(ProcessEventFailure(message.message, "No Asm"))
             }
         } catch (t: Throwable) {
             console.error(t.message)
@@ -168,7 +160,7 @@ class AglEditorMonaco(
     }
 
     override fun updateLanguage(oldId: String?) {
-        if (null!=oldId) {
+        if (null != oldId) {
             val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
             this.element.removeClass(oldAglStyleClass)
             this.element.addClass(this.agl.styleHandler.aglStyleClass)
@@ -177,7 +169,7 @@ class AglEditorMonaco(
 
     override fun updateGrammar() {
         this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageIdentity, editorId, this.agl.languageDefinition.grammar)
+        this.aglWorker.createProcessor(languageIdentity, editorId, "", this.agl.languageDefinition.grammar) //TODO: sessionId
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
     }
@@ -219,7 +211,7 @@ class AglEditorMonaco(
             this.element.ownerDocument?.querySelector("head")?.appendChild(
                 styleElement
             )
-            this.aglWorker.setStyle(languageIdentity, editorId, str)
+            this.aglWorker.setStyle(languageIdentity, editorId, "", str) //TODO: sessionId
 
             // need to update because token style types may have changed, not just their attributes
             this.update()
@@ -235,20 +227,24 @@ class AglEditorMonaco(
         }, 500)
     }
 
-    private fun processorCreateSuccess(message: String) {
-        when (message) {
-            "OK" -> {
-                console.asDynamic().debug("Debug: New Processor created for ${editorId}")
-                this.workerTokenizer.acceptingTokens = true
-                this.doBackgroundTryParse()
-                this.resetTokenization()
+    private fun processorCreateResult(message: MessageProcessorCreateResponse) {
+        if (message.success) {
+            when (message.message) {
+                "OK" -> {
+                    console.asDynamic().debug("Debug: New Processor created for ${editorId}")
+                    this.workerTokenizer.acceptingTokens = true
+                    this.doBackgroundTryParse()
+                    this.resetTokenization()
+                }
+                "reset" -> {
+                    console.asDynamic().debug("Debug: reset Processor for ${editorId}")
+                }
+                else -> {
+                    console.error("Error: unknown result message from create Processor for ${editorId}: $message")
+                }
             }
-            "reset" -> {
-                console.asDynamic().debug("Debug: reset Processor for ${editorId}")
-            }
-            else -> {
-                console.error("Error: unknown result message from create Processor for ${editorId}: $message")
-            }
+        } else {
+            this.logger.log(LogLevel.Error, "Failed to create processor ${message.message}")
         }
     }
 
@@ -278,8 +274,8 @@ class AglEditorMonaco(
 
     fun doBackgroundTryParse() {
         this.clearErrorMarkers()
-        this.aglWorker.interrupt(languageIdentity, editorId)
-        this.aglWorker.tryParse(languageIdentity, editorId, this.agl.goalRule, this.text)
+        this.aglWorker.interrupt(languageIdentity, editorId, "")//TODO: get session
+        this.aglWorker.tryParse(languageIdentity, editorId, "", this.agl.goalRule, this.text)
     }
 
     private fun tryParse() {
@@ -357,13 +353,21 @@ class AglEditorMonaco(
 
     }
 
+    private fun parseResult(event: MessageParseResult) {
+        if (event.success) {
+            this.parseSuccess(event.tree!!)
+        } else {
+            this.parseFailure(event.message, event.location, event.expected, event.tree)
+        }
+    }
+
     private fun parseSuccess(tree: Any) {
         this.resetTokenization()
         val event = ParseEventSuccess(tree)
         this.notifyParse(event)
     }
 
-    private fun parseFailure(message: String, location: InputLocation?, expected: Array<String>, tree: Any?) {
+    private fun parseFailure(message: String, location: InputLocation?, expected: Array<String>?, tree: Any?) {
         console.error("Error parsing text in ${this.editorId}: $message")
         // parse failed so re-tokenize from scan
         this.workerTokenizer.reset()
@@ -371,6 +375,7 @@ class AglEditorMonaco(
 
         if (null != location) {
             val errMsg = when {
+                null == expected -> "Syntax Error"
                 expected.isEmpty() -> "Syntax Error"
                 1 == expected.size -> "Syntax Error, expected: $expected"
                 else -> "Syntax Error, expected one of: $expected"
