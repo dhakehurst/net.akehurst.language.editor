@@ -87,8 +87,6 @@ styleEditor.onParse( (e) =>{
 });
 
 
-
-
 sentenceEditor.options = {
     editor: {
         enableBasicAutocompletion: true,
@@ -96,6 +94,17 @@ sentenceEditor.options = {
         enableLiveAutocompletion: false
     }
 };
+
+sentenceEditor.aglEditor.logger.bind = (level, msg)=>{
+    switch (level.toString()) {
+        //Uncomment to get log messages
+        case 'Fatal': console.error(level+': '+msg); break;
+        case 'Error': console.error(level+': '+msg); break;
+        case 'Warning': console.warn(level+': '+msg); break;
+        case 'Debug': console.debug(level+': '+msg); break;
+        case 'Trace': console.debug(level+': '+msg); break;
+    }
+}
 
 sentenceEditor.onParse( (e) =>{
     if (e instanceof ParseEventFailure) {
