@@ -17,6 +17,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.api.ParseEvent
 import net.akehurst.language.editor.api.ProcessEvent
 
@@ -27,9 +28,11 @@ abstract class AglEditorAbstract(
 
     protected val agl = AglComponents(languageId)
 
+    override var logger: ((level: LogLevel, message: String) -> Unit)? = null
+
     init {
-        this.agl.languageDefinition.grammarObservers.add { _,_ -> this.updateGrammar(); this.updateStyle() }
-        this.agl.languageDefinition.styleObservers.add { _,_ -> this.updateStyle() }
+        this.agl.languageDefinition.grammarObservers.add { _, _ -> this.updateGrammar(); this.updateStyle() }
+        this.agl.languageDefinition.styleObservers.add { _, _ -> this.updateStyle() }
     }
 
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
@@ -65,7 +68,11 @@ abstract class AglEditorAbstract(
         this._onParseHandler.add(handler)
     }
 
-    fun notifyParse(event: ParseEvent) {
+    protected fun log(level: LogLevel, message: String) = this.logger?.also {
+        it.invoke(level, message)
+    }
+
+    protected fun notifyParse(event: ParseEvent) {
         this._onParseHandler.forEach {
             it.invoke(event)
         }
@@ -75,7 +82,7 @@ abstract class AglEditorAbstract(
         this._onProcessHandler.add(handler)
     }
 
-    fun notifyProcess(event: ProcessEvent) {
+    protected fun notifyProcess(event: ProcessEvent) {
         this._onProcessHandler.forEach {
             it.invoke(event)
         }

@@ -18,6 +18,8 @@ package net.akehurst.language.editor.api
 
 import net.akehurst.language.api.processor.LanguageDefinition
 
+enum class LogLevel { None, Fatal, Error, Warning, Debug, Trace, All }
+
 interface AglEditor {
 
     val editorId: String
@@ -48,6 +50,11 @@ interface AglEditor {
      * the content of the editor
      */
     var text: String
+
+    /**
+     * destination for logging messages
+     */
+    var logger: ((level:LogLevel, message:String) -> Unit)?
 
     fun onParse(handler: (ParseEvent) -> Unit)
 
