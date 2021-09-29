@@ -42,19 +42,19 @@ class ModelDecorationOptions(
 class AglTokenizerByWorkerMonaco(
     val aglEditor: AglEditorMonaco,
     val agl: AglComponents
-) : monaco.languages.TokensProvider {
+) : monaco.languages.TokensProvider, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
-    var acceptingTokens = false
+    override var acceptingTokens = false
     val tokensByLine = mutableMapOf<Int, List<AglToken>>()
     val decs = mutableMapOf<Int, Array<String>>()
 
-    fun reset() {
+    override fun reset() {
         this.acceptingTokens = false
         this.tokensByLine.clear()
     }
 
-    fun receiveTokens(tokens: Array<Array<AglToken>>) {
+    override fun receiveTokens(tokens: Array<Array<AglToken>>) {
         if (this.acceptingTokens) {
             tokens.forEachIndexed { index, tokens ->
                 this.tokensByLine[index] = tokens.toList()

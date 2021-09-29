@@ -29,13 +29,8 @@ class AglCodeCompleterByWorker(
         val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val goalRule = this.agl.goalRule
-            if (null == goalRule) {
-                val list = proc.expectedAt(editor.getValue(), pos, 1);
-                list
-            } else {
-                val list = proc.expectedAtForGoal(goalRule, editor.getValue(), pos, 1);
-                list
-            }
+            val list = proc.expectedAt(editor.getValue(), pos, 1,goalRule)
+            list
         } else {
             emptyList()
         }

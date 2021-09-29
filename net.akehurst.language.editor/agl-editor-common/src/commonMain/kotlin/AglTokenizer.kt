@@ -21,6 +21,15 @@ import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
 
+interface AglTokenizerByWorker {
+
+    var acceptingTokens:Boolean
+
+    fun receiveTokens(lineTokens: Array<Array<AglToken>>)
+    fun reset()
+
+}
+
 class AglComponents(
     languageId: String,
     val editorId:String,
@@ -33,6 +42,8 @@ class AglComponents(
     var goalRule:String? = languageDefinition.defaultGoalRule
 
     val styleHandler get() = _styleHandler
+
+    var context:Any? = null
     var sppt: SharedPackedParseTree? = null
     var asm: Any? = null
 

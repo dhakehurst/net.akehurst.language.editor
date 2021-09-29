@@ -1,3 +1,3 @@
-import net.akehurst.language.editor.worker.AglWorker
+import net.akehurst.language.editor.worker.AglSharedWorker
 
-var worker = AglWorker()
+var worker = AglSharedWorker()

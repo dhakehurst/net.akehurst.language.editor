@@ -16,8 +16,6 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.api.parser.InputLocation
-import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.LogLevel
 import org.w3c.dom.*
 import org.w3c.dom.events.EventTarget
@@ -29,13 +27,15 @@ class AglWorkerClient(
 ) {
 
     lateinit var worker: AbstractWorker
-    var setStyleResult: (message: MessageSetStyleResult) -> Unit = { _-> }
+    var setStyleResult: (message: MessageSetStyleResult) -> Unit = { _ -> }
     var processorCreateResult: (message: MessageProcessorCreateResponse) -> Unit = { _ -> }
     var parseStart: (message: MessageParseStart) -> Unit = { }
     var parseResult: (message: MessageParseResult) -> Unit = { _ -> }
     var lineTokens: (message: MessageLineTokens) -> Unit = { _ -> }
-    var processStart: (message: MessageProcessStart) -> Unit = { }
-    var processResult: (message: MessageProcessResult) -> Unit = { _ -> }
+    var syntaxAnalysisStart: (message: MessageSyntaxAnalysisStart) -> Unit = { }
+    var syntaxAnalysisResult: (message: MessageSyntaxAnalysisResult) -> Unit = { _ -> }
+    var semanticAnalysisStart: (message: MessageSemanticAnalysisStart) -> Unit = { }
+    var semanticAnalysisResult: (message: MessageSemanticAnalysisResult) -> Unit = { _ -> }
     var codeCompleteResult: (message: MessageCodeCompleteResult) -> Unit = { _ -> }
 
     fun initialise() {
@@ -54,15 +54,17 @@ class AglWorkerClient(
             if (null == msg) {
                 this.agl.logger.log(LogLevel.Error, "Worker message not handled: $jsObj")
             } else {
-                if(this.agl.editorId==msg.editorId) { //TODO: should  test for sessionId also
+                if (this.agl.editorId == msg.editorId) { //TODO: should  test for sessionId also
                     when (msg) {
                         is MessageSetStyleResult -> this.setStyleResult(msg)
                         is MessageProcessorCreateResponse -> this.processorCreateResult(msg)
                         is MessageParseStart -> this.parseStart(msg)
                         is MessageParseResult -> this.parseResult(msg)
                         is MessageLineTokens -> this.lineTokens(msg)
-                        is MessageProcessStart -> this.processStart(msg)
-                        is MessageProcessResult -> this.processResult(msg)
+                        is MessageSyntaxAnalysisStart -> this.syntaxAnalysisStart(msg)
+                        is MessageSyntaxAnalysisResult -> this.syntaxAnalysisResult(msg)
+                        is MessageSemanticAnalysisStart -> this.semanticAnalysisStart(msg)
+                        is MessageSemanticAnalysisResult -> this.semanticAnalysisResult(msg)
                         is MessageCodeCompleteResult -> this.codeCompleteResult(msg)
                         else -> error("Unknown Message type")
                     }
@@ -88,20 +90,20 @@ class AglWorkerClient(
         }
     }
 
-    fun createProcessor(languageId: String, editorId: String, sessionId:String, grammarStr: String?) {
+    fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String?) {
         this.sendToWorker(MessageProcessorCreate(languageId, editorId, sessionId, grammarStr))
     }
 
-    fun interrupt(languageId: String, editorId: String,sessionId:String) {
+    fun interrupt(languageId: String, editorId: String, sessionId: String) {
         this.sendToWorker(MessageParserInterruptRequest(languageId, editorId, sessionId, "New parse request"))
     }
 
-    fun tryParse(languageId: String, editorId: String, sessionId:String,goalRuleName: String?, sentence: String) {
-        this.sendToWorker(MessageParseRequest(languageId, editorId, sessionId,goalRuleName, sentence))
+    fun tryParse(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context:Any?) {
+        this.sendToWorker(MessageProcessRequest(languageId, editorId, sessionId, goalRuleName, sentence, context))
     }
 
-    fun setStyle(languageId: String, editorId: String, sessionId:String, css: String) {
-        this.sendToWorker(MessageSetStyle(languageId, editorId, sessionId,css))
+    fun setStyle(languageId: String, editorId: String, sessionId: String, css: String) {
+        this.sendToWorker(MessageSetStyle(languageId, editorId, sessionId, css))
     }
 
 }

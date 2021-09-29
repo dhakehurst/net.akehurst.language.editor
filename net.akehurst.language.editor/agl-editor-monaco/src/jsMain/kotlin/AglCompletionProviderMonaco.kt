@@ -54,13 +54,8 @@ class AglCompletionProviderMonaco(
         return if (null == proc) {
             emptyList()
         } else {
-            if (null == goalRule) {
-                val list = proc.expectedAt(text, offset, 1);
-                list
-            } else {
-                val list = proc.expectedAtForGoal(goalRule, text, offset, 1);
-                list
-            }
+            val list = proc.expectedAt(text, offset, 1,goalRule)
+            list
         }
     }
 }

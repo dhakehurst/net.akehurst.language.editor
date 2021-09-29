@@ -16,6 +16,8 @@
 
 package net.akehurst.language.editor.application.client.web
 
+import ace.AceEditorOptions
+import ace.AceOptions
 import net.akehurst.kotlin.html5.create
 import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
 import net.akehurst.language.editor.demo.BuildConfig
@@ -29,15 +31,14 @@ import net.akehurst.language.agl.processor.Agl
 
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.information.examples.*
-import org.w3c.dom.HTMLDialogElement
-import org.w3c.dom.HTMLElement
-import org.w3c.dom.HTMLSelectElement
 import kotlinx.browser.document
-import net.akehurst.language.api.processor.AglLanguage
+import net.akehurst.language.editor.common.objectJS
+import org.w3c.dom.*
 
 external var aglScriptBasePath: dynamic = definedExternally
-
+val workerScriptName = "${aglScriptBasePath}/application-agl-editor-worker.js"
 var demo: Demo? = null
+
 fun main() {
 
     createBaseDom("div#agl-demo")
@@ -205,10 +206,25 @@ fun createDemo(isAce: Boolean) {
     if (null != demo) {
         demo!!.finalize()
     }
-    val editors = if (isAce) {
-        AglEditorAce.initialise(document, "${aglScriptBasePath}/application-agl-editor-worker.js")
-    } else {
-        AglEditorMonaco.initialise(document, "${aglScriptBasePath}/application-agl-editor-worker.js")
+    val editorEls = document.querySelectorAll("agl-editor")
+    val aceOptions = objectJS {
+        editor = objectJS {
+            enableBasicAutocompletion= true
+            enableSnippets= true
+            enableLiveAutocompletion= false
+        }
+    }
+    val editors = editorEls.asList().associate { node ->
+        val element = node as Element
+        //delete any current children of element - existing editor if switching ace<->monaco
+        while (element.childElementCount != 0) { element.removeChild(element.firstChild!!) }
+        val id = element.id
+        val ed = if (isAce) {
+            AglEditorAce(element, id, id, aceOptions,workerScriptName,true)
+        } else {
+            AglEditorMonaco(element, id, id, aceOptions,workerScriptName,true)
+        }
+        Pair(id,ed)
     }
 
     demo = Demo(editors)
@@ -233,12 +249,8 @@ class Demo(
     }
 
     fun connectEditors() {
-        grammarEditor.grammarStr="@Agl.grammarProcessor@"
-        styleEditor.grammarStr="@Agl.styleProcessor@"
-        //formatEditor.setProcessor("@Agl.formatProcessor@")
-
-        grammarEditor.styleStr=(AglLanguage.grammar.style)
-        styleEditor.styleStr=(AglLanguage.style.style)
+        grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
+        styleEditor.languageIdentity=Agl.registry.agl.styleLanguageIdentity
 
         grammarEditor.onParse { event ->
             when(event) {
@@ -248,14 +260,14 @@ class Demo(
                 is ParseEventSuccess ->{
                     try {
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
-                        sentenceEditor.grammarStr=(grammarEditor.text)
+                        sentenceEditor.languageDefinition.grammar=grammarEditor.text
                     } catch (t: Throwable) {
-                        sentenceEditor.grammarStr=(null)
+                        sentenceEditor.languageDefinition.grammar=null
                         console.error(grammarEditor.editorId + ": " + t.message)
                     }
                 }
                 is ParseEventFailure ->{
-                    sentenceEditor.grammarStr=(null)
+                    sentenceEditor.languageDefinition.grammar=null
                     console.error(grammarEditor.editorId + ": " + event.message)
                 }
             }
@@ -269,13 +281,15 @@ class Demo(
                 is ParseEventSuccess ->{
                     try {
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
-                        sentenceEditor.styleStr=(styleEditor.text)
+                        sentenceEditor.languageDefinition.style=styleEditor.text
                     } catch (t: Throwable) {
                         console.error(styleEditor.editorId + ": " + t.message)
+                        sentenceEditor.languageDefinition.style=""
                     }
                 }
                 is ParseEventFailure ->{
                     console.error(styleEditor.editorId + ": " + event.message)
+                    sentenceEditor.languageDefinition.style=""
                 }
             }
         }
@@ -370,12 +384,12 @@ class Demo(
                 }
                 is ProcessEventSuccess ->{
                     trees["ast"]!!.loading = false
-                    trees["ast"]!!.root = event.tree
+                    trees["ast"]!!.root = event.asm
                 }
                 is ProcessEventFailure ->{
                     console.error(event.message)
                     trees["ast"]!!.loading = false
-                    trees["ast"]!!.root = event.tree
+                    trees["ast"]!!.root = event.asm
                 }
             }
         }
@@ -386,9 +400,9 @@ class Demo(
             val egName = js("event.target.value") as String
             val eg = Examples[egName]
             grammarEditor.text = eg.grammar
-            sentenceEditor.grammarStr=(grammarEditor.text) // set this before setting the sentence text
+            sentenceEditor.languageDefinition.grammar=grammarEditor.text // set this before setting the sentence text
             styleEditor.text = eg.style
-            sentenceEditor.styleStr=(styleEditor.text)  // set this before setting the sentence text
+            sentenceEditor.languageDefinition.style=styleEditor.text  // set this before setting the sentence text
             //formatEditor.text = eg.format
             sentenceEditor.text = eg.sentence
         })
@@ -397,9 +411,9 @@ class Demo(
         val eg = Datatypes.example
         (exampleSelect as HTMLSelectElement).value = eg.id
         grammarEditor.text = eg.grammar
-        sentenceEditor.grammarStr=(grammarEditor.text) // set this before setting the sentence text
+        sentenceEditor.languageDefinition.grammar=grammarEditor.text // set this before setting the sentence text
         styleEditor.text = eg.style
-        sentenceEditor.styleStr=(styleEditor.text)  // set this before setting the sentence text
+        sentenceEditor.languageDefinition.style=styleEditor.text  // set this before setting the sentence text
         //formatEditor.text = eg.format
         sentenceEditor.text = eg.sentence
     }

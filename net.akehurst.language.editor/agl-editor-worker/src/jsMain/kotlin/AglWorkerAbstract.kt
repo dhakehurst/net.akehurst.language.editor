@@ -46,7 +46,7 @@ abstract class AglWorkerAbstract {
         try {
             val style = AglStyleHandler(message.languageId)
             this._styleHandler[message.languageId] = style
-            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process(List::class, message.css)
+            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process<List<AglStyleRule>,Any>(message.css).first
             rules.forEach { rule ->
                 style.mapClass(rule.selector)
             }
@@ -56,17 +56,17 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    protected fun parse(port: dynamic, message:MessageParseRequest) {
+    protected fun parse(port: dynamic, message:MessageProcessRequest) {
         try {
             sendMessage(port, MessageParseStart(message.languageId, message.editorId, message.sessionId))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val goal = message.goalRuleName
-            val sppt = if (null == goal) proc.parse(message.text) else proc.parseForGoal(goal, message.text)
+            val sppt = if (null == goal) proc.parse(message.text) else proc.parse(message.text,goal)
             val tree = createParseTree(sppt.root)
             sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "OK", tree, null, null))
             this.sendParseLineTokens(port, message.languageId, message.editorId, message.sessionId, sppt)
-            this.process(port, message.languageId, message.editorId, message.sessionId, sppt)
+            this.syntaxAnalysis(port, message, sppt)
         } catch (e: ParseFailedException) {
             val sppt = e.longestMatch
             val tree = createParseTree(sppt!!.root)
@@ -76,16 +76,30 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    private fun process(port: dynamic, languageId: String, editorId: String, sessionId: String, sppt: SharedPackedParseTree) {
+    private fun syntaxAnalysis(port: dynamic, message:MessageProcessRequest, sppt: SharedPackedParseTree) {
         try {
-            sendMessage(port, MessageProcessStart(languageId, editorId, sessionId))
-            val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '$languageId' not found, was it created corrrectly?")
-            val proc = ld.processor ?: error("Processor for '$languageId' not found, is the grammar correctly set ?")
-            val asm = proc.processFromSPPT<Any>(Any::class, sppt)
+            sendMessage(port, MessageSyntaxAnalysisStart(message.languageId, message.editorId, message.sessionId))
+            val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
+            val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
+            val asm = proc.syntaxAnalysis<Any,Any>(sppt)
             val asmTree = createAsmTree(asm) ?: "No Asm"
-            sendMessage(port, MessageProcessResult(languageId, editorId, sessionId, true, "OK", asmTree))
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "OK", asmTree))
+            this.semanticAnalysis(port, message, asm)
         } catch (t: Throwable) {
-            sendMessage(port, MessageProcessResult(languageId, editorId, sessionId, false, t.message!!, null))
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, t.message!!, null))
+        }
+    }
+
+    private fun semanticAnalysis(port: dynamic, message:MessageProcessRequest, asm: Any?) {
+        sendMessage(port, MessageSyntaxAnalysisStart(message.languageId, message.editorId, message.sessionId))
+        val context = message.context
+        if (null!=asm && null!=context) {
+            val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
+            val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
+            val locationMap = ld.syntaxAnalyser?.locationMap ?: error("SyntaxAnalyser is null")
+            val items = proc.semanticAnalysis(asm, locationMap,context)
+        } else {
+            //no analysis possible
         }
     }
 

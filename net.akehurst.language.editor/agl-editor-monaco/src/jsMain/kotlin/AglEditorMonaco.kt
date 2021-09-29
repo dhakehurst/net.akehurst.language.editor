@@ -37,13 +37,13 @@ import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
 class AglEditorMonaco(
-    val element: Element,
+    element: Element,
     editorId: String,
     languageId: String,
     options: dynamic, //TODO: types for this
     workerScriptName: String,
     sharedWorker: Boolean
-) : AglEditorAbstract(languageId, editorId) {
+) : AglEditorJsAbstract(element, languageId, editorId,workerScriptName,sharedWorker) {
 
     companion object {
         private val init = js(
@@ -83,8 +83,6 @@ class AglEditorMonaco(
             }
         }
 
-    var aglWorker = AglWorkerClient(this.agl, workerScriptName, sharedWorker)
-    lateinit var workerTokenizer: AglTokenizerByWorkerMonaco
     var parseTimeout: dynamic = null
 
     init {
@@ -93,7 +91,7 @@ class AglEditorMonaco(
 
     private fun init_() {
         try {
-            this.workerTokenizer = AglTokenizerByWorkerMonaco(this, this.agl)
+            this.connectWorker(AglTokenizerByWorkerMonaco(this, this.agl))
             val themeData = objectJS {
                 base = "vs"
                 inherit = false
@@ -116,7 +114,7 @@ class AglEditorMonaco(
                 wordBasedSuggestions = false
             }
             this.monacoEditor = monaco.editor.create(this.element, editorOptions, null)
-            monaco.languages.setTokensProvider(this.languageIdentity, this.workerTokenizer);
+            monaco.languages.setTokensProvider(this.languageIdentity, this.workerTokenizer as monaco.languages.TokensProvider)
             monaco.languages.registerCompletionItemProvider(this.languageIdentity, AglCompletionProviderMonaco(this.agl))
 
             this.onChange { this.update() }
@@ -124,27 +122,6 @@ class AglEditorMonaco(
             val resizeObserver = ResizeObserver { entries -> onResize(entries) }
             resizeObserver.observe(this.element)
 
-            this.aglWorker.initialise()
-            this.aglWorker.setStyleResult = { event -> if (event.success) this.resetTokenization() else console.error("Error: ${event.message}") }
-            this.aglWorker.processorCreateResult = this::processorCreateResult
-            this.aglWorker.parseStart = { this.notifyParse(ParseEventStart()) }
-            this.aglWorker.parseResult = this::parseResult
-            this.aglWorker.lineTokens = {
-                if (it.success) {
-                    console.asDynamic().debug("Debug: new line tokens from successful parse of ${editorId}")
-                    this.workerTokenizer.receiveTokens(it.lineTokens)
-                    this.resetTokenization()
-                } else {
-                    console.error("LineTokens - ${it.message}")
-                }
-            }
-            this.aglWorker.processStart = { this.notifyProcess(ProcessEventStart()) }
-            this.aglWorker.processResult = { message ->
-                if (message.success)
-                    this.notifyProcess(ProcessEventSuccess(message.asm!!))
-                else
-                    this.notifyProcess(ProcessEventFailure(message.message, "No Asm"))
-            }
         } catch (t: Throwable) {
             console.error(t.message)
         }
@@ -178,7 +155,7 @@ class AglEditorMonaco(
         val str = this.agl.languageDefinition.style
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process(List::class, str)
+            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process<List<AglStyleRule>,Any>(str).first
             var mappedCss = ""
             rules.forEach { rule ->
                 val cssClass = '.' + this.languageIdentity + ' ' + ".monaco_" + this.agl.styleHandler.mapClass(rule.selector);
@@ -268,16 +245,17 @@ class AglEditorMonaco(
         }
     }
 
-    fun resetTokenization() {
+    override fun resetTokenization() {
         this.monacoEditor.getModel().resetTokenization()
     }
 
-    fun doBackgroundTryParse() {
+    override fun doBackgroundTryParse() {
         this.clearErrorMarkers()
         this.aglWorker.interrupt(languageIdentity, editorId, "")//TODO: get session
-        this.aglWorker.tryParse(languageIdentity, editorId, "", this.agl.goalRule, this.text)
+        this.aglWorker.tryParse(languageIdentity, editorId, "", this.agl.goalRule, this.text, this.agl.context)
     }
 
+    /*
     private fun tryParse() {
         val proc = this.agl.languageDefinition.processor
         if (null != proc) {
@@ -329,14 +307,14 @@ class AglEditorMonaco(
                 this.notifyProcess(event)
             } catch (e: SyntaxAnalyserException) {
                 this.agl.asm = null
-                val event = ProcessEventFailure(e.message!!, "No Asm")
+                val event = SyntaxAnalysisEventFailure(e.message!!, "No Asm")
                 this.notifyProcess(event)
             } catch (t: Throwable) {
                 console.error("Error processing parse result in " + this.editorId + " for language " + this.languageIdentity, t.message)
             }
         }
     }
-
+*/
     private fun convertColor(value: String?): String? {
         if (null == value) {
             return null
@@ -353,21 +331,7 @@ class AglEditorMonaco(
 
     }
 
-    private fun parseResult(event: MessageParseResult) {
-        if (event.success) {
-            this.parseSuccess(event.tree!!)
-        } else {
-            this.parseFailure(event.message, event.location, event.expected, event.tree)
-        }
-    }
-
-    private fun parseSuccess(tree: Any) {
-        this.resetTokenization()
-        val event = ParseEventSuccess(tree)
-        this.notifyParse(event)
-    }
-
-    private fun parseFailure(message: String, location: InputLocation?, expected: Array<String>?, tree: Any?) {
+    override fun parseFailure(message: String, location: InputLocation?, expected: Array<String>?, tree: Any?) {
         console.error("Error parsing text in ${this.editorId}: $message")
         // parse failed so re-tokenize from scan
         this.workerTokenizer.reset()

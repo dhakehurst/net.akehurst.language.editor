@@ -30,10 +30,14 @@ abstract class AglEditorAbstract(
     init {
         this.agl.languageDefinition.grammarObservers.add { _, _ -> this.updateGrammar(); this.updateStyle() }
         this.agl.languageDefinition.styleObservers.add { _, _ -> this.updateStyle() }
+
+
+
     }
 
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
-    private val _onProcessHandler = mutableListOf<(ProcessEvent) -> Unit>()
+    private val _onSyntaxAnalysisHandler = mutableListOf<(SyntaxAnalysisEvent) -> Unit>()
+    private val _onSemanticAnalysisHandler = mutableListOf<(SemanticAnalysisEvent) -> Unit>()
     private var _editorSpecificStyleStr: String? = null
 
     override var languageIdentity: String
@@ -65,7 +69,16 @@ abstract class AglEditorAbstract(
         this._onParseHandler.add(handler)
     }
 
+    override fun onSyntaxAnalysis(handler: (SyntaxAnalysisEvent) -> Unit) {
+        this._onSyntaxAnalysisHandler.add(handler)
+    }
+
+    override fun onSemanticAnalysis(handler: (SemanticAnalysisEvent) -> Unit) {
+        this._onSemanticAnalysisHandler.add(handler)
+    }
+
     protected fun log(level: LogLevel, message: String) = this.logger.log(level, message)
+
 
     protected fun notifyParse(event: ParseEvent) {
         this._onParseHandler.forEach {
@@ -73,12 +86,14 @@ abstract class AglEditorAbstract(
         }
     }
 
-    override fun onProcess(handler: (ProcessEvent) -> Unit) {
-        this._onProcessHandler.add(handler)
+    protected fun notifySyntaxAnalysis(event: SyntaxAnalysisEvent) {
+        this._onSyntaxAnalysisHandler.forEach {
+            it.invoke(event)
+        }
     }
 
-    protected fun notifyProcess(event: ProcessEvent) {
-        this._onProcessHandler.forEach {
+    protected fun notifySemanticAnalysis(event: SemanticAnalysisEvent) {
+        this._onSemanticAnalysisHandler.forEach {
             it.invoke(event)
         }
     }

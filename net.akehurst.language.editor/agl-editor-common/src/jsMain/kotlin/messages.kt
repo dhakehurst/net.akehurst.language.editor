@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.parser.InputLocation
+import net.akehurst.language.api.semanticAnalyser.SemanticAnalyserItem
 
 abstract class AglWorkerMessage(
     val action: String,
@@ -33,15 +34,15 @@ abstract class AglWorkerMessage(
             return when (action) {
                 "MessageProcessorCreate" -> MessageProcessorCreate.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageProcessorCreateResponse" -> MessageProcessorCreateResponse.fromJsObject(languageId, editorId, sessionId, jsObj) as T
-                "MessageParseRequest" -> MessageParseRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageProcessRequest" -> MessageProcessRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageParseStart" -> MessageParseStart.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageParseResult" -> MessageParseResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageParserInterruptRequest" -> MessageParserInterruptRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageLineTokens" -> MessageLineTokens.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageSetStyle" -> MessageSetStyle.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageSetStyleResult" -> MessageSetStyleResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
-                "MessageProcessStart" -> MessageProcessStart.fromJsObject(languageId, editorId, sessionId, jsObj) as T
-                "MessageProcessResult" -> MessageProcessResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageSyntaxAnalysisStart" -> MessageSyntaxAnalysisStart.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                "MessageSyntaxAnalysisResult" -> MessageSyntaxAnalysisResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageCodeCompleteRequest" -> MessageCodeCompleteRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 "MessageCodeCompleteResult" -> MessageCodeCompleteResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                 else -> null
@@ -93,21 +94,23 @@ class MessageProcessorCreateResponse(
     }
 }
 
-class MessageParseRequest(
+class MessageProcessRequest(
     languageId: String, editorId: String, sessionId: String,
     val goalRuleName: String?,
-    val text: String
-) : AglWorkerMessage("MessageParseRequest", languageId, editorId, sessionId) {
+    val text: String,
+    val context: Any?
+) : AglWorkerMessage("MessageProcessRequest", languageId, editorId, sessionId) {
 
     companion object {
-        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageParseRequest =
-            MessageParseRequest(languageId, editorId, sessionId, jsObj["goalRuleName"], jsObj["text"])
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageProcessRequest =
+            MessageProcessRequest(languageId, editorId, sessionId, jsObj["goalRuleName"], jsObj["text"], jsObj["context"])
     }
 
     override fun toObjectJS(): dynamic {
         val obj = super.toObjectJS()
         obj["goalRuleName"] = goalRuleName
         obj["text"] = text
+        obj["context"] = context
         return obj
     }
 }
@@ -223,35 +226,68 @@ class MessageSetStyleResult(
     }
 }
 
-class MessageProcessStart(
+class MessageSyntaxAnalysisStart(
     languageId: String, editorId: String, sessionId: String,
-) : AglWorkerMessage("MessageProcessStart", languageId, editorId, sessionId) {
+) : AglWorkerMessage("MessageSyntaxAnalysisStart", languageId, editorId, sessionId) {
 
     companion object {
-        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageProcessStart =
-            MessageProcessStart(languageId, editorId, sessionId)
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageSyntaxAnalysisStart =
+            MessageSyntaxAnalysisStart(languageId, editorId, sessionId)
     }
 
     override fun toObjectJS(): dynamic = super.toObjectJS()
 }
 
-class MessageProcessResult(
+class MessageSyntaxAnalysisResult(
     languageId: String, editorId: String, sessionId: String,
     val success: Boolean,
     val message: String,
     val asm: Any?
-) : AglWorkerMessage("MessageProcessResult", languageId, editorId, sessionId) {
+) : AglWorkerMessage("MessageSyntaxAnalysisResult", languageId, editorId, sessionId) {
 
     companion object {
-        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageProcessResult =
-            MessageProcessResult(languageId, editorId, sessionId, jsObj["success"], jsObj["message"], jsObj["asm"])
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageSyntaxAnalysisResult =
+            MessageSyntaxAnalysisResult(languageId, editorId, sessionId, jsObj["success"], jsObj["message"], jsObj["asm"])
     }
 
     override fun toObjectJS(): dynamic = objectJS {
         val obj = super.toObjectJS()
         obj["success"] = success
-        obj["message"] = asm
+        obj["message"] = message
         obj["asm"] = asm
+        return obj
+    }
+}
+
+class MessageSemanticAnalysisStart(
+    languageId: String, editorId: String, sessionId: String,
+) : AglWorkerMessage("MessageSemanticAnalysisStart", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageSemanticAnalysisStart =
+            MessageSemanticAnalysisStart(languageId, editorId, sessionId)
+    }
+
+    override fun toObjectJS(): dynamic = super.toObjectJS()
+}
+
+class MessageSemanticAnalysisResult(
+    languageId: String, editorId: String, sessionId: String,
+    val success: Boolean,
+    val message: String,
+    val items: List<SemanticAnalyserItem>
+) : AglWorkerMessage("MessageSemanticAnalysisResult", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageSemanticAnalysisResult =
+            MessageSemanticAnalysisResult(languageId, editorId, sessionId, jsObj["success"], jsObj["message"], jsObj["items"])
+    }
+
+    override fun toObjectJS(): dynamic = objectJS {
+        val obj = super.toObjectJS()
+        obj["success"] = success
+        obj["message"] = message
+        obj["items"] = items
         return obj
     }
 }
@@ -297,3 +333,9 @@ class MessageCodeCompleteResult(
         return obj
     }
 }
+
+class MessageAnalyseRequest(
+    languageId: String, editorId: String, sessionId: String,
+    val success: Boolean,
+    val message: String,
+)

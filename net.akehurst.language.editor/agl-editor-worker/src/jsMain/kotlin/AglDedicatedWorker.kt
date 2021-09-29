@@ -45,7 +45,7 @@ class AglDedicatedWorker : AglWorkerAbstract() {
                         when (msg) {
                             is MessageProcessorCreate -> this.createProcessor(_selfDedicated, msg)
                             is MessageParserInterruptRequest -> this.interrupt(_selfDedicated, msg)
-                            is MessageParseRequest -> this.parse(_selfDedicated, msg)
+                            is MessageProcessRequest -> this.parse(_selfDedicated, msg)
                             is MessageSetStyle -> this.setStyle(_selfDedicated, msg)
                         }
                     }

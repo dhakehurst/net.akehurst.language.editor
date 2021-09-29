@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.api
 
 import net.akehurst.language.api.processor.LanguageDefinition
+import net.akehurst.language.api.semanticAnalyser.SemanticAnalyserItem
 
 enum class LogLevel { None, Fatal, Error, Warning, Debug, Trace, All }
 
@@ -58,7 +59,9 @@ interface AglEditor {
 
     fun onParse(handler: (ParseEvent) -> Unit)
 
-    fun onProcess(handler: (ProcessEvent) -> Unit)
+    fun onSyntaxAnalysis(handler: (SyntaxAnalysisEvent) -> Unit)
+
+    fun onSemanticAnalysis(handler: (SemanticAnalysisEvent) -> Unit)
 
     fun clearErrorMarkers()
 
@@ -85,16 +88,13 @@ class ParseEventFailure(
     override val tree: Any?
 ) : ParseEvent(message)
 
-sealed class ProcessEvent(
-    val message: String
+class SyntaxAnalysisEvent(
+    val success:Boolean,
+    val message: String,
+    val asm:Any?
 )
-
-class ProcessEventStart() : ProcessEvent("Process started")
-class ProcessEventSuccess(
-    val asm: Any
-) : ProcessEvent("Process success")
-
-class ProcessEventFailure(
-    message: String,
-    val asm: Any?
-) : ProcessEvent(message)
+class SemanticAnalysisEvent(
+    val success:Boolean,
+    val message: String,
+    val items: List<SemanticAnalyserItem>?
+)

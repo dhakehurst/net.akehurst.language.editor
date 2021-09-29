@@ -42,7 +42,7 @@ class AglSharedWorker : AglWorkerAbstract() {
                             when (msg) {
                                 is MessageProcessorCreate -> this.createProcessor(port, msg)
                                 is MessageParserInterruptRequest -> this.interrupt(port, msg)
-                                is MessageParseRequest -> this.parse(port, msg)
+                                is MessageProcessRequest -> this.parse(port, msg)
                                 is MessageSetStyle -> this.setStyle(port, msg)
                             }
                         }

@@ -16,26 +16,22 @@
 
 package net.akehurst.language.editor.ace
 
-import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.AglLineState
-import net.akehurst.language.editor.common.AglToken
-import net.akehurst.language.editor.common.AglTokenizer
-import net.akehurst.language.editor.common.AglWorkerClient
+import net.akehurst.language.editor.common.*
 
 class AglTokenizerByWorkerAce(
         val agl:AglComponents
-) : ace.Tokenizer {
+) : ace.Tokenizer, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
-    var acceptingTokens = false
+    override var acceptingTokens = false
     val tokensByLine = mutableMapOf<Int, List<AglToken>>()
 
-    fun reset() {
+    override fun reset() {
         this.acceptingTokens = false
         this.tokensByLine.clear()
     }
 
-    fun receiveTokens(tokens: Array<Array<AglToken>>) {
+    override fun receiveTokens(tokens: Array<Array<AglToken>>) {
         if (this.acceptingTokens) {
             tokens.forEachIndexed { index, tokens ->
                 this.tokensByLine[index] = tokens.toList()
