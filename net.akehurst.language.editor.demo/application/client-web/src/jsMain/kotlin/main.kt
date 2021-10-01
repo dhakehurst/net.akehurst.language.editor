@@ -16,23 +16,20 @@
 
 package net.akehurst.language.editor.application.client.web
 
-import ace.AceEditorOptions
-import ace.AceOptions
+import kotlinx.browser.document
 import net.akehurst.kotlin.html5.create
-import net.akehurst.language.api.syntaxAnalyser.AsmElementSimple
-import net.akehurst.language.editor.demo.BuildConfig
+import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
 import net.akehurst.language.editor.ace.AglEditorAce
+import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.common.objectJS
+import net.akehurst.language.editor.demo.BuildConfig
 import net.akehurst.language.editor.information.Examples
+import net.akehurst.language.editor.information.examples.*
 import net.akehurst.language.editor.monaco.AglEditorMonaco
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
-import net.akehurst.language.agl.processor.Agl
-
-import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.information.examples.*
-import kotlinx.browser.document
-import net.akehurst.language.editor.common.objectJS
 import org.w3c.dom.*
 
 external var aglScriptBasePath: dynamic = definedExternally
@@ -78,7 +75,7 @@ fun createBaseDom(appDivSelector: String) {
                             (it.target as HTMLDialogElement).close()
                         }
                         article {
-                            header { h2 { content="About" } }
+                            header { h2 { content = "About" } }
                             section {
                                 p { content = "Ace version 1.4.11, Licence BSD" }
                                 p { content = "Monaco version 0.20.0, Licence MIT" }
@@ -173,7 +170,12 @@ fun createBaseDom(appDivSelector: String) {
                                     htmlElement("agl-editor") { attribute.id = "language-style" }
                                 }
                             }
-                            //TODO: format
+                            htmlElement("tab") {
+                                attribute.id = "crossreferences"
+                                section {
+                                    htmlElement("agl-editor") { attribute.id = "language-references" }
+                                }
+                            }
                         }
                     }
                 }
@@ -201,7 +203,6 @@ fun initialiseExamples() {
     }
 }
 
-
 fun createDemo(isAce: Boolean) {
     if (null != demo) {
         demo!!.finalize()
@@ -209,22 +210,24 @@ fun createDemo(isAce: Boolean) {
     val editorEls = document.querySelectorAll("agl-editor")
     val aceOptions = objectJS {
         editor = objectJS {
-            enableBasicAutocompletion= true
-            enableSnippets= true
-            enableLiveAutocompletion= false
+            enableBasicAutocompletion = true
+            enableSnippets = true
+            enableLiveAutocompletion = false
         }
     }
     val editors = editorEls.asList().associate { node ->
         val element = node as Element
         //delete any current children of element - existing editor if switching ace<->monaco
-        while (element.childElementCount != 0) { element.removeChild(element.firstChild!!) }
+        while (element.childElementCount != 0) {
+            element.removeChild(element.firstChild!!)
+        }
         val id = element.id
         val ed = if (isAce) {
-            AglEditorAce(element, id, id, aceOptions,workerScriptName,true)
+            AglEditorAce(element, id, id, aceOptions, workerScriptName, true)
         } else {
-            AglEditorMonaco(element, id, id, aceOptions,workerScriptName,true)
+            AglEditorMonaco(element, id, id, aceOptions, workerScriptName, true)
         }
-        Pair(id,ed)
+        Pair(id, ed)
     }
 
     demo = Demo(editors)
@@ -232,7 +235,7 @@ fun createDemo(isAce: Boolean) {
 }
 
 class Demo(
-        val editors: Map<String, AglEditor>
+    val editors: Map<String, AglEditor>
 ) {
     val trees = TreeView.initialise(document)
 
@@ -240,6 +243,7 @@ class Demo(
     val sentenceEditor = editors["sentence-text"]!!
     val grammarEditor = editors["language-grammar"]!!
     val styleEditor = editors["language-style"]!!
+    val referencesEditor = editors["language-references"]!!
     //val formatEditor = editors["language-format"]!!
 
     fun configure() {
@@ -250,46 +254,62 @@ class Demo(
 
     fun connectEditors() {
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
-        styleEditor.languageIdentity=Agl.registry.agl.styleLanguageIdentity
+        styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
 
         grammarEditor.onParse { event ->
-            when(event) {
-                is ParseEventStart ->{
-
-                }
-                is ParseEventSuccess ->{
+            when {
+                event.success -> {
                     try {
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
-                        sentenceEditor.languageDefinition.grammar=grammarEditor.text
+                        sentenceEditor.languageDefinition.grammar = grammarEditor.text
                     } catch (t: Throwable) {
-                        sentenceEditor.languageDefinition.grammar=null
+                        sentenceEditor.languageDefinition.grammar = null
                         console.error(grammarEditor.editorId + ": " + t.message)
                     }
                 }
-                is ParseEventFailure ->{
-                    sentenceEditor.languageDefinition.grammar=null
+                event.isStart -> {
+                }
+                else -> { //Failure
+                    sentenceEditor.languageDefinition.grammar = null
                     console.error(grammarEditor.editorId + ": " + event.message)
                 }
             }
         }
-
         styleEditor.onParse { event ->
-            when(event) {
-                is ParseEventStart ->{
-
-                }
-                is ParseEventSuccess ->{
+            when {
+                event.success -> {
                     try {
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
-                        sentenceEditor.languageDefinition.style=styleEditor.text
+                        sentenceEditor.languageDefinition.style = styleEditor.text
                     } catch (t: Throwable) {
                         console.error(styleEditor.editorId + ": " + t.message)
-                        sentenceEditor.languageDefinition.style=""
+                        sentenceEditor.languageDefinition.style = ""
                     }
                 }
-                is ParseEventFailure ->{
+                event.isStart -> {
+                }
+                else -> { //Failure
                     console.error(styleEditor.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.style=""
+                    sentenceEditor.languageDefinition.style = ""
+                }
+            }
+        }
+        referencesEditor.onParse { event ->
+            when {
+                event.success -> {
+                    try {
+                        console.asDynamic().debug("Debug: CrossReferences parse success, resetting scopes and references")
+                        (sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).referencesDefinition = referencesEditor.text
+                    } catch (t: Throwable) {
+                        console.error(styleEditor.editorId + ": " + t.message)
+                        sentenceEditor.languageDefinition.style = ""
+                    }
+                }
+                event.isStart -> {
+                }
+                else -> { //Failure
+                    console.error(styleEditor.editorId + ": " + event.message)
+                    sentenceEditor.languageDefinition.style = ""
                 }
             }
         }
@@ -297,28 +317,28 @@ class Demo(
 
     fun connectTrees() {
         trees["parse"]!!.treeFunctions = TreeViewFunctions<dynamic>(
-                label = {
-                    when (it.isBranch) {
-                        false -> "${it.name} = ${it.nonSkipMatchedText}"
-                        true -> it.name
-                        else -> error("error")
-                    }
-                },
-                hasChildren = { it.isBranch },
-                children = { it.children }
+            label = {
+                when (it.isBranch) {
+                    false -> "${it.name} = ${it.nonSkipMatchedText}"
+                    true -> it.name
+                    else -> error("error")
+                }
+            },
+            hasChildren = { it.isBranch },
+            children = { it.children }
         )
 
         sentenceEditor.onParse { event ->
-            when(event) {
-                is ParseEventStart ->{
-                    trees["parse"]!!.loading = true
-                    trees["ast"]!!.loading = true
-                }
-                is ParseEventSuccess ->{
+            when {
+                event.success -> {
                     trees["parse"]!!.loading = false
                     trees["parse"]!!.root = event.tree
                 }
-                is ParseEventFailure->{
+                event.isStart -> {
+                    trees["parse"]!!.loading = true
+                    trees["ast"]!!.loading = true
+                }
+                else -> { //Failure
                     trees["parse"]!!.loading = false
                     trees["ast"]!!.loading = false
                 }
@@ -326,67 +346,67 @@ class Demo(
         }
 
         trees["ast"]!!.treeFunctions = TreeViewFunctions<dynamic>(
-                label = {
-                    when {
-                        it is Array<*> -> ": List"
-                        it.isAsmElementSimple -> ": " + it.typeName
-                        it.isAsmElementProperty -> {
-                            val v = it.value
-                            when {
-                                null == v -> "${it.name} = null"
-                                v is Array<*> -> "${it.name} : List"
-                                v.isAsmElementSimple -> "${it.name} : ${v.typeName}"
-                                it.name == "'${v}'" -> "${it.name}"
-                                v is String -> "${it.name} = '${v}'"
-                                else -> "${it.name} = ${v}"
-                            }
+            label = {
+                when {
+                    it is Array<*> -> ": List"
+                    it.isAsmElementSimple -> ": " + it.typeName
+                    it.isAsmElementProperty -> {
+                        val v = it.value
+                        when {
+                            null == v -> "${it.name} = null"
+                            v is Array<*> -> "${it.name} : List"
+                            v.isAsmElementSimple -> "${it.name} : ${v.typeName}"
+                            it.name == "'${v}'" -> "${it.name}"
+                            v is String -> "${it.name} = '${v}'"
+                            else -> "${it.name} = ${v}"
                         }
-                        else -> it.toString()
                     }
-                },
-                hasChildren = {
-                    when {
-                        it is Array<*> -> true
-                        it.isAsmElementSimple -> it.properties.size != 0
-                        it.isAsmElementProperty -> {
-                            val v = it.value
-                            when {
-                                null == v -> false
-                                v is Array<*> -> true
-                                v.isAsmElementSimple -> true
-                                else -> false
-                            }
-                        }
-                        else -> false
-                    }
-                },
-                children = {
-                    when {
-                        it is Array<*> -> it
-                        it.isAsmElementSimple -> it.properties
-                        it.isAsmElementProperty -> {
-                            val v = it.value
-                            when {
-                                v is Array<*> -> v
-                                v.isAsmElementSimple -> v.properties
-                                else -> emptyArray<dynamic>()
-                            }
-                        }
-                        else -> emptyArray<dynamic>()
-                    }
+                    else -> it.toString()
                 }
+            },
+            hasChildren = {
+                when {
+                    it is Array<*> -> true
+                    it.isAsmElementSimple -> it.properties.size != 0
+                    it.isAsmElementProperty -> {
+                        val v = it.value
+                        when {
+                            null == v -> false
+                            v is Array<*> -> true
+                            v.isAsmElementSimple -> true
+                            else -> false
+                        }
+                    }
+                    else -> false
+                }
+            },
+            children = {
+                when {
+                    it is Array<*> -> it
+                    it.isAsmElementSimple -> it.properties
+                    it.isAsmElementProperty -> {
+                        val v = it.value
+                        when {
+                            v is Array<*> -> v
+                            v.isAsmElementSimple -> v.properties
+                            else -> emptyArray<dynamic>()
+                        }
+                    }
+                    else -> emptyArray<dynamic>()
+                }
+            }
         )
 
-        sentenceEditor.onProcess { event ->
-            when(event) {
-                is ProcessEventStart ->{
+        sentenceEditor.onSyntaxAnalysis { event ->
+            when {
+                event.isStart -> {
                     //trees["ast"]!!.loading = true
                 }
-                is ProcessEventSuccess ->{
+                event.success -> {
                     trees["ast"]!!.loading = false
                     trees["ast"]!!.root = event.asm
                 }
-                is ProcessEventFailure ->{
+                else -> {//Failure
                     console.error(event.message)
                     trees["ast"]!!.loading = false
                     trees["ast"]!!.root = event.asm
@@ -400,9 +420,9 @@ class Demo(
             val egName = js("event.target.value") as String
             val eg = Examples[egName]
             grammarEditor.text = eg.grammar
-            sentenceEditor.languageDefinition.grammar=grammarEditor.text // set this before setting the sentence text
+            sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
             styleEditor.text = eg.style
-            sentenceEditor.languageDefinition.style=styleEditor.text  // set this before setting the sentence text
+            sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
             //formatEditor.text = eg.format
             sentenceEditor.text = eg.sentence
         })
@@ -411,9 +431,9 @@ class Demo(
         val eg = Datatypes.example
         (exampleSelect as HTMLSelectElement).value = eg.id
         grammarEditor.text = eg.grammar
-        sentenceEditor.languageDefinition.grammar=grammarEditor.text // set this before setting the sentence text
+        sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
         styleEditor.text = eg.style
-        sentenceEditor.languageDefinition.style=styleEditor.text  // set this before setting the sentence text
+        sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
         //formatEditor.text = eg.format
         sentenceEditor.text = eg.sentence
     }

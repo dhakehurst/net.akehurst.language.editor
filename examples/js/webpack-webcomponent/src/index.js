@@ -71,18 +71,22 @@ styleEditor.text = `$keyword {
 }`;
 
 grammarEditor.onParse( (e) =>{
-    if (e instanceof ParseEventFailure) {
-        userLang.grammar = null;
-    } else if (e instanceof ParseEventSuccess) {
+    if(e.isStart) {
+        
+    }else if(e.success) {
         userLang.grammar = grammarEditor.text;
+    }else {
+        userLang.grammar = null;
     }
 });
 
 styleEditor.onParse( (e) =>{
-    if (e instanceof ParseEventFailure) {
-        userLang.style = null;
-    } else if (e instanceof ParseEventSuccess) {
+    if(e.isStart) {
+        
+    }else if(e.success) {
         userLang.style = styleEditor.text;
+    }else {
+        userLang.style = null;
     }
 });
 
@@ -107,10 +111,13 @@ sentenceEditor.aglEditor.logger.bind = (level, msg)=>{
 }
 
 sentenceEditor.onParse( (e) =>{
-    if (e instanceof ParseEventFailure) {
-        result.value = e.message;
-    } else if (e instanceof ParseEventSuccess) {
+    if(e.isStart) {
+        
+    }else if(e.success) {
         result.value = toString(e.tree, '');
+    }else {
+        result.value = e.message;
+        
     }
 });
 userLang.grammar = grammarEditor.text

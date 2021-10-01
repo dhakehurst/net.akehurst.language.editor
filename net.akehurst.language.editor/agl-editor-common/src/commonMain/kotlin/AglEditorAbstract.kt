@@ -30,9 +30,6 @@ abstract class AglEditorAbstract(
     init {
         this.agl.languageDefinition.grammarObservers.add { _, _ -> this.updateGrammar(); this.updateStyle() }
         this.agl.languageDefinition.styleObservers.add { _, _ -> this.updateStyle() }
-
-
-
     }
 
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()

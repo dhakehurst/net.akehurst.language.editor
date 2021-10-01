@@ -16,6 +16,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.parser.InputLocation
+import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.editor.api.*
 import org.w3c.dom.Element
 
@@ -29,44 +30,21 @@ abstract class AglEditorJsAbstract(
 
     protected abstract fun resetTokenization()
     protected abstract fun doBackgroundTryParse()
-    protected abstract fun parseFailure(message: String, location: InputLocation?, expected: Array<String>?, tree: Any?)
+    protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)
 
     protected var aglWorker = AglWorkerClient(super.agl, workerScriptName, sharedWorker)
     protected lateinit var workerTokenizer: AglTokenizerByWorker
 
     // must be called by subclass
-    protected fun connectWorker(workerTokenizer: AglTokenizerByWorker ) {
+    protected fun connectWorker(workerTokenizer: AglTokenizerByWorker) {
         this.workerTokenizer = workerTokenizer
         this.aglWorker.initialise()
         this.aglWorker.setStyleResult = { message -> if (message.success) this.resetTokenization() else this.log(LogLevel.Error, message.message) }
         this.aglWorker.processorCreateResult = this::processorCreateResult
-        this.aglWorker.parseStart = { this.notifyParse(ParseEventStart()) }
         this.aglWorker.parseResult = this::parseResult
-        this.aglWorker.lineTokens = {
-            if (it.success) {
-                this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}")
-                this.workerTokenizer.receiveTokens(it.lineTokens)
-                this.resetTokenization()
-            } else {
-                this.log(LogLevel.Error, "LineTokens - ${it.message}")
-            }
-        }
-        this.aglWorker.syntaxAnalysisStart = { this.notifySyntaxAnalysis(SyntaxAnalysisEvent(true, "Start", null)) }
-        this.aglWorker.syntaxAnalysisResult= { message ->
-            if(message.success) {
-                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(true, "Success", message.asm))
-            } else {
-                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(false, message.message, null))
-            }
-        }
-        this.aglWorker.semanticAnalysisStart = { this.notifySemanticAnalysis(SemanticAnalysisEvent(true, "Start", null)) }
-        this.aglWorker.semanticAnalysisResult = { message ->
-            if(message.success) {
-                this.notifySemanticAnalysis(SemanticAnalysisEvent(true, "Success", message.items))
-            } else {
-                this.notifySemanticAnalysis(SemanticAnalysisEvent(false, message.message, null))
-            }
-        }
+        this.aglWorker.lineTokens = this::lineTokens
+        this.aglWorker.syntaxAnalysisResult = this::syntaxAnalysisResult
+        this.aglWorker.semanticAnalysisResult = this::semanticAnalysisResult
     }
 
     private fun processorCreateResult(message: MessageProcessorCreateResponse) {
@@ -90,17 +68,62 @@ abstract class AglEditorJsAbstract(
         }
     }
 
-    private fun parseResult(event: MessageParseResult) {
+    private fun lineTokens(event: MessageLineTokens) {
         if (event.success) {
-            this.parseSuccess(event.tree!!)
+            this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}")
+            this.workerTokenizer.receiveTokens(event.lineTokens)
+            this.resetTokenization()
         } else {
-            this.parseFailure(event.message, event.location, event.expected, event.tree)
+            this.log(LogLevel.Error, "LineTokens - ${event.message}")
         }
     }
 
-    protected fun parseSuccess(tree: Any) {
-        this.resetTokenization()
-        val event = ParseEventSuccess(tree)
-        this.notifyParse(event)
+    private fun parseResult(event: MessageParseResult) {
+        if (event.success) {
+            this.resetTokenization()
+            this.createIssueMarkers(event.issues.toList())
+            this.notifyParse(ParseEvent(true, "Success", event.tree, event.issues.toList()))
+        } else {
+            if ("Start" == event.message) {
+                this.notifyParse(ParseEvent(false, "Start", null, emptyList()))
+            } else {
+                // a failure to parse is not an 'error' in the editor - we expect some parse failures
+                this.log(LogLevel.Debug, "Cannot parse text in ${this.editorId} for language ${this.languageIdentity}: ${event.message}")
+                // parse failed so re-tokenize from scan
+                this.workerTokenizer.reset()
+                this.resetTokenization()
+                this.createIssueMarkers(event.issues.toList())
+                this.notifyParse(ParseEvent(false, "Failure", null, event.issues.toList()))
+            }
+        }
     }
+
+    private fun syntaxAnalysisResult(event: MessageSyntaxAnalysisResult) {
+        if (event.success) {
+            this.createIssueMarkers(event.issues.toList())
+            this.notifySyntaxAnalysis(SyntaxAnalysisEvent(true, "Success", event.asm, event.issues.toList()))
+        } else {
+            if ("Start" == event.message) {
+                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(false, "Start", null, emptyList()))
+            } else {
+                this.createIssueMarkers(event.issues.toList())
+                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(false, event.message, event.asm, event.issues.toList()))
+            }
+        }
+    }
+
+    private fun semanticAnalysisResult(event: MessageSemanticAnalysisResult) {
+        if (event.success) {
+            this.createIssueMarkers(event.issues.toList())
+            this.notifySemanticAnalysis(SemanticAnalysisEvent(true, "Success", event.issues.toList()))
+        } else {
+            if ("Start" == event.message) {
+                this.notifySemanticAnalysis(SemanticAnalysisEvent(false, "Start", emptyList()))
+            } else {
+                this.createIssueMarkers(event.issues.toList())
+                this.notifySemanticAnalysis(SemanticAnalysisEvent(false, event.message, event.issues.toList()))
+            }
+        }
+    }
+
 }

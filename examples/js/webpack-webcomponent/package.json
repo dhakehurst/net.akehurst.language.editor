@@ -4,8 +4,8 @@
   "scripts": {},
   "private": true,
   "dependencies": {
-    "net.akehurst.language.editor-agl-editor-ace": "file:../../../net.akehurst.language.editor/.gradle-build/agl-editor-ace/productionLibrary",
-    "net.akehurst.language.editor-agl-editor-worker": "file:../../../net.akehurst.language.editor/.gradle-build/agl-editor-worker/productionLibrary"
+    "net.akehurst.language.editor-agl-editor-ace": "file:../../../net.akehurst.language.editor/.gradle-build/agl-editor-ace/developmentLibrary",
+    "net.akehurst.language.editor-agl-editor-worker": "file:../../../net.akehurst.language.editor/.gradle-build/agl-editor-worker/developmentLibrary"
   },
   "devDependencies": {
     "css-loader": "6.2.0",

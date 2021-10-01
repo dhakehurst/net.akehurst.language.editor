@@ -16,10 +16,8 @@
 
 package net.akehurst.language.editor.worker
 
-import net.akehurst.language.editor.common.*
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.MessageEvent
-
 
 class AglDedicatedWorker : AglWorkerAbstract() {
 
@@ -36,24 +34,9 @@ class AglDedicatedWorker : AglWorkerAbstract() {
         }
         _selfDedicated?.onmessage = { ev: MessageEvent ->
             try {
-                val jsObj = (ev as MessageEvent).data.asDynamic()
-                if (null != jsObj) {
-                    val msg: AglWorkerMessage? = AglWorkerMessage.fromJsObject(jsObj)
-                    if (null == msg) {
-                        (_selfDedicated as DedicatedWorkerGlobalScope).postMessage("Worker cannot handle message: $jsObj")
-                    } else {
-                        when (msg) {
-                            is MessageProcessorCreate -> this.createProcessor(_selfDedicated, msg)
-                            is MessageParserInterruptRequest -> this.interrupt(_selfDedicated, msg)
-                            is MessageProcessRequest -> this.parse(_selfDedicated, msg)
-                            is MessageSetStyle -> this.setStyle(_selfDedicated, msg)
-                        }
-                    }
-                } else {
-                    //no data, message not handled
-                }
+                receiveMessage(_selfDedicated, ev)
             } catch (e: Throwable) {
-                (_selfDedicated as DedicatedWorkerGlobalScope).postMessage("Worker error: ${e.message!!}")
+                (_selfDedicated as DedicatedWorkerGlobalScope).postMessage("Error: Worker error: ${e.message!!}")
             }
         }
     }

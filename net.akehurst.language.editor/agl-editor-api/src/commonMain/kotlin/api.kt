@@ -17,7 +17,8 @@
 package net.akehurst.language.editor.api
 
 import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.semanticAnalyser.SemanticAnalyserItem
+import net.akehurst.language.api.processor.LanguageIssue
+
 
 enum class LogLevel { None, Fatal, Error, Warning, Debug, Trace, All }
 
@@ -70,31 +71,46 @@ interface AglEditor {
     fun destroy()
 }
 
-
-sealed class ParseEvent(val message: String) {
-    open val success: Boolean = false
-    open val tree: Any? = null
+/**
+ * Three kinds of event,
+ * Start -> success==false, message==Start
+ * Success -> success==true
+ * Failure -> success==false
+ */
+class ParseEvent(
+    val success: Boolean,
+    val message: String,
+    val tree: Any?,
+    val issues: List<LanguageIssue>
+) {
+    val isStart:Boolean = false==success && "Start"==message
 }
 
-class ParseEventStart() : ParseEvent("Parse started")
-class ParseEventSuccess(
-    override val tree: Any
-) : ParseEvent("Parse success") {
-    override val success = true
-}
-
-class ParseEventFailure(
-    message: String,
-    override val tree: Any?
-) : ParseEvent(message)
-
+/**
+ * Three kinds of event,
+ * Start -> success==false, message==Start
+ * Success -> success==true
+ * Failure -> success==false
+ */
 class SyntaxAnalysisEvent(
     val success:Boolean,
     val message: String,
-    val asm:Any?
-)
+    val asm:Any?,
+    val issues: List<LanguageIssue>
+) {
+    val isStart:Boolean = false==success && "Start"==message
+}
+
+/**
+ * Three kinds of event,
+ * Start -> success==false, message==Start
+ * Success -> success==true
+ * Failure -> success==false
+ */
 class SemanticAnalysisEvent(
     val success:Boolean,
     val message: String,
-    val items: List<SemanticAnalyserItem>?
-)
+    val issues: List<LanguageIssue>
+) {
+    val isStart:Boolean = false==success && "Start"==message
+}

@@ -26,11 +26,10 @@ import monaco.editor.IMarkerData
 import monaco.editor.IStandaloneCodeEditor
 import monaco.editor.ITokenThemeRule
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.parser.InputLocation
-import net.akehurst.language.api.parser.ParseFailedException
+import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.api.syntaxAnalyser.SyntaxAnalyserException
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
 import org.w3c.dom.Element
@@ -155,43 +154,47 @@ class AglEditorMonaco(
         val str = this.agl.languageDefinition.style
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule> = Agl.registry.agl.style.processor!!.process<List<AglStyleRule>,Any>(str).first
-            var mappedCss = ""
-            rules.forEach { rule ->
-                val cssClass = '.' + this.languageIdentity + ' ' + ".monaco_" + this.agl.styleHandler.mapClass(rule.selector);
-                val mappedRule = AglStyleRule(cssClass)
-                mappedRule.styles = rule.styles.values.associate { oldStyle ->
-                    val style = when (oldStyle.name) {
-                        "foreground" -> AglStyle("color", oldStyle.value)
-                        "background" -> AglStyle("background-color", oldStyle.value)
-                        "font-style" -> when (oldStyle.value) {
-                            "bold" -> AglStyle("font-weight", oldStyle.value)
-                            "italic" -> AglStyle("font-style", oldStyle.value)
+            val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process<List<AglStyleRule>,Any>(str).first
+            if(null!=rules) {
+                var mappedCss = ""
+                rules.forEach { rule ->
+                    val cssClass = '.' + this.languageIdentity + ' ' + ".monaco_" + this.agl.styleHandler.mapClass(rule.selector);
+                    val mappedRule = AglStyleRule(cssClass)
+                    mappedRule.styles = rule.styles.values.associate { oldStyle ->
+                        val style = when (oldStyle.name) {
+                            "foreground" -> AglStyle("color", oldStyle.value)
+                            "background" -> AglStyle("background-color", oldStyle.value)
+                            "font-style" -> when (oldStyle.value) {
+                                "bold" -> AglStyle("font-weight", oldStyle.value)
+                                "italic" -> AglStyle("font-style", oldStyle.value)
+                                else -> oldStyle
+                            }
                             else -> oldStyle
                         }
-                        else -> oldStyle
-                    }
-                    Pair(style.name, style)
-                }.toMutableMap()
-                mappedCss = mappedCss + "\n" + mappedRule.toCss()
+                        Pair(style.name, style)
+                    }.toMutableMap()
+                    mappedCss = mappedCss + "\n" + mappedRule.toCss()
+                }
+                val cssText: String = mappedCss
+                // remove the current style element for 'languageId' (which is used as the theme name) from the container
+                // else the theme css is not reapplied
+                val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#" + this.languageIdentity)
+                curStyle?.remove()
+
+                //add style element
+                val styleElement = this.element.ownerDocument?.createElement("style")!!
+                styleElement.setAttribute("id", this.languageIdentity)
+                styleElement.textContent = cssText
+                this.element.ownerDocument?.querySelector("head")?.appendChild(
+                    styleElement
+                )
+                this.aglWorker.setStyle(languageIdentity, editorId, "", str) //TODO: sessionId
+
+                // need to update because token style types may have changed, not just their attributes
+                this.update()
+            } else {
+                //TODO: cannot process style rules
             }
-            val cssText: String = mappedCss
-            // remove the current style element for 'languageId' (which is used as the theme name) from the container
-            // else the theme css is not reapplied
-            val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#" + this.languageIdentity)
-            curStyle?.remove()
-
-            //add style element
-            val styleElement = this.element.ownerDocument?.createElement("style")!!
-            styleElement.setAttribute("id", this.languageIdentity)
-            styleElement.textContent = cssText
-            this.element.ownerDocument?.querySelector("head")?.appendChild(
-                styleElement
-            )
-            this.aglWorker.setStyle(languageIdentity, editorId, "", str) //TODO: sessionId
-
-            // need to update because token style types may have changed, not just their attributes
-            this.update()
         }
     }
 
@@ -331,35 +334,33 @@ class AglEditorMonaco(
 
     }
 
-    override fun parseFailure(message: String, location: InputLocation?, expected: Array<String>?, tree: Any?) {
-        console.error("Error parsing text in ${this.editorId}: $message")
-        // parse failed so re-tokenize from scan
-        this.workerTokenizer.reset()
-        this.resetTokenization()
-
-        if (null != location) {
-            val errMsg = when {
-                null == expected -> "Syntax Error"
-                expected.isEmpty() -> "Syntax Error"
-                1 == expected.size -> "Syntax Error, expected: $expected"
-                else -> "Syntax Error, expected one of: $expected"
+    override fun createIssueMarkers(issues: List<LanguageIssue>) {
+        val monIssues = issues.map { issue ->
+            val errMsg:String = when(issue.phase) {
+                LanguageProcessorPhase.PARSE ->{
+                    val expected = issue.data as Set<String>?
+                    when {
+                        null == expected -> "Syntax Error"
+                        expected.isEmpty() -> "Syntax Error"
+                        1 == expected.size -> "Syntax Error, expected: $expected"
+                        else -> "Syntax Error, expected one of: $expected"
+                    }
+                }
+                LanguageProcessorPhase.SYNTAX_ANALYSIS -> ""
+                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> ""
             }
-            val errors = mutableListOf<IMarkerData>()
-            errors.add(objectJSTyped<IMarkerData> {
+            objectJSTyped<IMarkerData> {
                 code = null
                 severity = MarkerSeverity.Error
-                startLineNumber = location.line
-                startColumn = location.column
-                endLineNumber = location.line
-                endColumn = location.column
+                startLineNumber = issue.location?.line ?: 0
+                startColumn = issue.location?.column ?: 0
+                endLineNumber = issue.location?.line ?: 0
+                endColumn = issue.location?.column ?: 0
                 this.message = errMsg
                 source = null
-            })
-            monaco.editor.setModelMarkers(this.monacoEditor.getModel(), "", errors.toTypedArray())
-            val event = ParseEventFailure(message, tree)
-            this.notifyParse(event)
-
+            }
         }
+        monaco.editor.setModelMarkers(this.monacoEditor.getModel(), "", monIssues.toTypedArray())
     }
 
 }
