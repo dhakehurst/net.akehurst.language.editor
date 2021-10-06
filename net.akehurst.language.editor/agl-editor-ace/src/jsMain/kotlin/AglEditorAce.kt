@@ -56,6 +56,7 @@ class AglEditorAce(
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
+    private val _annotations = mutableListOf<AceAnnotation>()
 
     val aceEditor: ace.Editor = ace.Editor(
         ace.VirtualRenderer(this.element, null),
@@ -291,34 +292,42 @@ class AglEditorAce(
     }
 */
     override fun clearErrorMarkers() {
+        this._annotations.clear()
         this.aceEditor.getSession()?.clearAnnotations(); //assume there are no parse errors or there would be no sppt!
         this.errorParseMarkerIds.forEach { id -> this.aceEditor.getSession()?.removeMarker(id) }
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
         val aceIssues = issues.map { issue ->
+            val aceColumn = issue.location?.let { it.column - 1 } ?: 0
             val errMsg:String = when(issue.phase) {
                 LanguageProcessorPhase.PARSE ->{
-                    val expected = issue.data as Set<String>?
+                    val expected = issue.data as Array<String>?
                     when {
-                        null == expected -> "Syntax Error"
-                        expected.isEmpty() -> "Syntax Error"
-                        1 == expected.size -> "Syntax Error, expected: $expected"
-                        else -> "Syntax Error, expected one of: $expected"
+                        null == expected -> "Syntax Error [column $aceColumn]"
+                        expected.isEmpty() -> "Syntax Error [column $aceColumn]"
+                        1 == expected.size -> "Syntax Error [column $aceColumn], expected: $expected"
+                        else -> "Syntax Error [column $aceColumn], expected one of: $expected"
                     }
                 }
                 LanguageProcessorPhase.SYNTAX_ANALYSIS -> ""
                 LanguageProcessorPhase.SEMANTIC_ANALYSIS -> ""
             }
+            val errType = when(issue.kind) {
+                LanguageIssueKind.ERROR -> "error"
+                LanguageIssueKind.WARNING -> "warning"
+                LanguageIssueKind.INFORMATION -> "information"
+            }
             objectJSTyped<AceAnnotation> {
                 row = issue.location?.let { it.line - 1 } ?: 0
-                column = issue.location?.let { it.column - 1 } ?: 0
-                text = issue.message
-                type = errMsg
+                column = aceColumn
+                text = errMsg //issue.message
+                type = errType
                 raw = null
             }
         }
-        this.aceEditor.getSession()?.setAnnotations(aceIssues.toTypedArray())
+        this._annotations.addAll(aceIssues)
+        this.aceEditor.getSession()?.setAnnotations(this._annotations.toTypedArray())
         aceIssues.forEach { err ->
             val range = ace.Range(err.row, err.column, err.row, err.column + 1)
             val cls = "ace_marker_text_${err.type}"

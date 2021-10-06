@@ -20,6 +20,7 @@ import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
+import net.akehurst.language.editor.api.LogLevel
 
 interface AglTokenizerByWorker {
 
@@ -128,7 +129,12 @@ class AglTokenizer(
     }
 
     fun getLineTokensByScan(lineText: String, state: AglLineState, row: Int): AglLineState {
-        val proc = this.agl.languageDefinition.processor
+        val proc = try {
+            this.agl.languageDefinition.processor
+        } catch (t:Throwable) {
+            agl.logger.log(LogLevel.Error,t.message?:"Unable to create LanguageProcessor")
+            null
+        }
         return if (null != proc) {
             val text = state.leftOverText + lineText
             val leafs = proc.scan(text);
