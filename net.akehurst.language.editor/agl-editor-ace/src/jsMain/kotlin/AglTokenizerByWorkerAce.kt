@@ -19,7 +19,7 @@ package net.akehurst.language.editor.ace
 import net.akehurst.language.editor.common.*
 
 class AglTokenizerByWorkerAce(
-        val agl:AglComponents
+    agl:AglComponents
 ) : ace.Tokenizer, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
@@ -34,7 +34,12 @@ class AglTokenizerByWorkerAce(
     override fun receiveTokens(tokens: Array<Array<AglToken>>) {
         if (this.acceptingTokens) {
             tokens.forEachIndexed { index, tokens ->
-                this.tokensByLine[index] = tokens.toList()
+                // could get empty tokens for a line from a partial parse
+                if (tokens.isNotEmpty()) {
+                    this.tokensByLine[index] = tokens.toList()
+                } else {
+                    // nothing
+                }
             }
         }
     }

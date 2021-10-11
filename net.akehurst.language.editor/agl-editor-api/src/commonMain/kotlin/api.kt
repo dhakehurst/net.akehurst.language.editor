@@ -49,6 +49,11 @@ interface AglEditor {
     var editorSpecificStyleStr: String?
 
     /**
+     * The context for syntax and semantic analysis
+     */
+    var context: Any?
+
+    /**
      * the content of the editor
      */
     var text: String

@@ -129,27 +129,26 @@ class AglTokenizer(
     }
 
     fun getLineTokensByScan(lineText: String, state: AglLineState, row: Int): AglLineState {
-        val proc = try {
-            this.agl.languageDefinition.processor
+        return try {
+            val proc =  this.agl.languageDefinition.processor //TODO: move this to worker so don't have to process the grammar in main thread
+             if (null != proc) {
+                 val text = state.leftOverText + lineText
+                 val leafs = proc.scan(text);
+                 val tokens = transformToTokens(leafs)
+                 if (leafs.isEmpty()) {
+                     AglLineState(row, "", emptyList())
+                 } else {
+                     val lastLeaf = leafs.last()
+                     val endOfLastLeaf = lastLeaf.location.column + lastLeaf.location.length
+                     val leftOverText = lineText.substring(endOfLastLeaf, lineText.length)
+                     AglLineState(row, leftOverText, tokens)
+                 }
+            } else {
+                AglLineState(row, "", listOf(AglToken(arrayOf("nostyle"), lineText, row, 0)))
+            }
         } catch (t:Throwable) {
             agl.logger.log(LogLevel.Error,t.message?:"Unable to create LanguageProcessor")
-            null
-        }
-        return if (null != proc) {
-            val text = state.leftOverText + lineText
-            val leafs = proc.scan(text);
-            val tokens = transformToTokens(leafs)
-            val endState = if (leafs.isEmpty()) {
-                AglLineState(row, "", emptyList())
-            } else {
-                val lastLeaf = leafs.last()
-                val endOfLastLeaf = lastLeaf.location.column + lastLeaf.location.length
-                val leftOverText = lineText.substring(endOfLastLeaf, lineText.length)
-                AglLineState(row, leftOverText, tokens)
-            }
-            return endState
-        } else {
-            AglLineState(row, "", listOf(AglToken(emptyArray(), lineText, row, 0)))
+            AglLineState(row, "", listOf(AglToken(arrayOf("nostyle"), lineText, row, 0)))
         }
     }
 

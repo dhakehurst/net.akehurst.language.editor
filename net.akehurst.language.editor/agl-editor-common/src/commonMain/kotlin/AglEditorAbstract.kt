@@ -62,6 +62,10 @@ abstract class AglEditorAbstract(
             this.updateStyle()
         }
 
+    override var context: Any?
+        get() = this.agl.context
+        set(value) { this.agl.context = value }
+
     override fun onParse(handler: (ParseEvent) -> Unit) {
         this._onParseHandler.add(handler)
     }

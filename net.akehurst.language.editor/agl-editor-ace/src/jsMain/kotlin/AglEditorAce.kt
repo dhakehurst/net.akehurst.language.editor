@@ -304,14 +304,14 @@ class AglEditorAce(
                 LanguageProcessorPhase.PARSE ->{
                     val expected = issue.data as Array<String>?
                     when {
-                        null == expected -> "Syntax Error [column $aceColumn]"
-                        expected.isEmpty() -> "Syntax Error [column $aceColumn]"
-                        1 == expected.size -> "Syntax Error [column $aceColumn], expected: $expected"
-                        else -> "Syntax Error [column $aceColumn], expected one of: $expected"
+                        null == expected -> "Syntax Error"
+                        expected.isEmpty() -> "Syntax Error"
+                        1 == expected.size -> "Syntax Error, expected: $expected"
+                        else -> "Syntax Error, expected one of: $expected"
                     }
                 }
-                LanguageProcessorPhase.SYNTAX_ANALYSIS -> ""
-                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> ""
+                LanguageProcessorPhase.SYNTAX_ANALYSIS -> "Error ${issue.message}"
+                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> "Error ${issue.message}"
             }
             val errType = when(issue.kind) {
                 LanguageIssueKind.ERROR -> "error"
@@ -326,11 +326,21 @@ class AglEditorAce(
                 raw = null
             }
         }
+        // add/update annotations to indicate errors in gutter
         this._annotations.addAll(aceIssues)
         this.aceEditor.getSession()?.setAnnotations(this._annotations.toTypedArray())
-        aceIssues.forEach { err ->
-            val range = ace.Range(err.row, err.column, err.row, err.column + 1)
-            val cls = "ace_marker_text_${err.type}"
+        // add markers to indicate in the actual text - i.e. underline
+        issues.forEach { issue ->
+            val errType = when(issue.kind) {
+                LanguageIssueKind.ERROR -> "error"
+                LanguageIssueKind.WARNING -> "warning"
+                LanguageIssueKind.INFORMATION -> "information"
+            }
+            val row = issue.location?.let { it.line - 1 } ?: 0
+            val startColumn = issue.location?.let { it.column - 1 } ?: 0
+            val endColumn = startColumn + (issue.location?.length ?: 1)
+            val range = ace.Range(row, startColumn, row, endColumn)
+            val cls = "ace_marker_text_$errType"
             val errMrkId = this.aceEditor.getSession()?.addMarker(range, cls, "text")
             if (null != errMrkId) this.errorParseMarkerIds.add(errMrkId)
         }

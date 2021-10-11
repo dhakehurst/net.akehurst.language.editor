@@ -155,3 +155,22 @@
 .ace_indent-guide {
     background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==") right repeat-y;
 }
+
+.ace_marker_text_error {
+    position: absolute;
+    /* text-decoration does not work because it is a div with no text over/underlayed with the text!
+    text-decoration: red wavy underline;*/
+    border-bottom: red dashed;
+}
+
+.ace_marker_text_warning {
+    position: absolute;
+    /*text-decoration: orange wavy underline;*/
+    border-bottom: orange dashed;
+}
+
+.ace_marker_text_information {
+    position: absolute;
+    /*text-decoration: blue wavy underline;*/
+    border-bottom: blue dashed;
+}
