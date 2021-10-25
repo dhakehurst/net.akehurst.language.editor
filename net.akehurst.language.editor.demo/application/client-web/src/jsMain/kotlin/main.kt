@@ -259,7 +259,7 @@ class Demo(
     fun connectEditors() {
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
-        referencesEditor.languageIdentity = Agl.registry.agl.referencesLanguageIdentity
+        referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
         sentenceEditor.languageIdentity= Agl.registry.register(
             identity = "user-language",
             grammar = "",
