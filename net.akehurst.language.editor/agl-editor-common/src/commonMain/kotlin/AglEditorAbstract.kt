@@ -43,6 +43,7 @@ abstract class AglEditorAbstract(
             val oldId = this.agl.languageIdentity
             this.agl.languageIdentity = value
             this.updateLanguage(oldId)
+            this.updateGrammar()
             this.updateStyle()
         }
 

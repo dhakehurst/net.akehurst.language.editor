@@ -34,6 +34,10 @@ allprojects {
 
     buildDir = File(rootProject.projectDir, ".gradle-build/${project.name}")
 
+    gradle.taskGraph.whenReady {
+
+    }
+
 }
 
 fun getProjectProperty(s: String) = project.findProperty(s) as String?

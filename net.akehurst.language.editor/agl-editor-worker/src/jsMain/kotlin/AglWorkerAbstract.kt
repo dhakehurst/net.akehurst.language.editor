@@ -1,7 +1,9 @@
 package net.akehurst.language.editor.worker
 
+import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.asm.AsmElementSimple
+import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageProcessor
@@ -33,6 +35,7 @@ abstract class AglWorkerAbstract {
                 } else {
                     when (msg) {
                         is MessageProcessorCreate -> this.createProcessor(port, msg)
+                        is MessageSyntaxAnalyserConfigure -> this.configureSyntaxAnalyser(port, msg)
                         is MessageParserInterruptRequest -> this.interrupt(port, msg)
                         is MessageProcessRequest -> this.parse(port, msg)
                         is MessageSetStyle -> this.setStyle(port, msg)
@@ -63,6 +66,11 @@ abstract class AglWorkerAbstract {
                 sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, false, t.message!!))
             }
         }
+    }
+
+    protected fun configureSyntaxAnalyser(port: dynamic, message:MessageSyntaxAnalyserConfigure) {
+        val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
+        ld.syntaxAnalyser?.configure(ContextFromGrammar(ld.processor!!.grammar), message.configuration as String)
     }
 
     protected fun interrupt(port: dynamic, message: MessageParserInterruptRequest) {
@@ -207,6 +215,9 @@ abstract class AglWorkerAbstract {
             null
         } else {
             when (asm) {
+                is AsmSimple ->{
+                    createAsmTree(asm.rootElements)
+                }
                 is AsmElementSimple -> {
                     objectJS {
                         isAsmElementSimple = true
@@ -223,7 +234,7 @@ abstract class AglWorkerAbstract {
                 is List<*> -> asm.map {
                     createAsmTree(it)
                 }.toTypedArray()
-                else -> asm.toString()
+                else -> JSON.stringify(asm)
             }
         }
     }

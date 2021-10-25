@@ -239,6 +239,10 @@ FQN = ID ('.' ID)*;
 
 }
     """.trimIndent()
+
+    val references = """
+    """.trimIndent()
+
     val style = """
         '@@statechart@@' {
             foreground: purple;
@@ -261,6 +265,6 @@ FQN = ID ('.' ID)*;
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "Root", sentence, grammar, references, style, format)
 
 }

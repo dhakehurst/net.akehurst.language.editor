@@ -38,6 +38,7 @@ abstract class AglWorkerMessage(
                 return when (action) {
                     "MessageProcessorCreate" -> MessageProcessorCreate.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                     "MessageProcessorCreateResponse" -> MessageProcessorCreateResponse.fromJsObject(languageId, editorId, sessionId, jsObj) as T
+                    "MessageSyntaxAnalyserConfigure" -> MessageSyntaxAnalyserConfigure.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                     "MessageProcessRequest" -> MessageProcessRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                     "MessageParseResult" -> MessageParseResult.fromJsObject(languageId, editorId, sessionId, jsObj) as T
                     "MessageParserInterruptRequest" -> MessageParserInterruptRequest.fromJsObject(languageId, editorId, sessionId, jsObj) as T
@@ -111,6 +112,23 @@ class MessageProcessorCreate(
     override fun toJsObject(): dynamic {
         val obj = super.toJsObject()
         obj["grammarStr"] = grammarStr
+        return obj
+    }
+}
+
+class MessageSyntaxAnalyserConfigure(
+    languageId: String, editorId: String, sessionId: String,
+    val configuration: Any?
+) : AglWorkerMessage("MessageSyntaxAnalyserConfigure", languageId, editorId, sessionId) {
+
+    companion object {
+        fun fromJsObject(languageId: String, editorId: String, sessionId: String, jsObj: dynamic): MessageSyntaxAnalyserConfigure =
+            MessageSyntaxAnalyserConfigure(languageId, editorId, sessionId, jsObj["configuration"])
+    }
+
+    override fun toJsObject(): dynamic {
+        val obj = super.toJsObject()
+        obj["configuration"] = configuration
         return obj
     }
 }

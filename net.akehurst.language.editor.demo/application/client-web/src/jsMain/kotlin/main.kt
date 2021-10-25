@@ -18,15 +18,19 @@ package net.akehurst.language.editor.application.client.web
 
 import kotlinx.browser.document
 import net.akehurst.kotlin.html5.create
+import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
 import net.akehurst.language.editor.ace.AglEditorAce
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.common.objectJS
+
 import net.akehurst.language.editor.demo.BuildConfig
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.examples.*
 import net.akehurst.language.editor.monaco.AglEditorMonaco
+
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
@@ -77,10 +81,10 @@ fun createBaseDom(appDivSelector: String) {
                         article {
                             header { h2 { content = "About" } }
                             section {
-                                p { content = "Ace version 1.4.11, Licence BSD" }
+                                p { content = "Ace version 1.4.12, Licence BSD" }
                                 p { content = "Monaco version 0.20.0, Licence MIT" }
                                 p { content = "AGL version ${Agl.version}, Licence Apache 2.0" }
-                                p { content = "Kotlin version 1.5.10, Licence Apache 2.0" }
+                                p { content = "Kotlin version 1.5.31, Licence Apache 2.0" }
                             }
                             footer {
                                 button {
@@ -255,6 +259,16 @@ class Demo(
     fun connectEditors() {
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
+        referencesEditor.languageIdentity = Agl.registry.agl.referencesLanguageIdentity
+        sentenceEditor.languageIdentity= Agl.registry.register(
+            identity = "user-language",
+            grammar = "",
+            defaultGoalRule = null,
+            style = "",
+            format = "",
+            syntaxAnalyser = SyntaxAnalyserSimple(),
+            semanticAnalyser = null
+        ).identity
 
         grammarEditor.onParse { event ->
             when {
@@ -263,16 +277,15 @@ class Demo(
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammar = grammarEditor.text
                     } catch (t: Throwable) {
+                        console.error(grammarEditor.editorId + ": " + t.message,t)
                         sentenceEditor.languageDefinition.grammar = null
-                        console.error(grammarEditor.editorId + ": " + t.message)
                     }
                 }
-                event.isStart -> {
-                }
-                else -> { //Failure
-                    sentenceEditor.languageDefinition.grammar = null
+                event.failure -> {
                     console.error(grammarEditor.editorId + ": " + event.message)
+                    sentenceEditor.languageDefinition.grammar = null
                 }
+                else -> { }
             }
         }
         styleEditor.onParse { event ->
@@ -282,35 +295,33 @@ class Demo(
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
                         sentenceEditor.languageDefinition.style = styleEditor.text
                     } catch (t: Throwable) {
-                        console.error(styleEditor.editorId + ": " + t.message)
+                        console.error(styleEditor.editorId + ": " + t.message,t)
                         sentenceEditor.languageDefinition.style = ""
                     }
                 }
-                event.isStart -> {
-                }
-                else -> { //Failure
+                event.failure -> {
                     console.error(styleEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.style = ""
                 }
+                else -> { }
             }
         }
-        referencesEditor.onParse { event ->
+        referencesEditor.onSyntaxAnalysis { event ->
             when {
                 event.success -> {
                     try {
-                        console.asDynamic().debug("Debug: CrossReferences parse success, resetting scopes and references")
-                        (sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).referencesDefinition = referencesEditor.text
+                        console.asDynamic().debug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
+                        //(sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = event.asm as ScopeModel
                     } catch (t: Throwable) {
-                        console.error(styleEditor.editorId + ": " + t.message)
-                        sentenceEditor.languageDefinition.style = ""
+                        console.error(referencesEditor.editorId + ": " + t.message,t)
+                       // (sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = ScopeModel()
                     }
                 }
-                event.isStart -> {
+                event.failure -> {
+                    console.error(referencesEditor.editorId + ": " + event.message)
+                    //(sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = ScopeModel()
                 }
-                else -> { //Failure
-                    console.error(styleEditor.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.style = ""
-                }
+                else -> { }
             }
         }
     }
@@ -404,7 +415,7 @@ class Demo(
                 }
                 event.success -> {
                     trees["ast"]!!.loading = false
-                    trees["ast"]!!.root = event.asm
+                    trees["ast"]!!.root = (event.asm as Array<*>)[0] //examples always have one element
                 }
                 else -> {//Failure
                     console.error(event.message)
@@ -423,6 +434,7 @@ class Demo(
             sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
             styleEditor.text = eg.style
             sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
+            referencesEditor.text = eg.references
             //formatEditor.text = eg.format
             sentenceEditor.text = eg.sentence
         })
@@ -434,7 +446,9 @@ class Demo(
         sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
         styleEditor.text = eg.style
         sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
+        referencesEditor.text = eg.references // set this before setting the sentence text
         //formatEditor.text = eg.format
+        sentenceEditor.context = ContextSimple(null,eg.context)
         sentenceEditor.text = eg.sentence
     }
 

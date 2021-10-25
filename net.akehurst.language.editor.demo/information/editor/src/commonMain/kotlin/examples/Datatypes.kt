@@ -36,18 +36,35 @@ object Datatypes {
 
         grammar Test {
             skip WS = "\s+" ;
-
+        
             unit = declaration* ;
-            declaration = 'class' ID '{' property* '}' ;
+            declaration = datatype | primitive ;
+            primitive = 'primitive' ID ;
+            datatype = 'class' ID '{' property* '}' ;
             property = ID ':' typeReference ;
-            typeReference = ID typeArguments? ;
+            typeReference = type typeArguments? ;
             typeArguments = '<' [typeReference / ',']+ '>' ;
-
+        
             leaf ID = "[A-Za-z_][A-Za-z0-9_]*" ;
-
+            leaf type = ID;
         }
     """.trimIndent()
+
+    val references = """
+        scope unit {
+            identify primitive by ID
+            identify datatype by ID
+        }
+        references {
+            in typeReference property type refers-to primitive|datatype
+        }
+    """.trimIndent()
+
     val style = """
+        'primitive' {
+          foreground: purple;
+          font-style: bold;
+        }
         'class' {
           foreground: purple;
           font-style: bold;
@@ -76,6 +93,6 @@ object Datatypes {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "unit", sentence, grammar, references, style, format)
 
 }

@@ -89,6 +89,7 @@ class ParseEvent(
     val issues: List<LanguageIssue>
 ) {
     val isStart:Boolean = false==success && "Start"==message
+    val failure:Boolean= success.not() && isStart.not()
 }
 
 /**
@@ -104,6 +105,7 @@ class SyntaxAnalysisEvent(
     val issues: List<LanguageIssue>
 ) {
     val isStart:Boolean = false==success && "Start"==message
+    val failure:Boolean= success.not() && isStart.not()
 }
 
 /**
@@ -118,4 +120,5 @@ class SemanticAnalysisEvent(
     val issues: List<LanguageIssue>
 ) {
     val isStart:Boolean = false==success && "Start"==message
+    val failure:Boolean= success.not() && isStart.not()
 }

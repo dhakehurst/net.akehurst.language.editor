@@ -259,6 +259,10 @@ grammar English {
 
 }
     """.trimIndent()
+
+    val references = """
+    """.trimIndent()
+
     val style = """
 
     """.trimIndent()
@@ -266,6 +270,6 @@ grammar English {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "text", sentence, grammar, references, style, format)
 
 }

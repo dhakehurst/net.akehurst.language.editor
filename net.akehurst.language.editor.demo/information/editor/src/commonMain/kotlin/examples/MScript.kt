@@ -111,6 +111,9 @@ grammar Mscript {
 }
     """.trimIndent()
 
+    val references = """
+    """.trimIndent()
+
     val style = """
 NAME {
   foreground: red;
@@ -131,6 +134,6 @@ matrix {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "script", sentence, grammar, references, style, format)
 
 }

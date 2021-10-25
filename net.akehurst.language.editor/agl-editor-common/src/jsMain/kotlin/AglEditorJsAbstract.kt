@@ -93,7 +93,7 @@ abstract class AglEditorJsAbstract(
                 this.workerTokenizer.reset()
                 this.resetTokenization()
                 this.createIssueMarkers(event.issues.toList())
-                this.notifyParse(ParseEvent(false, "Failure", null, event.issues.toList()))
+                this.notifyParse(ParseEvent(false, event.message, null, event.issues.toList()))
             }
         }
     }

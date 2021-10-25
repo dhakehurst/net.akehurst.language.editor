@@ -77,6 +77,10 @@ grammar C {
 
 }
     """.trimIndent()
+
+    val references = """
+    """.trimIndent()
+
     val style = """
 
     """.trimIndent()
@@ -84,7 +88,7 @@ grammar C {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "expression", sentence, grammar, references, style, format)
 
 
 }

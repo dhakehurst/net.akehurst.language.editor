@@ -44,8 +44,19 @@ val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {
 
 }
 
-tasks.getByName("jsBrowserDistribution").dependsOn(workerTask)
-tasks.getByName("jsBrowserDevelopmentRun").dependsOn(workerTask)
+val workerTaskDev = tasks.register<Copy>("copyAglEditorWorkerJsDev") {
+    dependsOn(":application-agl-editor-worker:jsBrowserDevelopmentWebpack")
+    dependsOn("jsProcessResources")
+    from("$buildDir/../application-agl-editor-worker/developmentExecutable") {
+        include("application-agl-editor-worker.js")
+        include("application-agl-editor-worker.js.map")
+    }
+    into(file("$buildDir/processedResources/js/main"))
+
+}
+
+tasks.getByName("jsBrowserDevelopmentRun").dependsOn(workerTaskDev)
+tasks.getByName("jsBrowserDevelopmentWebpack").dependsOn(workerTaskDev)
 tasks.getByName("jsBrowserProductionRun").dependsOn(workerTask)
 tasks.getByName("jsBrowserProductionWebpack").dependsOn(workerTask)
 tasks.getByName("jsProductionExecutableCompileSync").dependsOn(workerTask)

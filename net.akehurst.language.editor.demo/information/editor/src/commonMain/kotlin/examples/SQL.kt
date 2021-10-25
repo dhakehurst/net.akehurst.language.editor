@@ -72,6 +72,9 @@ grammar SQL {
 }
     """.trimIndent()
 
+    val references = """
+    """.trimIndent()
+
     val style = """
 ID {
   foreground: blue;
@@ -115,6 +118,6 @@ SET {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "statementList", sentence, grammar, references, style, format)
 
 }

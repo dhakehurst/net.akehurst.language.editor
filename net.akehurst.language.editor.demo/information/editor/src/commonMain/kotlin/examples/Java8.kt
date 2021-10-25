@@ -578,6 +578,10 @@ grammar Packages extends Interfaces {
     TypeDeclaration = ClassDeclaration | InterfaceDeclaration ;
 }
     """.trimIndent()
+
+    val references = """
+    """.trimIndent()
+
     val style = """
         ${'$'}keyword {
             foreground: purple;
@@ -608,6 +612,6 @@ grammar Packages extends Interfaces {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "CompilationUnit", sentence, grammar, references, style, format)
 
 }

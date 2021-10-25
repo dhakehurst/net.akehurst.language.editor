@@ -31,39 +31,6 @@ interface AglTokenizerByWorker {
 
 }
 
-class AglComponents(
-    languageId: String,
-    val editorId:String,
-    val logger: AglEditorLogger
-) {
-    private var _languageDefinition: LanguageDefinition = Agl.registry.findOrPlaceholder(languageId)
-    private var _styleHandler = AglStyleHandler(languageId)
-
-    val languageDefinition get() = _languageDefinition
-    var goalRule:String? = languageDefinition.defaultGoalRule
-
-    val styleHandler get() = _styleHandler
-
-    var context:Any? = null
-    var sppt: SharedPackedParseTree? = null
-    var asm: Any? = null
-
-    var languageIdentity:String get() = languageDefinition.identity
-    set(value) {
-        val grammarObservers = this._languageDefinition.grammarObservers
-        val styleObservers = this._languageDefinition.styleObservers
-        val formatObservers = this._languageDefinition.formatObservers
-        this._languageDefinition = Agl.registry.findOrPlaceholder(languageIdentity)
-        this._languageDefinition.grammarObservers.addAll(grammarObservers)
-        this._languageDefinition.styleObservers.addAll(styleObservers)
-        this._languageDefinition.formatObservers.addAll(formatObservers)
-
-        this._styleHandler = AglStyleHandler(languageIdentity)
-        this.sppt = null
-        this.asm = null
-    }
-}
-
 class AglLineState(
         val lineNumber: Int,
         val leftOverText: String,

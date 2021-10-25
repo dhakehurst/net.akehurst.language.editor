@@ -195,6 +195,9 @@ grammar Query {
 }
     """.trimIndent()
 
+    val references = """
+    """.trimIndent()
+
     val style = """
 ${'$'}keyword {
     foreground: green;
@@ -228,6 +231,6 @@ timestamp {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "query", sentence, grammar, references, style, format)
 
 }

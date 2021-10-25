@@ -168,6 +168,10 @@ grammar Dot  {
 	HTML = '<' Xml.elementContent '>' ;
 }
     """.trimIndent()
+
+    val references = """
+    """.trimIndent()
+
     val style = """
         C_PREPROCESSOR {
           foreground: gray;
@@ -222,6 +226,6 @@ grammar Dot  {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, style, format)
+    val example = Example(id, label, "graph", sentence, grammar, references, style, format)
 
 }
