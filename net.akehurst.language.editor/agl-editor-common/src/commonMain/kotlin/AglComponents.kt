@@ -17,6 +17,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
+import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
@@ -35,7 +36,7 @@ class AglComponents(
 
     val styleHandler get() = _styleHandler
 
-    var context:Any? = null
+    var context: SentenceContext? = null
     var sppt: SharedPackedParseTree? = null
     var asm: Any? = null
 

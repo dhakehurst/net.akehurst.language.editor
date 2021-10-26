@@ -18,10 +18,12 @@ package net.akehurst.language.editor.application.client.web
 
 import kotlinx.browser.document
 import net.akehurst.kotlin.html5.create
+import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
+import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.editor.ace.AglEditorAce
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.common.objectJS
@@ -270,6 +272,8 @@ class Demo(
             semanticAnalyser = null
         ).identity
 
+        var grammarContext:ContextFromGrammar? = null
+
         grammarEditor.onParse { event ->
             when {
                 event.success -> {
@@ -288,6 +292,18 @@ class Demo(
                 else -> { }
             }
         }
+        grammarEditor.onSyntaxAnalysis { event->
+            when{
+                event.success ->{
+                    val grammar = event.asm as Grammar? ?: error("should always be a Grammar if success")
+                    grammarContext = ContextFromGrammar(grammar)
+                }
+                event.failure -> grammarContext = null
+            }
+            referencesEditor.sentenceContext = grammarContext
+            styleEditor.sentenceContext = grammarContext
+        }
+
         styleEditor.onParse { event ->
             when {
                 event.success -> {
@@ -312,6 +328,7 @@ class Demo(
                     try {
                         console.asDynamic().debug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
                         //(sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = event.asm as ScopeModel
+                        sentenceEditor.configureSyntaxAnalyser(referencesEditor.text)
                     } catch (t: Throwable) {
                         console.error(referencesEditor.editorId + ": " + t.message,t)
                        // (sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = ScopeModel()
@@ -431,11 +448,12 @@ class Demo(
             val egName = js("event.target.value") as String
             val eg = Examples[egName]
             grammarEditor.text = eg.grammar
-            sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
+//            sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
             styleEditor.text = eg.style
-            sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
+//            sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
             referencesEditor.text = eg.references
             //formatEditor.text = eg.format
+            sentenceEditor.sentenceContext = ContextSimple(null,eg.context)
             sentenceEditor.text = eg.sentence
         })
 
@@ -443,12 +461,12 @@ class Demo(
         val eg = Datatypes.example
         (exampleSelect as HTMLSelectElement).value = eg.id
         grammarEditor.text = eg.grammar
-        sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
+//        sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
         styleEditor.text = eg.style
-        sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
+//        sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
         referencesEditor.text = eg.references // set this before setting the sentence text
         //formatEditor.text = eg.format
-        sentenceEditor.context = ContextSimple(null,eg.context)
+        sentenceEditor.sentenceContext = ContextSimple(null,eg.context)
         sentenceEditor.text = eg.sentence
     }
 

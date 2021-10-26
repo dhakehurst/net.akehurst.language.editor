@@ -16,6 +16,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.processor.LanguageDefinition
+import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.editor.api.*
 
 abstract class AglEditorAbstract(
@@ -63,7 +64,7 @@ abstract class AglEditorAbstract(
             this.updateStyle()
         }
 
-    override var context: Any?
+    override var sentenceContext: SentenceContext?
         get() = this.agl.context
         set(value) { this.agl.context = value }
 

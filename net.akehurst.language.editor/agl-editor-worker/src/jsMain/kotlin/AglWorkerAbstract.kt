@@ -21,7 +21,8 @@ abstract class AglWorkerAbstract {
     private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
 
     protected fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
-        val str = AglWorkerMessage.serialise(msg)
+        //val str = AglWorkerMessage.serialise(msg)
+        val str = AglWorkerSerialisation.serialise(msg)
         port.postMessage(str, transferables)
     }
 
@@ -29,7 +30,8 @@ abstract class AglWorkerAbstract {
         try {
             if (ev.data is String) {
                 val str = ev.data as String
-                val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
+                //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
+                val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
                 if (null == msg) {
                     port.postMessage("Error: Worker cannot handle message: $str")
                 } else {
@@ -70,7 +72,12 @@ abstract class AglWorkerAbstract {
 
     protected fun configureSyntaxAnalyser(port: dynamic, message:MessageSyntaxAnalyserConfigure) {
         val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
-        ld.syntaxAnalyser?.configure(ContextFromGrammar(ld.processor!!.grammar), message.configuration as String)
+        val grmr = ld.processor?.grammar
+        if (null!=grmr) {
+            val issues = ld.syntaxAnalyser?.configure(ContextFromGrammar(grmr), message.configuration as String)
+        } else {
+            //TODO: report error!
+        }
     }
 
     protected fun interrupt(port: dynamic, message: MessageParserInterruptRequest) {

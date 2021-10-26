@@ -23,14 +23,16 @@ import kotlinx.browser.window
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.common.AglEditorJsAbstract
+import net.akehurst.language.editor.common.AglStyleHandler
+import net.akehurst.language.editor.common.objectJS
+import net.akehurst.language.editor.common.objectJSTyped
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -125,6 +127,12 @@ class AglEditorAce(
             if (null != formattedText) {
                 this.aceEditor.setValue(formattedText, -1)
             }
+        }
+    }
+
+    override fun configureSyntaxAnalyser(configuration: String) {
+        this.aceEditor.getSession()?.also { session ->
+            this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, session.id, configuration)
         }
     }
 
@@ -300,8 +308,8 @@ class AglEditorAce(
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
         val aceIssues = issues.map { issue ->
             val aceColumn = issue.location?.let { it.column - 1 } ?: 0
-            val errMsg:String = when(issue.phase) {
-                LanguageProcessorPhase.PARSE ->{
+            val errMsg: String = when (issue.phase) {
+                LanguageProcessorPhase.PARSE -> {
                     val expected = issue.data as Array<String>?
                     when {
                         null == expected -> "Syntax Error"
@@ -313,7 +321,7 @@ class AglEditorAce(
                 LanguageProcessorPhase.SYNTAX_ANALYSIS -> "Error ${issue.message}"
                 LanguageProcessorPhase.SEMANTIC_ANALYSIS -> "Error ${issue.message}"
             }
-            val errType = when(issue.kind) {
+            val errType = when (issue.kind) {
                 LanguageIssueKind.ERROR -> "error"
                 LanguageIssueKind.WARNING -> "warning"
                 LanguageIssueKind.INFORMATION -> "information"
@@ -331,7 +339,7 @@ class AglEditorAce(
         this.aceEditor.getSession()?.setAnnotations(this._annotations.toTypedArray())
         // add markers to indicate in the actual text - i.e. underline
         issues.forEach { issue ->
-            val errType = when(issue.kind) {
+            val errType = when (issue.kind) {
                 LanguageIssueKind.ERROR -> "error"
                 LanguageIssueKind.WARNING -> "warning"
                 LanguageIssueKind.INFORMATION -> "information"

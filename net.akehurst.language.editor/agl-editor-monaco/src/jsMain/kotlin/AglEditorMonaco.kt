@@ -143,6 +143,12 @@ class AglEditorMonaco(
         }
     }
 
+    override fun configureSyntaxAnalyser(configuration: String) {
+        //this.aceEditor.getSession()?.also { session ->
+            this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, "", configuration) //TODO: sessionId
+        //}
+    }
+
     override fun updateGrammar() {
         this.clearErrorMarkers()
         this.aglWorker.createProcessor(languageIdentity, editorId, "", this.agl.languageDefinition.grammar) //TODO: sessionId

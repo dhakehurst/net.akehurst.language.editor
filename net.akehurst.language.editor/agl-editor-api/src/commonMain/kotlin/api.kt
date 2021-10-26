@@ -18,6 +18,7 @@ package net.akehurst.language.editor.api
 
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.SentenceContext
 
 
 enum class LogLevel { None, Fatal, Error, Warning, Debug, Trace, All }
@@ -49,9 +50,9 @@ interface AglEditor {
     var editorSpecificStyleStr: String?
 
     /**
-     * The context for syntax and semantic analysis
+     * The context for syntax and semantic analysis of the sentence (text) in the editor
      */
-    var context: Any?
+    var sentenceContext: SentenceContext?
 
     /**
      * the content of the editor
@@ -62,6 +63,8 @@ interface AglEditor {
      * destination for logging messages
      */
     val logger: AglEditorLogger
+
+    fun configureSyntaxAnalyser(configuration: String)
 
     fun onParse(handler: (ParseEvent) -> Unit)
 

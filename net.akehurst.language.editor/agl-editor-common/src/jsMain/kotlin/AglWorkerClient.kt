@@ -16,8 +16,6 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.api.processor.LanguageIssueKind
-import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.editor.api.LogLevel
 import org.w3c.dom.*
 import org.w3c.dom.events.EventTarget
@@ -55,7 +53,8 @@ class AglWorkerClient(
                     if (str.startsWith("Error:")) {
                         this.agl.logger.log(LogLevel.Error, str.substringAfter("Error:"))
                     } else {
-                        val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
+                        //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
+                        val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
                         if (null == msg) {
                             this.agl.logger.log(LogLevel.Error, "Worker message not handled: $str")
                         } else {
@@ -78,7 +77,7 @@ class AglWorkerClient(
                 } else {
                     this.agl.logger.log(LogLevel.Error, "Handling Worker message, data content should be a String, got - '${ev.data}'")
                 }
-            } catch (e:Throwable) {
+            } catch (e: Throwable) {
                 this.agl.logger.log(LogLevel.Error, "Handling Worker message, ${e.message!!}")
             }
         }, objectJS { })
@@ -92,7 +91,8 @@ class AglWorkerClient(
 
     fun sendToWorker(msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
         val jsObj = msg.toJsObject()
-        val str = AglWorkerMessage.serialise(msg)
+        //val str = AglWorkerMessage.serialise(msg)
+        val str = AglWorkerSerialisation.serialise(msg)
         if (this.sharedWorker) {
             (this.worker as SharedWorker).port.postMessage(str, transferables)
         } else {
@@ -104,11 +104,15 @@ class AglWorkerClient(
         this.sendToWorker(MessageProcessorCreate(languageId, editorId, sessionId, grammarStr))
     }
 
+    fun configureSyntaxAnalyser(languageId: String, editorId: String, sessionId: String, configuration: String) {
+        this.sendToWorker(MessageSyntaxAnalyserConfigure(languageId, editorId, sessionId, configuration))
+    }
+
     fun interrupt(languageId: String, editorId: String, sessionId: String) {
         this.sendToWorker(MessageParserInterruptRequest(languageId, editorId, sessionId, "New parse request"))
     }
 
-    fun tryParse(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context:Any?) {
+    fun tryParse(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context: Any?) {
         this.sendToWorker(MessageProcessRequest(languageId, editorId, sessionId, goalRuleName, sentence, context))
     }
 
