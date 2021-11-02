@@ -13,6 +13,7 @@ import net.akehurst.language.api.sppt.SPPTNode
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.MessageEvent
 
 abstract class AglWorkerAbstract {

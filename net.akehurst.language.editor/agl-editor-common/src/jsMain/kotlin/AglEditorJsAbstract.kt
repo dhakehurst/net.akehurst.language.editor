@@ -18,6 +18,7 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.editor.api.*
+import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
 
 abstract class AglEditorJsAbstract(

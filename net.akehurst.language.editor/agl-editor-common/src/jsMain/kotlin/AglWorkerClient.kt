@@ -19,6 +19,7 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.editor.api.LogLevel
 import org.w3c.dom.*
 import org.w3c.dom.events.EventTarget
+import net.akehurst.language.editor.common.messages.*
 
 class AglWorkerClient(
     val agl: AglComponents,

@@ -1,5 +1,5 @@
 plugins {
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic")
+    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version("1.4.1-1.6.0-RC")
 }
 
 val version_kserialisation:String by project
@@ -10,6 +10,15 @@ dependencies {
     commonMainImplementation("net.akehurst.kotlinx:kotlinx-reflect:$version_kotlinx")
     commonMainImplementation("net.akehurst.kotlin.kserialisation:kserialisation-json:$version_kserialisation")
 }
+
+kotlinxReflect {
+    forReflection.set(listOf(
+        "net.akehurst.language.editor.common.messages",
+        "net.akehurst.language.api.asm",
+        "net.akehurst.language.agl.grammar.grammar.asm"
+    ))
+}
+
 
 configure<PublishingExtension> {
     publications.withType<MavenPublication> {

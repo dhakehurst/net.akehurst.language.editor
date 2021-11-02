@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackOutput
 val version_agl:String by project
 
 plugins {
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic")
 }
 
 dependencies {
@@ -28,10 +27,4 @@ configure<PublishingExtension> {
             name.set("AGL Processor Editor integration: Web Worker")
         }
     }
-}
-
-exportPublic {
-    exportPatterns.set(listOf(
-    //    "net.akehurst.language.editor.worker.**"
-    ))
 }

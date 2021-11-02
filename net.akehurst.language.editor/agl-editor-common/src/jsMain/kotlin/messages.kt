@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.common
+package net.akehurst.language.editor.common.messages
 
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
+import net.akehurst.language.editor.common.AglToken
+import net.akehurst.language.editor.common.objectJS
 
 abstract class AglWorkerMessage(
     val action: String,

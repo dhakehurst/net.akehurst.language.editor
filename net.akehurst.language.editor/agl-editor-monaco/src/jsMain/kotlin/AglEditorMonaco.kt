@@ -32,6 +32,7 @@ import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 

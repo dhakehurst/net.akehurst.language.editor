@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 plugins {
-    kotlin("multiplatform") version ("1.5.31") apply false
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.3.0") apply false
+    kotlin("multiplatform") version ("1.6.0-RC") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.4.0-1.6.0-RC") apply false
     //id("org.jetbrains.dokka") version ("1.4.32") apply false
     id("com.github.gmazzo.buildconfig") version ("3.0.0") apply false
     id("nu.studer.credentials") version ("2.1")
@@ -44,6 +44,7 @@ subprojects {
     apply(plugin = "signing")
     //apply(plugin = "org.jetbrains.dokka")
     apply(plugin = "com.github.gmazzo.buildconfig")
+    apply(plugin = "net.akehurst.kotlin.gradle.plugin.exportPublic")
 
     repositories {
         mavenLocal()
