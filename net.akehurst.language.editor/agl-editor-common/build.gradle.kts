@@ -15,7 +15,8 @@ kotlinxReflect {
     forReflection.set(listOf(
         "net.akehurst.language.editor.common.messages",
         "net.akehurst.language.api.asm",
-        "net.akehurst.language.agl.grammar.grammar.asm"
+        "net.akehurst.language.agl.grammar.grammar.asm",
+        "net.akehurst.language.agl.syntaxAnalyser"
     ))
 }
 

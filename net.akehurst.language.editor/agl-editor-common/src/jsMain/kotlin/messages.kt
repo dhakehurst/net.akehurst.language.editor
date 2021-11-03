@@ -21,7 +21,7 @@ import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.editor.common.AglToken
 import net.akehurst.language.editor.common.objectJS
-
+/*
 abstract class AglWorkerMessage(
     val action: String,
     val languageId: String,
@@ -357,3 +357,4 @@ class MessageCodeCompleteResult(
         return obj
     }
 }
+*/

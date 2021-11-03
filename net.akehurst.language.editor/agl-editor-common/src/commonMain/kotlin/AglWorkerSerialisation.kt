@@ -41,25 +41,106 @@ object AglWorkerSerialisation {
         serialiser.confgureDatatypeModel(
             """
             namespace net.akehurst.language.editor.common.messages {
-                datatype AglWorkerMessage {
+                datatype MessageProcessorCreate {
                     composite-val languageId : String
                     composite-val editorId : String
                     composite-val sessionId: String
-                }
-                datatype MessageProcessorCreate : AglWorkerMessage {
                     composite-val grammarStr: String
                 }
                 datatype MessageSyntaxAnalyserConfigure {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
                     composite-val configuration: Any
                 }
                 datatype MessageProcessorCreateResponse {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
                     composite-val success: Boolean
                     composite-val message: String
                 }
                 datatype MessageProcessRequest {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
                     composite-val goalRuleName: String?
                     composite-val text: String
                     composite-val context: Any?
+                }
+                datatype MessageParseResult {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val success: Boolean
+                    composite-val message: String
+                    composite-val tree: Any?
+                    composite-val issues: Array<LanguageIssue>
+                }
+                datatype MessageSyntaxAnalysisResult {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val success: Boolean
+                    composite-val message: String
+                    composite-val asm: Any?
+                    composite-val issues: Array<LanguageIssue>
+                }
+                datatype MessageSemanticAnalysisResult {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val success: Boolean
+                    composite-val message: String
+                    composite-val issues: Array<LanguageIssue>
+                }
+                datatype MessageParserInterruptRequest {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val reason: String
+                }
+                datatype MessageLineTokens {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val success: Boolean
+                    composite-val message: String
+                    composite-val lineTokens: Array<Array<AglToken>>
+                }
+                datatype MessageSetStyle {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val css: String
+                }
+                datatype MessageSetStyleResult {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val success: Boolean
+                    composite-val message: String
+                }
+                datatype MessageCodeCompleteRequest {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val goalRuleName: String?
+                    composite-val text: String
+                    composite-val position: Int
+                }
+                datatype MessageCodeCompleteResult {
+                    composite-val languageId : String
+                    composite-val editorId : String
+                    composite-val sessionId: String
+                    composite-val success: Boolean
+                    composite-val message: String
+                    composite-val completionItems: Array<Pair<String, String>>?
+                }
+            }
+            namespace net.akehurst.language.agl.syntaxAnalyser {
+                datatype ContextSimple {
+                    composite-val scope: ScopeSimple<AsmElementSimple>
                 }
             }
         """.trimIndent()
@@ -68,9 +149,16 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseAsmSimple() {
+        //TODO: add type arg to ScopeSimple<E>
         serialiser.confgureDatatypeModel(
             """
             namespace net.akehurst.language.api.asm {
+                datatype ScopeSimple {
+                    reference-val parent: ScopeSimple<E>?
+                    composite-val forTypeName:String
+                    composite-var childScopes:Map<String,ScopeSimple<E>>
+                    composite-var items:Map<String,Map<String,E>>
+                }
                 datatype AsmSimple {
                     composite-var rootElements: List<AsmElementSimple>
                 }
