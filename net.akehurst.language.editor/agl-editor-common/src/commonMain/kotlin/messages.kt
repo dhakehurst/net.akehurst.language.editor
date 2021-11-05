@@ -22,91 +22,98 @@ import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.editor.common.AglToken
 
 abstract class AglWorkerMessage(
-    val action: String,
-    val languageId: String,
-    val editorId: String,
-    val sessionId: String
-)
+    val action: String
+) {
+    abstract val languageId: String
+    abstract val editorId: String
+    abstract val sessionId: String
+}
 
-class MessageProcessorCreate(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageProcessorCreate(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val grammarStr: String?
-) : AglWorkerMessage("MessageProcessorCreate", languageId, editorId, sessionId)
-
-class MessageSyntaxAnalyserConfigure(
-    languageId: String, editorId: String, sessionId: String,
-    val configuration: Any?
-) : AglWorkerMessage("MessageSyntaxAnalyserConfigure", languageId, editorId, sessionId)
-
-class MessageProcessorCreateResponse(
-    languageId: String, editorId: String, sessionId: String,
+) : AglWorkerMessage("MessageProcessorCreate")
+data class MessageProcessorCreateResponse(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String
-) : AglWorkerMessage("MessageProcessorCreateResponse", languageId, editorId, sessionId)
+) : AglWorkerMessage("MessageProcessorCreateResponse")
 
-class MessageProcessRequest(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageSyntaxAnalyserConfigure(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
+    val configuration: Any?
+) : AglWorkerMessage("MessageSyntaxAnalyserConfigure")
+data class MessageSyntaxAnalyserConfigureResponse(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
+    val success: Boolean,
+    val message: String,
+    val issues: List<LanguageIssue>
+) : AglWorkerMessage("MessageSyntaxAnalyserConfigureResponse")
+
+
+data class MessageProcessRequest(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val goalRuleName: String?,
     val text: String,
     val context: Any?
-) : AglWorkerMessage("MessageProcessRequest", languageId, editorId, sessionId)
+) : AglWorkerMessage("MessageProcessRequest")
 
-class MessageParseResult(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageParseResult(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String,
-    val tree: Any?,
-    val issues: Array<LanguageIssue>
-) : AglWorkerMessage("MessageParseResult", languageId, editorId, sessionId)
+    val treeSerialised: String?, // custom serialisation because auto serialisation of SPPT impl classes is too complex
+    val issues: List<LanguageIssue>
+) : AglWorkerMessage("MessageParseResult")
 
-class MessageSyntaxAnalysisResult(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageSyntaxAnalysisResult(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String,
     val asm: Any?,
-    val issues: Array<LanguageIssue>
-) : AglWorkerMessage("MessageSyntaxAnalysisResult", languageId, editorId, sessionId)
+    val issues: List<LanguageIssue>
+) : AglWorkerMessage("MessageSyntaxAnalysisResult")
 
-class MessageSemanticAnalysisResult(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageSemanticAnalysisResult(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String,
-    val issues: Array<LanguageIssue>
-) : AglWorkerMessage("MessageSemanticAnalysisResult", languageId, editorId, sessionId)
+    val issues: List<LanguageIssue>
+) : AglWorkerMessage("MessageSemanticAnalysisResult")
 
-class MessageParserInterruptRequest(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageParserInterruptRequest(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val reason: String
-) : AglWorkerMessage("MessageParserInterruptRequest", languageId, editorId, sessionId)
+) : AglWorkerMessage("MessageParserInterruptRequest")
 
-class MessageLineTokens(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageLineTokens(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String,
     val lineTokens: Array<Array<AglToken>>,
-) : AglWorkerMessage("MessageLineTokens", languageId, editorId, sessionId)
+) : AglWorkerMessage("MessageLineTokens")
 
-class MessageSetStyle(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageSetStyle(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val css: String
-) : AglWorkerMessage("MessageSetStyle", languageId, editorId, sessionId)
+) : AglWorkerMessage("MessageSetStyle")
 
-class MessageSetStyleResult(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageSetStyleResult(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String
-) : AglWorkerMessage("MessageSetStyleResult", languageId, editorId, sessionId)
+) : AglWorkerMessage("MessageSetStyleResult")
 
-class MessageCodeCompleteRequest(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageCodeCompleteRequest(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val goalRuleName: String?,
     val text: String,
     val position: Int
-) : AglWorkerMessage("MessageCodeCompleteRequest", languageId, editorId, sessionId)
+) : AglWorkerMessage("MessageCodeCompleteRequest")
 
-class MessageCodeCompleteResult(
-    languageId: String, editorId: String, sessionId: String,
+data class MessageCodeCompleteResult(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String,
     val completionItems: Array<Pair<String, String>>?
-) : AglWorkerMessage("MessageCodeCompleteResult", languageId, editorId, sessionId)
+) : AglWorkerMessage("MessageCodeCompleteResult")

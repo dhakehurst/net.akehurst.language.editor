@@ -19,17 +19,25 @@ import net.akehurst.kotlin.json.json
 import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.api.asm.AsmElementSimple
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.grammar.Grammar
+import net.akehurst.language.api.parser.InputLocation
+import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.LanguageIssueKind
+import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.editor.common.AglWorkerSerialisation
 import net.akehurst.language.editor.common.messages.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class test_AglWorkerSerialisation {
+
+    companion object {
+        val languageId = "test-languageId"
+        val editorId = "test-editorId"
+        val sessionId = "test-sessionId"
+    }
 
     @Test
     fun AsmSimple_toJsonDocument() {
@@ -43,26 +51,26 @@ class test_AglWorkerSerialisation {
                 }
             """.trimIndent()
         )
-        val context = ContextSimple(null, "Root")
+        val context = ContextSimple()
         val asm = asmSimple(scopeModel!!, context) {
             root("Root") {
-                property("content", "Elem1") {
-                    property("propString", "stringValue")
-                    property("propListString", listOf("Hello", "World"))
-                    property("propListElem", listOf(
+                propertyElement("content", "Elem1") {
+                    propertyString("propString", "stringValue")
+                    propertyListOfString("propListString", listOf("Hello", "World"))
+                    propertyListOfElement("propListElem") {
                         element("Elem2") {
-                            property("id", "e1")
+                            propertyString("id", "e1")
                             reference("ref", "e2")
-                        },
+                        }
                         element("Elem2") {
-                            property("id", "e2")
+                            propertyString("id", "e2")
                             reference("ref", "e3")
-                        },
+                        }
                         element("Elem2") {
-                            property("id", "e3")
+                            propertyString("id", "e3")
                             reference("ref", "e1")
                         }
-                    ))
+                    }
                 }
             }
         }
@@ -382,31 +390,31 @@ class test_AglWorkerSerialisation {
                 }
             """.trimIndent()
         )
-        val context = ContextSimple(null, "Root")
+        val context = ContextSimple()
         val expected = asmSimple(scopeModel!!, context) {
             root("Root") {
-                property("content", "Elem1") {
-                    property("propString", "stringValue")
-                    property("propListString", listOf("Hello", "World"))
-                    property("propListElem", listOf(
+                propertyElement("content", "Elem1") {
+                    propertyString("propString", "stringValue")
+                    propertyListOfString("propListString", listOf("Hello", "World"))
+                    propertyListOfElement("propListElem") {
                         element("Elem2") {
-                            property("id", "e1")
+                            propertyString("id", "e1")
                             reference("ref", "e2")
-                        },
+                        }
                         element("Elem2") {
-                            property("id", "e2")
+                            propertyString("id", "e2")
                             reference("ref", "e3")
-                        },
+                        }
                         element("Elem2") {
-                            property("id", "e3")
+                            propertyString("id", "e3")
                             reference("ref", "e1")
                         }
-                    ))
+                    }
                 }
             }
         }
 
-        assertEquals(expected.asString("  ",""),actual.asString("  ",""))
+        assertEquals(expected.asString("  ", ""), actual.asString("  ", ""))
     }
 
     @Test
@@ -415,7 +423,12 @@ class test_AglWorkerSerialisation {
             sentence = """
                 namespace test.test
                 grammar Test {
-                    rule1 = 'a' ;
+                    S = as | bs | cs ;
+                    as = a* ;
+                    bs = [b/',']+ ;
+                    cs = 'c' | c 'c' ;
+                    leaf a = 'a' 'a' ;
+                    leaf b = 'b' 'b' ;
                 }
             """.trimIndent()
         ).first!![0]
@@ -455,7 +468,7 @@ class test_AglWorkerSerialisation {
                 }
             }
         }
-
+//TODO: complete json
         assertEquals(expected.toFormattedJsonString("  ", "  "), actual.toFormattedJsonString("  ", "  "))
     }
 
@@ -517,49 +530,76 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun MessageProcessorCreate_com() {
-        val expected = MessageProcessorCreate("testLang", "tesEditor", "testSession", "namespace test grammar Test { rule1 = 'a' ; }")
+        val expected = MessageProcessorCreate(
+            languageId, editorId, sessionId,
+            "namespace test grammar Test { rule1 = 'a' ; }"
+        )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreate>(jsonStr)
 
-        assertEquals(expected.languageId,actual.languageId)
-        assertEquals(expected.editorId,actual.editorId)
-        assertEquals(expected.sessionId,actual.sessionId)
-        assertEquals(expected.grammarStr,actual.grammarStr)
-    }
-
-    @Test
-    fun MessageSyntaxAnalyserConfigure_com() {
-        val expected = MessageSyntaxAnalyserConfigure("testLang", "tesEditor", "testSession", "scope XX { identify y by z } references { }")
-
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageSyntaxAnalyserConfigure>(jsonStr)
-
-        assertEquals(expected.languageId,actual.languageId)
-        assertEquals(expected.editorId,actual.editorId)
-        assertEquals(expected.sessionId,actual.sessionId)
-        assertEquals(expected.configuration,actual.configuration)
+        assertEquals(expected, actual)
     }
 
     @Test
     fun MessageProcessorCreateResponse_com() {
-        val expected = MessageProcessorCreateResponse("testLang", "tesEditor", "testSession", false,"Start")
+        val expected = MessageProcessorCreateResponse(
+            languageId, editorId, sessionId,
+            false, "Start"
+        )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreateResponse>(jsonStr)
 
-        assertEquals(expected.languageId,actual.languageId)
-        assertEquals(expected.editorId,actual.editorId)
-        assertEquals(expected.sessionId,actual.sessionId)
-        assertEquals(expected.success,actual.success)
-        assertEquals(expected.message,actual.message)
+        assertEquals(expected.languageId, actual.languageId)
+        assertEquals(expected.editorId, actual.editorId)
+        assertEquals(expected.sessionId, actual.sessionId)
+        assertEquals(expected.success, actual.success)
+        assertEquals(expected.message, actual.message)
     }
+
+
+    @Test
+    fun MessageSyntaxAnalyserConfigure_com() {
+        val expected = MessageSyntaxAnalyserConfigure(
+            languageId, editorId, sessionId,
+            "scope XX { identify y by z } references { }"
+        )
+
+        val jsonStr = AglWorkerSerialisation.serialise(expected)
+        val actual = AglWorkerSerialisation.deserialise<MessageSyntaxAnalyserConfigure>(jsonStr)
+
+        assertEquals(expected.languageId, actual.languageId)
+        assertEquals(expected.editorId, actual.editorId)
+        assertEquals(expected.sessionId, actual.sessionId)
+        assertEquals(expected.configuration, actual.configuration)
+    }
+
+    @Test
+    fun MessageSyntaxAnalyserConfigureResponse_com() {
+        val expected = MessageSyntaxAnalyserConfigureResponse(
+            languageId, editorId, sessionId,
+            false,
+            "Error",
+            listOf(
+                LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.SYNTAX_ANALYSIS, InputLocation(0, 0, 0, 0), "Error Message")
+            )
+        )
+
+        val jsonStr = AglWorkerSerialisation.serialise(expected)
+        val actual = AglWorkerSerialisation.deserialise<MessageSyntaxAnalyserConfigureResponse>(jsonStr)
+
+        assertEquals(expected, actual)
+    }
+
 
     @Test
     fun MessageProcessRequest_com() {
         val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
             sentence = """
-                scope Root {
+                identify Elem by id
+                identify ScopedElem by id
+                scope ScopedElem {
                     identify Elem by id
                 }
                 references {
@@ -567,23 +607,31 @@ class test_AglWorkerSerialisation {
                 }
             """.trimIndent()
         )
-        val context = ContextSimple(null, "Root")
+        val context = ContextSimple()
         val asm = asmSimple(scopeModel!!, context) {
-            root("Root") {
-                element("Elem") {
-                    property("id","e1")
+            root("Elem") {
+                propertyString("id", "e1")
+                propertyElement("s1","ScopedElem") {
+                    propertyString("id", "se1")
                 }
             }
         }
-        val expected = MessageProcessRequest("testLang", "tesEditor", "testSession", "rule1","Start",context)
+        val expected = MessageProcessRequest(
+            "testLang", "tesEditor", "testSession",
+            "rule1",
+            "Start",
+            context
+        )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest>(jsonStr)
 
-        assertEquals(expected.languageId,actual.languageId)
-        assertEquals(expected.editorId,actual.editorId)
-        assertEquals(expected.sessionId,actual.sessionId)
-        assertEquals(expected.goalRuleName,actual.goalRuleName)
-        assertEquals(expected.text,actual.text)
-        assertEquals((expected.context as ContextSimple).scope.findOrNull("e1","Elem")?.asm?.asString("  ", ""), (actual.context as ContextSimple).scope.findOrNull("e1","Elem")?.asm?.asString("  ", ""))
-    }}
+        assertEquals(expected.languageId, actual.languageId)
+        assertEquals(expected.editorId, actual.editorId)
+        assertEquals(expected.sessionId, actual.sessionId)
+        assertEquals(expected.goalRuleName, actual.goalRuleName)
+        assertEquals(expected.text, actual.text)
+
+        assertEquals((expected.context as ContextSimple).rootScope.findOrNull("e1", "Elem"), (actual.context as ContextSimple).rootScope.findOrNull("e1", "Elem"))
+    }
+}

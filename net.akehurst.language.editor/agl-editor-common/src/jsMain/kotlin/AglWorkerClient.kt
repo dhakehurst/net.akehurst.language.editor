@@ -30,6 +30,7 @@ class AglWorkerClient(
     lateinit var worker: AbstractWorker
     var setStyleResult: (message: MessageSetStyleResult) -> Unit = { _ -> }
     var processorCreateResult: (message: MessageProcessorCreateResponse) -> Unit = { _ -> }
+    var syntaxAnalyserConfigureResult: (message: MessageSyntaxAnalyserConfigureResponse) -> Unit = { _ -> }
     var parseResult: (message: MessageParseResult) -> Unit = { _ -> }
     var lineTokens: (message: MessageLineTokens) -> Unit = { _ -> }
     var syntaxAnalysisResult: (message: MessageSyntaxAnalysisResult) -> Unit = { _ -> }
@@ -63,6 +64,7 @@ class AglWorkerClient(
                                 when (msg) {
                                     is MessageSetStyleResult -> this.setStyleResult(msg)
                                     is MessageProcessorCreateResponse -> this.processorCreateResult(msg)
+                                    is MessageSyntaxAnalyserConfigureResponse -> this.syntaxAnalyserConfigureResult(msg)
                                     is MessageParseResult -> this.parseResult(msg)
                                     is MessageLineTokens -> this.lineTokens(msg)
                                     is MessageSyntaxAnalysisResult -> this.syntaxAnalysisResult(msg)
@@ -79,7 +81,7 @@ class AglWorkerClient(
                     this.agl.logger.log(LogLevel.Error, "Handling Worker message, data content should be a String, got - '${ev.data}'")
                 }
             } catch (e: Throwable) {
-                this.agl.logger.log(LogLevel.Error, "Handling Worker message, ${e.message!!}")
+                this.agl.logger.log(LogLevel.Error, "Handling Worker message, ${e.message}")
             }
         }, objectJS { })
         //need to explicitly start because used addEventListener
@@ -91,7 +93,7 @@ class AglWorkerClient(
     }
 
     fun sendToWorker(msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
-        val jsObj = msg.toJsObject()
+        //val jsObj = msg.toJsObject()
         //val str = AglWorkerMessage.serialise(msg)
         val str = AglWorkerSerialisation.serialise(msg)
         if (this.sharedWorker) {

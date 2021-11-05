@@ -26,6 +26,7 @@ import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.editor.ace.AglEditorAce
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.objectJS
 
 import net.akehurst.language.editor.demo.BuildConfig
@@ -232,6 +233,14 @@ fun createDemo(isAce: Boolean) {
             AglEditorAce(element, id, id, aceOptions, workerScriptName, true)
         } else {
             AglEditorMonaco(element, id, id, aceOptions, workerScriptName, true)
+        }
+        ed.logger.bind = { lvl,msg ->
+            when (lvl) {
+                LogLevel.Fatal,LogLevel.Error -> console.error(msg)
+                LogLevel.Warning -> console.warn(msg)
+                LogLevel.Information -> console.info(msg)
+                LogLevel.Debug,LogLevel.Trace -> console.asDynamic().debug(msg)
+            }
         }
         Pair(id, ed)
     }
@@ -453,7 +462,7 @@ class Demo(
 //            sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
             referencesEditor.text = eg.references
             //formatEditor.text = eg.format
-            sentenceEditor.sentenceContext = ContextSimple(null,eg.context)
+            sentenceEditor.sentenceContext = ContextSimple()
             sentenceEditor.text = eg.sentence
         })
 
@@ -466,7 +475,7 @@ class Demo(
 //        sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
         referencesEditor.text = eg.references // set this before setting the sentence text
         //formatEditor.text = eg.format
-        sentenceEditor.sentenceContext = ContextSimple(null,eg.context)
+        sentenceEditor.sentenceContext = ContextSimple()
         sentenceEditor.text = eg.sentence
     }
 

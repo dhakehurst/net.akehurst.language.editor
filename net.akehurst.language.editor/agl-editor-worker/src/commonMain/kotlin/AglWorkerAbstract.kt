@@ -1,60 +1,53 @@
+/**
+ * Copyright (C) 2021 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package net.akehurst.language.editor.worker
 
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.asm.AsmElementSimple
-import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageProcessor
-import net.akehurst.language.api.sppt.SPPTBranch
-import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.api.sppt.SPPTNode
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.messages.*
-import org.w3c.dom.MessageEvent
 
 abstract class AglWorkerAbstract {
 
     private var _languageDefinition: MutableMap<String, LanguageDefinition> = mutableMapOf()
     private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
 
-    protected fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
-        //val str = AglWorkerMessage.serialise(msg)
-        val str = AglWorkerSerialisation.serialise(msg)
-        port.postMessage(str, transferables)
-    }
+    protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
+    protected abstract fun serialiseParseTree(spptNode: SPPTNode?) : String?
 
-    protected fun receiveMessage(port: dynamic, ev: MessageEvent) {
-        try {
-            if (ev.data is String) {
-                val str = ev.data as String
-                //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
-                val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
-                if (null == msg) {
-                    port.postMessage("Error: Worker cannot handle message: $str")
-                } else {
-                    when (msg) {
-                        is MessageProcessorCreate -> this.createProcessor(port, msg)
-                        is MessageSyntaxAnalyserConfigure -> this.configureSyntaxAnalyser(port, msg)
-                        is MessageParserInterruptRequest -> this.interrupt(port, msg)
-                        is MessageProcessRequest -> this.parse(port, msg)
-                        is MessageSetStyle -> this.setStyle(port, msg)
-                        else -> error("Unknown Message type")
-                    }
-                }
-            } else {
-                port.postMessage("Error: Worker error in receiveMessage: data content should be a String, got - '${ev.data}'")
-            }
-        } catch (e: Throwable) {
-            port.postMessage("Error: Worker error in receiveMessage: ${e.message!!}")
+    protected fun receiveAglWorkerMessage(port: Any, msg: AglWorkerMessage) {
+        when (msg) {
+            is MessageProcessorCreate -> this.createProcessor(port, msg)
+            is MessageSyntaxAnalyserConfigure -> this.configureSyntaxAnalyser(port, msg)
+            is MessageParserInterruptRequest -> this.interrupt(port, msg)
+            is MessageProcessRequest -> this.parse(port, msg)
+            is MessageSetStyle -> this.setStyle(port, msg)
+            else -> error("Unknown Message type")
         }
     }
 
-    protected fun createProcessor(port: dynamic, message: MessageProcessorCreate) {
-        if (null == message.grammarStr) {
+    protected fun createProcessor(port: Any, message: MessageProcessorCreate) {
+        if (message.grammarStr.isNullOrBlank()) {
             this._languageDefinition.remove(message.languageId)
             sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "reset"))
         } else {
@@ -64,6 +57,8 @@ abstract class AglWorkerAbstract {
                     ld.grammar = message.grammarStr
                 }
                 _languageDefinition[message.languageId] = ld
+                //check that grammar is well-defined and a processor can be created from it
+                val proc = ld.processor // should throw exception if there are problems
                 sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "OK"))
             } catch (t: Throwable) {
                 sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, false, t.message!!))
@@ -71,21 +66,36 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    protected fun configureSyntaxAnalyser(port: dynamic, message:MessageSyntaxAnalyserConfigure) {
+    protected fun configureSyntaxAnalyser(port: Any, message: MessageSyntaxAnalyserConfigure) {
         val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
         val grmr = ld.processor?.grammar
-        if (null!=grmr) {
+        if (null != grmr) {
             val issues = ld.syntaxAnalyser?.configure(ContextFromGrammar(grmr), message.configuration as String)
+            sendMessage(
+                port, MessageSyntaxAnalyserConfigureResponse(
+                    message.languageId, message.editorId, message.sessionId,
+                    true,
+                    "OK",
+                    issues ?: emptyList()
+                )
+            )
         } else {
-            //TODO: report error!
+            sendMessage(
+                port, MessageSyntaxAnalyserConfigureResponse(
+                    message.languageId, message.editorId, message.sessionId,
+                    false,
+                    "Failed to configure Syntax Analyser, no grammar for processor",
+                    emptyList(),
+                )
+            )
         }
     }
 
-    protected fun interrupt(port: dynamic, message: MessageParserInterruptRequest) {
+    protected fun interrupt(port: Any, message: MessageParserInterruptRequest) {
         _languageDefinition[message.languageId]?.processor?.interrupt(message.reason)
     }
 
-    protected fun setStyle(port: dynamic, message: MessageSetStyle) {
+    protected fun setStyle(port: Any, message: MessageSetStyle) {
         try {
             val style = AglStyleHandler(message.languageId)
             this._styleHandler[message.languageId] = style
@@ -103,15 +113,15 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    protected fun parse(port: dynamic, message: MessageProcessRequest) {
+    protected fun parse(port: Any, message: MessageProcessRequest) {
         try {
-            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, false, "Start", null, emptyArray()))
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, false, "Start", null, emptyList()))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val goal = message.goalRuleName
             val (sppt, issues) = if (null == goal) proc.parse(message.text) else proc.parse(message.text, goal)
-            val tree = sppt?.let { createParseTree(sppt.root) }
-            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", tree, issues.toTypedArray()))
+            val treeStr = serialiseParseTree(sppt?.root)
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", treeStr, issues))
             sppt?.let {
                 this.sendParseLineTokens(port, message.languageId, message.editorId, message.sessionId, sppt)
                 this.syntaxAnalysis(port, message, proc, sppt)
@@ -126,19 +136,19 @@ abstract class AglWorkerAbstract {
                     false,
                     "Exception during parse - ${t::class.simpleName} - ${t.message!!}",
                     null,
-                    emptyArray()
+                    emptyList()
                 )
             )
         }
     }
 
-    private fun syntaxAnalysis(port: dynamic, message: MessageProcessRequest, proc: LanguageProcessor, sppt: SharedPackedParseTree) {
+    private fun syntaxAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor, sppt: SharedPackedParseTree) {
         try {
-            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", null, emptyArray()))
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", null, emptyList()))
             val context = message.context
-            val (asm, issues, locationMap) = proc.syntaxAnalysis<Any, Any>(sppt,context)
-            val asmTree = createAsmTree(asm) ?: "No Asm"
-            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", asmTree, issues.toTypedArray()))
+            val (asm, issues, locationMap) = proc.syntaxAnalysis<Any, Any>(sppt, context)
+            val asmTree = asm //createAsmTree(asm) ?: "No Asm"
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", asmTree, issues))
             this.semanticAnalysis(port, message, proc, asm, locationMap)
         } catch (t: Throwable) {
             sendMessage(
@@ -150,19 +160,19 @@ abstract class AglWorkerAbstract {
                     false,
                     "Exception during syntaxAnalysis - ${t::class.simpleName} - ${t.message!!}",
                     null,
-                    emptyArray()
+                    emptyList()
                 )
             )
         }
     }
 
-    private fun semanticAnalysis(port: dynamic, message: MessageProcessRequest, proc: LanguageProcessor, asm: Any?, locationMap: Map<*, InputLocation>) {
+    private fun semanticAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor, asm: Any?, locationMap: Map<*, InputLocation>) {
         try {
-            sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyArray()))
+            sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList()))
             val context = message.context
             if (null != asm) {
                 val issues = proc.semanticAnalysis(asm, locationMap, context)
-                sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", issues.toTypedArray()))
+                sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", issues))
             } else {
                 //no analysis possible
             }
@@ -175,13 +185,13 @@ abstract class AglWorkerAbstract {
                     message.sessionId,
                     false,
                     "Exception during semanticAnalysis - ${t::class.simpleName} - ${t.message!!}",
-                    emptyArray()
+                    emptyList()
                 )
             )
         }
     }
 
-    private fun sendParseLineTokens(port: dynamic, languageId: String, editorId: String, sessionId: String, sppt: SharedPackedParseTree) {
+    private fun sendParseLineTokens(port: Any, languageId: String, editorId: String, sessionId: String, sppt: SharedPackedParseTree) {
         if (null == sppt) {
             //nothing
         } else {
@@ -200,50 +210,4 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    private fun createParseTree(spptNode: SPPTNode): dynamic {
-        return when (spptNode) {
-            is SPPTLeaf -> objectJS {
-                isBranch = false
-                name = spptNode.name
-                nonSkipMatchedText = spptNode.nonSkipMatchedText
-            }
-            is SPPTBranch -> objectJS {
-                isBranch = true
-                name = spptNode.name
-                children = spptNode.children.map {
-                    createParseTree(it)
-                }.toTypedArray()
-            }
-            else -> error("Not supported")
-        }
-    }
-
-    private fun createAsmTree(asm: Any?): Any? {
-        return if (null == asm) {
-            null
-        } else {
-            when (asm) {
-                is AsmSimple ->{
-                    createAsmTree(asm.rootElements)
-                }
-                is AsmElementSimple -> {
-                    objectJS {
-                        isAsmElementSimple = true
-                        typeName = asm.typeName
-                        properties = asm.properties.map {
-                            objectJS {
-                                isAsmElementProperty = true
-                                name = it.name
-                                value = createAsmTree(it.value)
-                            }
-                        }.toTypedArray()
-                    }
-                }
-                is List<*> -> asm.map {
-                    createAsmTree(it)
-                }.toTypedArray()
-                else -> JSON.stringify(asm)
-            }
-        }
-    }
 }

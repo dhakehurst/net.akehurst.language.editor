@@ -19,7 +19,7 @@ package net.akehurst.language.editor.worker
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.MessageEvent
 
-class AglDedicatedWorker : AglWorkerAbstract() {
+class AglDedicatedWorker : AglWorkerJsAbstract() {
 
     private var _selfDedicated: dynamic? = null
 
@@ -34,7 +34,7 @@ class AglDedicatedWorker : AglWorkerAbstract() {
         }
         _selfDedicated?.onmessage = { ev: MessageEvent ->
             try {
-                receiveMessage(_selfDedicated, ev)
+                receiveMessageEventFromJsPort(_selfDedicated, ev)
             } catch (e: Throwable) {
                 (_selfDedicated as DedicatedWorkerGlobalScope).postMessage("Error: Worker error: ${e.message!!}")
             }

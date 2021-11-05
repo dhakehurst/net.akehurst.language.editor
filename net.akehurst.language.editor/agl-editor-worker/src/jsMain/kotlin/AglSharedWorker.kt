@@ -18,7 +18,7 @@ package net.akehurst.language.editor.worker
 
 import org.w3c.dom.MessageEvent
 
-class AglSharedWorker : AglWorkerAbstract() {
+class AglSharedWorker : AglWorkerJsAbstract() {
 
     private var _selfShared: dynamic? = null
 
@@ -32,7 +32,7 @@ class AglSharedWorker : AglWorkerAbstract() {
             val port = ev1.ports[0]
             port.onmessage = { ev: MessageEvent ->
                 try {
-                    receiveMessage(port, ev)
+                    receiveMessageEventFromJsPort(port, ev)
                 } catch (e: Throwable) {
                     port.postMessage("Error: Worker error: ${e.message!!}")
                 }

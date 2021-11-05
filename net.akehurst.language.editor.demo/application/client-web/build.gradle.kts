@@ -23,7 +23,7 @@ dependencies {
 }
 
 kotlin {
-    js("js") {
+    js("js",IR) {
         binaries.executable()
     }
     sourceSets {

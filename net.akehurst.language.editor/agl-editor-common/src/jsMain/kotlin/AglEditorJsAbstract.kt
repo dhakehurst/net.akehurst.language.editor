@@ -42,6 +42,7 @@ abstract class AglEditorJsAbstract(
         this.aglWorker.initialise()
         this.aglWorker.setStyleResult = { message -> if (message.success) this.resetTokenization() else this.log(LogLevel.Error, message.message) }
         this.aglWorker.processorCreateResult = this::processorCreateResult
+        this.aglWorker.syntaxAnalyserConfigureResult = this::syntaxAnalyserConfigureResult
         this.aglWorker.parseResult = this::parseResult
         this.aglWorker.lineTokens = this::lineTokens
         this.aglWorker.syntaxAnalysisResult = this::syntaxAnalysisResult
@@ -69,6 +70,15 @@ abstract class AglEditorJsAbstract(
         }
     }
 
+    private fun syntaxAnalyserConfigureResult(message:MessageSyntaxAnalyserConfigureResponse) {
+        if (message.success) {
+            //?
+        } else {
+            this.log(LogLevel.Error, "SyntaxAnalyserConfigure failed for ${this.languageIdentity}: ${message.message}")
+        }
+        this.createIssueMarkers(message.issues.toList())
+    }
+
     private fun lineTokens(event: MessageLineTokens) {
         if (event.success) {
             this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}")
@@ -83,7 +93,9 @@ abstract class AglEditorJsAbstract(
         if (event.success) {
             this.resetTokenization()
             this.createIssueMarkers(event.issues.toList())
-            this.notifyParse(ParseEvent(true, "Success", event.tree, event.issues.toList()))
+            val treeStr = event.treeSerialised
+            val treeJS = treeStr?.let { JSON.parse<Any>(it) }
+            this.notifyParse(ParseEvent(true, "Success", treeJS, event.issues.toList()))
         } else {
             if ("Start" == event.message) {
                 this.notifyParse(ParseEvent(false, "Start", null, emptyList()))

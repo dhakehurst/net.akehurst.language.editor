@@ -19,8 +19,7 @@ import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 
 plugins {
-    //kotlin("multiplatform") version("1.5.20-RC-179") apply false
-    kotlin("multiplatform") version("1.5.31") apply false
+    kotlin("multiplatform") version("1.6.0-RC") apply false
     id("com.github.gmazzo.buildconfig") version("3.0.0") apply false
 }
 
