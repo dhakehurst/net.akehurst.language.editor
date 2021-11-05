@@ -594,6 +594,40 @@ class test_AglWorkerSerialisation {
 
 
     @Test
+    fun MessageProcessRequest_com_empty_context() {
+        val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
+            sentence = """
+                identify Elem by id
+                identify ScopedElem by id
+                scope ScopedElem {
+                    identify Elem by id
+                }
+                references {
+                    in Elem property ref refers-to Elem
+                }
+            """.trimIndent()
+        )
+        val context = ContextSimple()
+        val expected = MessageProcessRequest(
+            "testLang", "tesEditor", "testSession",
+            "rule1",
+            "Start",
+            context
+        )
+
+        val jsonStr = AglWorkerSerialisation.serialise(expected)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest>(jsonStr)
+
+        assertEquals(expected.languageId, actual.languageId)
+        assertEquals(expected.editorId, actual.editorId)
+        assertEquals(expected.sessionId, actual.sessionId)
+        assertEquals(expected.goalRuleName, actual.goalRuleName)
+        assertEquals(expected.text, actual.text)
+
+        assertEquals((expected.context as ContextSimple).rootScope.findOrNull("e1", "Elem"), (actual.context as ContextSimple).rootScope.findOrNull("e1", "Elem"))
+    }
+
+    @Test
     fun MessageProcessRequest_com() {
         val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
             sentence = """
