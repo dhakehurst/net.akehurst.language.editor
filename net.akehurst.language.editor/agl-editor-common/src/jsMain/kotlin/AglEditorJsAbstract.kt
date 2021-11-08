@@ -94,7 +94,13 @@ abstract class AglEditorJsAbstract(
             this.resetTokenization()
             this.createIssueMarkers(event.issues.toList())
             val treeStr = event.treeSerialised
-            val treeJS = treeStr?.let { JSON.parse<Any>(it) }
+            val treeJS = treeStr?.let {
+                val unescaped = it
+                    .replace("\\n","\n")
+                    .replace("\\r","\r")
+                    .replace("\\t","\t")
+                JSON.parse<Any>(unescaped)
+            }
             this.notifyParse(ParseEvent(true, "Success", treeJS, event.issues.toList()))
         } else {
             if ("Start" == event.message) {

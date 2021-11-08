@@ -58,7 +58,7 @@ class AglWorkerClient(
                         //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
                         val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
                         if (null == msg) {
-                            this.agl.logger.log(LogLevel.Error, "Worker message not handled: $str")
+                            this.agl.logger.log(LogLevel.Error, "Message from Worker not handled: $str")
                         } else {
                             if (this.agl.editorId == msg.editorId) { //TODO: should  test for sessionId also
                                 when (msg) {
@@ -78,10 +78,10 @@ class AglWorkerClient(
                         }
                     }
                 } else {
-                    this.agl.logger.log(LogLevel.Error, "Handling Worker message, data content should be a String, got - '${ev.data}'")
+                    this.agl.logger.log(LogLevel.Error, "Handling message from Worker, data content should be a String, got - '${ev.data}'")
                 }
             } catch (e: Throwable) {
-                this.agl.logger.log(LogLevel.Error, "Handling Worker message, ${e.message}")
+                this.agl.logger.log(LogLevel.Error, "Handling message from Worker, ${e.message}")
             }
         }, objectJS { })
         //need to explicitly start because used addEventListener

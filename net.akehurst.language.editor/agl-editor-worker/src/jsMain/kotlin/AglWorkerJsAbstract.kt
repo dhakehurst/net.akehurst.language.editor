@@ -79,7 +79,7 @@ abstract class AglWorkerJsAbstract : AglWorkerAbstract() {
             is SPPTLeaf -> objectJS {
                 isBranch = false
                 name = spptNode.name
-                nonSkipMatchedText = spptNode.nonSkipMatchedText
+                nonSkipMatchedText = escapeCtrlCodes(spptNode.nonSkipMatchedText)
             }
             is SPPTBranch -> objectJS {
                 isBranch = true
@@ -91,6 +91,12 @@ abstract class AglWorkerJsAbstract : AglWorkerAbstract() {
             else -> error("Not supported")
         }
     }
+
+    private fun escapeCtrlCodes(input:String) : String = input
+        .replace(Regex("\n"),"\\n")
+        .replace(Regex("\r"),"\\r")
+        .replace(Regex("\t"),"\\t")
+
     /*
     private fun createAsmTree(asm: Any?): Any? {
         return if (null == asm) {
