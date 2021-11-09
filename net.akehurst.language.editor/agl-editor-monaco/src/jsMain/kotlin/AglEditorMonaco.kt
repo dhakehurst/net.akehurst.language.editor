@@ -231,7 +231,7 @@ class AglEditorMonaco(
                 }
             }
         } else {
-            this.logger.log(LogLevel.Error, "Failed to create processor ${message.message}")
+            this.logger.log(LogLevel.Error, "Failed to create processor ${message.message}",null)
         }
     }
 

@@ -44,7 +44,7 @@ class AglWorkerClient(
             Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
         }
         this.worker.onerror = {
-            this.agl.logger.log(LogLevel.Error, it.toString())
+            this.agl.logger.log(LogLevel.Error, it.toString(),null)
         }
         val tgt: EventTarget = if (this.sharedWorker) (this.worker as SharedWorker).port else this.worker as Worker
         tgt.addEventListener("message", { ev ->
@@ -53,12 +53,12 @@ class AglWorkerClient(
                 if (data is String) {
                     val str = (ev as MessageEvent).data as String
                     if (str.startsWith("Error:")) {
-                        this.agl.logger.log(LogLevel.Error, str.substringAfter("Error:"))
+                        this.agl.logger.log(LogLevel.Error, str.substringAfter("Error:"),null)
                     } else {
                         //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
                         val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
                         if (null == msg) {
-                            this.agl.logger.log(LogLevel.Error, "Message from Worker not handled: $str")
+                            this.agl.logger.log(LogLevel.Error, "Message from Worker not handled: $str",null)
                         } else {
                             if (this.agl.editorId == msg.editorId) { //TODO: should  test for sessionId also
                                 when (msg) {
@@ -78,10 +78,10 @@ class AglWorkerClient(
                         }
                     }
                 } else {
-                    this.agl.logger.log(LogLevel.Error, "Handling message from Worker, data content should be a String, got - '${ev.data}'")
+                    this.agl.logger.log(LogLevel.Error, "Handling message from Worker, data content should be a String, got - '${ev.data}'",null)
                 }
             } catch (e: Throwable) {
-                this.agl.logger.log(LogLevel.Error, "Handling message from Worker, ${e.message}")
+                this.agl.logger.log(LogLevel.Error, "Handling message from Worker",e)
             }
         }, objectJS { })
         //need to explicitly start because used addEventListener

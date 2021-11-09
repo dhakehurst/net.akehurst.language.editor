@@ -45,6 +45,7 @@ object AglWorkerSerialisation {
     //TODO: define the Komposite defs below using a builder rather than parsed string
 // to improve performance
     private fun initialiseApiTypes() {
+        /*
         serialiser.confgureFromKompositeString(
             """
             namespace net.akehurst.language.editor.common {
@@ -76,7 +77,43 @@ object AglWorkerSerialisation {
             }
             """.trimIndent()
         )
+         */
         //classes registered with KotlinxReflect via gradle plugin
+        serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.editor.common") {
+                dataType("AglToken") {
+                    constructorArguments {
+                        composite("styles","Array") { typeArgument("String") }
+                        composite("value","String")
+                        composite("line","Int")
+                        composite("column","Int")
+                    }
+                }
+            }
+            namespace("net.akehurst.language.api.parser") {
+                dataType("InputLocation") {
+                    constructorArguments {
+                        composite("position", "Int")
+                        composite("column", "Int")
+                        composite("line", "Int")
+                        composite("length", "Int")
+                    }
+                }
+            }
+            namespace("net.akehurst.language.api.processor") {
+                enumType("LanguageIssueKind")
+                enumType("LanguageProcessorPhase")
+                dataType("LanguageIssue") {
+                    constructorArguments {
+                        composite("kind", "LanguageIssueKind")
+                        composite("phase", "LanguageProcessorPhase")
+                        composite("location", "InputLocation")
+                        composite("message", "String")
+                        composite("data", "Any")
+                    }
+                }
+            }
+        })
     }
 
     private fun initialiseStyleAsm() {
@@ -122,6 +159,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseScopesAsm() {
+        /*
         serialiser.confgureFromKompositeString(
             """
             namespace net.akehurst.language.agl.grammar.scopes {
@@ -145,7 +183,44 @@ object AglWorkerSerialisation {
             }
             """.trimIndent()
         )
+         */
         //classes registered with KotlinxReflect via gradle plugin
+        serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.agl.grammar.scopes") {
+                dataType("ScopeModel") {
+                    mutableProperties {
+                        composite("scopes", "Map") {
+                            typeArgument("String")
+                            typeArgument("ScopeDefinition")
+                        }
+                        composite("references", "List") {
+                            typeArgument("ReferenceDefinition")
+                        }
+                    }
+                }
+                dataType("ScopeDefinition") {
+                    constructorArguments {
+                        composite("scopeFor", "String")
+                    }
+                    mutableProperties {
+                        composite("identifiables", "List") { typeArgument("Identifiable") }
+                    }
+                }
+                dataType("Identifiable") {
+                    constructorArguments {
+                        composite("typeName", "String")
+                        composite("propertyName", "String")
+                    }
+                }
+                dataType("ReferenceDefinition") {
+                    constructorArguments {
+                        composite("inTypeName", "String")
+                        composite("referringPropertyName", "String")
+                        composite("refersToTypeName", "List") { typeArgument("String") }
+                    }
+                }
+            }
+        })
     }
 
     private fun initialiseMessages() {
@@ -302,7 +377,7 @@ object AglWorkerSerialisation {
                         composite("typeName", "String")
                     }
                     mutableProperties {
-                        composite("properties","Map") {
+                        composite("properties", "Map") {
                             typeArgument("String")
                             typeArgument("AsmElementProperty")
                         }
@@ -348,6 +423,11 @@ object AglWorkerSerialisation {
     private fun initialiseGrammarAsm() {
         serialiser.confgureFromKompositeString(
             """
+            namespace net.akehurst.language.agl.grammar.grammar {
+                datatype ContextFromGrammar {
+                
+                }
+            }
             namespace net.akehurst.language.agl.grammar.grammar.asm {
                 datatype NamespaceDefault {
                     composite-val qualifiedName: String
@@ -367,11 +447,13 @@ object AglWorkerSerialisation {
                 }
                 datatype RuleItemAbstract { }
                 datatype EmptyRuleDefault : RuleItemAbstract { }
-                datatype ChoiceAbstract : RuleItemAbstract {
+                datatype ChoiceAbstract : RuleItemAbstract {}
+                datatype ChoiceLongestDefault : ChoiceAbstract {
                     composite-val alternative: List<ConcatenationDefault>
                 }
-                datatype ChoiceLongestDefault : ChoiceAbstract { }
-                datatype ChoicePriorityDefault : ChoiceAbstract { }
+                datatype ChoicePriorityDefault : ChoiceAbstract { 
+                    composite-val alternative: List<ConcatenationDefault>
+                }
                 datatype ConcatenationDefault : RuleItemAbstract {
                     composite-val items: List<ConcatenationItem>
                 }

@@ -22,6 +22,7 @@ object Datatypes {
     val id = "datatypes"
     val label = "Datatype"
     val sentence = """
+        primitive String
         class Person {
             name: String
             dob: Date
@@ -51,10 +52,8 @@ object Datatypes {
     """.trimIndent()
 
     val references = """
-        scope unit {
-            identify primitive by ID
-            identify datatype by ID
-        }
+        identify primitive by ID
+        identify datatype by ID
         references {
             in typeReference property type refers-to primitive|datatype
         }

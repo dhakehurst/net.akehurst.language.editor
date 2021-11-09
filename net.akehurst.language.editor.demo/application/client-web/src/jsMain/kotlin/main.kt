@@ -19,21 +19,22 @@ package net.akehurst.language.editor.application.client.web
 import kotlinx.browser.document
 import net.akehurst.kotlin.html5.create
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
-import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
+import net.akehurst.language.api.asm.AsmElementPath
+import net.akehurst.language.api.asm.AsmElementProperty
+import net.akehurst.language.api.asm.AsmElementSimple
+import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.editor.ace.AglEditorAce
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.objectJS
-
 import net.akehurst.language.editor.demo.BuildConfig
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.examples.*
 import net.akehurst.language.editor.monaco.AglEditorMonaco
-
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
@@ -234,12 +235,32 @@ fun createDemo(isAce: Boolean) {
         } else {
             AglEditorMonaco(element, id, id, aceOptions, workerScriptName, true)
         }
-        ed.logger.bind = { lvl,msg ->
+        ed.logger.bind = { lvl, msg, t ->
             when (lvl) {
-                LogLevel.Fatal,LogLevel.Error -> console.error(msg)
-                LogLevel.Warning -> console.warn(msg)
-                LogLevel.Information -> console.info(msg)
-                LogLevel.Debug,LogLevel.Trace -> console.asDynamic().debug(msg)
+                LogLevel.Fatal, LogLevel.Error -> if (null == t) {
+                    console.error(msg)
+                } else {
+                    console.error(msg)
+                   t.printStackTrace()
+                }
+                LogLevel.Warning -> if (null == t) {
+                    console.warn(msg)
+                } else {
+                    console.warn(msg)
+                    t.printStackTrace()
+                }
+                LogLevel.Information -> if (null == t) {
+                    console.info(msg)
+                } else {
+                    console.info(msg)
+                    t.printStackTrace()
+                }
+                LogLevel.Debug, LogLevel.Trace -> if (null == t) {
+                    console.asDynamic().debug(msg)
+                } else {
+                    console.asDynamic().debug(msg)
+                    t.printStackTrace()
+                }
             }
         }
         Pair(id, ed)
@@ -271,9 +292,9 @@ class Demo(
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
         referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
-        sentenceEditor.languageIdentity= Agl.registry.register(
+        sentenceEditor.languageIdentity = Agl.registry.register(
             identity = "user-language",
-            grammar = "",
+            grammar = null,
             defaultGoalRule = null,
             style = "",
             format = "",
@@ -281,7 +302,7 @@ class Demo(
             semanticAnalyser = null
         ).identity
 
-        var grammarContext:ContextFromGrammar? = null
+        var grammarContext: ContextSimple? = null
 
         grammarEditor.onParse { event ->
             when {
@@ -290,7 +311,7 @@ class Demo(
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammar = grammarEditor.text
                     } catch (t: Throwable) {
-                        console.error(grammarEditor.editorId + ": " + t.message,t)
+                        console.error(grammarEditor.editorId + ": " + t.message, t)
                         sentenceEditor.languageDefinition.grammar = null
                     }
                 }
@@ -298,14 +319,21 @@ class Demo(
                     console.error(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammar = null
                 }
-                else -> { }
+                else -> {
+                }
             }
         }
-        grammarEditor.onSyntaxAnalysis { event->
-            when{
-                event.success ->{
-                    val grammar = event.asm as Grammar? ?: error("should always be a Grammar if success")
-                    grammarContext = ContextFromGrammar(grammar)
+        grammarEditor.onSyntaxAnalysis { event ->
+            when {
+                event.success -> {
+                    val grammar = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
+                    //grammarContext = ContextFromGrammar(grammar.last()) //TODO: multiple grammars
+                    grammarContext = ContextSimple()
+                    grammar.forEach { g ->
+                        g.allRule.forEach { r->
+                            grammarContext?.rootScope?.addToScope(r.name, "Rule", AsmElementPath("${g.name}/${r.name}"))
+                        }
+                    }
                 }
                 event.failure -> grammarContext = null
             }
@@ -320,7 +348,7 @@ class Demo(
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
                         sentenceEditor.languageDefinition.style = styleEditor.text
                     } catch (t: Throwable) {
-                        console.error(styleEditor.editorId + ": " + t.message,t)
+                        console.error(styleEditor.editorId + ": " + t.message, t)
                         sentenceEditor.languageDefinition.style = ""
                     }
                 }
@@ -328,7 +356,8 @@ class Demo(
                     console.error(styleEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.style = ""
                 }
-                else -> { }
+                else -> {
+                }
             }
         }
         referencesEditor.onSyntaxAnalysis { event ->
@@ -339,15 +368,16 @@ class Demo(
                         //(sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = event.asm as ScopeModel
                         sentenceEditor.configureSyntaxAnalyser(referencesEditor.text)
                     } catch (t: Throwable) {
-                        console.error(referencesEditor.editorId + ": " + t.message,t)
-                       // (sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = ScopeModel()
+                        console.error(referencesEditor.editorId + ": " + t.message, t)
+                        // (sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = ScopeModel()
                     }
                 }
                 event.failure -> {
                     console.error(referencesEditor.editorId + ": " + event.message)
                     //(sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = ScopeModel()
                 }
-                else -> { }
+                else -> {
+                }
             }
         }
     }
@@ -386,13 +416,14 @@ class Demo(
             label = {
                 when {
                     it is Array<*> -> ": List"
-                    it.isAsmElementSimple -> ": " + it.typeName
-                    it.isAsmElementProperty -> {
+                    it is AsmElementSimple -> ": " + it.typeName
+                    it is AsmElementProperty -> {
                         val v = it.value
                         when {
                             null == v -> "${it.name} = null"
                             v is Array<*> -> "${it.name} : List"
-                            v.isAsmElementSimple -> "${it.name} : ${v.typeName}"
+                            v is Collection<*> -> "${it.name} : List"
+                            v is AsmElementSimple -> "${it.name} : ${v.typeName}"
                             it.name == "'${v}'" -> "${it.name}"
                             v is String -> "${it.name} = '${v}'"
                             else -> "${it.name} = ${v}"
@@ -404,13 +435,14 @@ class Demo(
             hasChildren = {
                 when {
                     it is Array<*> -> true
-                    it.isAsmElementSimple -> it.properties.size != 0
-                    it.isAsmElementProperty -> {
+                    it is AsmElementSimple -> it.properties.size != 0
+                    it is AsmElementProperty -> {
                         val v = it.value
                         when {
                             null == v -> false
                             v is Array<*> -> true
-                            v.isAsmElementSimple -> true
+                            v is Collection<*> -> true
+                            v is AsmElementSimple -> true
                             else -> false
                         }
                     }
@@ -420,12 +452,13 @@ class Demo(
             children = {
                 when {
                     it is Array<*> -> it
-                    it.isAsmElementSimple -> it.properties
-                    it.isAsmElementProperty -> {
+                    it is AsmElementSimple -> it.properties.values.toTypedArray()
+                    it is AsmElementProperty -> {
                         val v = it.value
                         when {
                             v is Array<*> -> v
-                            v.isAsmElementSimple -> v.properties
+                            v is Collection<*> -> v.toTypedArray()
+                            v is AsmElementSimple -> v.properties.values.toTypedArray()
                             else -> emptyArray<dynamic>()
                         }
                     }
@@ -441,7 +474,16 @@ class Demo(
                 }
                 event.success -> {
                     trees["ast"]!!.loading = false
-                    trees["ast"]!!.root = (event.asm as Array<*>)[0] //examples always have one element
+                    trees["ast"]!!.root = if (event.asm is AsmSimple) {
+                        val rts = (event.asm as AsmSimple).rootElements
+                        when {
+                            rts.size == 0 -> "<Empty>"
+                            rts.size == 1 -> rts[0]
+                            else -> rts
+                        }
+                    } else {
+                        "<Unknown>"
+                    }
                 }
                 else -> {//Failure
                     console.error(event.message)

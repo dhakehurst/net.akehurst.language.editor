@@ -114,7 +114,7 @@ class AglTokenizer(
                 AglLineState(row, "", listOf(AglToken(arrayOf("nostyle"), lineText, row, 0)))
             }
         } catch (t:Throwable) {
-            agl.logger.log(LogLevel.Error,t.message?:"Unable to create LanguageProcessor")
+            agl.logger.log(LogLevel.Error,"Unable to create LanguageProcessor",t)
             AglLineState(row, "", listOf(AglToken(arrayOf("nostyle"), lineText, row, 0)))
         }
     }

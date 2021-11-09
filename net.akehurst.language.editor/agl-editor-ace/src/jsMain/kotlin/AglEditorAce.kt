@@ -245,11 +245,11 @@ class AglEditorAce(
         this.aceEditor.renderer.updateText()
         val sess = this.aceEditor.getSession()
         if (null == sess) {
-            this.log(LogLevel.Error, "session is null ??")
+            this.log(LogLevel.Error, "session is null ??",null)
         } else {
             val bgt = sess.bgTokenizer
             if (null == bgt) {
-                this.log(LogLevel.Error, "bgTokenizer is null ??")
+                this.log(LogLevel.Error, "bgTokenizer is null ??",null)
             } else {
                 bgt.start(0)
             }

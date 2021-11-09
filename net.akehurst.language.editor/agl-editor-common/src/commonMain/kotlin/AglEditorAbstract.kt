@@ -80,7 +80,7 @@ abstract class AglEditorAbstract(
         this._onSemanticAnalysisHandler.add(handler)
     }
 
-    protected fun log(level: LogLevel, message: String) = this.logger.log(level, message)
+    protected fun log(level: LogLevel, message: String,t:Throwable?) = this.logger.log(level, message,t)
 
 
     protected fun notifyParse(event: ParseEvent) {

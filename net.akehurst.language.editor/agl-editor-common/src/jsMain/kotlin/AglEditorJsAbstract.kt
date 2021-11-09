@@ -40,7 +40,7 @@ abstract class AglEditorJsAbstract(
     protected fun connectWorker(workerTokenizer: AglTokenizerByWorker) {
         this.workerTokenizer = workerTokenizer
         this.aglWorker.initialise()
-        this.aglWorker.setStyleResult = { message -> if (message.success) this.resetTokenization() else this.log(LogLevel.Error, message.message) }
+        this.aglWorker.setStyleResult = { message -> if (message.success) this.resetTokenization() else this.log(LogLevel.Error, message.message,null) }
         this.aglWorker.processorCreateResult = this::processorCreateResult
         this.aglWorker.syntaxAnalyserConfigureResult = this::syntaxAnalyserConfigureResult
         this.aglWorker.parseResult = this::parseResult
@@ -53,20 +53,20 @@ abstract class AglEditorJsAbstract(
         if (message.success) {
             when (message.message) {
                 "OK" -> {
-                    this.log(LogLevel.Debug, "New Processor created for ${editorId}")
+                    this.log(LogLevel.Debug, "New Processor created for ${editorId}",null)
                     this.workerTokenizer.acceptingTokens = true
                     this.doBackgroundTryParse()
                     this.resetTokenization()
                 }
                 "reset" -> {
-                    this.log(LogLevel.Debug, "Reset Processor for ${editorId}")
+                    this.log(LogLevel.Debug, "Reset Processor for ${editorId}",null)
                 }
                 else -> {
-                    this.log(LogLevel.Error, "Unknown result message from create Processor for ${editorId}: $message")
+                    this.log(LogLevel.Error, "Unknown result message from create Processor for ${editorId}: $message",null)
                 }
             }
         } else {
-            this.log(LogLevel.Error, "Failed to create processor ${message.message}")
+            this.log(LogLevel.Error, "Failed to create processor ${message.message}",null)
         }
     }
 
@@ -74,18 +74,18 @@ abstract class AglEditorJsAbstract(
         if (message.success) {
             //?
         } else {
-            this.log(LogLevel.Error, "SyntaxAnalyserConfigure failed for ${this.languageIdentity}: ${message.message}")
+            this.log(LogLevel.Error, "SyntaxAnalyserConfigure failed for ${this.languageIdentity}: ${message.message}",null)
         }
         this.createIssueMarkers(message.issues.toList())
     }
 
     private fun lineTokens(event: MessageLineTokens) {
         if (event.success) {
-            this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}")
+            this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}",null)
             this.workerTokenizer.receiveTokens(event.lineTokens)
             this.resetTokenization()
         } else {
-            this.log(LogLevel.Error, "LineTokens - ${event.message}")
+            this.log(LogLevel.Error, "LineTokens - ${event.message}",null)
         }
     }
 
@@ -107,7 +107,7 @@ abstract class AglEditorJsAbstract(
                 this.notifyParse(ParseEvent(false, "Start", null, emptyList()))
             } else {
                 // a failure to parse is not an 'error' in the editor - we expect some parse failures
-                this.log(LogLevel.Debug, "Cannot parse text in ${this.editorId} for language ${this.languageIdentity}: ${event.message}")
+                this.log(LogLevel.Debug, "Cannot parse text in ${this.editorId} for language ${this.languageIdentity}: ${event.message}",null)
                 // parse failed so re-tokenize from scan
                 this.workerTokenizer.reset()
                 this.resetTokenization()
