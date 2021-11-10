@@ -8,6 +8,12 @@ object SQL {
     val label = "Simple SQL Queries"
 
     val sentence = """
+CREATE TABLE table (
+    col1 int,
+    col2 int,
+    col3 varchar(255)
+);
+
 SELECT col1 FROM table ;
 SELECT col1, col2 FROM table ;
 SELECT * FROM table ;
@@ -36,6 +42,7 @@ grammar SQL {
         | update
         | delete
         | insert
+        | table-definition
         ;
 
     select = SELECT columns FROM table-id ;
@@ -43,8 +50,7 @@ grammar SQL {
     delete = DELETE FROM table-id  ;
     insert = INSERT INTO table-id '(' columns ')' VALUES '(' values ')' ;
 
-
-    columns = [column-id / ',']+ ;
+    columns = [column-id-or-any / ',']+ ;
     column-values = [column-value/ ',']+ ;
     column-value = column-id '=' value ;
 
@@ -54,13 +60,22 @@ grammar SQL {
         | STRING
         ;
 
+    table-definition = CREATE TABLE table-id '(' column-definition-list ')' ;
+    column-definition-list = [column-definition / ',']+ ;
+    column-definition = column-id datatype-ref datatype-size? ;
+    datatype-size = '(' INTEGER ')' ;
+
     table-id = ID ;
-    column-id = '*' | ID ;
+    column-id-or-any = '*' | ID ;
+    column-id = ID ;
+    datatype-ref = ID ;
 
     leaf ID = "[A-Za-z_][A-Za-z0-9_]*" ;
     leaf INTEGER = "[0-9]+" ;
     leaf STRING = "'[^']*'";
 
+    leaf CREATE = "create|CREATE" ;
+    leaf TABLE  = "table|TABLE" ;
     leaf SELECT = "select|SELECT" ;
     leaf UPDATE = "update|UPDATE" ;
     leaf DELETE = "delete|DELETE" ;

@@ -112,6 +112,12 @@ object AglWorkerSerialisation {
                         composite("data", "Any")
                     }
                 }
+                dataType("CompletionItem") {
+                    constructorArguments {
+                        composite("ruleName","String")
+                        composite("text","String")
+                    }
+                }
             }
         })
     }
@@ -224,6 +230,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseMessages() {
+        /*
         serialiser.confgureFromKompositeString(
             """
             namespace net.akehurst.language.editor.common.messages {
@@ -256,15 +263,15 @@ object AglWorkerSerialisation {
                     composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
                     composite-val success: Boolean
                     composite-val message: String
-                    composite-val treeSerialised: String?
                     composite-val issues: List<LanguageIssue>
+                    composite-val treeSerialised: String?
                 }
                 datatype MessageSyntaxAnalysisResult {
                     composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
                     composite-val success: Boolean
                     composite-val message: String
-                    composite-val asm: Any?
                     composite-val issues: List<LanguageIssue>
+                    composite-val asm: Any?
                 }
                 datatype MessageSemanticAnalysisResult {
                     composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
@@ -310,8 +317,152 @@ object AglWorkerSerialisation {
                 }
             }
         """.trimIndent()
-        )
+        )*/
         //classes registered with KotlinxReflect via gradle plugin
+        // use DslBuilder rather than KompositeProcessor as it is faster
+        serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.agl.syntaxAnalyser") {
+                dataType("ContextSimple") {
+                    mutableProperties {
+                        composite("rootScope","ScopeSimple") { typeArgument("E") }
+                    }
+                }
+            }
+            namespace("net.akehurst.language.editor.common.messages") {
+                dataType("MessageProcessorCreate") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("grammarStr","String")
+                    }
+                }
+                dataType("MessageProcessorCreateResponse") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("success","Boolean")
+                        composite("message","String")
+                    }
+                }
+                dataType("MessageSyntaxAnalyserConfigure") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("configuration","Any")
+                    }
+                }
+                dataType("MessageSyntaxAnalyserConfigureResponse") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("success","Boolean")
+                        composite("message","String")
+                        composite("issues","List") { typeArgument("LanguageIssue") }
+                    }
+                }
+                dataType("MessageProcessRequest") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("goalRuleName","String",true)
+                        composite("text","String")
+                        composite("context","Any",true)
+                    }
+                }
+                dataType("MessageParseResult") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("success","Boolean")
+                        composite("message","String")
+                        composite("issues","List") { typeArgument("LanguageIssue") }
+                        composite("treeSerialised", "String",true)
+                    }
+                }
+                dataType("MessageSyntaxAnalysisResult") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("success","Boolean")
+                        composite("message","String")
+                        composite("issues","List") { typeArgument("LanguageIssue") }
+                        composite("asm", "Any",true)
+                    }
+                }
+                dataType("MessageSemanticAnalysisResult") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("success","Boolean")
+                        composite("message","String")
+                        composite("issues","List") { typeArgument("LanguageIssue") }
+                    }
+                }
+                dataType("MessageParserInterruptRequest") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("reason","String")
+                    }
+                }
+                dataType("MessageLineTokens") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("success","Boolean")
+                        composite("message","String")
+                        composite("lineTokens","Array") { typeArgument("Array"){typeArgument("AglToken")} }
+                    }
+                }
+                dataType("MessageSetStyle") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("css","String")
+                    }
+                }
+                dataType("MessageSetStyleResult") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("success","Boolean")
+                        composite("message","String")
+                    }
+                }
+                dataType("MessageCodeCompleteRequest") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("goalRuleName","String")
+                        composite("text","String")
+                        composite("position","Int")
+                    }
+                }
+                dataType("MessageCodeCompleteResult") {
+                    constructorArguments {
+                        composite("languageId","String")
+                        composite("editorId","String")
+                        composite("sessionId","String")
+                        composite("success","Boolean")
+                        composite("message","String")
+                        composite("completionItems","Array") { typeArgument("CompletionItem") }
+                    }
+                }
+            }
+        })
     }
 
     private fun initialiseAsmSimple() {
@@ -423,11 +574,6 @@ object AglWorkerSerialisation {
     private fun initialiseGrammarAsm() {
         serialiser.confgureFromKompositeString(
             """
-            namespace net.akehurst.language.agl.grammar.grammar {
-                datatype ContextFromGrammar {
-                
-                }
-            }
             namespace net.akehurst.language.agl.grammar.grammar.asm {
                 datatype NamespaceDefault {
                     composite-val qualifiedName: String
@@ -516,7 +662,7 @@ object AglWorkerSerialisation {
     }
 
     fun serialise(obj: Any): String {
-        return toJsonDocument(obj).toJsonString()
+        return toJsonDocument(obj).toStringJson()
     }
 
     fun <T : Any> deserialise(jsonString: String): T {

@@ -1,12 +1,14 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackOutput
-val version_agl:String by project
 
 plugins {
 }
 
+val version_agl:String by project
+val version_kjson:String by project
 dependencies {
     commonMainApi(project(":agl-editor-common"))
     commonMainApi("net.akehurst.language:agl-processor:$version_agl")
+    commonMainImplementation("net.akehurst.kotlin.json:json:$version_kjson")
 }
 
 kotlin {

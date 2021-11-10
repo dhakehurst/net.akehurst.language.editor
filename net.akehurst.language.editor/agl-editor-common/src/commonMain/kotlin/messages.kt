@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.common.messages
 
+import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
@@ -62,16 +63,16 @@ data class MessageParseResult(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String,
-    val treeSerialised: String?, // custom serialisation because auto serialisation of SPPT impl classes is too complex
-    val issues: List<LanguageIssue>
+    val issues: List<LanguageIssue>, // custom serialisation because auto serialisation of SPPT impl classes is too complex
+    val treeSerialised: String?
 ) : AglWorkerMessage("MessageParseResult")
 
 data class MessageSyntaxAnalysisResult(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String,
-    val asm: Any?,
-    val issues: List<LanguageIssue>
+    val issues: List<LanguageIssue>,
+    val asm: Any?
 ) : AglWorkerMessage("MessageSyntaxAnalysisResult")
 
 data class MessageSemanticAnalysisResult(
@@ -115,5 +116,5 @@ data class MessageCodeCompleteResult(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
     val message: String,
-    val completionItems: Array<Pair<String, String>>?
+    val completionItems: Array<CompletionItem>?
 ) : AglWorkerMessage("MessageCodeCompleteResult")

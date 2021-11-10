@@ -67,7 +67,7 @@ abstract class AglWorkerJsAbstract : AglWorkerAbstract() {
         }
     }
 
-    override fun serialiseParseTree(spptNode: SPPTNode?) : String? {
+    override fun serialiseParseTreeToStringJson(spptNode: SPPTNode?) : String? {
         return spptNode?.let {
             val jsObj = parseTreeToJS(it)
             return JSON.stringify(jsObj)

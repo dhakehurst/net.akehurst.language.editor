@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.worker
 
+import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.parser.InputLocation
@@ -33,7 +34,7 @@ abstract class AglWorkerAbstract {
     private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
 
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
-    protected abstract fun serialiseParseTree(spptNode: SPPTNode?) : String?
+    protected abstract fun serialiseParseTreeToStringJson(spptNode: SPPTNode?) : String?
 
     protected fun receiveAglWorkerMessage(port: Any, msg: AglWorkerMessage) {
         when (msg) {
@@ -115,13 +116,14 @@ abstract class AglWorkerAbstract {
 
     protected fun parse(port: Any, message: MessageProcessRequest) {
         try {
-            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, false, "Start", null, emptyList()))
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList(), null))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val goal = message.goalRuleName
             val (sppt, issues) = if (null == goal) proc.parse(message.text) else proc.parse(message.text, goal)
-            val treeStr = serialiseParseTree(sppt?.root)
-            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", treeStr, issues))
+            val treeStr = serialiseParseTreeToStringJson(sppt?.root)
+            val treeStrEncoded = treeStr?.let{JsonString.encode(it)} //double encode treeStr as it itself is json
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", issues, treeStrEncoded))
             sppt?.let {
                 this.sendParseLineTokens(port, message.languageId, message.editorId, message.sessionId, sppt)
                 this.syntaxAnalysis(port, message, proc, sppt)
@@ -135,8 +137,8 @@ abstract class AglWorkerAbstract {
                     message.sessionId,
                     false,
                     "Exception during parse - ${t::class.simpleName} - ${t.message!!}",
-                    null,
-                    emptyList()
+                    emptyList(),
+                    null
                 )
             )
         }
@@ -144,11 +146,11 @@ abstract class AglWorkerAbstract {
 
     private fun syntaxAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor, sppt: SharedPackedParseTree) {
         try {
-            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", null, emptyList()))
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList(), null))
             val context = message.context
             val (asm, issues, locationMap) = proc.syntaxAnalysis<Any, Any>(sppt, context)
             val asmTree = asm //createAsmTree(asm) ?: "No Asm"
-            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", asmTree, issues))
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", issues, asmTree))
             this.semanticAnalysis(port, message, proc, asm, locationMap)
         } catch (t: Throwable) {
             sendMessage(
@@ -159,8 +161,8 @@ abstract class AglWorkerAbstract {
                     message.sessionId,
                     false,
                     "Exception during syntaxAnalysis - ${t::class.simpleName} - ${t.message!!}",
-                    null,
-                    emptyList()
+                    emptyList(),
+                    null
                 )
             )
         }

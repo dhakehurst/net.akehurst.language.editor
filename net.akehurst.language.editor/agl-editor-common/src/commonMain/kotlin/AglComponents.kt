@@ -38,7 +38,7 @@ class AglComponents(
 
     var context: SentenceContext? = null
     var sppt: SharedPackedParseTree? = null
-    var asm: Any? = null
+    //var asm: Any? = null
 
     var languageIdentity:String get() = languageDefinition.identity
     set(value) {
@@ -52,6 +52,6 @@ class AglComponents(
 
         this._styleHandler = AglStyleHandler(value)
         this.sppt = null
-        this.asm = null
+        //this.asm = null
     }
 }

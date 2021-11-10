@@ -22,10 +22,7 @@ import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
-import net.akehurst.language.api.asm.AsmElementPath
-import net.akehurst.language.api.asm.AsmElementProperty
-import net.akehurst.language.api.asm.AsmElementSimple
-import net.akehurst.language.api.asm.AsmSimple
+import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.editor.ace.AglEditorAce
 import net.akehurst.language.editor.api.AglEditor
@@ -331,7 +328,11 @@ class Demo(
                     grammarContext = ContextSimple()
                     grammar.forEach { g ->
                         g.allRule.forEach { r->
-                            grammarContext?.rootScope?.addToScope(r.name, "Rule", AsmElementPath("${g.name}/${r.name}"))
+                            grammarContext?.rootScope?.addToScope(r.name, "Rule", AsmElementPath("${g.name}/rules/${r.name}"))
+                        }
+                        g.allTerminal.forEach { term ->
+                            val ref = if(term.isPattern) "\"${term.value}\"" else "'${term.value}'"
+                            grammarContext?.rootScope?.addToScope(ref, "Rule", AsmElementPath("${g.name}/terminals/${ref}"))
                         }
                     }
                 }
@@ -341,7 +342,7 @@ class Demo(
             styleEditor.sentenceContext = grammarContext
         }
 
-        styleEditor.onParse { event ->
+        styleEditor.onSyntaxAnalysis { event ->
             when {
                 event.success -> {
                     try {
@@ -424,6 +425,7 @@ class Demo(
                             v is Array<*> -> "${it.name} : List"
                             v is Collection<*> -> "${it.name} : List"
                             v is AsmElementSimple -> "${it.name} : ${v.typeName}"
+                            v is AsmElementReference -> "&${v.reference}"
                             it.name == "'${v}'" -> "${it.name}"
                             v is String -> "${it.name} = '${v}'"
                             else -> "${it.name} = ${v}"

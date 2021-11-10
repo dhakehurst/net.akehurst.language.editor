@@ -23,6 +23,8 @@ object Datatypes {
     val label = "Datatype"
     val sentence = """
         primitive String
+        //primitive Date
+        collection List<E>
         class Person {
             name: String
             dob: Date
@@ -36,15 +38,20 @@ object Datatypes {
         namespace test
 
         grammar Test {
-            skip WS = "\s+" ;
+            skip leaf WS = "\s+" ;
+            skip leaf COMMENT = "//[^\n]*(\n)" ;
         
             unit = declaration* ;
-            declaration = datatype | primitive ;
+            declaration = datatype | primitive | collection ;
             primitive = 'primitive' ID ;
+            collection = 'collection' ID typeParameters? ;
+            typeParameters = '<' typeParameterList '>' ;
+            typeParameterList = [ID / ',']+ ;
             datatype = 'class' ID '{' property* '}' ;
             property = ID ':' typeReference ;
             typeReference = type typeArguments? ;
-            typeArguments = '<' [typeReference / ',']+ '>' ;
+            typeArguments = '<' typeArgumentList '>' ;
+            typeArgumentList = [typeReference / ',']+ ;
         
             leaf ID = "[A-Za-z_][A-Za-z0-9_]*" ;
             leaf type = ID;
@@ -54,13 +61,18 @@ object Datatypes {
     val references = """
         identify primitive by ID
         identify datatype by ID
+        identify collection by ID
         references {
-            in typeReference property type refers-to primitive|datatype
+            in typeReference property type refers-to primitive|datatype|collection
         }
     """.trimIndent()
 
     val style = """
         'primitive' {
+          foreground: purple;
+          font-style: bold;
+        }
+        'collection' {
           foreground: purple;
           font-style: bold;
         }

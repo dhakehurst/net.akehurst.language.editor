@@ -18,7 +18,7 @@ class AglCodeCompleter(
             objectJS {
                 caption = ci.text
                 value = ci.text
-                meta = "(${ci.rule.name})"
+                meta = "(${ci.ruleName})"
             }
         }.toTypedArray()
         callback(null, aceCi)

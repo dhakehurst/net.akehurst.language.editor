@@ -15,7 +15,7 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.api.parser.InputLocation
+import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.messages.*
@@ -95,10 +95,7 @@ abstract class AglEditorJsAbstract(
             this.createIssueMarkers(event.issues.toList())
             val treeStr = event.treeSerialised
             val treeJS = treeStr?.let {
-                val unescaped = it
-                    .replace("\\n","\n")
-                    .replace("\\r","\r")
-                    .replace("\\t","\t")
+                val unescaped = JsonString.decode(it) // double decode the string as it itself is json
                 JSON.parse<Any>(unescaped)
             }
             this.notifyParse(ParseEvent(true, "Success", treeJS, event.issues.toList()))

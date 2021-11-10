@@ -310,7 +310,7 @@ class AglEditorAce(
             val aceColumn = issue.location?.let { it.column - 1 } ?: 0
             val errMsg: String = when (issue.phase) {
                 LanguageProcessorPhase.PARSE -> {
-                    val expected = issue.data as Array<String>?
+                    val expected = issue.data as Set<String>?
                     when {
                         null == expected -> "Syntax Error"
                         expected.isEmpty() -> "Syntax Error"

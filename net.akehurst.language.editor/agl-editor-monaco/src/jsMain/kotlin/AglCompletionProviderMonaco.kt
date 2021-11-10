@@ -32,7 +32,7 @@ class AglCompletionProviderMonaco(
         val wordList = this.getCompletionItems(model, posn);
         val cil = wordList.map { ci ->
             object : monaco.languages.CompletionItem {
-                override val label: String = "${ci.text} (${ci.rule.name})"
+                override val label: String = "${ci.text} (${ci.ruleName})"
                 override val insertText: String = ci.text
                 override val kind: monaco.languages.CompletionItemKind = monaco.languages.CompletionItemKind.Text
             }
