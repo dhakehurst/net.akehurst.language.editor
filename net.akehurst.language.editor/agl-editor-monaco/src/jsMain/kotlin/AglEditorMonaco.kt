@@ -117,7 +117,7 @@ class AglEditorMonaco(
             monaco.languages.setTokensProvider(this.languageIdentity, this.workerTokenizer as monaco.languages.TokensProvider)
             monaco.languages.registerCompletionItemProvider(this.languageIdentity, AglCompletionProviderMonaco(this.agl))
 
-            this.onChange { this.update() }
+            this.onChange { this.onEditorTextChange() }
 
             val resizeObserver = ResizeObserver { entries -> onResize(entries) }
             resizeObserver.observe(this.element)
@@ -158,6 +158,7 @@ class AglEditorMonaco(
     }
 
     override fun updateStyle() {
+        val aglStyleClass = this.agl.styleHandler.aglStyleClass
         val str = this.agl.languageDefinition.style
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
@@ -165,8 +166,12 @@ class AglEditorMonaco(
             if(null!=rules) {
                 var mappedCss = ""
                 rules.forEach { rule ->
-                    val cssClass = '.' + this.languageIdentity + ' ' + ".monaco_" + this.agl.styleHandler.mapClass(rule.selector);
-                    val mappedRule = AglStyleRule(cssClass)
+                    val ruleClasses = rule.selector.map{
+                        val mappedSelName = this.agl.styleHandler.mapClass(it)
+                        ".monaco_$mappedSelName"
+                    }
+                    val cssClasses = listOf(".$aglStyleClass") + ruleClasses
+                    val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
                     mappedRule.styles = rule.styles.values.associate { oldStyle ->
                         val style = when (oldStyle.name) {
                             "foreground" -> AglStyle("color", oldStyle.value)
@@ -198,41 +203,20 @@ class AglEditorMonaco(
                 this.aglWorker.setStyle(languageIdentity, editorId, "", str) //TODO: sessionId
 
                 // need to update because token style types may have changed, not just their attributes
-                this.update()
+                this.processSentence()
             } else {
                 //TODO: cannot process style rules
             }
         }
     }
 
-    private fun update() {
+    private fun onEditorTextChange() {
         this.workerTokenizer.reset()
         window.clearTimeout(parseTimeout)
         this.parseTimeout = window.setTimeout({
             this.workerTokenizer.acceptingTokens = true
-            this.doBackgroundTryParse()
+            this.processSentence()
         }, 500)
-    }
-
-    private fun processorCreateResult(message: MessageProcessorCreateResponse) {
-        if (message.success) {
-            when (message.message) {
-                "OK" -> {
-                    console.asDynamic().debug("Debug: New Processor created for ${editorId}")
-                    this.workerTokenizer.acceptingTokens = true
-                    this.doBackgroundTryParse()
-                    this.resetTokenization()
-                }
-                "reset" -> {
-                    console.asDynamic().debug("Debug: reset Processor for ${editorId}")
-                }
-                else -> {
-                    console.error("Error: unknown result message from create Processor for ${editorId}: $message")
-                }
-            }
-        } else {
-            this.logger.log(LogLevel.Error, "Failed to create processor ${message.message}",null)
-        }
     }
 
     @JsName("onResize")
@@ -259,10 +243,10 @@ class AglEditorMonaco(
         this.monacoEditor.getModel().resetTokenization()
     }
 
-    override fun doBackgroundTryParse() {
+    override fun processSentence() {
         this.clearErrorMarkers()
         this.aglWorker.interrupt(languageIdentity, editorId, "")//TODO: get session
-        this.aglWorker.tryParse(languageIdentity, editorId, "", this.agl.goalRule, this.text, this.agl.context)
+        this.aglWorker.processSentence(languageIdentity, editorId, "", this.agl.goalRule, this.text, this.agl.context)
     }
 
     /*

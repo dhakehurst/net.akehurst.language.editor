@@ -19,6 +19,7 @@ package net.akehurst.language.editor.application.client.web
 import kotlinx.browser.document
 import net.akehurst.kotlin.html5.create
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
+import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
@@ -199,6 +200,7 @@ fun initialiseExamples() {
     Examples.add(English.example)
     Examples.add(TraceabilityQuery.example)
     Examples.add(MScript.example)
+    Examples.add(Hannes.example)
 
     Examples.map.forEach { eg ->
         val option = document.createElement("option")
@@ -299,7 +301,8 @@ class Demo(
             semanticAnalyser = null
         ).identity
 
-        var grammarContext: ContextSimple? = null
+        var grammarAsContext: ContextSimple? = null
+        var sentenceScopeModel:ScopeModel? = null
 
         grammarEditor.onParse { event ->
             when {
@@ -325,21 +328,21 @@ class Demo(
                 event.success -> {
                     val grammar = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
                     //grammarContext = ContextFromGrammar(grammar.last()) //TODO: multiple grammars
-                    grammarContext = ContextSimple()
+                    grammarAsContext = ContextSimple()
                     grammar.forEach { g ->
                         g.allRule.forEach { r->
-                            grammarContext?.rootScope?.addToScope(r.name, "Rule", AsmElementPath("${g.name}/rules/${r.name}"))
+                            grammarAsContext?.rootScope?.addToScope(r.name, "Rule", AsmElementPath("${g.name}/rules/${r.name}"))
                         }
                         g.allTerminal.forEach { term ->
                             val ref = if(term.isPattern) "\"${term.value}\"" else "'${term.value}'"
-                            grammarContext?.rootScope?.addToScope(ref, "Rule", AsmElementPath("${g.name}/terminals/${ref}"))
+                            grammarAsContext?.rootScope?.addToScope(ref, "Rule", AsmElementPath("${g.name}/terminals/${ref}"))
                         }
                     }
                 }
-                event.failure -> grammarContext = null
+                event.failure -> grammarAsContext = null
             }
-            referencesEditor.sentenceContext = grammarContext
-            styleEditor.sentenceContext = grammarContext
+            referencesEditor.sentenceContext = grammarAsContext
+            styleEditor.sentenceContext = grammarAsContext
         }
 
         styleEditor.onSyntaxAnalysis { event ->
@@ -365,17 +368,15 @@ class Demo(
             when {
                 event.success -> {
                     try {
+                        sentenceScopeModel = event.asm as ScopeModel
                         console.asDynamic().debug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
-                        //(sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = event.asm as ScopeModel
                         sentenceEditor.configureSyntaxAnalyser(referencesEditor.text)
                     } catch (t: Throwable) {
                         console.error(referencesEditor.editorId + ": " + t.message, t)
-                        // (sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = ScopeModel()
                     }
                 }
                 event.failure -> {
                     console.error(referencesEditor.editorId + ": " + event.message)
-                    //(sentenceEditor.languageDefinition.syntaxAnalyser as SyntaxAnalyserSimple).scopeModel = ScopeModel()
                 }
                 else -> {
                 }
@@ -416,16 +417,19 @@ class Demo(
         trees["ast"]!!.treeFunctions = TreeViewFunctions<dynamic>(
             label = {
                 when {
-                    it is Array<*> -> ": List"
+                    it is Array<*> -> ": Array"
+                    it is List<*> -> ": List"
+                    it is Set<*> -> ": Set"
                     it is AsmElementSimple -> ": " + it.typeName
                     it is AsmElementProperty -> {
                         val v = it.value
                         when {
                             null == v -> "${it.name} = null"
-                            v is Array<*> -> "${it.name} : List"
-                            v is Collection<*> -> "${it.name} : List"
+                            v is Array<*> -> "${it.name} : Array"
+                            v is List<*> -> "${it.name} : List"
+                            v is Set<*> -> "${it.name} : Set"
                             v is AsmElementSimple -> "${it.name} : ${v.typeName}"
-                            v is AsmElementReference -> "&${v.reference}"
+                            v is AsmElementReference -> "& ${v.reference} : ${v.value?.typeName}"
                             it.name == "'${v}'" -> "${it.name}"
                             v is String -> "${it.name} = '${v}'"
                             else -> "${it.name} = ${v}"
@@ -437,6 +441,7 @@ class Demo(
             hasChildren = {
                 when {
                     it is Array<*> -> true
+                    it is Collection<*> -> true
                     it is AsmElementSimple -> it.properties.size != 0
                     it is AsmElementProperty -> {
                         val v = it.value
@@ -453,7 +458,8 @@ class Demo(
             },
             children = {
                 when {
-                    it is Array<*> -> it
+                    it is Array<*> -> (it as Array<*>)
+                    it is Collection<*> -> (it as Collection<*>).toTypedArray()
                     it is AsmElementSimple -> it.properties.values.toTypedArray()
                     it is AsmElementProperty -> {
                         val v = it.value
@@ -498,12 +504,12 @@ class Demo(
 
     fun configExampleSelector() {
         exampleSelect.addEventListener("change", { _ ->
+            trees["parse"]!!.loading = true
+            trees["ast"]!!.loading = true
             val egName = js("event.target.value") as String
             val eg = Examples[egName]
             grammarEditor.text = eg.grammar
-//            sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
             styleEditor.text = eg.style
-//            sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
             referencesEditor.text = eg.references
             //formatEditor.text = eg.format
             sentenceEditor.sentenceContext = ContextSimple()
@@ -514,10 +520,8 @@ class Demo(
         val eg = Datatypes.example
         (exampleSelect as HTMLSelectElement).value = eg.id
         grammarEditor.text = eg.grammar
-//        sentenceEditor.languageDefinition.grammar = grammarEditor.text // set this before setting the sentence text
         styleEditor.text = eg.style
-//        sentenceEditor.languageDefinition.style = styleEditor.text  // set this before setting the sentence text
-        referencesEditor.text = eg.references // set this before setting the sentence text
+        referencesEditor.text = eg.references
         //formatEditor.text = eg.format
         sentenceEditor.sentenceContext = ContextSimple()
         sentenceEditor.text = eg.sentence

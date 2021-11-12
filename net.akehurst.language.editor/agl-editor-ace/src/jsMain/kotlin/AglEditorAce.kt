@@ -165,9 +165,12 @@ class AglEditorAce(
                     if (null != rules) {
                         var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
                         rules.forEach { rule ->
-                            val ruleClass = this.agl.styleHandler.mapClass(rule.selector)
-                            val cssClass = ".$aglStyleClass .ace_$ruleClass"
-                            val mappedRule = AglStyleRule(cssClass)
+                            val ruleClasses = rule.selector.map{
+                                val mappedSelName = this.agl.styleHandler.mapClass(it)
+                                ".ace_$mappedSelName"
+                            }
+                            val cssClasses = listOf(".$aglStyleClass") + ruleClasses
+                            val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
                             mappedRule.styles = rule.styles.values.associate { oldStyle ->
                                 val style = when (oldStyle.name) {
                                     "foreground" -> AglStyle("color", oldStyle.value)
@@ -217,7 +220,7 @@ class AglEditorAce(
         window.clearTimeout(parseTimeout)
         this.parseTimeout = window.setTimeout({
             this.workerTokenizer.acceptingTokens = true
-            this.doBackgroundTryParse()
+            this.processSentence()
         }, 500)
     }
 
@@ -256,11 +259,11 @@ class AglEditorAce(
         }
     }
 
-    override fun doBackgroundTryParse() {
+    override fun processSentence() {
         this.clearErrorMarkers()
         this.aceEditor.getSession()?.also { session ->
             this.aglWorker.interrupt(this.languageIdentity, editorId, session.id)
-            this.aglWorker.tryParse(this.languageIdentity, editorId, session.id, this.agl.goalRule, this.text, this.agl.context)
+            this.aglWorker.processSentence(this.languageIdentity, editorId, session.id, this.agl.goalRule, this.text, this.agl.context)
         }
     }
 

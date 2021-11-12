@@ -66,7 +66,10 @@ abstract class AglEditorAbstract(
 
     override var sentenceContext: SentenceContext?
         get() = this.agl.context
-        set(value) { this.agl.context = value }
+        set(value) {
+            this.agl.context = value
+            this.processSentence()
+        }
 
     override fun onParse(handler: (ParseEvent) -> Unit) {
         this._onParseHandler.add(handler)
@@ -104,4 +107,5 @@ abstract class AglEditorAbstract(
     protected abstract fun updateLanguage(oldId: String?)
     protected abstract fun updateGrammar()
     protected abstract fun updateStyle()
+    protected abstract fun processSentence()
 }

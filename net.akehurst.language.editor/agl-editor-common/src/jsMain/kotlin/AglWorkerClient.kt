@@ -17,9 +17,9 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.*
 import org.w3c.dom.events.EventTarget
-import net.akehurst.language.editor.common.messages.*
 
 class AglWorkerClient(
     val agl: AglComponents,
@@ -44,7 +44,7 @@ class AglWorkerClient(
             Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
         }
         this.worker.onerror = {
-            this.agl.logger.log(LogLevel.Error, it.toString(),null)
+            this.agl.logger.log(LogLevel.Error, it.toString(), null)
         }
         val tgt: EventTarget = if (this.sharedWorker) (this.worker as SharedWorker).port else this.worker as Worker
         tgt.addEventListener("message", { ev ->
@@ -53,35 +53,21 @@ class AglWorkerClient(
                 if (data is String) {
                     val str = (ev as MessageEvent).data as String
                     if (str.startsWith("Error:")) {
-                        this.agl.logger.log(LogLevel.Error, str.substringAfter("Error:"),null)
+                        this.agl.logger.log(LogLevel.Error, str.substringAfter("Error:"), null)
                     } else {
                         //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
                         val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
                         if (null == msg) {
-                            this.agl.logger.log(LogLevel.Error, "Message from Worker not handled: $str",null)
+                            this.agl.logger.log(LogLevel.Error, "Message from Worker not handled: $str", null)
                         } else {
-                            if (this.agl.editorId == msg.editorId) { //TODO: should  test for sessionId also
-                                when (msg) {
-                                    is MessageSetStyleResult -> this.setStyleResult(msg)
-                                    is MessageProcessorCreateResponse -> this.processorCreateResult(msg)
-                                    is MessageSyntaxAnalyserConfigureResponse -> this.syntaxAnalyserConfigureResult(msg)
-                                    is MessageParseResult -> this.parseResult(msg)
-                                    is MessageLineTokens -> this.lineTokens(msg)
-                                    is MessageSyntaxAnalysisResult -> this.syntaxAnalysisResult(msg)
-                                    is MessageSemanticAnalysisResult -> this.semanticAnalysisResult(msg)
-                                    is MessageCodeCompleteResult -> this.codeCompleteResult(msg)
-                                    else -> error("Unknown Message type")
-                                }
-                            } else {
-                                //msg for different editor
-                            }
+                            this.receiveMessageFromWorker(msg)
                         }
                     }
                 } else {
-                    this.agl.logger.log(LogLevel.Error, "Handling message from Worker, data content should be a String, got - '${ev.data}'",null)
+                    this.agl.logger.log(LogLevel.Error, "Handling message from Worker, data content should be a String, got - '${ev.data}'", null)
                 }
             } catch (e: Throwable) {
-                this.agl.logger.log(LogLevel.Error, "Handling message from Worker",e)
+                this.agl.logger.log(LogLevel.Error, "Handling message from Worker", e)
             }
         }, objectJS { })
         //need to explicitly start because used addEventListener
@@ -89,6 +75,24 @@ class AglWorkerClient(
             (this.worker as SharedWorker).port.start()
         } else {
             this.worker as Worker
+        }
+    }
+
+    private fun receiveMessageFromWorker(msg: AglWorkerMessage) {
+        if (this.agl.languageIdentity==msg.languageId && this.agl.editorId == msg.editorId) { //TODO: should  test for sessionId also
+            when (msg) {
+                is MessageSetStyleResult -> this.setStyleResult(msg)
+                is MessageProcessorCreateResponse -> this.processorCreateResult(msg)
+                is MessageSyntaxAnalyserConfigureResponse -> this.syntaxAnalyserConfigureResult(msg)
+                is MessageParseResult -> this.parseResult(msg)
+                is MessageLineTokens -> this.lineTokens(msg)
+                is MessageSyntaxAnalysisResult -> this.syntaxAnalysisResult(msg)
+                is MessageSemanticAnalysisResult -> this.semanticAnalysisResult(msg)
+                is MessageCodeCompleteResult -> this.codeCompleteResult(msg)
+                else -> error("Unknown Message type")
+            }
+        } else {
+            //msg for different editor or language changed and no longer relevant
         }
     }
 
@@ -115,7 +119,7 @@ class AglWorkerClient(
         this.sendToWorker(MessageParserInterruptRequest(languageId, editorId, sessionId, "New parse request"))
     }
 
-    fun tryParse(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context: Any?) {
+    fun processSentence(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context: Any?) {
         this.sendToWorker(MessageProcessRequest(languageId, editorId, sessionId, goalRuleName, sentence, context))
     }
 

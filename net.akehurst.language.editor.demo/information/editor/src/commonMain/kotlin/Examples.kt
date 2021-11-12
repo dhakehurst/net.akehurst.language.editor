@@ -31,21 +31,21 @@ object Examples {
     fun add(
             id: String,
             label: String,
-            context:String,
+            goalRuleName:String,
             sentence: String,
             grammar: String,
             references:String,
             style: String,
             format: String
     ) {
-        this.map[id] = Example(id, label, context, sentence, grammar,  references, style, format)
+        this.map[id] = Example(id, label, goalRuleName, sentence, grammar,  references, style, format)
     }
 }
 
 class Example(
         val id: String,
         val label: String,
-        val context:String,
+        val goalRuleName:String,
         val sentence: String,
         val grammar: String,
         val references:String,

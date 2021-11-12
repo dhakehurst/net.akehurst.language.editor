@@ -22,6 +22,7 @@ import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
+import net.akehurst.language.api.sppt.SPPTNode
 import net.akehurst.language.editor.common.messages.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -34,6 +35,10 @@ class test_AglWorkerAbstract {
 
         override fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any>) {
             sent.add(msg)
+        }
+
+        override fun serialiseParseTreeToStringJson(spptNode: SPPTNode?): String? {
+            TODO("not implemented")
         }
 
         fun receive(port: Any, msg: AglWorkerMessage) {

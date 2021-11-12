@@ -45,14 +45,14 @@ grammar SQL {
         | table-definition
         ;
 
-    select = SELECT columns FROM table-id ;
-    update = UPDATE table-id SET column-values ;
-    delete = DELETE FROM table-id  ;
-    insert = INSERT INTO table-id '(' columns ')' VALUES '(' values ')' ;
+    select = SELECT columns FROM table-ref ;
+    update = UPDATE table-ref SET column-values ;
+    delete = DELETE FROM table-ref  ;
+    insert = INSERT INTO table-ref '(' columns ')' VALUES '(' values ')' ;
 
-    columns = [column-id-or-any / ',']+ ;
+    columns = [column-ref-or-any / ',']+ ;
     column-values = [column-value/ ',']+ ;
-    column-value = column-id '=' value ;
+    column-value = column-ref '=' value ;
 
     values = [value /',']+ ;
     value
@@ -65,10 +65,12 @@ grammar SQL {
     column-definition = column-id datatype-ref datatype-size? ;
     datatype-size = '(' INTEGER ')' ;
 
-    table-id = ID ;
-    column-id-or-any = '*' | ID ;
-    column-id = ID ;
-    datatype-ref = ID ;
+    leaf table-id = ID ;
+    leaf table-ref = ID ;
+    column-ref-or-any = '*' | column-ref ;
+    leaf column-id = ID ;
+    leaf column-ref = ID ;
+    leaf datatype-ref = ID ;
 
     leaf ID = "[A-Za-z_][A-Za-z0-9_]*" ;
     leaf INTEGER = "[0-9]+" ;
@@ -88,12 +90,30 @@ grammar SQL {
     """.trimIndent()
 
     val references = """
+        identify table-definition by table-id
+        scope table-definition {
+            identify column-definition by column-id
+        }
+        references {
+            in select property table-ref refers-to table-definition
+            in update property table-ref refers-to table-definition
+            in delete property table-ref refers-to table-definition
+            in insert property table-ref refers-to table-definition
+        }
     """.trimIndent()
 
     val style = """
 ID {
   foreground: blue;
   font-style: italic;
+}
+CREATE {
+  foreground: chocolate;
+  font-style: bold;
+}
+TABLE {
+  foreground: chocolate;
+  font-style: bold;
 }
 SELECT {
   foreground: chocolate;

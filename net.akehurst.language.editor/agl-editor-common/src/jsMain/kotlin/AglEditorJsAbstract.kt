@@ -30,7 +30,6 @@ abstract class AglEditorJsAbstract(
 ) : AglEditorAbstract(languageId, editorId) {
 
     protected abstract fun resetTokenization()
-    protected abstract fun doBackgroundTryParse()
     protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)
 
     protected var aglWorker = AglWorkerClient(super.agl, workerScriptName, sharedWorker)
@@ -50,23 +49,27 @@ abstract class AglEditorJsAbstract(
     }
 
     private fun processorCreateResult(message: MessageProcessorCreateResponse) {
-        if (message.success) {
-            when (message.message) {
-                "OK" -> {
-                    this.log(LogLevel.Debug, "New Processor created for ${editorId}",null)
-                    this.workerTokenizer.acceptingTokens = true
-                    this.doBackgroundTryParse()
-                    this.resetTokenization()
+        if (message.editorId == this.editorId && message.languageId == this.languageIdentity) {
+            if (message.success) {
+                when (message.message) {
+                    "OK" -> {
+                        this.log(LogLevel.Debug, "New Processor created for ${editorId}", null)
+                        this.workerTokenizer.acceptingTokens = true
+                        this.processSentence()
+                        this.resetTokenization()
+                    }
+                    "reset" -> {
+                        this.log(LogLevel.Debug, "Reset Processor for ${editorId}", null)
+                    }
+                    else -> {
+                        this.log(LogLevel.Error, "Unknown result message from create Processor for ${editorId}: $message", null)
+                    }
                 }
-                "reset" -> {
-                    this.log(LogLevel.Debug, "Reset Processor for ${editorId}",null)
-                }
-                else -> {
-                    this.log(LogLevel.Error, "Unknown result message from create Processor for ${editorId}: $message",null)
-                }
+            } else {
+                this.log(LogLevel.Error, "Failed to create processor ${message.message}", null)
             }
         } else {
-            this.log(LogLevel.Error, "Failed to create processor ${message.message}",null)
+            //ignore because message no longer relevant
         }
     }
 

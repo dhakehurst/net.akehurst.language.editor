@@ -37,7 +37,7 @@ class AglStyleHandler(
     private val tokenToClassMap = mutableMapOf<String, String>()
 
     private fun mapTokenTypeToClass(tokenType: String): String? {
-        var cssClass = this.tokenToClassMap.get(tokenType)
+        val cssClass = this.tokenToClassMap.get(tokenType)
         return cssClass
     }
 

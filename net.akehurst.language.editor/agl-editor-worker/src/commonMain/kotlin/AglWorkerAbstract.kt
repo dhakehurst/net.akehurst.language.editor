@@ -103,7 +103,7 @@ abstract class AglWorkerAbstract {
             val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process<List<AglStyleRule>, Any>(message.css).first
             if (null != rules) {
                 rules.forEach { rule ->
-                    style.mapClass(rule.selector)
+                    rule.selector.forEach { sel ->  style.mapClass(sel) }
                 }
                 sendMessage(port, MessageSetStyleResult(message.languageId, message.editorId, message.sessionId, true, "OK"))
             } else {
