@@ -1,21 +1,15 @@
 package net.akehurst.language.editor.web.server
 
-import io.ktor.application.*
-import io.ktor.features.StatusPages
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.*
-import io.ktor.request.acceptItems
-import io.ktor.request.uri
-import io.ktor.response.ApplicationSendPipeline
-import io.ktor.response.respond
-import io.ktor.response.respondFile
-import io.ktor.routing.routing
-import io.ktor.util.AttributeKey
-import io.ktor.util.pipeline.PipelineContext
+import io.ktor.http.*
+import io.ktor.serialization.*
+import io.ktor.server.application.*
+import io.ktor.server.http.content.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.util.pipeline.*
 import java.io.File
 import java.io.FileNotFoundException
-import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -23,7 +17,7 @@ import java.nio.file.Paths
  * @param configuration The object configured by the install lambda.
  */
 class SinglePageApplication(private val configuration: Configuration) {
-
+/*
     companion object Feature :
             ApplicationFeature<Application, SinglePageApplication.Configuration, SinglePageApplication> {
 
@@ -54,7 +48,7 @@ class SinglePageApplication(private val configuration: Configuration) {
         }
 
     }
-
+*/
     private suspend fun intercept(
             pipelineContext: PipelineContext<Any, ApplicationCall>,
             message: Any
@@ -82,7 +76,7 @@ class SinglePageApplication(private val configuration: Configuration) {
         if (call.attributes.contains(StatusPages.key) || stop || !is404 || !acceptsHtml)
             return@apply
 
-        call.attributes.put(key, this@SinglePageApplication)
+//        call.attributes.put(key, this@SinglePageApplication)
 
         if (configuration.useFiles) {
             val file = configuration.fullPath().toFile()

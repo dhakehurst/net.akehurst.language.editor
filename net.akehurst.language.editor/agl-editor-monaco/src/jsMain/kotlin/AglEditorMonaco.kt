@@ -152,7 +152,7 @@ class AglEditorMonaco(
 
     override fun updateGrammar() {
         this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageIdentity, editorId, "", this.agl.languageDefinition.grammar) //TODO: sessionId
+        this.aglWorker.createProcessor(languageIdentity, editorId, "", this.agl.languageDefinition.grammarStr) //TODO: sessionId
         this.workerTokenizer.reset()
         this.resetTokenization() //new processor so find new tokens, first by scan
     }

@@ -19,23 +19,22 @@ import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 
 plugins {
-    kotlin("multiplatform") version("1.6.0-RC") apply false
-    id("com.github.gmazzo.buildconfig") version("3.0.0") apply false
+    kotlin("multiplatform") version ("1.7.0") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.0") apply false
+    id("org.jetbrains.dokka") version ("1.7.0") apply false
+    id("com.github.gmazzo.buildconfig") version ("3.1.0") apply false
+    id("nu.studer.credentials") version ("3.0")
 }
 
 allprojects {
 
     val version_project: String by project
-    val group_project = "${rootProject.name}"
+    val group_project = rootProject.name
 
     group = group_project
     version = version_project
 
     buildDir = File(rootProject.projectDir, ".gradle-build/${project.name}")
-
-    gradle.taskGraph.whenReady {
-
-    }
 
 }
 
@@ -70,15 +69,15 @@ subprojects {
         jvm("jvm8") {
             val main by compilations.getting {
                 kotlinOptions {
-                    languageVersion = "1.5"
-                    apiVersion = "1.5"
+                    //languageVersion = "1.5"
+                   // apiVersion = "1.5"
                     jvmTarget = JavaVersion.VERSION_1_8.toString()
                 }
             }
             val test by compilations.getting {
                 kotlinOptions {
-                    languageVersion = "1.5"
-                    apiVersion = "1.5"
+                    //languageVersion = "1.5"
+                    //apiVersion = "1.5"
                     jvmTarget = JavaVersion.VERSION_1_8.toString()
                 }
             }

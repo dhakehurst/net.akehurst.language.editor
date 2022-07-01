@@ -18,11 +18,11 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 plugins {
-    kotlin("multiplatform") version ("1.6.0-RC") apply false
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.4.0-1.6.0-RC") apply false
-    //id("org.jetbrains.dokka") version ("1.4.32") apply false
-    id("com.github.gmazzo.buildconfig") version ("3.0.0") apply false
-    id("nu.studer.credentials") version ("2.1")
+    kotlin("multiplatform") version ("1.7.0") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.0") apply false
+    //id("org.jetbrains.dokka") version ("1.7.0") apply false
+    id("com.github.gmazzo.buildconfig") version ("3.1.0") apply false
+    id("nu.studer.credentials") version ("3.0")
 }
 
 allprojects {
@@ -68,15 +68,15 @@ subprojects {
         jvm("jvm8") {
             val main by compilations.getting {
                 kotlinOptions {
-                    languageVersion = "1.5"
-                    apiVersion = "1.5"
+                    //languageVersion = "1.5"
+                    //apiVersion = "1.5"
                     jvmTarget = JavaVersion.VERSION_1_8.toString()
                 }
             }
             val test by compilations.getting {
                 kotlinOptions {
-                    languageVersion = "1.5"
-                    apiVersion = "1.5"
+                    //languageVersion = "1.5"
+                    //apiVersion = "1.5"
                     jvmTarget = JavaVersion.VERSION_1_8.toString()
                 }
             }
@@ -108,15 +108,15 @@ subprojects {
         "commonTestImplementation"(kotlin("test"))
         "commonTestImplementation"(kotlin("test-annotations-common"))
 
-        "jvm8TestImplementation"(kotlin("test-junit"))
+        //"jvm8TestImplementation"(kotlin("test-junit"))
 
-        "jsTestImplementation"(kotlin("test-js"))
+        //"jsTestImplementation"(kotlin("test-js"))
     }
 
     fun getProjectProperty(s: String) = project.findProperty(s) as String?
 
     val creds = project.properties["credentials"] as nu.studer.gradle.credentials.domain.CredentialsContainer
-    val sonatype_pwd = creds.propertyMissing("SONATYPE_PASSWORD") as String?
+    val sonatype_pwd = creds.forKey("SONATYPE_PASSWORD") as String?
         ?: getProjectProperty("SONATYPE_PASSWORD")
         ?: error("Must set project property with Sonatype Password (-P SONATYPE_PASSWORD=<...> or set in ~/.gradle/gradle.properties)")
     project.ext.set("signing.password", sonatype_pwd)

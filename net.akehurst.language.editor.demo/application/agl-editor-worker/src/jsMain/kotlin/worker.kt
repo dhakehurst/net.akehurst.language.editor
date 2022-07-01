@@ -6,10 +6,12 @@ var worker = AglSharedWorker().also {
     Agl.registry.register(
         identity = "user-language",
         grammar = "",
+        targetGrammar = null,
         defaultGoalRule = null,
+        buildForDefaultGoal = false,
         style = "",
         format = "",
-        syntaxAnalyser = SyntaxAnalyserSimple(),
+        syntaxAnalyser = null,//SyntaxAnalyserSimple(),
         semanticAnalyser = null
     ).identity
 }

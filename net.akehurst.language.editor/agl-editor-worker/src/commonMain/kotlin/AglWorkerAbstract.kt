@@ -55,7 +55,7 @@ abstract class AglWorkerAbstract {
             try {
                 val ld = Agl.registry.findOrPlaceholder(message.languageId)
                 if (ld.grammarIsModifiable) {
-                    ld.grammar = message.grammarStr
+                    ld.grammarStr = message.grammarStr
                 }
                 _languageDefinition[message.languageId] = ld
                 //check that grammar is well-defined and a processor can be created from it

@@ -236,6 +236,12 @@ fun createDemo(isAce: Boolean) {
         }
         ed.logger.bind = { lvl, msg, t ->
             when (lvl) {
+                LogLevel.All-> if (null == t) {
+                    console.error(msg)
+                } else {
+                    console.error(msg)
+                    t.printStackTrace()
+                }
                 LogLevel.Fatal, LogLevel.Error -> if (null == t) {
                     console.error(msg)
                 } else {
@@ -260,6 +266,7 @@ fun createDemo(isAce: Boolean) {
                     console.asDynamic().debug(msg)
                     t.printStackTrace()
                 }
+                LogLevel.None -> Unit
             }
         }
         Pair(id, ed)
@@ -294,10 +301,12 @@ class Demo(
         sentenceEditor.languageIdentity = Agl.registry.register(
             identity = "user-language",
             grammar = null,
+            targetGrammar = null,
             defaultGoalRule = null,
+            buildForDefaultGoal = false,
             style = "",
             format = "",
-            syntaxAnalyser = SyntaxAnalyserSimple(),
+            syntaxAnalyser = null,//SyntaxAnalyserSimple(),
             semanticAnalyser = null
         ).identity
 
@@ -309,15 +318,15 @@ class Demo(
                 event.success -> {
                     try {
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
-                        sentenceEditor.languageDefinition.grammar = grammarEditor.text
+                        sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
                     } catch (t: Throwable) {
                         console.error(grammarEditor.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.grammar = null
+                        sentenceEditor.languageDefinition.grammarStr = null
                     }
                 }
                 event.failure -> {
                     console.error(grammarEditor.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.grammar = null
+                    sentenceEditor.languageDefinition.grammarStr = null
                 }
                 else -> {
                 }

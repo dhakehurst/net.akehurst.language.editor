@@ -43,6 +43,7 @@ class test_AglWorkerSerialisation {
     fun AsmSimple_toJsonDocument() {
         val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
             sentence = """
+                identify Root by §nothing
                 scope Root {
                     identify Elem2 by id
                 }
@@ -81,59 +82,59 @@ class test_AglWorkerSerialisation {
                 property("rootElements") {
                     listObject {
                         objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                            property("id") { primitiveObject("kotlin.Int", 0) }
+                            property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0") } }
                             property("asm") { reference("/") }
                             property("typeName", "Root")
                             property("properties") {
                                 mapObject {
-                                    entry({ primitive("content") }) {
+                                    entry({ string("content") }) {
                                         objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                             property("name", "content")
                                             property("value") {
                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                    property("id") { primitiveObject("kotlin.Int", 1) }
+                                                    property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content") } }
                                                     property("asm") { reference("/") }
                                                     property("typeName", "Elem1")
                                                     property("properties") {
                                                         mapObject {
-                                                            entry({ primitive("propString") }) {
+                                                            entry({ string("propString") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propString")
                                                                     property("value", "stringValue")
                                                                     property("isReference", false)
                                                                 }
                                                             }
-                                                            entry({ primitive("propListString") }) {
+                                                            entry({ string("propListString") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propListString")
                                                                     property("value") {
                                                                         listObject {
-                                                                            primitive("Hello")
-                                                                            primitive("World")
+                                                                            string("Hello")
+                                                                            string("World")
                                                                         }
                                                                     }
                                                                     property("isReference", false)
                                                                 }
                                                             }
-                                                            entry({ primitive("propListElem") }) {
+                                                            entry({ string("propListElem") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propListElem")
                                                                     property("value") {
                                                                         listObject {
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("id") { primitiveObject("kotlin.Int", 2) }
+                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/0") } }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
                                                                                     mapObject {
-                                                                                        entry({ primitive("id") }) {
+                                                                                        entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
                                                                                                 property("value", "e1")
                                                                                                 property("isReference", false)
                                                                                             }
                                                                                         }
-                                                                                        entry({ primitive("ref") }) {
+                                                                                        entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
                                                                                                 property("value") {
@@ -149,19 +150,19 @@ class test_AglWorkerSerialisation {
                                                                                 }
                                                                             }
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("id") { primitiveObject("kotlin.Int", 3) }
+                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/1") } }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
                                                                                     mapObject {
-                                                                                        entry({ primitive("id") }) {
+                                                                                        entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
                                                                                                 property("value", "e2")
                                                                                                 property("isReference", false)
                                                                                             }
                                                                                         }
-                                                                                        entry({ primitive("ref") }) {
+                                                                                        entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
                                                                                                 property("value") {
@@ -177,19 +178,19 @@ class test_AglWorkerSerialisation {
                                                                                 }
                                                                             }
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("id") { primitiveObject("kotlin.Int", 4) }
+                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/2") } }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
                                                                                     mapObject {
-                                                                                        entry({ primitive("id") }) {
+                                                                                        entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
                                                                                                 property("value", "e3")
                                                                                                 property("isReference", false)
                                                                                             }
                                                                                         }
-                                                                                        entry({ primitive("ref") }) {
+                                                                                        entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
                                                                                                 property("value") {
@@ -235,59 +236,59 @@ class test_AglWorkerSerialisation {
                 property("rootElements") {
                     listObject {
                         objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                            property("id") { primitiveObject("kotlin.Int", 0) }
+                            property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0") } }
                             property("asm") { reference("/") }
                             property("typeName", "Root")
                             property("properties") {
                                 mapObject {
-                                    entry({ primitive("content") }) {
+                                    entry({ string("content") }) {
                                         objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                             property("name", "content")
                                             property("value") {
                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                    property("id") { primitiveObject("kotlin.Int", 1) }
+                                                    property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content") } }
                                                     property("asm") { reference("/") }
                                                     property("typeName", "Elem1")
                                                     property("properties") {
                                                         mapObject {
-                                                            entry({ primitive("propString") }) {
+                                                            entry({ string("propString") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propString")
                                                                     property("value", "stringValue")
                                                                     property("isReference", false)
                                                                 }
                                                             }
-                                                            entry({ primitive("propListString") }) {
+                                                            entry({ string("propListString") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propListString")
                                                                     property("value") {
                                                                         listObject {
-                                                                            primitive("Hello")
-                                                                            primitive("World")
+                                                                            string("Hello")
+                                                                            string("World")
                                                                         }
                                                                     }
                                                                     property("isReference", false)
                                                                 }
                                                             }
-                                                            entry({ primitive("propListElem") }) {
+                                                            entry({ string("propListElem") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propListElem")
                                                                     property("value") {
                                                                         listObject {
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("id") { primitiveObject("kotlin.Int", 2) }
+                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/0") } }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
                                                                                     mapObject {
-                                                                                        entry({ primitive("id") }) {
+                                                                                        entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
                                                                                                 property("value", "e1")
                                                                                                 property("isReference", false)
                                                                                             }
                                                                                         }
-                                                                                        entry({ primitive("ref") }) {
+                                                                                        entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
                                                                                                 property("value") {
@@ -303,19 +304,19 @@ class test_AglWorkerSerialisation {
                                                                                 }
                                                                             }
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("id") { primitiveObject("kotlin.Int", 3) }
+                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/1") } }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
                                                                                     mapObject {
-                                                                                        entry({ primitive("id") }) {
+                                                                                        entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
                                                                                                 property("value", "e2")
                                                                                                 property("isReference", false)
                                                                                             }
                                                                                         }
-                                                                                        entry({ primitive("ref") }) {
+                                                                                        entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
                                                                                                 property("value") {
@@ -331,19 +332,19 @@ class test_AglWorkerSerialisation {
                                                                                 }
                                                                             }
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("id") { primitiveObject("kotlin.Int", 4) }
+                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/2") } }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
                                                                                     mapObject {
-                                                                                        entry({ primitive("id") }) {
+                                                                                        entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
                                                                                                 property("value", "e3")
                                                                                                 property("isReference", false)
                                                                                             }
                                                                                         }
-                                                                                        entry({ primitive("ref") }) {
+                                                                                        entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
                                                                                                 property("value") {
@@ -378,10 +379,11 @@ class test_AglWorkerSerialisation {
             }
         }
 
-        val actual = AglWorkerSerialisation.deserialise<AsmSimple>(json.toJsonString())
+        val actual = AglWorkerSerialisation.deserialise<AsmSimple>(json.toStringJson())
 
         val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
             sentence = """
+                identify Root by §nothing
                 scope Root {
                     identify Elem2 by id
                 }
@@ -508,7 +510,7 @@ class test_AglWorkerSerialisation {
             }
         }
 
-        val actual = AglWorkerSerialisation.deserialise<Grammar>(json.toJsonString())
+        val actual = AglWorkerSerialisation.deserialise<Grammar>(json.toStringJson())
         val expected = Agl.registry.agl.grammar.processor!!.process<List<Grammar>, Any>(
             sentence = """
                 namespace test.test
@@ -645,7 +647,7 @@ class test_AglWorkerSerialisation {
         val asm = asmSimple(scopeModel!!, context) {
             root("Elem") {
                 propertyString("id", "e1")
-                propertyElement("s1","ScopedElem") {
+                propertyElement("s1", "ScopedElem") {
                     propertyString("id", "se1")
                 }
             }

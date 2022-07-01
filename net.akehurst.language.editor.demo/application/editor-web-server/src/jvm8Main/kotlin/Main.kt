@@ -16,17 +16,15 @@
 
 package net.akehurst.language.editor.web.server
 
-import io.ktor.application.ApplicationCallPipeline
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.features.*
-import io.ktor.routing.Routing
+import io.ktor.server.application.*
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.http.content.*
 import io.ktor.server.jetty.Jetty
-import io.ktor.sessions.Sessions
-import io.ktor.sessions.cookie
-import io.ktor.sessions.sessions
-import io.ktor.sessions.set
+import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.defaultheaders.*
+import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
+
 import io.ktor.util.generateNonce
 import java.io.File
 
@@ -62,11 +60,18 @@ class Server(
             intercept(ApplicationCallPipeline.Features) {
                 call.sessions.set<String>(generateNonce())
             }
-            install(SinglePageApplication) {
-                defaultPage = "index.html"
-                folderPath = "/"
-                spaRoute = ""
-                useFiles = false
+            //install(SinglePageApplication) {
+            //    defaultPage = "index.html"
+            //    folderPath = "/"
+            //    spaRoute = ""
+            //    useFiles = false
+            //}
+            routing {
+                singlePageApplication {
+                    defaultPage = "index.html"
+                    filesPath = "/"
+                    useResources = true
+                }
             }
         }
 

@@ -147,7 +147,7 @@ class AglEditorAce(
     override fun updateGrammar() {
         this.clearErrorMarkers()
         this.aceEditor.getSession()?.also { session ->
-            this.aglWorker.createProcessor(this.languageIdentity, editorId, session.id, this.agl.languageDefinition.grammar)
+            this.aglWorker.createProcessor(this.languageIdentity, editorId, session.id, this.agl.languageDefinition.grammarStr)
             this.workerTokenizer.reset()
             this.resetTokenization() //new processor so find new tokens, first by scan
         }
