@@ -449,16 +449,160 @@ class test_AglWorkerSerialisation {
                     listObject {
                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
                             property("grammar") { reference("/") }
-                            property("name", "rule1")
+                            property("name", "S")
                             property("isOverride", false)
                             property("isSkip", false)
                             property("isLeaf", false)
+                            property("rhs") {
+                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ChoiceLongestDefault") {
+                                    property("alternative") {
+                                        listObject {
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
+                                                property("items") {
+                                                    listObject {
+                                                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
+                                                            property("name", "as")
+                                                            property("owningGrammar"){ reference("/") }
+                                                            property("embedded", false)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
+                                                property("items") {
+                                                    listObject {
+                                                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
+                                                            property("name", "bs")
+                                                            property("owningGrammar"){ reference("/") }
+                                                            property("embedded", false)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
+                                                property("items") {
+                                                    listObject {
+                                                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
+                                                            property("name", "cs")
+                                                            property("owningGrammar"){ reference("/") }
+                                                            property("embedded", false)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                            property("grammar") { reference("/") }
+                            property("name", "as")
+                            property("isOverride", false)
+                            property("isSkip", false)
+                            property("isLeaf", false)
+                            property("rhs") {
+                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ListSimple") {
+                                    property("items") {
+                                        listObject {
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "b")
+                                                property("isPattern", false)
+                                            }
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "b")
+                                                property("isPattern", false)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                            property("grammar") { reference("/") }
+                            property("name", "bs")
+                            property("isOverride", false)
+                            property("isSkip", false)
+                            property("isLeaf", true)
+                            property("rhs") {
+                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.SeparatedList") {
+                                    property("items") {
+                                        listObject {
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "b")
+                                                property("isPattern", false)
+                                            }
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "b")
+                                                property("isPattern", false)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                            property("grammar") { reference("/") }
+                            property("name", "cs")
+                            property("isOverride", false)
+                            property("isSkip", false)
+                            property("isLeaf", false)
+                            property("rhs") {
+                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ChoiceDefault") {
+                                    property("items") {
+                                        listObject {
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "b")
+                                                property("isPattern", false)
+                                            }
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "b")
+                                                property("isPattern", false)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                            property("grammar") { reference("/") }
+                            property("name", "a")
+                            property("isOverride", false)
+                            property("isSkip", false)
+                            property("isLeaf", true)
                             property("rhs") {
                                 objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
                                     property("items") {
                                         listObject {
                                             objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
                                                 property("value", "a")
+                                                property("isPattern", false)
+                                            }
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "a")
+                                                property("isPattern", false)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                            property("grammar") { reference("/") }
+                            property("name", "b")
+                            property("isOverride", false)
+                            property("isSkip", false)
+                            property("isLeaf", true)
+                            property("rhs") {
+                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
+                                    property("items") {
+                                        listObject {
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "b")
+                                                property("isPattern", false)
+                                            }
+                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
+                                                property("value", "b")
                                                 property("isPattern", false)
                                             }
                                         }

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Agl Editor Webcomponent Example (Ace)</title>
+<script defer src="bundle.js"></script><script defer src="worker.js"></script></head>
+<body>
+    <main>
+
+        <agl-editor-ace id='grammarEditor' languageId='net.akehurst.language.agl.AglGrammar' workerScript='worker.js' sharedWorker></agl-editor-ace>
+
+        <agl-editor-ace id='styleEditor' languageId='net.akehurst.language.agl.AglStyle' workerScript='worker.js' sharedWorker></agl-editor-ace>
+
+        <agl-editor-ace id='sentenceEditor' workerScript='worker.js' sharedWorker></agl-editor-ace>
+        
+        <textarea id='result'></textarea>
+
+    </main>
+</body>
+</html>

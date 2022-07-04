@@ -572,6 +572,91 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseGrammarAsm() {
+        val k = komposite {
+            namespace("net.akehurst.language.agl.grammar.grammar.asm") {
+                dataType("NamespaceDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("GrammarDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("RuleDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("RuleItemAbstract") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("EmptyRuleDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("ChoiceAbstract") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("ChoiceLongestDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("ChoicePriorityDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("ConcatenationDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("ConcatenationItemAbstract") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("SimpleItemAbstract") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("GroupDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("NonTerminalDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("TerminalDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("SeparatedListDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("SimpleListDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+            }
+        }
+
         serialiser.confgureFromKompositeString(
             """
             namespace net.akehurst.language.agl.grammar.grammar.asm {
@@ -671,3 +756,4 @@ object AglWorkerSerialisation {
     }
 
 }
+

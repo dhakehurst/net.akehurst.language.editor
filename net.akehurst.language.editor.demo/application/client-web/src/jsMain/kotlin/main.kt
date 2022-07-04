@@ -294,7 +294,7 @@ class Demo(
         this.configExampleSelector()
     }
 
-    fun connectEditors() {
+    private fun connectEditors() {
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
         referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity

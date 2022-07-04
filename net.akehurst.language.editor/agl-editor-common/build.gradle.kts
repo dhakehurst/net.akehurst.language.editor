@@ -26,6 +26,13 @@ kotlinxReflect {
     ))
 }
 
+kotlin {
+    sourceSets {
+        val commonMain by getting {
+            kotlin.srcDir("$buildDir/kotlinxReflect/genSrc/commonMain")
+        }
+    }
+}
 
 configure<PublishingExtension> {
     publications.withType<MavenPublication> {

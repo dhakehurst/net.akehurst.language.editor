@@ -1,0 +1,117 @@
+{
+  "$type": "$OBJECT",
+  "$class": "net.akehurst.language.editor.common.messages.MessageProcessRequest",
+  "languageId": "net.akehurst.language.agl.AglStyle",
+  "editorId": "language-style",
+  "sessionId": "session3",
+  "goalRuleName": null,
+  "text": "'primitive' {\n  foreground: purple;\n  font-style: bold;\n}\n'class' {\n  foreground: purple;\n  font-style: bold;\n}\nID2 {\n  foreground: blue;\n  font-style: italic;\n}\n'{' {\n  foreground: darkgreen;\n  font-style: bold;\n}\n'}' {\n  foreground: darkgreen;\n  font-style: bold;\n}\nproperty {\n  background: lightgray;\n}\ntypeReference {\n  foreground: green;\n  background: lightblue;\n}",
+  "context": {
+    "$type": "$OBJECT",
+    "$class": "net.akehurst.language.agl.syntaxAnalyser.ContextSimple",
+    "rootScope": {
+      "$type": "$OBJECT",
+      "$class": "net.akehurst.language.api.asm.ScopeSimple",
+      "parent": null,
+      "forReferenceInParent": "",
+      "forTypeName": "§root",
+      "childScopes": {
+        "$type": "$MAP",
+        "$entries": []
+      },
+      "items": {
+        "$type": "$MAP",
+        "$entries": [
+          {
+            "$key": "Rule",
+            "$value": {
+              "$type": "$MAP",
+              "$entries": [
+                {
+                  "$key": "WS",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/WS"
+                  }
+                },
+                {
+                  "$key": "unit",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/unit"
+                  }
+                },
+                {
+                  "$key": "declaration",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/declaration"
+                  }
+                },
+                {
+                  "$key": "primitive",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/primitive"
+                  }
+                },
+                {
+                  "$key": "datatype",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/datatype"
+                  }
+                },
+                {
+                  "$key": "property",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/property"
+                  }
+                },
+                {
+                  "$key": "typeReference",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/typeReference"
+                  }
+                },
+                {
+                  "$key": "typeArguments",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/typeArguments"
+                  }
+                },
+                {
+                  "$key": "ID",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/ID"
+                  }
+                },
+                {
+                  "$key": "type",
+                  "$value": {
+                    "$type": "$OBJECT",
+                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                    "value": "Test/type"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
