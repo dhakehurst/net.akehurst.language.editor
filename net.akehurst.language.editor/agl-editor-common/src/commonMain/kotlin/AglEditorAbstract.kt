@@ -19,14 +19,14 @@ import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.editor.api.*
 
-abstract class AglEditorAbstract(
+abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     languageId: String,
     override val editorId: String
-) : AglEditor {
+) : AglEditor<AsmType, ContextType> {
 
     override val logger = AglEditorLogger()
 
-    protected val agl = AglComponents(languageId, editorId, logger)
+    protected val agl = AglComponents<AsmType, ContextType> (languageId, editorId, logger)
 
     init {
         this.agl.languageDefinition.grammarObservers.add { _, _ -> this.updateGrammar(); this.updateStyle() }
@@ -48,7 +48,7 @@ abstract class AglEditorAbstract(
             this.updateStyle()
         }
 
-    override val languageDefinition: LanguageDefinition
+    override val languageDefinition: LanguageDefinition<AsmType, ContextType>
         get() = agl.languageDefinition
 
     override var goalRuleName: String?

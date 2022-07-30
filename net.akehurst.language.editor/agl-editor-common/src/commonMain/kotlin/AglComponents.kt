@@ -23,12 +23,12 @@ import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.LogLevel
 
-class AglComponents(
+class AglComponents<AsmType : Any, ContextType : Any>(
     languageId: String,
     val editorId:String,
     val logger: AglEditorLogger
 ) {
-    private var _languageDefinition: LanguageDefinition = Agl.registry.findOrPlaceholder(languageId)
+    private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder(languageId)
     private var _styleHandler = AglStyleHandler(languageId)
 
     val languageDefinition get() = _languageDefinition

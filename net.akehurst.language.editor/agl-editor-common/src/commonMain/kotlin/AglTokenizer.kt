@@ -41,8 +41,8 @@ class AglToken(
     val column: Int
 )
 
-class AglTokenizer(
-    val agl: AglComponents
+class AglTokenizer<AsmType : Any, ContextType : Any>(
+    val agl: AglComponents<AsmType, ContextType>
 ) {
 
     fun getLineTokens(lineText: String, pState: AglLineState, line: Int): AglLineState {

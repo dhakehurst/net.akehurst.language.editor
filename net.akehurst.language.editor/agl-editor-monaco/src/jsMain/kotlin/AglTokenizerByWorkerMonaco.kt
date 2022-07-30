@@ -39,9 +39,9 @@ class ModelDecorationOptions(
     override var zindex: dynamic = null
 ) : IModelDecorationOptions
 
-class AglTokenizerByWorkerMonaco(
-    val aglEditor: AglEditorMonaco,
-    val agl: AglComponents
+class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
+    val aglEditor: AglEditorMonaco<AsmType, ContextType>,
+    val agl: AglComponents<AsmType, ContextType>
 ) : monaco.languages.TokensProvider, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)

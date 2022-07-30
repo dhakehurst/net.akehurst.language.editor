@@ -51,9 +51,9 @@ class AglLineTokensMonaco(
 
 }
 
-class AglTokenProvider(
+class AglTokenProvider<AsmType : Any, ContextType : Any>(
         val tokenPrefix: String,
-        val agl: AglComponents
+        val agl: AglComponents<AsmType, ContextType>
 ) : monaco.languages.TokensProvider {
 
     companion object {

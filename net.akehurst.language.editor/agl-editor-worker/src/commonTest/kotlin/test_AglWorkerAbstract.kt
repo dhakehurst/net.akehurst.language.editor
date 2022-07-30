@@ -30,7 +30,7 @@ import kotlin.test.assertEquals
 
 class test_AglWorkerAbstract {
 
-    class TestAglWorker() : AglWorkerAbstract() {
+    class TestAglWorker<AsmType : Any, ContextType : Any>() : AglWorkerAbstract<AsmType, ContextType>() {
         val sent = mutableListOf<Any>()
 
         override fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any>) {
@@ -60,10 +60,12 @@ class test_AglWorkerAbstract {
     @BeforeTest
     fun before() {
         Agl.registry.unregister(languageId)
-        Agl.registry.register(
+        Agl.registry.register<Any, Any>(
             languageId,
             "",
             null,
+            null,
+            false,
             null,
             null,
             null,
@@ -73,7 +75,7 @@ class test_AglWorkerAbstract {
 
     @Test
     fun receive_MessageProcessorCreate() {
-        val sut = TestAglWorker()
+        val sut = TestAglWorker<Any, Any>()
         val grammarStr = """
             namespace test
             grammar Test {
@@ -91,7 +93,7 @@ class test_AglWorkerAbstract {
 
     @Test
     fun receive_MessageProcessorCreate_error() {
-        val sut = TestAglWorker()
+        val sut = TestAglWorker<Any, Any>()
         val grammarStr = """
             garbage
         """.trimIndent()
@@ -109,7 +111,7 @@ class test_AglWorkerAbstract {
 
     @Test
     fun receive_MessageProcessorCreate_agl_grammar_langauge() {
-        val sut = TestAglWorker()
+        val sut = TestAglWorker<Any, Any>()
         val grammarStr = """
             garbage
         """.trimIndent()
@@ -125,7 +127,7 @@ class test_AglWorkerAbstract {
 
     @Test
     fun receive_MessageSyntaxAnalyserConfigure_no_SyntaxAnalyser() {
-        val sut = TestAglWorker()
+        val sut = TestAglWorker<Any, Any>()
         sut.receive(
             port, MessageProcessorCreate(
                 languageId, editorId, sessionId,
@@ -157,7 +159,7 @@ class test_AglWorkerAbstract {
     fun receive_MessageSyntaxAnalyserConfigure_empty_configuration() {
         Agl.registry.findOrPlaceholder(languageId).syntaxAnalyser = SyntaxAnalyserSimple()
 
-        val sut = TestAglWorker()
+        val sut = TestAglWorker<Any, Any>()
         sut.receive(
             port, MessageProcessorCreate(
                 languageId, editorId, sessionId,
@@ -189,7 +191,7 @@ class test_AglWorkerAbstract {
     fun receive_MessageSyntaxAnalyserConfigure_error_parse() {
         Agl.registry.findOrPlaceholder(languageId).syntaxAnalyser = SyntaxAnalyserSimple()
 
-        val sut = TestAglWorker()
+        val sut = TestAglWorker<Any, Any>()
         sut.receive(
             port, MessageProcessorCreate(
                 languageId, editorId, sessionId,
@@ -231,7 +233,7 @@ class test_AglWorkerAbstract {
     fun receive_MessageSyntaxAnalyserConfigure_error_syntaxAnalysis_1() {
         Agl.registry.findOrPlaceholder(languageId).syntaxAnalyser = SyntaxAnalyserSimple()
 
-        val sut = TestAglWorker()
+        val sut = TestAglWorker<Any, Any>()
         sut.receive(
             port, MessageProcessorCreate(
                 languageId, editorId, sessionId,
@@ -275,7 +277,7 @@ class test_AglWorkerAbstract {
     fun receive_MessageSyntaxAnalyserConfigure_error_syntaxAnalysis_2() {
         Agl.registry.findOrPlaceholder(languageId).syntaxAnalyser = SyntaxAnalyserSimple()
 
-        val sut = TestAglWorker()
+        val sut = TestAglWorker<Any, Any>()
         sut.receive(
             port, MessageProcessorCreate(
                 languageId, editorId, sessionId,

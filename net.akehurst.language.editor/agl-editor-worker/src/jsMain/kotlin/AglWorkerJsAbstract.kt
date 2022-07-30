@@ -32,9 +32,9 @@ import net.akehurst.language.editor.common.*
 import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.MessageEvent
 
-abstract class AglWorkerJsAbstract : AglWorkerAbstract() {
+abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract<AsmType, ContextType>() {
 
-    private var _languageDefinition: MutableMap<String, LanguageDefinition> = mutableMapOf()
+    private var _languageDefinition: MutableMap<String, LanguageDefinition<AsmType, ContextType>> = mutableMapOf()
     private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
 
     override fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic>) {

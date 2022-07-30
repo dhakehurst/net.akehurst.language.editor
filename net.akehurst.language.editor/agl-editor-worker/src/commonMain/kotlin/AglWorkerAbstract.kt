@@ -28,13 +28,13 @@ import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.messages.*
 
-abstract class AglWorkerAbstract {
+abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
 
-    private var _languageDefinition: MutableMap<String, LanguageDefinition> = mutableMapOf()
+    private var _languageDefinition: MutableMap<String, LanguageDefinition<AsmType, ContextType>> = mutableMapOf()
     private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
 
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
-    protected abstract fun serialiseParseTreeToStringJson(spptNode: SPPTNode?) : String?
+    protected abstract fun serialiseParseTreeToStringJson(spptNode: SPPTNode?): String?
 
     protected fun receiveAglWorkerMessage(port: Any, msg: AglWorkerMessage) {
         when (msg) {
@@ -53,7 +53,7 @@ abstract class AglWorkerAbstract {
             sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "reset"))
         } else {
             try {
-                val ld = Agl.registry.findOrPlaceholder(message.languageId)
+                val ld = Agl.registry.findOrPlaceholder<AsmType, ContextType>(message.languageId)
                 if (ld.grammarIsModifiable) {
                     ld.grammarStr = message.grammarStr
                 }
@@ -100,14 +100,15 @@ abstract class AglWorkerAbstract {
         try {
             val style = AglStyleHandler(message.languageId)
             this._styleHandler[message.languageId] = style
-            val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process<List<AglStyleRule>, Any>(message.css).first
+            val result = Agl.registry.agl.style.processor!!.process(message.css)
+            val rules: List<AglStyleRule>? = result.asm
             if (null != rules) {
                 rules.forEach { rule ->
-                    rule.selector.forEach { sel ->  style.mapClass(sel) }
+                    rule.selector.forEach { sel -> style.mapClass(sel) }
                 }
                 sendMessage(port, MessageSetStyleResult(message.languageId, message.editorId, message.sessionId, true, "OK"))
             } else {
-
+                //TODO: handle issues!
             }
         } catch (t: Throwable) {
             sendMessage(port, MessageSetStyleResult(message.languageId, message.editorId, message.sessionId, false, t.message!!))
@@ -120,11 +121,12 @@ abstract class AglWorkerAbstract {
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val goal = message.goalRuleName
-            val (sppt, issues) = if (null == goal) proc.parse(message.text) else proc.parse(message.text, goal)
-            val treeStr = serialiseParseTreeToStringJson(sppt?.root)
-            val treeStrEncoded = treeStr?.let{JsonString.encode(it)} //double encode treeStr as it itself is json
-            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", issues, treeStrEncoded))
-            sppt?.let {
+            val result = if (null == goal) proc.parse(message.text) else proc.parse(message.text, proc.parseOptions { goalRuleName(goal) })
+
+            val treeStr = serialiseParseTreeToStringJson(result.sppt?.root)
+            val treeStrEncoded = treeStr?.let { JsonString.encode(it) } //double encode treeStr as it itself is json
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues, treeStrEncoded))
+            result.sppt?.let {sppt ->
                 this.sendParseLineTokens(port, message.languageId, message.editorId, message.sessionId, sppt)
                 this.syntaxAnalysis(port, message, proc, sppt)
             }
@@ -144,14 +146,14 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    private fun syntaxAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor, sppt: SharedPackedParseTree) {
+    private fun syntaxAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor<AsmType, ContextType>, sppt: SharedPackedParseTree) {
         try {
             sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList(), null))
-            val context = message.context
-            val (asm, issues, locationMap) = proc.syntaxAnalysis<Any, Any>(sppt, context)
-            val asmTree = asm //createAsmTree(asm) ?: "No Asm"
-            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", issues, asmTree))
-            this.semanticAnalysis(port, message, proc, asm, locationMap)
+            val context = message.context as ContextType
+            val result = proc.syntaxAnalysis(sppt, proc.options {  syntaxAnalysis { context(context) }})
+            val asmTree = result.asm //createAsmTree(asm) ?: "No Asm"
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues, asmTree))
+            this.semanticAnalysis(port, message, proc, result.asm, result.locationMap)
         } catch (t: Throwable) {
             sendMessage(
                 port,
@@ -168,13 +170,16 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    private fun semanticAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor, asm: Any?, locationMap: Map<*, InputLocation>) {
+    private fun semanticAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor<AsmType, ContextType>, asm: AsmType?, locationMap: Map<Any, InputLocation>) {
         try {
             sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList()))
-            val context = message.context
+            val context = message.context as ContextType
             if (null != asm) {
-                val issues = proc.semanticAnalysis(asm, locationMap, context)
-                sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", issues))
+                val result = proc.semanticAnalysis(asm, proc.options {
+                    syntaxAnalysis { context(context) }
+                    semanticAnalysis { locationMap(locationMap) }
+                })
+                sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", result.issues))
             } else {
                 //no analysis possible
             }

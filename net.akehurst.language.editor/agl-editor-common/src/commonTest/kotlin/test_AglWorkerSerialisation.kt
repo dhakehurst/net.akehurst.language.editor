@@ -41,7 +41,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun AsmSimple_toJsonDocument() {
-        val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
+        val result = Agl.registry.agl.scopes.processor!!.process(
             sentence = """
                 identify Root by §nothing
                 scope Root {
@@ -53,7 +53,7 @@ class test_AglWorkerSerialisation {
             """.trimIndent()
         )
         val context = ContextSimple()
-        val asm = asmSimple(scopeModel!!, context) {
+        val asm = asmSimple(result.asm!!, context) {
             root("Root") {
                 propertyElement("content", "Elem1") {
                     propertyString("propString", "stringValue")
@@ -122,7 +122,14 @@ class test_AglWorkerSerialisation {
                                                                     property("value") {
                                                                         listObject {
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/0") } }
+                                                                                property("asmPath") {
+                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
+                                                                                        property(
+                                                                                            "value",
+                                                                                            "/0/content/propListElem/0"
+                                                                                        )
+                                                                                    }
+                                                                                }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
@@ -150,7 +157,14 @@ class test_AglWorkerSerialisation {
                                                                                 }
                                                                             }
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/1") } }
+                                                                                property("asmPath") {
+                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
+                                                                                        property(
+                                                                                            "value",
+                                                                                            "/0/content/propListElem/1"
+                                                                                        )
+                                                                                    }
+                                                                                }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
@@ -178,7 +192,14 @@ class test_AglWorkerSerialisation {
                                                                                 }
                                                                             }
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/2") } }
+                                                                                property("asmPath") {
+                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
+                                                                                        property(
+                                                                                            "value",
+                                                                                            "/0/content/propListElem/2"
+                                                                                        )
+                                                                                    }
+                                                                                }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
@@ -276,7 +297,14 @@ class test_AglWorkerSerialisation {
                                                                     property("value") {
                                                                         listObject {
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/0") } }
+                                                                                property("asmPath") {
+                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
+                                                                                        property(
+                                                                                            "value",
+                                                                                            "/0/content/propListElem/0"
+                                                                                        )
+                                                                                    }
+                                                                                }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
@@ -304,7 +332,14 @@ class test_AglWorkerSerialisation {
                                                                                 }
                                                                             }
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/1") } }
+                                                                                property("asmPath") {
+                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
+                                                                                        property(
+                                                                                            "value",
+                                                                                            "/0/content/propListElem/1"
+                                                                                        )
+                                                                                    }
+                                                                                }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
@@ -332,7 +367,14 @@ class test_AglWorkerSerialisation {
                                                                                 }
                                                                             }
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content/propListElem/2") } }
+                                                                                property("asmPath") {
+                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
+                                                                                        property(
+                                                                                            "value",
+                                                                                            "/0/content/propListElem/2"
+                                                                                        )
+                                                                                    }
+                                                                                }
                                                                                 property("asm") { reference("/") }
                                                                                 property("typeName", "Elem2")
                                                                                 property("properties") {
@@ -381,7 +423,7 @@ class test_AglWorkerSerialisation {
 
         val actual = AglWorkerSerialisation.deserialise<AsmSimple>(json.toStringJson())
 
-        val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
+        val result = Agl.registry.agl.scopes.processor!!.process(
             sentence = """
                 identify Root by §nothing
                 scope Root {
@@ -393,7 +435,7 @@ class test_AglWorkerSerialisation {
             """.trimIndent()
         )
         val context = ContextSimple()
-        val expected = asmSimple(scopeModel!!, context) {
+        val expected = asmSimple(result.asm!!, context) {
             root("Root") {
                 propertyElement("content", "Elem1") {
                     propertyString("propString", "stringValue")
@@ -421,7 +463,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun Grammar_toJsonDocument() {
-        val grammar = Agl.registry.agl.grammar.processor!!.process<List<Grammar>, Any>(
+        val result = Agl.registry.agl.grammar.processor!!.process(
             sentence = """
                 namespace test.test
                 grammar Test {
@@ -433,9 +475,9 @@ class test_AglWorkerSerialisation {
                     leaf b = 'b' 'b' ;
                 }
             """.trimIndent()
-        ).first!![0]
+        )
 
-        val actual = AglWorkerSerialisation.toJsonDocument(grammar)
+        val actual = AglWorkerSerialisation.toJsonDocument(result.asm!![0])
 
         val expected = json("serialised") {
             objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarDefault") {
@@ -462,7 +504,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "as")
-                                                            property("owningGrammar"){ reference("/") }
+                                                            property("owningGrammar") { reference("/") }
                                                             property("embedded", false)
                                                         }
                                                     }
@@ -473,7 +515,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "bs")
-                                                            property("owningGrammar"){ reference("/") }
+                                                            property("owningGrammar") { reference("/") }
                                                             property("embedded", false)
                                                         }
                                                     }
@@ -484,7 +526,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "cs")
-                                                            property("owningGrammar"){ reference("/") }
+                                                            property("owningGrammar") { reference("/") }
                                                             property("embedded", false)
                                                         }
                                                     }
@@ -655,14 +697,15 @@ class test_AglWorkerSerialisation {
         }
 
         val actual = AglWorkerSerialisation.deserialise<Grammar>(json.toStringJson())
-        val expected = Agl.registry.agl.grammar.processor!!.process<List<Grammar>, Any>(
+        val result = Agl.registry.agl.grammar.processor!!.process(
             sentence = """
                 namespace test.test
                 grammar Test {
                     rule1 = 'a' ;
                 }
             """.trimIndent()
-        ).first!![0]
+        )
+        val expected = result.asm!![0]
 
         assertEquals(expected.namespace, actual.namespace)
         assertEquals(expected.name, actual.name)
@@ -741,7 +784,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun MessageProcessRequest_com_empty_context() {
-        val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
+        val result = Agl.registry.agl.scopes.processor!!.process(
             sentence = """
                 identify Elem by id
                 identify ScopedElem by id
@@ -775,7 +818,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun MessageProcessRequest_com() {
-        val (scopeModel, issues) = Agl.registry.agl.scopes.processor!!.process<ScopeModel, ContextSimple>(
+        val result = Agl.registry.agl.scopes.processor!!.process(
             sentence = """
                 identify Elem by id
                 identify ScopedElem by id
@@ -788,7 +831,7 @@ class test_AglWorkerSerialisation {
             """.trimIndent()
         )
         val context = ContextSimple()
-        val asm = asmSimple(scopeModel!!, context) {
+        val asm = asmSimple(result.asm!!, context) {
             root("Elem") {
                 propertyString("id", "e1")
                 propertyElement("s1", "ScopedElem") {

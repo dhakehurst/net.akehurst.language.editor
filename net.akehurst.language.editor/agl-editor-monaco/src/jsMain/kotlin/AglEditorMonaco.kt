@@ -36,14 +36,14 @@ import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
-class AglEditorMonaco(
+class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     element: Element,
     editorId: String,
     languageId: String,
     options: dynamic, //TODO: types for this
     workerScriptName: String,
     sharedWorker: Boolean
-) : AglEditorJsAbstract(element, languageId, editorId,workerScriptName,sharedWorker) {
+) : AglEditorJsAbstract<AsmType , ContextType>(element, languageId, editorId,workerScriptName,sharedWorker) {
 
     companion object {
         private val init = js(
@@ -162,7 +162,7 @@ class AglEditorMonaco(
         val str = this.agl.languageDefinition.style
         if (null != str && str.isNotEmpty()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process<List<AglStyleRule>,Any>(str).first
+            val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process(str).asm
             if(null!=rules) {
                 var mappedCss = ""
                 rules.forEach { rule ->

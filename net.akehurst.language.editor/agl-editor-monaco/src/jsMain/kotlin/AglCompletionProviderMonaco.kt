@@ -22,8 +22,8 @@ import monaco.editor.ITextModel
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.editor.common.AglComponents
 
-class AglCompletionProviderMonaco(
-        val agl: AglComponents
+class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
+        val agl: AglComponents<AsmType, ContextType>
 ) : monaco.languages.CompletionItemProvider {
     override val triggerCharacters: Array<String>? = null
 
@@ -54,8 +54,8 @@ class AglCompletionProviderMonaco(
         return if (null == proc) {
             emptyList()
         } else {
-            val list = proc.expectedAt(text, offset, 1,goalRule)
-            list
+            val result = proc.expectedAt(text, offset, 1,proc.options { parse { goalRuleName(goalRule) } })
+            result.items
         }
     }
 }

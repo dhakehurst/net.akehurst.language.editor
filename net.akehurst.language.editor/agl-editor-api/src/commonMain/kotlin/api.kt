@@ -23,7 +23,7 @@ import net.akehurst.language.api.processor.SentenceContext
 
 enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, All }
 
-interface AglEditor {
+interface AglEditor<AsmType : Any, ContextType : Any> {
 
     val editorId: String
 
@@ -35,7 +35,7 @@ interface AglEditor {
     /**
      * The language definition for the editor, found or created using the languageId
      */
-    val languageDefinition: LanguageDefinition
+    val languageDefinition: LanguageDefinition<AsmType, ContextType>
 
     /**
      * The name of a rule in the grammar from which to start the parse.

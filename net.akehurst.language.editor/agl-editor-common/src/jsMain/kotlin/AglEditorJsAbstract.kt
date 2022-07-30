@@ -21,13 +21,13 @@ import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
 
-abstract class AglEditorJsAbstract(
+abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
     val element: Element,
     languageId: String,
     editorId: String,
     workerScriptName: String,
     sharedWorker: Boolean
-) : AglEditorAbstract(languageId, editorId) {
+) : AglEditorAbstract<AsmType, ContextType>(languageId, editorId) {
 
     protected abstract fun resetTokenization()
     protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)

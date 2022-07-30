@@ -18,12 +18,15 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 plugins {
-    kotlin("multiplatform") version ("1.7.0") apply false
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.0") apply false
-    //id("org.jetbrains.dokka") version ("1.7.0") apply false
+    kotlin("multiplatform") version ("1.7.10") apply false
+    id("org.jetbrains.dokka") version ("1.7.10") apply false
     id("com.github.gmazzo.buildconfig") version ("3.1.0") apply false
     id("nu.studer.credentials") version ("3.0")
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.0") apply false
 }
+val kotlin_languageVersion = "1.7"
+val kotlin_apiVersion:String = "1.7"
+val jvmTargetVersion = JavaVersion.VERSION_1_8.toString()
 
 allprojects {
 
@@ -42,7 +45,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.multiplatform")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
-    //apply(plugin = "org.jetbrains.dokka")
+    apply(plugin = "org.jetbrains.dokka")
     apply(plugin = "com.github.gmazzo.buildconfig")
     apply(plugin = "net.akehurst.kotlin.gradle.plugin.exportPublic")
 
@@ -68,16 +71,16 @@ subprojects {
         jvm("jvm8") {
             val main by compilations.getting {
                 kotlinOptions {
-                    //languageVersion = "1.5"
-                    //apiVersion = "1.5"
-                    jvmTarget = JavaVersion.VERSION_1_8.toString()
+                    languageVersion = kotlin_languageVersion
+                    apiVersion = kotlin_apiVersion
+                    jvmTarget = jvmTargetVersion
                 }
             }
             val test by compilations.getting {
                 kotlinOptions {
-                    //languageVersion = "1.5"
-                    //apiVersion = "1.5"
-                    jvmTarget = JavaVersion.VERSION_1_8.toString()
+                    languageVersion = kotlin_languageVersion
+                    apiVersion = kotlin_apiVersion
+                    jvmTarget = jvmTargetVersion
                 }
             }
         }
@@ -85,7 +88,7 @@ subprojects {
             nodejs()
             browser {
                 webpackTask {
-                    //outputFileName = "${project.group}-${project.name}.js"
+                    outputFileName = "${project.group}-${project.name}.js"
                 }
             }
         }
@@ -96,21 +99,24 @@ subprojects {
             val commonMain by getting {
                 kotlin.srcDir("$buildDir/generated/kotlin")
             }
+            all {
+                languageSettings.optIn("kotlin.ExperimentalStdlibApi")
+            }
         }
     }
 
+    val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
+
     val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
+        dependsOn(dokkaHtml)
         archiveClassifier.set("javadoc")
+        from(dokkaHtml.outputDirectory)
     }
     tasks.named("publish").get().dependsOn("javadocJar")
 
     dependencies {
         "commonTestImplementation"(kotlin("test"))
         "commonTestImplementation"(kotlin("test-annotations-common"))
-
-        //"jvm8TestImplementation"(kotlin("test-junit"))
-
-        //"jsTestImplementation"(kotlin("test-js"))
     }
 
     fun getProjectProperty(s: String) = project.findProperty(s) as String?

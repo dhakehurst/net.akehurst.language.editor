@@ -21,8 +21,8 @@ import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.*
 import org.w3c.dom.events.EventTarget
 
-class AglWorkerClient(
-    val agl: AglComponents,
+class AglWorkerClient<AsmType : Any, ContextType : Any>(
+    val agl: AglComponents<AsmType, ContextType>,
     val workerScriptName: String,
     val sharedWorker: Boolean
 ) {
