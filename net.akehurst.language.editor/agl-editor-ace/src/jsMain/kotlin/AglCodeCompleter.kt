@@ -5,8 +5,8 @@ import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.objectJS
 
 
-class AglCodeCompleter(
-        val agl: AglComponents
+class AglCodeCompleter<AsmType : Any, ContextType : Any>(
+        val agl: AglComponents<AsmType, ContextType>
 ) {
 
     // called by Ace

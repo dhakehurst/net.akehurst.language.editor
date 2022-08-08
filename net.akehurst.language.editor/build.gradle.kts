@@ -22,7 +22,8 @@ plugins {
     id("org.jetbrains.dokka") version ("1.7.10") apply false
     id("com.github.gmazzo.buildconfig") version ("3.1.0") apply false
     id("nu.studer.credentials") version ("3.0")
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.0") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.10") apply false
+    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version("1.7.20-Beta") apply false
 }
 val kotlin_languageVersion = "1.7"
 val kotlin_apiVersion:String = "1.7"
@@ -50,7 +51,11 @@ subprojects {
     apply(plugin = "net.akehurst.kotlin.gradle.plugin.exportPublic")
 
     repositories {
-        mavenLocal()
+        mavenLocal {
+            content{
+                includeGroupByRegex("net\\.akehurst.+")
+            }
+        }
         mavenCentral()
     }
 
