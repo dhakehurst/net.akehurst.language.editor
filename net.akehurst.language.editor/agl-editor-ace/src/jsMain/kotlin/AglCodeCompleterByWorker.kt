@@ -5,8 +5,8 @@ import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.objectJS
 
 
-class AglCodeCompleterByWorker(
-        val agl: AglComponents
+class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
+        val agl: AglComponents<AsmType, ContextType>
 ) {
 
     // called by Ace
@@ -29,8 +29,8 @@ class AglCodeCompleterByWorker(
         val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val goalRule = this.agl.goalRule
-            val list = proc.expectedAt(editor.getValue(), pos, 1,goalRule)
-            list
+            val result = proc.expectedAt(editor.getValue(), pos, 1,proc.options { parse { goalRuleName(goalRule) } })
+            result.items
         } else {
             emptyList()
         }

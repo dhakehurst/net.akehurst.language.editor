@@ -66,7 +66,7 @@ class test_AglWorkerAbstract {
         Agl.registry.unregister(languageId)
         Agl.registry.register<Any, Any>(
             languageId,
-            "",
+            null,
             null,
             null,
             false,
@@ -127,7 +127,6 @@ class test_AglWorkerAbstract {
             ), sut.sent
         )
     }
-
 
     @Test
     fun receive_MessageSyntaxAnalyserConfigure_no_SyntaxAnalyser() {

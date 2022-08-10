@@ -48,8 +48,8 @@ class AglLineTokensAce(
         override val tokens: Array<ace.Token>
 ) : ace.LineTokens {}
 
-class AglTokenizerAce(
-        val agl: AglComponents,
+class AglTokenizerAce<AsmType : Any, ContextType : Any>(
+        val agl: AglComponents<AsmType, ContextType>,
         val aglStyleHandler: AglStyleHandler
 ) : ace.Tokenizer {
 

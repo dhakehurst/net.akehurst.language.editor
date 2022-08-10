@@ -18,11 +18,11 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 plugins {
-    kotlin("multiplatform") version ("1.7.10") apply false
+    kotlin("multiplatform") version ("1.7.20-Beta") apply false
     id("org.jetbrains.dokka") version ("1.7.10") apply false
     id("com.github.gmazzo.buildconfig") version ("3.1.0") apply false
     id("nu.studer.credentials") version ("3.0")
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.10") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.20-Beta") apply false
     id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version("1.7.20-Beta") apply false
 }
 val kotlin_languageVersion = "1.7"
@@ -172,6 +172,7 @@ subprojects {
     }
 
     configure<SigningExtension> {
+        useGpgCmd()
         val publishing = project.properties["publishing"] as PublishingExtension
         sign(publishing.publications)
     }

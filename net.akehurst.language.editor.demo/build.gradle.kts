@@ -17,14 +17,16 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
-
 plugins {
-    kotlin("multiplatform") version ("1.7.0") apply false
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.7.0") apply false
-    id("org.jetbrains.dokka") version ("1.7.0") apply false
+    kotlin("multiplatform") version ("1.7.20-Beta") apply false
+    id("org.jetbrains.dokka") version ("1.7.10") apply false
     id("com.github.gmazzo.buildconfig") version ("3.1.0") apply false
     id("nu.studer.credentials") version ("3.0")
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version ("1.7.20-Beta") apply false
 }
+val kotlin_languageVersion = "1.7"
+val kotlin_apiVersion: String = "1.7"
+val jvmTargetVersion = JavaVersion.VERSION_1_8.toString()
 
 allprojects {
 
@@ -43,12 +45,16 @@ fun getProjectProperty(s: String) = project.findProperty(s) as String?
 
 subprojects {
 
-    apply(plugin="org.jetbrains.kotlin.multiplatform")
+    apply(plugin = "org.jetbrains.kotlin.multiplatform")
     apply(plugin = "maven-publish")
     apply(plugin = "com.github.gmazzo.buildconfig")
 
     repositories {
-        mavenLocal()
+        mavenLocal {
+            content {
+                includeGroupByRegex("net\\.akehurst.+")
+            }
+        }
         mavenCentral()
     }
 
@@ -56,7 +62,7 @@ subprojects {
         val now = java.time.Instant.now()
         fun fBbuildStamp(): String = java.time.format.DateTimeFormatter.ISO_DATE_TIME.withZone(java.time.ZoneId.of("UTC")).format(now)
         fun fBuildDate(): String = java.time.format.DateTimeFormatter.ofPattern("yyyy-MMM-dd").withZone(java.time.ZoneId.of("UTC")).format(now)
-        fun fBuildTime(): String= java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss z").withZone(java.time.ZoneId.of("UTC")).format(now)
+        fun fBuildTime(): String = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss z").withZone(java.time.ZoneId.of("UTC")).format(now)
 
         packageName("${project.group}")
         buildConfigField("String", "version", "\"${project.version}\"")
@@ -69,20 +75,20 @@ subprojects {
         jvm("jvm8") {
             val main by compilations.getting {
                 kotlinOptions {
-                    //languageVersion = "1.5"
-                   // apiVersion = "1.5"
-                    jvmTarget = JavaVersion.VERSION_1_8.toString()
+                    languageVersion = kotlin_languageVersion
+                    apiVersion = kotlin_apiVersion
+                    jvmTarget = jvmTargetVersion
                 }
             }
             val test by compilations.getting {
                 kotlinOptions {
-                    //languageVersion = "1.5"
-                    //apiVersion = "1.5"
-                    jvmTarget = JavaVersion.VERSION_1_8.toString()
+                    languageVersion = kotlin_languageVersion
+                    apiVersion = kotlin_apiVersion
+                    jvmTarget = jvmTargetVersion
                 }
             }
         }
-        js("js",IR) {
+        js("js", IR) {
             nodejs()
             browser {
                 webpackTask {

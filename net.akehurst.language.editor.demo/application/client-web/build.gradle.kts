@@ -35,6 +35,7 @@ kotlin {
 
 val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {
     dependsOn(":application-agl-editor-worker:jsBrowserProductionWebpack")
+    dependsOn(":application-agl-editor-worker:jsBrowserDistribution")
     dependsOn("jsProcessResources")
     from("$buildDir/../application-agl-editor-worker/distributions") {
         include("application-agl-editor-worker.js")
@@ -57,7 +58,12 @@ val workerTaskDev = tasks.register<Copy>("copyAglEditorWorkerJsDev") {
 
 tasks.getByName("jsBrowserDevelopmentRun").dependsOn(workerTaskDev)
 tasks.getByName("jsBrowserDevelopmentWebpack").dependsOn(workerTaskDev)
+
 tasks.getByName("jsBrowserProductionRun").dependsOn(workerTask)
 tasks.getByName("jsBrowserProductionWebpack").dependsOn(workerTask)
 tasks.getByName("jsProductionExecutableCompileSync").dependsOn(workerTask)
+tasks.getByName("jsBrowserProductionExecutableDistributeResources").dependsOn(workerTask)
+tasks.getByName("jsJar").dependsOn(workerTask)
+
 tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserProductionWebpack")
+tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserDistribution")

@@ -230,9 +230,9 @@ fun createDemo(isAce: Boolean) {
         }
         val id = element.id
         val ed = if (isAce) {
-            AglEditorAce(element, id, id, aceOptions, workerScriptName, true)
+            AglEditorAce<Any,Any>(element, id, id, aceOptions, workerScriptName, true)
         } else {
-            AglEditorMonaco(element, id, id, aceOptions, workerScriptName, true)
+            AglEditorMonaco<Any,Any>(element, id, id, aceOptions, workerScriptName, true)
         }
         ed.logger.bind = { lvl, msg, t ->
             when (lvl) {
@@ -277,7 +277,7 @@ fun createDemo(isAce: Boolean) {
 }
 
 class Demo(
-    val editors: Map<String, AglEditor>
+    val editors: Map<String, AglEditor<*,*>>
 ) {
     val trees = TreeView.initialise(document)
 
@@ -298,7 +298,7 @@ class Demo(
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
         referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
-        sentenceEditor.languageIdentity = Agl.registry.register(
+        sentenceEditor.languageIdentity = Agl.registry.register<Any,Any>(
             identity = "user-language",
             grammar = null,
             targetGrammar = null,
@@ -306,8 +306,8 @@ class Demo(
             buildForDefaultGoal = false,
             style = "",
             format = "",
-            syntaxAnalyser = null,//SyntaxAnalyserSimple(),
-            semanticAnalyser = null
+            syntaxAnalyserResolver = null,
+            semanticAnalyserResolver = null
         ).identity
 
         var grammarAsContext: ContextSimple? = null
@@ -393,7 +393,7 @@ class Demo(
         }
     }
 
-    fun connectTrees() {
+    private fun connectTrees() {
         trees["parse"]!!.treeFunctions = TreeViewFunctions<dynamic>(
             label = {
                 when (it.isBranch) {
@@ -511,7 +511,7 @@ class Demo(
         }
     }
 
-    fun configExampleSelector() {
+    private fun configExampleSelector() {
         exampleSelect.addEventListener("change", { _ ->
             trees["parse"]!!.loading = true
             trees["ast"]!!.loading = true

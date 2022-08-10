@@ -47,14 +47,14 @@ class AglErrorAnnotation(
 }
 
 //FIXME: some inefficiency due to some updates being triggered multiple times
-class AglEditorAce(
+class AglEditorAce<AsmType : Any, ContextType : Any>(
     element: Element,
     languageId: String,
     editorId: String,
     options: AceOptions, //TODO: types for this
     workerScriptName: String,
     sharedWorker: Boolean
-) : AglEditorJsAbstract(element, languageId, editorId, workerScriptName, sharedWorker) {
+) : AglEditorJsAbstract<AsmType, ContextType>(element, languageId, editorId, workerScriptName, sharedWorker) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
@@ -123,9 +123,11 @@ class AglEditorAce(
         val proc = this.agl.languageDefinition.processor
         if (null != proc) {
             val pos = this.aceEditor.getSelection().getCursor()
-            val formattedText = proc.format<Any, Any>(this.text)
-            if (null != formattedText) {
-                this.aceEditor.setValue(formattedText, -1)
+            val result = proc.format(this.text)
+            if (null != result.sentence) {
+                this.aceEditor.setValue(result.sentence!!, -1)
+            } else {
+                TODO()
             }
         }
     }
@@ -161,7 +163,7 @@ class AglEditorAce(
                 val str = this.editorSpecificStyleStr
                 if (null != str && str.isNotEmpty()) {
                     this.agl.styleHandler.reset()
-                    val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process<List<AglStyleRule>, Any>(str).first //TODO: pass context?
+                    val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process(str).asm //TODO: pass context?
                     if (null != rules) {
                         var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
                         rules.forEach { rule ->

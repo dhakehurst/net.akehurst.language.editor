@@ -29,8 +29,8 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
         val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val goalRule = this.agl.goalRule
-            val list = proc.expectedAt(editor.getValue(), pos, 1,goalRule)
-            list
+            val result = proc.expectedAt(editor.getValue(), pos, 1, proc.options { parse { goalRuleName(goalRule) } } )
+            result.items
         } else {
             emptyList()
         }

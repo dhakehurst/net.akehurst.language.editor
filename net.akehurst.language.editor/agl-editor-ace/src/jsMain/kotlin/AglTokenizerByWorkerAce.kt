@@ -18,8 +18,8 @@ package net.akehurst.language.editor.ace
 
 import net.akehurst.language.editor.common.*
 
-class AglTokenizerByWorkerAce(
-    agl:AglComponents
+class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
+    agl:AglComponents<AsmType, ContextType>
 ) : ace.Tokenizer, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)

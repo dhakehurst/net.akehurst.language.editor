@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.kotlin.json.JsonDocument
+import net.akehurst.kotlin.komposite.api.DatatypeModel
 import net.akehurst.kotlin.komposite.processor.komposite
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
 
@@ -38,6 +39,7 @@ object AglWorkerSerialisation {
             initialiseGrammarAsm()
             initialiseMessages()
             initialiseAsmSimple()
+            initialiseSPPT()
             initialised = true
         }
     }
@@ -572,91 +574,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseGrammarAsm() {
-        val k = komposite {
-            namespace("net.akehurst.language.agl.grammar.grammar.asm") {
-                dataType("NamespaceDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("GrammarDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("RuleDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("RuleItemAbstract") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("EmptyRuleDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("ChoiceAbstract") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("ChoiceLongestDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("ChoicePriorityDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("ConcatenationDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("ConcatenationItemAbstract") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("SimpleItemAbstract") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("GroupDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("NonTerminalDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("TerminalDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("SeparatedListDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-                dataType("SimpleListDefault") {
-                    constructorArguments {
-                        composite("qualifiedName","String")
-                    }
-                }
-            }
-        }
-
+        /*
         serialiser.confgureFromKompositeString(
             """
             namespace net.akehurst.language.agl.grammar.grammar.asm {
@@ -716,7 +634,113 @@ object AglWorkerSerialisation {
             }
         """.trimIndent()
         )
+        */
         //classes registered with KotlinxReflect via gradle plugin
+        serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.agl.grammar.grammar.asm") {
+                dataType("NamespaceDefault") {
+                    constructorArguments {
+                        composite("qualifiedName","String")
+                    }
+                }
+                dataType("GrammarDefault") {
+                    constructorArguments {
+                        composite("namespace","Namespace")
+                        composite("name","String")
+                    }
+                    mutableProperties {
+                        composite("rule","List") {
+                            typeArgument("RuleItemAbstract")
+                        }
+                    }
+                }
+                dataType("RuleDefault") {
+                    constructorArguments {
+                        reference("grammar","GrammarDefault")
+                        composite("name","String")
+                        composite("isOverride","Boolean")
+                        composite("isSkip","Boolean")
+                        composite("isLeaf","Boolean")
+                    }
+                    mutableProperties {
+                        composite("rhs","RuleItemAbstract")
+                    }
+                }
+                dataType("RuleItemAbstract") {}
+                dataType("EmptyRuleDefault") {
+                    superTypes("RuleItemAbstract")
+                }
+                dataType("ChoiceAbstract") {
+                    superTypes("RuleItemAbstract")
+                }
+                dataType("ChoiceLongestDefault") {
+                    superTypes("ChoiceAbstract")
+                    constructorArguments {
+                        composite("alternative","List") {
+                            typeArgument("ConcatenationDefault")
+                        }
+                    }
+                }
+                dataType("ChoicePriorityDefault") {
+                    superTypes("ChoiceAbstract")
+                    constructorArguments {
+                        composite("alternative","List") {
+                            typeArgument("ConcatenationDefault")
+                        }
+                    }
+                }
+                dataType("ConcatenationDefault") {
+                    superTypes("RuleItemAbstract")
+                    constructorArguments {
+                        composite("items","List") {
+                            typeArgument("ConcatenationItemAbstract")
+                        }
+                    }
+                }
+                dataType("ConcatenationItemAbstract")  {
+                    superTypes("RuleItemAbstract")
+                }
+                dataType("SimpleItemAbstract") {
+                    superTypes("ConcatenationItemAbstract")
+                }
+                dataType("GroupDefault") {
+                    superTypes("ConcatenationItemAbstract")
+                    constructorArguments {
+                        composite("choice","ChoiceAbstract")
+                    }
+                }
+                dataType("NonTerminalDefault") {
+                    superTypes("RuleItemAbstract")
+                    constructorArguments {
+                        composite("name","String")
+                        reference("owningGrammar","Grammar")
+                        composite("embedded","Boolean")
+                    }
+                }
+                dataType("TerminalDefault") {
+                    superTypes("RuleItemAbstract")
+                    constructorArguments {
+                        composite("value","String")
+                        composite("isPattern","Boolean")
+                    }
+                }
+                dataType("SeparatedListDefault") {
+                    constructorArguments {
+                        composite("min","Int")
+                        composite("max","Int")
+                        composite("item","SimpleItemAbstract")
+                        composite("separator","SimpleItem")
+                    }
+                }
+                dataType("SimpleListDefault") {
+                    constructorArguments {
+                        composite("min","Int")
+                        composite("max","Int")
+                        composite("item","SimpleItemAbstract")
+                    }
+                }
+            }
+        })
     }
 
     private fun initialiseSPPT() {
@@ -736,10 +760,12 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
     }
 
-    fun configure(datatypeModel: String) {
+    fun confgureFromKompositeString(datatypeModel: String) {
         serialiser.confgureFromKompositeString(datatypeModel)
     }
-
+    fun confgureFromKompositeModel(datatypeModel: DatatypeModel) {
+        serialiser.confgureFromKompositeModel(datatypeModel)
+    }
     // provided to make testing better
     internal fun toJsonDocument(obj: Any): JsonDocument {
         if (this.initialised.not()) this.initialise()
