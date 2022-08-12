@@ -18,11 +18,9 @@ package net.akehurst.language.editor.application.client.web
 
 import kotlinx.browser.document
 import net.akehurst.kotlin.html5.create
-import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.editor.ace.AglEditorAce
@@ -200,7 +198,7 @@ fun initialiseExamples() {
     Examples.add(English.example)
     Examples.add(TraceabilityQuery.example)
     Examples.add(MScript.example)
-    Examples.add(Hannes.example)
+    Examples.add(Xml.example)
 
     Examples.map.forEach { eg ->
         val option = document.createElement("option")
@@ -393,6 +391,11 @@ class Demo(
         }
     }
 
+    private fun loading(parse:Boolean, ast:Boolean) {
+        trees["parse"]!!.loading = parse
+        trees["ast"]!!.loading = ast
+    }
+
     private fun connectTrees() {
         trees["parse"]!!.treeFunctions = TreeViewFunctions<dynamic>(
             label = {
@@ -412,14 +415,8 @@ class Demo(
                     trees["parse"]!!.loading = false
                     trees["parse"]!!.root = event.tree
                 }
-                event.isStart -> {
-                    trees["parse"]!!.loading = true
-                    trees["ast"]!!.loading = true
-                }
-                else -> { //Failure
-                    trees["parse"]!!.loading = false
-                    trees["ast"]!!.loading = false
-                }
+                event.isStart -> loading(true,true)
+                else -> loading(false,false)
             }
         }
 
@@ -513,8 +510,7 @@ class Demo(
 
     private fun configExampleSelector() {
         exampleSelect.addEventListener("change", { _ ->
-            trees["parse"]!!.loading = true
-            trees["ast"]!!.loading = true
+            loading(true,true)
             val egName = js("event.target.value") as String
             val eg = Examples[egName]
             grammarEditor.text = eg.grammar
@@ -523,9 +519,11 @@ class Demo(
             //formatEditor.text = eg.format
             sentenceEditor.sentenceContext = ContextSimple()
             sentenceEditor.text = eg.sentence
+
         })
 
         // select initial example
+        loading(true,true)
         val eg = Datatypes.example
         (exampleSelect as HTMLSelectElement).value = eg.id
         grammarEditor.text = eg.grammar

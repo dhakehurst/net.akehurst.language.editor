@@ -1,5 +1,5 @@
-val version_agl_editor:String by project
-val version_html_builder:String by project
+val version_agl_editor: String by project
+val version_html_builder: String by project
 
 dependencies {
 
@@ -23,7 +23,7 @@ dependencies {
 }
 
 kotlin {
-    js("js",IR) {
+    js("js", IR) {
         binaries.executable()
     }
     sourceSets {
@@ -58,6 +58,8 @@ val workerTaskDev = tasks.register<Copy>("copyAglEditorWorkerJsDev") {
 
 tasks.getByName("jsBrowserDevelopmentRun").dependsOn(workerTaskDev)
 tasks.getByName("jsBrowserDevelopmentWebpack").dependsOn(workerTaskDev)
+tasks.getByName("jsDevelopmentExecutableCompileSync").dependsOn(workerTaskDev)
+tasks.getByName("jsBrowserDevelopmentExecutableDistributeResources").dependsOn(workerTaskDev)
 
 tasks.getByName("jsBrowserProductionRun").dependsOn(workerTask)
 tasks.getByName("jsBrowserProductionWebpack").dependsOn(workerTask)
@@ -67,3 +69,17 @@ tasks.getByName("jsJar").dependsOn(workerTask)
 
 tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserProductionWebpack")
 tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserDistribution")
+
+
+val pythonServerDev = tasks.register<Exec>("pythonServerDev") {
+    group ="kotlin browser"
+    dependsOn("jsBrowserDevelopmentWebpack")
+    workingDir("$buildDir/developmentExecutable")
+    commandLine("python3", "-m", "http.server")
+}
+val pythonServerProd = tasks.register<Exec>("pythonServerProd") {
+    group ="kotlin browser"
+    dependsOn("jsBrowserProductionWebpack")
+    workingDir("$buildDir/distributions")
+    commandLine("python3", "-m", "http.server")
+}

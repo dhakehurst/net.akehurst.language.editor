@@ -149,7 +149,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     private fun syntaxAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor<AsmType, ContextType>, sppt: SharedPackedParseTree) {
         try {
             sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList(), null))
-            val context = message.context as ContextType
+            val context = message.context as ContextType?
             val result = proc.syntaxAnalysis(sppt, proc.options {  syntaxAnalysis { context(context) }})
             val asmTree = result.asm //createAsmTree(asm) ?: "No Asm"
             sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues, asmTree))
@@ -207,9 +207,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                 val lineTokens = sppt.tokensByLineAll().mapIndexed { lineNum, leaves ->
                     style.transformToTokens(leaves)
                 }
-                val lt = lineTokens.map {
-                    it.toTypedArray()
-                }.toTypedArray()
+                val lt = lineTokens.map { it.toTypedArray() }.toTypedArray()
                 sendMessage(port, MessageLineTokens(languageId, editorId, sessionId, true, "Success", lt))
             } catch (t: Throwable) {
                 sendMessage(port, MessageLineTokens(languageId, editorId, sessionId, false, t.message!!, emptyArray()))
