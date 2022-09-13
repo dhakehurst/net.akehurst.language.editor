@@ -84,7 +84,7 @@ fun createBaseDom(appDivSelector: String) {
                                 p { content = "Ace version 1.4.12, Licence BSD" }
                                 p { content = "Monaco version 0.20.0, Licence MIT" }
                                 p { content = "AGL version ${Agl.version}, Licence Apache 2.0" }
-                                p { content = "Kotlin version 1.5.31, Licence Apache 2.0" }
+                                p { content = "Kotlin version ${kotlin.KotlinVersion.CURRENT}, Licence Apache 2.0" }
                             }
                             footer {
                                 button {

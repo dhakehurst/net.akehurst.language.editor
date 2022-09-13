@@ -30,6 +30,7 @@ object Java8 {
     """.trimIndent()
     val grammar = """
 /*
+ * This may be more permissive than the other ambiguous grammar
  * derived from [https://docs.oracle.com/javase/specs/jls/se8/html/jls-19.html]
  */
 namespace net.akehurst.language.java8
@@ -41,17 +42,11 @@ grammar Base {
 
     leaf IDENTIFIER = JAVA_LETTER JAVA_LETTER_OR_DIGIT* ;
     leaf JAVA_LETTER_OR_DIGIT = JAVA_LETTER | "[0-9]" ;
-    leaf JAVA_LETTER= UNICODE_LETTER | '$' | '_' ;
+    leaf JAVA_LETTER= UNICODE_LETTER | '${'$'}' | '_' ;
     leaf UNICODE_LETTER = "[A-Za-z]" ; //TODO: add unicode chars !
 
     QualifiedName = [ IDENTIFIER / '.' ]+ ;
 
-    TypeName = QualifiedName ;
-    PackageOrTypeName = QualifiedName ;
-    ExpressionName = QualifiedName ;
-    MethodName = IDENTIFIER;
-    PackageName = QualifiedName ;
-    AmbiguousName = QualifiedName ;
 }
 
 grammar Literals {
@@ -79,8 +74,9 @@ grammar Literals {
     leaf INTEGER_TYPE_SUFFIX = 'l' | 'L' ;
 
     leaf FLOATING_POINT_LITERAL
-     = "[0-9]([eE][+-]?[0-9]+)?" "[fdFD]"
-     | "[0-9]*.[0-9]*" "[eE][+-]?(0|[1-9])+"? "[fdFD]"?
+     = "[0-9]+" "[fdFD]"
+     | "[0-9]+[eE][+-]?[0-9]+" "[fdFD]"?
+     | "[0-9]*[.][0-9]*" "[eE][+-]?(0|[1-9])+"? "[fdFD]"?
      ;
 
     leaf BOOLEAN_LITERAL   = 'true' | 'false' ;
@@ -96,132 +92,161 @@ grammar Literals {
 
 grammar Annotations extends Base, Literals {
     Annotation = NormalAnnotation | MarkerAnnotation | SingleElementAnnotation ;
-    NormalAnnotation = '@' TypeName '(' ElementValuePairList ')' ;
+    NormalAnnotation = '@' QualifiedName '(' ElementValuePairList ')' ;
     ElementValuePairList = [ ElementValuePair / ',' ]* ;
     ElementValuePair = IDENTIFIER '=' ElementValue ;
-    //ElementValue = ConditionalExpression | ElementValueArrayInitializer | Annotation ;
     // overridden in expressions
     ElementValue = Literal | ElementValueArrayInitializer | Annotation ;
     ElementValueArrayInitializer = '{' ElementValueList ','? '}' ;
     ElementValueList = [ ElementValue / ',' ]* ;
-    MarkerAnnotation = '@' TypeName ;
-    SingleElementAnnotation = '@' TypeName '(' ElementValue ')' ;
+    MarkerAnnotation = '@' QualifiedName ;
+    SingleElementAnnotation = '@' QualifiedName '(' ElementValue ')' ;
 }
 
 grammar Types extends Annotations {
-    Type = ReferenceType < PrimitiveType ;
-    PrimitiveType = Annotation* NumericType | Annotation* 'boolean' ;
-    NumericType = IntegralType | FloatingPointType ;
-    IntegralType = 'byte' | 'short' | 'int' | 'long' | 'char' ;
-    FloatingPointType = 'float' | 'double' ;
+    Type = Annotation* UnannType ;
+    PrimitiveType = Annotation* UnannPrimitiveType ;
+    leaf UnannPrimitiveType = NumericType | 'boolean' ;
+    leaf NumericType = IntegralType | FloatingPointType ;
+    leaf IntegralType = 'byte' | 'short' | 'int' | 'long' | 'char' ;
+    leaf FloatingPointType = 'float' | 'double' ;
 
-    ReferenceType = ClassOrInterfaceType | TypeVariable | ArrayType ;
-    ClassOrInterfaceType = ClassType | InterfaceType ;
-    ClassType
-      = Annotation* IDENTIFIER TypeArguments?
-      | ClassOrInterfaceType '.' Annotation* IDENTIFIER TypeArguments?
-      ;
-    InterfaceType = ClassType ;
-    TypeVariable = Annotation* IDENTIFIER ;
-    ArrayType = PrimitiveType Dims | ClassOrInterfaceType Dims | TypeVariable Dims ;
+    ReferenceType = QualifiedTypeReference | ArrayType ;
+    QualifiedTypeReference = [ TypeReference / '.' ]+ ;
+    TypeReference = Annotation* UnannTypeReference ;
+    ArrayType = (PrimitiveType | QualifiedTypeReference) Dims ;
     Dims = (Annotation* '[' ']')+ ;
 
-    TypeParameter = TypeParameterModifier* IDENTIFIER TypeBound? ;
-    TypeParameterModifier = Annotation ;
-    TypeBound = 'extends' TypeVariable | 'extends' ClassOrInterfaceType AdditionalBound? ;
-    AdditionalBound = '&' InterfaceType ;
+    TypeParameter = Annotation* IDENTIFIER TypeBound? ;
+    TypeBound = 'extends' QualifiedTypeReference AdditionalBound? ;
+    AdditionalBound = '&' QualifiedTypeReference ;
 
     TypeArguments = '<' TypeArgumentList '>' ;
-    TypeArgumentList = [ TypeArgument / ',']+ ;
+    TypeArgumentList = [ TypeArgument / ',']* ;
     TypeArgument = ReferenceType | Wildcard ;
     Wildcard = Annotation* '?' WildcardBounds? ;
     WildcardBounds = 'extends' ReferenceType | 'super' ReferenceType ;
 
-    UnannType = UnannPrimitiveType | UnannReferenceType ;
-    UnannPrimitiveType = NumericType | 'boolean' ;
-    UnannReferenceType = UnannClassOrInterfaceType | UnannTypeVariable | UnannArrayType ;
-    UnannClassOrInterfaceType = UnannClassType | UnannInterfaceType ;
-    UnannClassType
-      = IDENTIFIER TypeArguments?
-      | UnannClassOrInterfaceType '.' Annotation* IDENTIFIER TypeArguments?
-      ;
-    UnannInterfaceType = UnannClassType ;
-    UnannTypeVariable = IDENTIFIER ;
-    UnannArrayType
-      = UnannPrimitiveType Dims
-      | UnannClassOrInterfaceType Dims
-      | UnannTypeVariable Dims
-      ;
+    UnannType = UnannTypeNonArray Dims? ;
+    UnannTypeNonArray = UnannReferenceType < UnannPrimitiveType ;
+    UnannReferenceType = UnannQualifiedTypeReference ;
+    UnannQualifiedTypeReference = UnannTypeReference ( '.' [ TypeReference / '.' ]+ )? ;
+    UnannTypeReference = IDENTIFIER TypeArguments? ;
 }
 
 grammar Expressions extends Types {
 
     // from Annotations
-    override ElementValue = ConditionalExpression | ElementValueArrayInitializer | Annotation ;
+    override ElementValue = Expression | ElementValueArrayInitializer | Annotation ;
+
+    Expression
+     = LambdaExpression
+     | Assignment
+     | TernaryIf
+     | Infix
+     | Prefix
+     | Postfix
+     | CastExpression
+     | Navigations
+     ;
+
+    Navigations = Primary ('.' [ NavigableExpression  / '.' ]+)? ;
+    NavigableExpression
+      = IDENTIFIER
+      | MethodReference
+      | GenericMethodInvocation
+      | ArrayAccess
+      | 'this'
+      | 'super'
+      ;
 
     Primary = PrimaryNoNewArray | ArrayCreationExpression ;
-    // overridden in classes
+
     PrimaryNoNewArray
-      = Literal
+      = IDENTIFIER
+      | Literal
+      | MethodReference
+      | MethodInvocation
+      | ArrayAccess
       | ClassLiteral
       | 'this'
-      | TypeName '.' 'this'
-      | '(' Expression ')'
+      | 'super'
+      | GroupedExpression
       | ClassInstanceCreationExpression
-      | FieldAccess
-      | ArrayAccess
-      | MethodInvocation
-      | MethodReference
       ;
+
+    MethodReference
+      = QualifiedName '::' TypeArguments? IDENTIFIER
+      | ReferenceType '::' TypeArguments? IDENTIFIER
+      | Primary '::' TypeArguments? IDENTIFIER
+      | 'super' '::' TypeArguments? IDENTIFIER
+      | QualifiedName '.' 'super' '::' TypeArguments? IDENTIFIER
+      | QualifiedTypeReference '::' TypeArguments? 'new'
+      | ArrayType '::' 'new'
+      ;
+
+    GenericMethodInvocation = TypeArguments? MethodInvocation ;
+    MethodInvocation = IDENTIFIER ArgumentList ;
+    ArgumentList = '(' Arguments ')' ;
+    Arguments = [ Expression / ',' ]* ;
+
     ClassLiteral
-      = TypeName ('[' ']')* '.' 'class'
+      = QualifiedName ('[' ']')* '.' 'class'
       | NumericType ('[' ']')* '.' 'class'
       | 'boolean' ('[' ']')* '.' 'class'
       | 'void' '.' 'class'
       ;
+
+    GroupedExpression = '(' Expression ')' ;
+
     ClassInstanceCreationExpression
       = UnqualifiedClassInstanceCreationExpression
-      | ExpressionName '.' UnqualifiedClassInstanceCreationExpression
+      | QualifiedName '.' UnqualifiedClassInstanceCreationExpression
       | Primary '.' UnqualifiedClassInstanceCreationExpression
       ;
     UnqualifiedClassInstanceCreationExpression
-      = 'new' TypeArguments? ClassOrInterfaceTypeToInstantiate '(' ArgumentList? ')' ClassBody? ;
+      = 'new' TypeArguments? ClassOrInterfaceTypeToInstantiate  ArgumentList ClassBody? ;
     // overridden in Classes
     ClassBody = '{' '}' ;
     ClassOrInterfaceTypeToInstantiate = Annotation* IDENTIFIER ('.' Annotation* IDENTIFIER)* TypeArgumentsOrDiamond? ;
+
+
+    TernaryIf = Expression '?' Expression ':' Expression ;
+
+    Infix = [ Expression / INFIX_OPERATOR ]2+ ;
+    leaf INFIX_OPERATOR
+      = '%' | '/' | '*' | '+' | '-'
+      | '<<' | '>>>' | '>>'
+      | '<=' | '>=' | '<' | '>' | 'instanceof'
+      | '==' | '!='
+      | '&&' | '||' | '&' | '|' | '^'
+      ;
+
+    Assignment = [ Expression / ASSIGNMENT_OPERATOR ]2+ ;
+    leaf ASSIGNMENT_OPERATOR
+      = '=' | '+=' | '-=' | '*=' | '/=' | '%='
+      | '&=' | '|=' | '^='
+      | '>>=' | '>>>=' | '<<='
+      ;
+
+    Prefix = PREFIX_OPERATOR Expression ;
+    leaf PREFIX_OPERATOR = '++' | '--' | '+' | '-' | '!' | '~' ;
+    Postfix = Expression POSTFIX_OPERATOR ;
+    leaf POSTFIX_OPERATOR = '++' | '--' ;
+    CastExpression
+          = '(' PrimitiveType ')' Expression
+          | '(' ReferenceType AdditionalBound* ')' Expression
+          ;
+
     TypeArgumentsOrDiamond = TypeArguments | '<>' ;
-    FieldAccess
-      = Primary '.' IDENTIFIER
-      | 'super' '.' IDENTIFIER
-      | TypeName '.' 'super' '.' IDENTIFIER
-      ;
-    ArrayAccess
-      = ExpressionName '[' Expression ']'
-      | PrimaryNoNewArray '[' Expression ']'
-      ;
-    MethodInvocation
-      = MethodName '(' ArgumentList? ')'
-      | TypeName '.' TypeArguments? IDENTIFIER '(' ArgumentList? ')'
-      | ExpressionName '.' TypeArguments? IDENTIFIER '(' ArgumentList? ')'
-      | Primary '.' TypeArguments? IDENTIFIER '(' ArgumentList? ')'
-      | 'super' '.' TypeArguments? IDENTIFIER '(' ArgumentList? ')'
-      | TypeName '.' 'super' '.' TypeArguments? IDENTIFIER '(' ArgumentList? ')'
-      ;
-    ArgumentList = Expression (',' Expression)* ;
-    MethodReference
-      = ExpressionName '::' TypeArguments? IDENTIFIER
-      | ReferenceType '::' TypeArguments? IDENTIFIER
-      | Primary '::' TypeArguments? IDENTIFIER
-      | 'super' '::' TypeArguments? IDENTIFIER
-      | TypeName '.' 'super' '::' TypeArguments? IDENTIFIER
-      | ClassType '::' TypeArguments? 'new'
-      | ArrayType '::' 'new'
-      ;
+
+    ArrayAccess = Expression '[' Expression ']' ;
+
     ArrayCreationExpression
       = 'new' PrimitiveType DimExprs Dims?
-      | 'new' ClassOrInterfaceType DimExprs Dims?
+      | 'new' QualifiedTypeReference DimExprs Dims?
       | 'new' PrimitiveType Dims ArrayInitializer
-      | 'new' ClassOrInterfaceType Dims ArrayInitializer
+      | 'new' QualifiedTypeReference Dims ArrayInitializer
       ;
 
     ArrayInitializer = '{' VariableInitializerList ','? '}' ;
@@ -230,122 +255,29 @@ grammar Expressions extends Types {
 
     DimExprs = DimExpr DimExpr* ;
     DimExpr = Annotation* '[' Expression ']' ;
-    Expression = LambdaExpression | AssignmentExpression ;
+
     LambdaExpression = LambdaParameters '->' LambdaBody ;
     LambdaParameters
       = IDENTIFIER
       | '(' FormalParameterList? ')'
       | '(' InferredFormalParameterList ')'
       ;
-    InferredFormalParameterList = IDENTIFIER (',' IDENTIFIER)* ;
+    InferredFormalParameterList = [IDENTIFIER / ',']+ ;
 
-    FormalParameterList = ReceiverParameter | FormalParameters ',' LastFormalParameter | LastFormalParameter ;
-    FormalParameters
-      = FormalParameter (',' FormalParameter)*
-      | ReceiverParameter (',' FormalParameter)*
-      ;
+    FormalParameterList = ReceiverParameter? FormalParameters VarargsParameter? ;
+    FormalParameters = [FormalParameter / ',']* ;
     FormalParameter = VariableModifier* UnannType VariableDeclaratorId ;
-    VariableModifier = Annotation | 'final' ;
-    LastFormalParameter
-      = VariableModifier* UnannType Annotation* '...' VariableDeclaratorId
-      | FormalParameter
-      ;
+    VarargsParameter = VariableModifier* UnannType Annotation* '...' VariableDeclaratorId ;
     ReceiverParameter = Annotation* UnannType (IDENTIFIER '.')? 'this' ;
+
+    VariableModifier = Annotation | 'final' ;
     VariableDeclaratorId = IDENTIFIER Dims? ;
     VariableDeclaratorList = [ VariableDeclarator / ',' ]+ ;
     VariableDeclarator = VariableDeclaratorId ('=' VariableInitializer)? ;
 
     // overridden in BlocksAndStatements
-    //LambdaBody = Expression | Block ;
     LambdaBody = Expression ;
-    AssignmentExpression = ConditionalExpression | Assignment ;
-    Assignment = LeftHandSide AssignmentOperator Expression ;
-    LeftHandSide = ExpressionName | FieldAccess | ArrayAccess ;
-    AssignmentOperator = '=' | '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '>>>=' | '&=' | '^=' | '|=' ;
 
-    ConditionalExpression
-      = ConditionalOrExpression
-      | ConditionalOrExpression '?' Expression ':' ConditionalExpression
-      | ConditionalOrExpression '?' Expression ':' LambdaExpression
-      ;
-    ConditionalOrExpression
-      = ConditionalAndExpression
-      | ConditionalOrExpression '||' ConditionalAndExpression
-      ;
-    ConditionalAndExpression
-      = InclusiveOrExpression
-      | ConditionalAndExpression '&&' InclusiveOrExpression
-      ;
-    InclusiveOrExpression
-      = ExclusiveOrExpression
-      | InclusiveOrExpression '|' ExclusiveOrExpression
-      ;
-    ExclusiveOrExpression
-      = AndExpression
-      | ExclusiveOrExpression '^' AndExpression
-      ;
-    AndExpression
-      = EqualityExpression
-      | AndExpression '&' EqualityExpression
-      ;
-    EqualityExpression
-      = RelationalExpression
-      | EqualityExpression '==' RelationalExpression
-      | EqualityExpression '!=' RelationalExpression
-      ;
-    RelationalExpression
-      = ShiftExpression
-      | RelationalExpression '<' ShiftExpression
-      | RelationalExpression '>' ShiftExpression
-      | RelationalExpression '<=' ShiftExpression
-      | RelationalExpression '>=' ShiftExpression
-      | RelationalExpression 'instanceof' ReferenceType
-      ;
-    ShiftExpression
-      = AdditiveExpression
-      | ShiftExpression '<<' AdditiveExpression
-      | ShiftExpression '>>' AdditiveExpression
-      | ShiftExpression '>>>' AdditiveExpression
-      ;
-    AdditiveExpression
-      = MultiplicativeExpression
-      | AdditiveExpression '+' MultiplicativeExpression
-      | AdditiveExpression '-' MultiplicativeExpression
-      ;
-    MultiplicativeExpression
-      = UnaryExpression
-      | MultiplicativeExpression '*' UnaryExpression
-      | MultiplicativeExpression '/' UnaryExpression
-      | MultiplicativeExpression '%' UnaryExpression
-      ;
-    UnaryExpression
-      = PreIncrementExpression
-      | PreDecrementExpression
-      | '+' UnaryExpression
-      | '-' UnaryExpression
-      | UnaryExpressionNotPlusMinus
-      ;
-    PreIncrementExpression = '++' UnaryExpression ;
-    PreDecrementExpression = '--' UnaryExpression ;
-    UnaryExpressionNotPlusMinus
-      = PostfixExpression
-      | '~' UnaryExpression
-      | '!' UnaryExpression
-      | CastExpression
-      ;
-    PostfixExpression
-      = Primary
-      | ExpressionName
-      | PostIncrementExpression
-      | PostDecrementExpression
-      ;
-    PostIncrementExpression = PostfixExpression '++' ;
-    PostDecrementExpression = PostfixExpression '--' ;
-    CastExpression
-      = '(' PrimitiveType ')' UnaryExpression
-      | '(' ReferenceType AdditionalBound* ')' UnaryExpressionNotPlusMinus
-      | '(' ReferenceType AdditionalBound* ')' LambdaExpression
-      ;
     ConstantExpression = Expression ;
 }
 
@@ -394,25 +326,18 @@ grammar BlocksAndStatements extends Expressions {
     LabeledStatementNoShortIf = IDENTIFIER ':' StatementNoShortIf ;
     ExpressionStatement = StatementExpression ';' ;
     StatementExpression
-      = Assignment
-      | PreIncrementExpression
-      | PreDecrementExpression
-      | PostIncrementExpression
-      | PostDecrementExpression
-      | MethodInvocation
-      | ClassInstanceCreationExpression
+      = Expression
       ;
     IfThenStatement = 'if' '(' Expression ')' Statement ;
     IfThenElseStatement = 'if' '(' Expression ')' StatementNoShortIf 'else' Statement ;
     IfThenElseStatementNoShortIf = 'if' '(' Expression ')' StatementNoShortIf 'else' StatementNoShortIf ;
     AssertStatement
-     = 'assert' Expression ';'
-     | 'assert' Expression ':' Expression ';'
+     = 'assert' Expression (':' Expression)? ';'
      ;
     SwitchStatement = 'switch' '(' Expression ')' SwitchBlock ;
     SwitchBlock = '{' SwitchBlockStatementGroup* SwitchLabel* '}' ;
     SwitchBlockStatementGroup = SwitchLabels BlockStatements ;
-    SwitchLabels = SwitchLabel SwitchLabel* ;
+    SwitchLabels = SwitchLabel+ ;
     SwitchLabel
       = 'case' ConstantExpression ':'
       | 'case' EnumConstantName ':'
@@ -428,7 +353,7 @@ grammar BlocksAndStatements extends Expressions {
     BasicForStatementNoShortIf = 'for' '(' ForInit? ';' Expression? ';' ForUpdate? ')' StatementNoShortIf ;
     ForInit = StatementExpressionList | LocalVariableDeclaration ;
     ForUpdate = StatementExpressionList ;
-    StatementExpressionList = StatementExpression (',' StatementExpression)* ;
+    StatementExpressionList = [StatementExpression /',' ]+ ;
     EnhancedForStatement = 'for' '(' VariableModifier* UnannType VariableDeclaratorId ':' Expression ')' Statement ;
     EnhancedForStatementNoShortIf = 'for' '(' VariableModifier* UnannType VariableDeclaratorId ':' Expression ')' StatementNoShortIf ;
     BreakStatement = 'break' IDENTIFIER? ';' ;
@@ -444,7 +369,7 @@ grammar BlocksAndStatements extends Expressions {
     Catches = CatchClause CatchClause* ;
     CatchClause = 'catch' '(' CatchFormalParameter ')' Block ;
     CatchFormalParameter = VariableModifier* CatchType VariableDeclaratorId ;
-    CatchType = UnannClassType ('|' ClassType)* ;
+    CatchType = UnannQualifiedTypeReference ('|' QualifiedTypeReference)* ;
     Finally = 'finally' Block ;
     TryWithResourcesStatement = 'try' ResourceSpecification Block Catches? Finally? ;
     ResourceSpecification = '(' ResourceList ';'? ')' ;
@@ -461,12 +386,13 @@ grammar Classes extends BlocksAndStatements {
 
     ClassDeclaration = NormalClassDeclaration | EnumDeclaration ;
     NormalClassDeclaration = ClassModifier* 'class' IDENTIFIER TypeParameters? Superclass? Superinterfaces? ClassBody ;
-    ClassModifier = Annotation | 'public' | 'protected' | 'private' | 'abstract' | 'static' | 'final' | 'strictfp' ;
+    ClassModifier = Annotation | CLASS_MODIFIER ;
+    leaf CLASS_MODIFIER = 'public' | 'protected' | 'private' | 'abstract' | 'static' | 'final' | 'strictfp' ;
     TypeParameters = '<' TypeParameterList '>' ;
     TypeParameterList = [ TypeParameter / ',' ]+ ;
-    Superclass = 'extends' ClassType ;
+    Superclass = 'extends' QualifiedTypeReference ;
     Superinterfaces = 'implements' InterfaceTypeList ;
-    InterfaceTypeList = [ InterfaceType / ',' ]+ ;
+    InterfaceTypeList = [ QualifiedTypeReference / ',' ]+ ;
 
     ClassBodyDeclaration
        = ClassMemberDeclaration
@@ -482,11 +408,12 @@ grammar Classes extends BlocksAndStatements {
        | ';'
        ;
     FieldDeclaration = FieldModifier* UnannType VariableDeclaratorList ';' ;
-    FieldModifier = Annotation | 'public' | 'protected' | 'private' | 'static' | 'final' | 'transient' | 'volatile' ;
+    FieldModifier = Annotation | FIELD_MODIFIER ;
+    leaf FIELD_MODIFIER = 'public' | 'protected' | 'private' | 'static' | 'final' | 'transient' | 'volatile' ;
 
     MethodDeclaration = MethodModifier* MethodHeader MethodBody ;
-    MethodModifier
-      = Annotation | 'public' | 'protected' | 'private' | 'abstract'
+    MethodModifier  = Annotation | METHOD_MODIFIER ;
+    leaf METHOD_MODIFIER = 'public' | 'protected' | 'private' | 'abstract'
       | 'static' | 'final' | 'synchronized' | 'native' | 'strictfp'
       ;
     MethodHeader
@@ -498,25 +425,26 @@ grammar Classes extends BlocksAndStatements {
 
     Throws = 'throws' ExceptionTypeList ;
     ExceptionTypeList = [ ExceptionType / ',' ]+ ;
-    ExceptionType = ClassType | TypeVariable ;
+    ExceptionType = QualifiedTypeReference ;
     MethodBody = Block | ';' ;
     InstanceInitializer = Block ;
     StaticInitializer = 'static' Block ;
     ConstructorDeclaration = ConstructorModifier* ConstructorDeclarator Throws? ConstructorBody ;
-    ConstructorModifier = Annotation | 'public' | 'protected' | 'private' ;
+    ConstructorModifier = Annotation | CONSTRUCTOR_MODIFIER ;
+    leaf CONSTRUCTOR_MODIFIER = 'public' | 'protected' | 'private' ;
     ConstructorDeclarator = TypeParameters? SimpleTypeName '(' FormalParameterList? ')' ;
     SimpleTypeName = IDENTIFIER ;
     ConstructorBody = '{' ExplicitConstructorInvocation? BlockStatements? '}' ;
     ExplicitConstructorInvocation
-      = TypeArguments? 'this' '(' ArgumentList? ')' ';'
-      | TypeArguments? 'super' '(' ArgumentList? ')' ';'
-      | ExpressionName '.' TypeArguments? 'super' '(' ArgumentList? ')' ';'
-      | Primary '.' TypeArguments? 'super' '(' ArgumentList? ')' ';'
+      = TypeArguments? 'this'  ArgumentList  ';'
+      | TypeArguments? 'super'  ArgumentList  ';'
+      | QualifiedName '.' TypeArguments? 'super'  ArgumentList  ';'
+      | Primary '.' TypeArguments? 'super'  ArgumentList  ';'
       ;
     EnumDeclaration = ClassModifier* 'enum' IDENTIFIER Superinterfaces? EnumBody ;
     EnumBody = '{' EnumConstantList? ','? EnumBodyDeclarations? '}' ;
     EnumConstantList = [ EnumConstant / ',' ]+ ;
-    EnumConstant = EnumConstantModifier* IDENTIFIER ('(' ArgumentList? ')')? ClassBody? ;
+    EnumConstant = EnumConstantModifier* IDENTIFIER ArgumentList? ClassBody? ;
     EnumConstantModifier = Annotation ;
     EnumBodyDeclarations = ';' ClassBodyDeclaration* ;
 }
@@ -533,7 +461,8 @@ grammar Interfaces extends Classes {
 
     InterfaceDeclaration = NormalInterfaceDeclaration | AnnotationTypeDeclaration ;
     NormalInterfaceDeclaration = InterfaceModifier* 'interface' IDENTIFIER TypeParameters? ExtendsInterfaces? InterfaceBody ;
-    InterfaceModifier = Annotation | 'public' | 'protected' | 'private' | 'abstract' | 'static' | 'strictfp' ;
+    InterfaceModifier = Annotation | INTERFACE_MODIFIER ;
+    leaf INTERFACE_MODIFIER = 'public' | 'protected' | 'private' | 'abstract' | 'static' | 'strictfp' ;
     ExtendsInterfaces = 'extends' InterfaceTypeList ;
     InterfaceBody = '{' InterfaceMemberDeclaration* '}' ;
     InterfaceMemberDeclaration
@@ -544,7 +473,8 @@ grammar Interfaces extends Classes {
       | ';'
       ;
     ConstantDeclaration = ConstantModifier* UnannType VariableDeclaratorList ;
-    ConstantModifier = Annotation | 'public' | 'static' | 'final' ;
+    ConstantModifier = Annotation | CONSTANT_MODIFIER ;
+    leaf CONSTANT_MODIFIER = 'public' | 'static' | 'final' ;
     InterfaceMethodDeclaration = InterfaceMethodModifier* MethodHeader MethodBody ;
     InterfaceMethodModifier =  Annotation | 'public' | 'abstract' | 'default' | 'static' | 'strictfp' ;
     AnnotationTypeDeclaration = InterfaceModifier* '@' 'interface' IDENTIFIER AnnotationTypeBody ;
@@ -557,7 +487,8 @@ grammar Interfaces extends Classes {
       | ';'
       ;
     AnnotationTypeElementDeclaration = AnnotationTypeElementModifier* UnannType IDENTIFIER '(' ')' Dims? DefaultValue? ';' ;
-    AnnotationTypeElementModifier = Annotation | 'public' | 'abstract' ;
+    AnnotationTypeElementModifier = Annotation | ANNOTATION_MODIFIER ;
+    leaf ANNOTATION_MODIFIER = 'public' | 'abstract' ;
     DefaultValue = 'default' ElementValue ;
 }
 
@@ -565,17 +496,8 @@ grammar Packages extends Interfaces {
     CompilationUnit = PackageDeclaration? ImportDeclaration* TypeDeclaration* ;
     PackageDeclaration = PackageModifier* 'package' [IDENTIFIER / '.']+ ';' ;
     PackageModifier = Annotation ;
-    ImportDeclaration
-      = SingleTypeImportDeclaration
-      | TypeImportOnDemandDeclaration
-      | SingleStaticImportDeclaration
-      | StaticImportOnDemandDeclaration
-      ;
-    SingleTypeImportDeclaration = 'import' TypeName ';' ;
-    TypeImportOnDemandDeclaration = 'import' PackageOrTypeName '.' '*' ';' ;
-    SingleStaticImportDeclaration = 'import' 'static' TypeName '.' IDENTIFIER ';' ;
-    StaticImportOnDemandDeclaration = 'import' 'static' TypeName '.' '*' ';' ;
-    TypeDeclaration = ClassDeclaration | InterfaceDeclaration ;
+    ImportDeclaration = 'import' 'static'? QualifiedName ( '.' '*' )? ';' ;
+    TypeDeclaration = ClassDeclaration | InterfaceDeclaration | ';' ;
 }
     """.trimIndent()
 

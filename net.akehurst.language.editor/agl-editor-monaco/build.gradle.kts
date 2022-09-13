@@ -29,6 +29,11 @@ kotlin {
     }
 }
 
+buildConfig {
+    buildConfigField("String", "versionEditorMonaco", "\"${version_monaco}\"")
+}
+
+
 configure<PublishingExtension> {
    publications.withType<MavenPublication> {
         pom {

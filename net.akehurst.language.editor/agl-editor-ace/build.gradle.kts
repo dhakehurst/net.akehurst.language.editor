@@ -27,6 +27,10 @@ kotlin {
     }
 }
 
+buildConfig {
+    buildConfigField("String", "versionEditorAce", "\"${version_ace}\"")
+}
+
 configure<PublishingExtension> {
     publications.withType<MavenPublication> {
         pom {
