@@ -19,15 +19,21 @@ package net.akehurst.language.editor.monaco
 import monaco.CancellationToken
 import monaco.Position
 import monaco.editor.ITextModel
+import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.editor.common.AglComponents
 
 class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
-        val agl: AglComponents<AsmType, ContextType>
+    val agl: AglComponents<AsmType, ContextType>
 ) : monaco.languages.CompletionItemProvider {
     override val triggerCharacters: Array<String>? = null
 
-    override fun provideCompletionItems(model: ITextModel, position: Position, context: monaco.languages.CompletionContext, token: CancellationToken): monaco.languages.CompletionList? {
+    override fun provideCompletionItems(
+        model: ITextModel,
+        position: Position,
+        context: monaco.languages.CompletionContext,
+        token: CancellationToken
+    ): monaco.languages.CompletionList? {
         val posn = model.getOffsetAt(position)
         val wordList = this.getCompletionItems(model, posn);
         val cil = wordList.map { ci ->
@@ -54,7 +60,7 @@ class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
         return if (null == proc) {
             emptyList()
         } else {
-            val result = proc.expectedAt(text, offset, 1,proc.options { parse { goalRuleName(goalRule) } })
+            val result = proc.expectedTerminalsAt(text, offset, 1, Agl.options { parse { goalRuleName(goalRule) } })
             result.items
         }
     }

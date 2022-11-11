@@ -73,6 +73,7 @@ class test_AglWorkerAbstract {
             null,
             null,
             null,
+            null,
             null
         )
     }
@@ -160,7 +161,7 @@ class test_AglWorkerAbstract {
 
     @Test
     fun receive_MessageSyntaxAnalyserConfigure_empty_configuration() {
-        Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g).derive())}
+        Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g))}
 
         val sut = TestAglWorker<Any, Any>()
         sut.receive(
@@ -192,7 +193,7 @@ class test_AglWorkerAbstract {
 
     @Test
     fun receive_MessageSyntaxAnalyserConfigure_error_parse() {
-        Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g).derive())}
+        Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g))}
 
         val sut = TestAglWorker<Any, Any>()
         sut.receive(
@@ -234,7 +235,7 @@ class test_AglWorkerAbstract {
 
     @Test
     fun receive_MessageSyntaxAnalyserConfigure_error_syntaxAnalysis_1() {
-        Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g).derive())}
+        Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g))}
 
         val sut = TestAglWorker<Any, Any>()
         sut.receive(
@@ -278,7 +279,7 @@ class test_AglWorkerAbstract {
 
     @Test
     fun receive_MessageSyntaxAnalyserConfigure_error_syntaxAnalysis_2() {
-        Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g).derive())}
+        Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g))}
 
         val sut = TestAglWorker<Any, Any>()
         sut.receive(

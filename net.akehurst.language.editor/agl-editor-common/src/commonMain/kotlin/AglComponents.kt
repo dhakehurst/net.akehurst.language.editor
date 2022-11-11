@@ -25,14 +25,21 @@ import net.akehurst.language.editor.api.LogLevel
 
 class AglComponents<AsmType : Any, ContextType : Any>(
     languageId: String,
-    val editorId:String,
+    val editorId: String,
     val logger: AglEditorLogger
 ) {
-    private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder(languageId)
+    private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder<AsmType, ContextType>(languageId)
+        .also {
+            it.aglOptions = Agl.options {
+                semanticAnalysis {
+                    active(false)
+                }
+            }
+        }
     private var _styleHandler = AglStyleHandler(languageId)
 
     val languageDefinition get() = _languageDefinition
-    var goalRule:String? = languageDefinition.defaultGoalRule
+    var goalRule: String? = languageDefinition.defaultGoalRule
 
     val styleHandler get() = _styleHandler
 
@@ -40,18 +47,19 @@ class AglComponents<AsmType : Any, ContextType : Any>(
     var sppt: SharedPackedParseTree? = null
     //var asm: Any? = null
 
-    var languageIdentity:String get() = languageDefinition.identity
-    set(value) {
-        val grammarObservers = this._languageDefinition.grammarObservers
-        val styleObservers = this._languageDefinition.styleObservers
-        val formatObservers = this._languageDefinition.formatObservers
-        this._languageDefinition = Agl.registry.findOrPlaceholder(value)
-        this._languageDefinition.grammarObservers.addAll(grammarObservers)
-        this._languageDefinition.styleObservers.addAll(styleObservers)
-        this._languageDefinition.formatObservers.addAll(formatObservers)
+    var languageIdentity: String
+        get() = languageDefinition.identity
+        set(value) {
+            val grammarObservers = this._languageDefinition.grammarObservers
+            val styleObservers = this._languageDefinition.styleObservers
+            val formatObservers = this._languageDefinition.formatObservers
+            this._languageDefinition = Agl.registry.findOrPlaceholder(value)
+            this._languageDefinition.grammarObservers.addAll(grammarObservers)
+            this._languageDefinition.styleObservers.addAll(styleObservers)
+            this._languageDefinition.formatObservers.addAll(formatObservers)
 
-        this._styleHandler = AglStyleHandler(value)
-        this.sppt = null
-        //this.asm = null
-    }
+            this._styleHandler = AglStyleHandler(value)
+            this.sppt = null
+            //this.asm = null
+        }
 }

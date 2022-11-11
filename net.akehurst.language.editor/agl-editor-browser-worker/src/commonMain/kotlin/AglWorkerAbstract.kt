@@ -121,7 +121,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val goal = message.goalRuleName
-            val result = if (null == goal) proc.parse(message.text) else proc.parse(message.text, proc.parseOptions { goalRuleName(goal) })
+            val result = if (null == goal) proc.parse(message.text) else proc.parse(message.text, Agl.parseOptions { goalRuleName(goal) })
 
             val treeStr = serialiseParseTreeToStringJson(result.sppt?.root)
             val treeStrEncoded = treeStr?.let { JsonString.encode(it) } //double encode treeStr as it itself is json
@@ -150,7 +150,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
         try {
             sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList(), null))
             val context = message.context as ContextType?
-            val result = proc.syntaxAnalysis(sppt, proc.options {  syntaxAnalysis { context(context) }})
+            val result = proc.syntaxAnalysis(sppt, Agl.options {  syntaxAnalysis { context(context) }})
             val asmTree = result.asm //createAsmTree(asm) ?: "No Asm"
             sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues, asmTree))
             this.semanticAnalysis(port, message, proc, result.asm, result.locationMap)
@@ -175,7 +175,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList()))
             val context = message.context as ContextType
             if (null != asm) {
-                val result = proc.semanticAnalysis(asm, proc.options {
+                val result = proc.semanticAnalysis(asm, Agl.options {
                     syntaxAnalysis { context(context) }
                     semanticAnalysis { locationMap(locationMap) }
                 })

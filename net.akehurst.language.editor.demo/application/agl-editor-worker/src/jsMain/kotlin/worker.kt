@@ -13,7 +13,12 @@ fun main() {
             style = "",
             format = "",
             syntaxAnalyserResolver = null,
-            semanticAnalyserResolver = null
+            semanticAnalyserResolver = null,
+            Agl.options {
+                semanticAnalysis {
+                    active(false)
+                }
+            }
         ).identity
     }
     worker.start()

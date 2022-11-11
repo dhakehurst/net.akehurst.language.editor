@@ -22,7 +22,6 @@ import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
 
 abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
-    val element: Element,
     languageId: String,
     editorId: String,
     workerScriptName: String,

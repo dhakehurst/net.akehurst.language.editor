@@ -713,8 +713,7 @@ object AglWorkerSerialisation {
                     superTypes("RuleItemAbstract")
                     constructorArguments {
                         composite("name","String")
-                        reference("owningGrammar","Grammar")
-                        composite("embedded","Boolean")
+                        reference("owningRule","Rule")
                     }
                 }
                 dataType("TerminalDefault") {
@@ -722,6 +721,13 @@ object AglWorkerSerialisation {
                     constructorArguments {
                         composite("value","String")
                         composite("isPattern","Boolean")
+                    }
+                }
+                dataType("EmbeddedDefault") {
+                    superTypes("RuleItemAbstract")
+                    constructorArguments {
+                        composite("embeddedGoalName","String")
+                        reference("embeddedGrammar","Grammar")
                     }
                 }
                 dataType("SeparatedListDefault") {

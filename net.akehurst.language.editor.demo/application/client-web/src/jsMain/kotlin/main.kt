@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.application.client.web
 
 import kotlinx.browser.document
+import monaco.editor.IStandaloneEditorConstructionOptions
 import net.akehurst.kotlin.html5.create
 import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
@@ -24,9 +25,11 @@ import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.editor.ace.AglEditorAce
+import net.akehurst.language.editor.codemirror.AglEditorCodeMirror
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.objectJS
+import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.demo.BuildConfig
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.examples.*
@@ -40,23 +43,26 @@ external var aglScriptBasePath: dynamic = definedExternally
 val workerScriptName = "${aglScriptBasePath}/application-agl-editor-worker.js"
 var demo: Demo? = null
 
+enum class AlternativeEditors {
+    ACE, MONACO, CODEMIRROR
+}
+
 fun main() {
 
     createBaseDom("div#agl-demo")
 
-    val editorChoiceAce = document.querySelector("#editor-choice-ace")!!
+    val editorChoiceAce = document.querySelector("#editor-choice-ace")!! as HTMLSelectElement
     val editorChoiceMonaco = document.querySelector("#editor-choice-monaco")!!
 
     TabView.initialise(document)
     initialiseExamples()
 
-    createDemo(true)
+    createDemo(AlternativeEditors.ACE)
 
-    editorChoiceAce.addEventListener("click", {
-        createDemo(true)
-    })
-    editorChoiceMonaco.addEventListener("click", {
-        createDemo(false)
+    editorChoiceAce.addEventListener("change", {
+        val optionStr = editorChoiceAce.value
+        val edKind = AlternativeEditors.valueOf(optionStr)
+        createDemo(edKind)
     })
 
 }
@@ -72,6 +78,7 @@ fun createBaseDom(appDivSelector: String) {
             section {
                 class_.add("agl-menubar")
                 h2 { content = "Version ${BuildConfig.version}" }
+
                 nav {
                     val about = dialog {
                         val thisDialog = this.element as HTMLDialogElement
@@ -81,8 +88,8 @@ fun createBaseDom(appDivSelector: String) {
                         article {
                             header { h2 { content = "About" } }
                             section {
-                                p { content = "Ace version 1.4.12, Licence BSD" }
-                                p { content = "Monaco version 0.20.0, Licence MIT" }
+                                p { content = "Ace version ${net.akehurst.language.editor.agl.editor.ace.BuildConfig.versionEditorAce}, Licence BSD" }
+                                p { content = "Monaco version ${net.akehurst.language.editor.agl.editor.monaco.BuildConfig.versionEditorMonaco}, Licence MIT" }
                                 p { content = "AGL version ${Agl.version}, Licence Apache 2.0" }
                                 p { content = "Kotlin version ${kotlin.KotlinVersion.CURRENT}, Licence Apache 2.0" }
                             }
@@ -105,23 +112,6 @@ fun createBaseDom(appDivSelector: String) {
             section {
                 class_.add("agl-options")
                 div {
-                    class_.add("agl-options-editor")
-                    label { content = "Select underlying Editor Type: " }
-                    radio {
-                        attribute.id = "editor-choice-ace"
-                        attribute.name = "editor-choice"
-                        attribute.value = "ace"
-                        attribute.checked = "checked"
-                    }
-                    label { attribute.for_ = "editor-choice-ace"; content = "Ace" }
-                    radio {
-                        attribute.id = "editor-choice-monaco"
-                        attribute.name = "editor-choice"
-                        attribute.value = "monaco"
-                    }
-                    label { attribute.for_ = "editor-choice-monaco"; content = "Monaco" }
-                }
-                div {
                     class_.add("agl-options-example")
                     label { attribute.for_ = "example"; content = "Please choose an example :" }
                     select { attribute.id = "example" }
@@ -137,6 +127,23 @@ fun createBaseDom(appDivSelector: String) {
 
         section {
             htmlElement("tabview") {
+                htmlElement("tab") {
+                    attribute.id = "Configuration"
+                    section {
+                        class_.add("editor")
+                        div {
+                            class_.add("agl-options-editor")
+                            label { content = "Select underlying Editor Type: " }
+                            select {
+                                attribute.id = "editor-choice-ace"
+                                attribute.name = "editor-choice"
+                                option(value = "ACE", selected = true) { content = "Ace" }
+                                option(value = "MONACO") { content = "Monaco" }
+                                option(value = "CODEMIRROR") { content = "CodeMirror" }
+                            }
+                        }
+                    }
+                }
                 htmlElement("tab") {
                     attribute.id = "Sentence"
                     section {
@@ -208,7 +215,7 @@ fun initialiseExamples() {
     }
 }
 
-fun createDemo(isAce: Boolean) {
+fun createDemo(editorChoice: AlternativeEditors) {
     if (null != demo) {
         demo!!.finalize()
     }
@@ -226,56 +233,94 @@ fun createDemo(isAce: Boolean) {
         while (element.childElementCount != 0) {
             element.removeChild(element.firstChild!!)
         }
-        val id = element.id
-        val ed = if (isAce) {
-            AglEditorAce<Any,Any>(element, id, id, aceOptions, workerScriptName, true)
-        } else {
-            AglEditorMonaco<Any,Any>(element, id, id, aceOptions, workerScriptName, true)
+        val ed = when (editorChoice) {
+            AlternativeEditors.ACE -> createAce(element)
+            AlternativeEditors.MONACO -> createMonaco(element)
+            AlternativeEditors.CODEMIRROR -> createCodeMirror(element)
         }
         ed.logger.bind = { lvl, msg, t ->
             when (lvl) {
-                LogLevel.All-> if (null == t) {
+                LogLevel.All -> if (null == t) {
                     console.error(msg)
                 } else {
                     console.error(msg)
                     t.printStackTrace()
                 }
+
                 LogLevel.Fatal, LogLevel.Error -> if (null == t) {
                     console.error(msg)
                 } else {
                     console.error(msg)
-                   t.printStackTrace()
+                    t.printStackTrace()
                 }
+
                 LogLevel.Warning -> if (null == t) {
                     console.warn(msg)
                 } else {
                     console.warn(msg)
                     t.printStackTrace()
                 }
+
                 LogLevel.Information -> if (null == t) {
                     console.info(msg)
                 } else {
                     console.info(msg)
                     t.printStackTrace()
                 }
+
                 LogLevel.Debug, LogLevel.Trace -> if (null == t) {
                     console.asDynamic().debug(msg)
                 } else {
                     console.asDynamic().debug(msg)
                     t.printStackTrace()
                 }
+
                 LogLevel.None -> Unit
             }
         }
-        Pair(id, ed)
+        Pair(element.id, ed)
     }
 
     demo = Demo(editors)
     demo!!.configure()
 }
 
+fun createAce(editorElement: Element): AglEditor<Any, Any> {
+    val id = editorElement.id
+    val ed: ace.Editor = ace.Editor(
+        ace.VirtualRenderer(editorElement, null),
+        ace.Ace.createEditSession(""),
+        objectJS { } //options are set later in init_
+    )
+    val aceOptions = objectJS {
+        editor = objectJS {
+            enableBasicAutocompletion = true
+            enableSnippets = true
+            enableLiveAutocompletion = false
+        }
+    }
+    ed.setOptions(aceOptions.editor)
+    ed.renderer.setOptions(aceOptions.renderer)
+    return AglEditor.attachToAce(ed, id, id, workerScriptName, true)
+}
+
+fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
+    val id = editorElement.id
+    val editorOptions = objectJSTyped<IStandaloneEditorConstructionOptions> {
+        value = ""
+        wordBasedSuggestions = false
+    }
+    val ed = monaco.editor.create(editorElement, editorOptions, null)
+    return AglEditor.attachToMonaco(ed, id, id, workerScriptName, true)
+}
+
+fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
+    val id = editorElement.id
+    return AglEditor.attachToCodeMirror(ed, id, id, workerScriptName, true)
+}
+
 class Demo(
-    val editors: Map<String, AglEditor<*,*>>
+    val editors: Map<String, AglEditor<*, *>>
 ) {
     val trees = TreeView.initialise(document)
 
@@ -296,7 +341,7 @@ class Demo(
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
         referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
-        sentenceEditor.languageIdentity = Agl.registry.register<Any,Any>(
+        sentenceEditor.languageIdentity = Agl.registry.register<Any, Any>(
             identity = "user-language",
             grammar = null,
             targetGrammar = null,
@@ -305,11 +350,16 @@ class Demo(
             style = "",
             format = "",
             syntaxAnalyserResolver = null,
-            semanticAnalyserResolver = null
+            semanticAnalyserResolver = null,
+            aglOptions = Agl.options {
+                semanticAnalysis {
+                    active(false)
+                }
+            }
         ).identity
 
         var grammarAsContext: ContextSimple? = null
-        var sentenceScopeModel:ScopeModel? = null
+        var sentenceScopeModel: ScopeModel? = null
 
         grammarEditor.onParse { event ->
             when {
@@ -322,10 +372,12 @@ class Demo(
                         sentenceEditor.languageDefinition.grammarStr = null
                     }
                 }
+
                 event.failure -> {
                     console.error(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = null
                 }
+
                 else -> {
                 }
             }
@@ -337,15 +389,16 @@ class Demo(
                     //grammarContext = ContextFromGrammar(grammar.last()) //TODO: multiple grammars
                     grammarAsContext = ContextSimple()
                     grammar.forEach { g ->
-                        g.allRule.forEach { r->
+                        g.allRule.forEach { r ->
                             grammarAsContext?.rootScope?.addToScope(r.name, "Rule", AsmElementPath("${g.name}/rules/${r.name}"))
                         }
                         g.allTerminal.forEach { term ->
-                            val ref = if(term.isPattern) "\"${term.value}\"" else "'${term.value}'"
+                            val ref = if (term.isPattern) "\"${term.value}\"" else "'${term.value}'"
                             grammarAsContext?.rootScope?.addToScope(ref, "Rule", AsmElementPath("${g.name}/terminals/${ref}"))
                         }
                     }
                 }
+
                 event.failure -> grammarAsContext = null
             }
             referencesEditor.sentenceContext = grammarAsContext
@@ -363,10 +416,12 @@ class Demo(
                         sentenceEditor.languageDefinition.style = ""
                     }
                 }
+
                 event.failure -> {
                     console.error(styleEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.style = ""
                 }
+
                 else -> {
                 }
             }
@@ -382,16 +437,18 @@ class Demo(
                         console.error(referencesEditor.editorId + ": " + t.message, t)
                     }
                 }
+
                 event.failure -> {
                     console.error(referencesEditor.editorId + ": " + event.message)
                 }
+
                 else -> {
                 }
             }
         }
     }
 
-    private fun loading(parse:Boolean, ast:Boolean) {
+    private fun loading(parse: Boolean, ast: Boolean) {
         trees["parse"]!!.loading = parse
         trees["ast"]!!.loading = ast
     }
@@ -415,8 +472,9 @@ class Demo(
                     trees["parse"]!!.loading = false
                     trees["parse"]!!.root = event.tree
                 }
-                event.isStart -> loading(true,true)
-                else -> loading(false,false)
+
+                event.isStart -> loading(true, true)
+                else -> loading(false, false)
             }
         }
 
@@ -441,6 +499,7 @@ class Demo(
                             else -> "${it.name} = ${v}"
                         }
                     }
+
                     else -> it.toString()
                 }
             },
@@ -459,6 +518,7 @@ class Demo(
                             else -> false
                         }
                     }
+
                     else -> false
                 }
             },
@@ -476,6 +536,7 @@ class Demo(
                             else -> emptyArray<dynamic>()
                         }
                     }
+
                     else -> emptyArray<dynamic>()
                 }
             }
@@ -486,6 +547,7 @@ class Demo(
                 event.isStart -> {
                     //trees["ast"]!!.loading = true
                 }
+
                 event.success -> {
                     trees["ast"]!!.loading = false
                     trees["ast"]!!.root = if (event.asm is AsmSimple) {
@@ -499,6 +561,7 @@ class Demo(
                         "<Unknown>"
                     }
                 }
+
                 else -> {//Failure
                     console.error(event.message)
                     trees["ast"]!!.loading = false
@@ -510,7 +573,7 @@ class Demo(
 
     private fun configExampleSelector() {
         exampleSelect.addEventListener("change", { _ ->
-            loading(true,true)
+            loading(true, true)
             val egName = js("event.target.value") as String
             val eg = Examples[egName]
             grammarEditor.text = eg.grammar
@@ -523,7 +586,7 @@ class Demo(
         })
 
         // select initial example
-        loading(true,true)
+        loading(true, true)
         val eg = Datatypes.example
         (exampleSelect as HTMLSelectElement).value = eg.id
         grammarEditor.text = eg.grammar

@@ -36,14 +36,32 @@ import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
-class AglEditorMonaco<AsmType : Any, ContextType : Any>(
-    element: Element,
-    editorId: String,
+fun <AsmType:Any, ContextType:Any> AglEditor<AsmType, ContextType>.attachToCodeMirror(
+    containerElement:Element,
+    monacoEditor: IStandaloneCodeEditor,
     languageId: String,
-    options: dynamic, //TODO: types for this
+    editorId: String,
     workerScriptName: String,
     sharedWorker: Boolean
-) : AglEditorJsAbstract<AsmType , ContextType>(element, languageId, editorId,workerScriptName,sharedWorker) {
+) : AglEditor<AsmType, ContextType> {
+    return AglEditorMonaco<AsmType, ContextType>(
+        containerElement = containerElement,
+        monacoEditor = monacoEditor,
+        languageId = languageId,
+        editorId = editorId,
+        workerScriptName = workerScriptName,
+        sharedWorker = sharedWorker
+    )
+}
+
+private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
+    val containerElement: Element,
+    val monacoEditor: IStandaloneCodeEditor,
+    editorId: String,
+    languageId: String,
+    workerScriptName: String,
+    sharedWorker: Boolean
+) : AglEditorJsAbstract<AsmType , ContextType>(languageId, editorId,workerScriptName,sharedWorker) {
 
     companion object {
         private val init = js(
@@ -64,7 +82,6 @@ class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         val allAglGlobalThemeRules = mutableMapOf<String, ITokenThemeRule>()
     }
 
-    lateinit var monacoEditor: IStandaloneCodeEditor
     val languageThemePrefix = this.languageIdentity + "-"
 
     override var text: String
@@ -107,20 +124,17 @@ class AglEditorMonaco<AsmType : Any, ContextType : Any>(
             })
             //val languageId = this.languageId
             //val editorOptions = js("{language: languageId, value: initialContent, theme: theme, wordBasedSuggestions:false}")
-            val editorOptions = objectJSTyped<monaco.editor.IStandaloneEditorConstructionOptions> {
-                language = languageIdentity
-                value = ""
-                theme = aglGlobalTheme
-                wordBasedSuggestions = false
-            }
-            this.monacoEditor = monaco.editor.create(this.element, editorOptions, null)
+
+            monaco.editor.setModelLanguage(this.monacoEditor.getModel(), languageIdentity)
+            monaco.editor.setTheme(aglGlobalTheme)
+
             monaco.languages.setTokensProvider(this.languageIdentity, this.workerTokenizer as monaco.languages.TokensProvider)
             monaco.languages.registerCompletionItemProvider(this.languageIdentity, AglCompletionProviderMonaco(this.agl))
 
             this.onChange { this.onEditorTextChange() }
 
             val resizeObserver = ResizeObserver { entries -> onResize(entries) }
-            resizeObserver.observe(this.element)
+            resizeObserver.observe(this.containerElement)
 
         } catch (t: Throwable) {
             console.error(t.message)
@@ -139,8 +153,8 @@ class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     override fun updateLanguage(oldId: String?) {
         if (null != oldId) {
             val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
-            this.element.removeClass(oldAglStyleClass)
-            this.element.addClass(this.agl.styleHandler.aglStyleClass)
+            this.containerElement.removeClass(oldAglStyleClass)
+            this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
         }
     }
 
@@ -190,14 +204,14 @@ class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 val cssText: String = mappedCss
                 // remove the current style element for 'languageId' (which is used as the theme name) from the container
                 // else the theme css is not reapplied
-                val curStyle = (this.element.getRootNode() as ParentNode).querySelector("style#" + this.languageIdentity)
+                val curStyle = (this.containerElement.getRootNode() as ParentNode).querySelector("style#" + this.languageIdentity)
                 curStyle?.remove()
 
                 //add style element
-                val styleElement = this.element.ownerDocument?.createElement("style")!!
+                val styleElement = this.containerElement.ownerDocument?.createElement("style")!!
                 styleElement.setAttribute("id", this.languageIdentity)
                 styleElement.textContent = cssText
-                this.element.ownerDocument?.querySelector("head")?.appendChild(
+                this.containerElement.ownerDocument?.querySelector("head")?.appendChild(
                     styleElement
                 )
                 this.aglWorker.setStyle(languageIdentity, editorId, "", str) //TODO: sessionId
@@ -222,7 +236,7 @@ class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     @JsName("onResize")
     private fun onResize(entries: Array<dynamic>) {
         entries.forEach { entry ->
-            if (entry.target == this.element) {
+            if (entry.target == this.containerElement) {
                 this.monacoEditor.layout()
             }
         }

@@ -34,6 +34,9 @@ external fun defineTheme(themeName: String, themeData: IStandaloneThemeData)
 
 external fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>)
 
+external fun setModelLanguage(model: ITextModel, languageId: String )
+
+external fun setTheme(themeName:String)
 
 external enum class EndOfLinePreference {
     TextDefined,

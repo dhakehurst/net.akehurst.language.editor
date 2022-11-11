@@ -470,7 +470,7 @@ class test_AglWorkerSerialisation {
                     S = as | bs | cs ;
                     as = a* ;
                     bs = [b/',']+ ;
-                    cs = 'c' | c 'c' ;
+                    cs = 'c' | cs 'c' ;
                     leaf a = 'a' 'a' ;
                     leaf b = 'b' 'b' ;
                 }
@@ -504,8 +504,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "as")
-                                                            property("owningGrammar") { reference("/") }
-                                                            property("embedded", false)
+                                                            property("owningRule") { reference("/rule/\$elements/0") }
                                                         }
                                                     }
                                                 }
@@ -515,8 +514,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "bs")
-                                                            property("owningGrammar") { reference("/") }
-                                                            property("embedded", false)
+                                                            property("owningRule") { reference("/rule/\$elements/0") }
                                                         }
                                                     }
                                                 }
@@ -526,8 +524,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "cs")
-                                                            property("owningGrammar") { reference("/") }
-                                                            property("embedded", false)
+                                                            property("owningRule") { reference("/rule/\$elements/0") }
                                                         }
                                                     }
                                                 }
