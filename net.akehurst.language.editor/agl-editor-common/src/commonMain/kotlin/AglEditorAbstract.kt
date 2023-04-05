@@ -29,7 +29,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     protected val agl = AglComponents<AsmType, ContextType> (languageId, editorId, logger)
 
     init {
-        this.agl.languageDefinition.grammarObservers.add { _, _ -> this.updateGrammar(); this.updateStyle() }
+        this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
         this.agl.languageDefinition.styleObservers.add { _, _ -> this.updateStyle() }
     }
 
@@ -44,7 +44,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             val oldId = this.agl.languageIdentity
             this.agl.languageIdentity = value
             this.updateLanguage(oldId)
-            this.updateGrammar()
+            this.updateProcessor()
             this.updateStyle()
         }
 
@@ -58,13 +58,13 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         }
 
     override var editorSpecificStyleStr: String?
-        get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.style
+        get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.styleStr
         set(value) {
             this._editorSpecificStyleStr = value
             this.updateStyle()
         }
 
-    override var sentenceContext: SentenceContext?
+    override var sentenceContext: SentenceContext<Any>?
         get() = this.agl.context
         set(value) {
             this.agl.context = value
@@ -105,7 +105,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     protected abstract fun updateLanguage(oldId: String?)
-    protected abstract fun updateGrammar()
+    protected abstract fun updateProcessor()
     protected abstract fun updateStyle()
     protected abstract fun processSentence()
 }

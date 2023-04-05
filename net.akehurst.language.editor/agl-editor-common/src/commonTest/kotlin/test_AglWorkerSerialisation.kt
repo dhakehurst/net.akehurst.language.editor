@@ -16,7 +16,6 @@
 package net.akehurst.language.editor.common.serialisation
 
 import net.akehurst.kotlin.json.json
-import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.api.asm.AsmSimple
@@ -55,7 +54,7 @@ class test_AglWorkerSerialisation {
         val context = ContextSimple()
         val asm = asmSimple(result.asm!!, context) {
             root("Root") {
-                propertyElement("content", "Elem1") {
+                propertyElementExplicitType("content", "Elem1") {
                     propertyString("propString", "stringValue")
                     propertyListOfString("propListString", listOf("Hello", "World"))
                     propertyListOfElement("propListElem") {
@@ -437,7 +436,7 @@ class test_AglWorkerSerialisation {
         val context = ContextSimple()
         val expected = asmSimple(result.asm!!, context) {
             root("Root") {
-                propertyElement("content", "Elem1") {
+                propertyElementExplicitType("content", "Elem1") {
                     propertyString("propString", "stringValue")
                     propertyListOfString("propListString", listOf("Hello", "World"))
                     propertyListOfElement("propListElem") {
@@ -487,9 +486,9 @@ class test_AglWorkerSerialisation {
                     }
                 }
                 property("name", "Test")
-                property("rule") {
+                property("grammarRule") {
                     listObject {
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "S")
                             property("isOverride", false)
@@ -504,7 +503,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "as")
-                                                            property("owningRule") { reference("/rule/\$elements/0") }
+                                                            property("owningRule") { reference("/grammarRule/\$elements/0") }
                                                         }
                                                     }
                                                 }
@@ -514,7 +513,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "bs")
-                                                            property("owningRule") { reference("/rule/\$elements/0") }
+                                                            property("owningRule") { reference("/grammarRule/\$elements/0") }
                                                         }
                                                     }
                                                 }
@@ -524,7 +523,7 @@ class test_AglWorkerSerialisation {
                                                     listObject {
                                                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
                                                             property("name", "cs")
-                                                            property("owningRule") { reference("/rule/\$elements/0") }
+                                                            property("owningRule") { reference("/grammarRule/\$elements/0") }
                                                         }
                                                     }
                                                 }
@@ -534,7 +533,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "as")
                             property("isOverride", false)
@@ -557,7 +556,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "bs")
                             property("isOverride", false)
@@ -580,7 +579,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "cs")
                             property("isOverride", false)
@@ -603,7 +602,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "a")
                             property("isOverride", false)
@@ -626,7 +625,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.RuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "b")
                             property("isOverride", false)
@@ -660,16 +659,16 @@ class test_AglWorkerSerialisation {
     @Test
     fun Grammar_deserialise() {
         val json = json("serialised") {
-            objectReferenceable("net.akehurst.language.api.grammar.GrammarDefault") {
+            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarDefault") {
                 property("namespace") {
-                    objectReferenceable("net.akehurst.language.api.grammar.NamespaceDefault") {
+                    objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NamespaceDefault") {
                         property("qualifiedName", "test.test")
                     }
                 }
                 property("name", "Test")
-                property("rule") {
+                property("grammarRule") {
                     listObject {
-                        objectReferenceable("net.akehurst.language.api.grammar.RuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "rule1")
                             property("isOverride", false)
@@ -706,9 +705,9 @@ class test_AglWorkerSerialisation {
 
         assertEquals(expected.namespace, actual.namespace)
         assertEquals(expected.name, actual.name)
-        assertEquals(expected.rule.size, actual.rule.size)
-        expected.rule.forEachIndexed { i, e ->
-            val a = actual.rule[i]
+        assertEquals(expected.grammarRule.size, actual.grammarRule.size)
+        expected.grammarRule.forEachIndexed { i, e ->
+            val a = actual.grammarRule[i]
             assertEquals(e.name, a.name)
             //TODO
         }
@@ -731,7 +730,7 @@ class test_AglWorkerSerialisation {
     fun MessageProcessorCreateResponse_com() {
         val expected = MessageProcessorCreateResponse(
             languageId, editorId, sessionId,
-            false, "Start"
+            false, "Start", emptyList()
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
@@ -749,7 +748,7 @@ class test_AglWorkerSerialisation {
     fun MessageSyntaxAnalyserConfigure_com() {
         val expected = MessageSyntaxAnalyserConfigure(
             languageId, editorId, sessionId,
-            "scope XX { identify y by z } references { }"
+            emptyMap(),//"scope XX { identify y by z } references { }"
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
@@ -831,7 +830,7 @@ class test_AglWorkerSerialisation {
         val asm = asmSimple(result.asm!!, context) {
             root("Elem") {
                 propertyString("id", "e1")
-                propertyElement("s1", "ScopedElem") {
+                propertyElementExplicitType("s1", "ScopedElem") {
                     propertyString("id", "se1")
                 }
             }
@@ -853,5 +852,6 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.text, actual.text)
 
         assertEquals((expected.context as ContextSimple).rootScope.findOrNull("e1", "Elem"), (actual.context as ContextSimple).rootScope.findOrNull("e1", "Elem"))
+
     }
 }

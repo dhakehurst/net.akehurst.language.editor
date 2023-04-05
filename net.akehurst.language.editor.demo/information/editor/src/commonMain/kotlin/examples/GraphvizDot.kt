@@ -165,7 +165,7 @@ grammar Dot  {
 
 	leaf NUMERAL = "[-+]?([0-9]+([.][0-9]+)?|([.][0-9]+))" ;
 	leaf DOUBLE_QUOTE_STRING = "\"(?:[^\"\\]|\\.)*\"" ;
-	HTML = '<' Xml.elementContent '>' ;
+	HTML = '<' Xml::elementContent '>' ;
 }
     """.trimIndent()
 

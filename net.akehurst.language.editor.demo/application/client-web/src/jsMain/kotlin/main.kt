@@ -16,24 +16,26 @@
 
 package net.akehurst.language.editor.application.client.web
 
+import codemirror.view.EditorViewConfig
 import kotlinx.browser.document
 import monaco.editor.IStandaloneEditorConstructionOptions
 import net.akehurst.kotlin.html5.create
-import net.akehurst.language.agl.grammar.scopes.ScopeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
+import net.akehurst.language.api.analyser.ScopeModel
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
-import net.akehurst.language.editor.ace.AglEditorAce
-import net.akehurst.language.editor.codemirror.AglEditorCodeMirror
+import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.browser.ace.attachToAce
+import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
+import net.akehurst.language.editor.browser.monaco.attachToMonaco
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.demo.BuildConfig
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.examples.*
-import net.akehurst.language.editor.monaco.AglEditorMonaco
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
@@ -51,16 +53,15 @@ fun main() {
 
     createBaseDom("div#agl-demo")
 
-    val editorChoiceAce = document.querySelector("#editor-choice-ace")!! as HTMLSelectElement
-    val editorChoiceMonaco = document.querySelector("#editor-choice-monaco")!!
+    val editorChoice = document.querySelector("#agl-options-editor")!! as HTMLSelectElement
 
     TabView.initialise(document)
     initialiseExamples()
 
     createDemo(AlternativeEditors.ACE)
 
-    editorChoiceAce.addEventListener("change", {
-        val optionStr = editorChoiceAce.value
+    editorChoice.addEventListener("change", {
+        val optionStr = editorChoice.value
         val edKind = AlternativeEditors.valueOf(optionStr)
         createDemo(edKind)
     })
@@ -88,8 +89,8 @@ fun createBaseDom(appDivSelector: String) {
                         article {
                             header { h2 { content = "About" } }
                             section {
-                                p { content = "Ace version ${net.akehurst.language.editor.agl.editor.ace.BuildConfig.versionEditorAce}, Licence BSD" }
-                                p { content = "Monaco version ${net.akehurst.language.editor.agl.editor.monaco.BuildConfig.versionEditorMonaco}, Licence MIT" }
+                                p { content = "Ace version ${net.akehurst.language.editor.agl.editor.browser.ace.BuildConfig.versionEditorAce}, Licence BSD" }
+                                p { content = "Monaco version ${net.akehurst.language.editor.agl.editor.browser.monaco.BuildConfig.versionEditorMonaco}, Licence MIT" }
                                 p { content = "AGL version ${Agl.version}, Licence Apache 2.0" }
                                 p { content = "Kotlin version ${kotlin.KotlinVersion.CURRENT}, Licence Apache 2.0" }
                             }
@@ -127,23 +128,6 @@ fun createBaseDom(appDivSelector: String) {
 
         section {
             htmlElement("tabview") {
-                htmlElement("tab") {
-                    attribute.id = "Configuration"
-                    section {
-                        class_.add("editor")
-                        div {
-                            class_.add("agl-options-editor")
-                            label { content = "Select underlying Editor Type: " }
-                            select {
-                                attribute.id = "editor-choice-ace"
-                                attribute.name = "editor-choice"
-                                option(value = "ACE", selected = true) { content = "Ace" }
-                                option(value = "MONACO") { content = "Monaco" }
-                                option(value = "CODEMIRROR") { content = "CodeMirror" }
-                            }
-                        }
-                    }
-                }
                 htmlElement("tab") {
                     attribute.id = "Sentence"
                     section {
@@ -186,6 +170,23 @@ fun createBaseDom(appDivSelector: String) {
                                 section {
                                     htmlElement("agl-editor") { attribute.id = "language-references" }
                                 }
+                            }
+                        }
+                    }
+                }
+                htmlElement("tab") {
+                    attribute.id = "Configuration"
+                    section {
+                        class_.add("editor")
+                        div {
+                            //class_.add("agl-options-editor")
+                            label { content = "Select underlying Editor Type: " }
+                            select {
+                                attribute.id = "agl-options-editor"
+                                attribute.name = "editor-choice"
+                                option(value = AlternativeEditors.ACE.name, selected = true) { content = "Ace" }
+                                option(value = AlternativeEditors.MONACO.name) { content = "Monaco" }
+                                option(value = AlternativeEditors.CODEMIRROR.name) { content = "CodeMirror" }
                             }
                         }
                     }
@@ -298,10 +299,13 @@ fun createAce(editorElement: Element): AglEditor<Any, Any> {
             enableSnippets = true
             enableLiveAutocompletion = false
         }
+        renderer = {
+
+        }
     }
     ed.setOptions(aceOptions.editor)
     ed.renderer.setOptions(aceOptions.renderer)
-    return AglEditor.attachToAce(ed, id, id, workerScriptName, true)
+    return Agl.attachToAce(editorElement, ed, id, id, workerScriptName, true)
 }
 
 fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
@@ -311,13 +315,23 @@ fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
         wordBasedSuggestions = false
     }
     val ed = monaco.editor.create(editorElement, editorOptions, null)
-    return AglEditor.attachToMonaco(ed, id, id, workerScriptName, true)
+    return Agl.attachToMonaco(editorElement, ed, id, id, workerScriptName, true)
 }
 
 fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
     val id = editorElement.id
-    return AglEditor.attachToCodeMirror(ed, id, id, workerScriptName, true)
+    val ed = codemirror.view.EditorView(objectJSTyped<EditorViewConfig> {
+        doc = "hello"
+        //extensions= [keymap.of(defaultKeymap)],
+        parent = editorElement
+    })
+    return Agl.attachToCodeMirror(editorElement, ed, id, id, workerScriptName, true)
 }
+
+//fun createFirepad(editorElement: Element): AglEditor<Any, Any> {
+//    val id = editorElement.id
+//    return Agl.attachToCodeMirror(ed, id, id, workerScriptName, true)
+//}
 
 class Demo(
     val editors: Map<String, AglEditor<*, *>>
@@ -341,22 +355,22 @@ class Demo(
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
         referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
-        sentenceEditor.languageIdentity = Agl.registry.register<Any, Any>(
+        Agl.registry.unregister("user-language")
+        sentenceEditor.languageIdentity = Agl.registry.register(
             identity = "user-language",
-            grammar = null,
-            targetGrammar = null,
-            defaultGoalRule = null,
+            grammarStr = null,
             buildForDefaultGoal = false,
-            style = "",
-            format = "",
-            syntaxAnalyserResolver = null,
-            semanticAnalyserResolver = null,
             aglOptions = Agl.options {
                 semanticAnalysis {
                     active(false)
                 }
-            }
+            },
+            configuration = Agl.configurationDefault()
         ).identity
+
+        grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleStr
+        styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
+        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.scopes.styleStr
 
         var grammarAsContext: ContextSimple? = null
         var sentenceScopeModel: ScopeModel? = null
@@ -389,10 +403,10 @@ class Demo(
                     //grammarContext = ContextFromGrammar(grammar.last()) //TODO: multiple grammars
                     grammarAsContext = ContextSimple()
                     grammar.forEach { g ->
-                        g.allRule.forEach { r ->
+                        g.allResolvedGrammarRule.forEach { r ->
                             grammarAsContext?.rootScope?.addToScope(r.name, "Rule", AsmElementPath("${g.name}/rules/${r.name}"))
                         }
-                        g.allTerminal.forEach { term ->
+                        g.allResolvedTerminal.forEach { term ->
                             val ref = if (term.isPattern) "\"${term.value}\"" else "'${term.value}'"
                             grammarAsContext?.rootScope?.addToScope(ref, "Rule", AsmElementPath("${g.name}/terminals/${ref}"))
                         }
@@ -401,8 +415,8 @@ class Demo(
 
                 event.failure -> grammarAsContext = null
             }
-            referencesEditor.sentenceContext = grammarAsContext
-            styleEditor.sentenceContext = grammarAsContext
+            referencesEditor.sentenceContext = grammarAsContext as SentenceContext<Any>
+            styleEditor.sentenceContext = grammarAsContext as SentenceContext<Any>
         }
 
         styleEditor.onSyntaxAnalysis { event ->
@@ -410,16 +424,16 @@ class Demo(
                 event.success -> {
                     try {
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
-                        sentenceEditor.languageDefinition.style = styleEditor.text
+                        sentenceEditor.languageDefinition.styleStr = styleEditor.text
                     } catch (t: Throwable) {
                         console.error(styleEditor.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.style = ""
+                        sentenceEditor.languageDefinition.styleStr = ""
                     }
                 }
 
                 event.failure -> {
                     console.error(styleEditor.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.style = ""
+                    sentenceEditor.languageDefinition.styleStr = ""
                 }
 
                 else -> {
@@ -432,7 +446,7 @@ class Demo(
                     try {
                         sentenceScopeModel = event.asm as ScopeModel
                         console.asDynamic().debug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
-                        sentenceEditor.configureSyntaxAnalyser(referencesEditor.text)
+                        sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
                     } catch (t: Throwable) {
                         console.error(referencesEditor.editorId + ": " + t.message, t)
                     }
@@ -580,7 +594,7 @@ class Demo(
             styleEditor.text = eg.style
             referencesEditor.text = eg.references
             //formatEditor.text = eg.format
-            sentenceEditor.sentenceContext = ContextSimple()
+            sentenceEditor.sentenceContext = ContextSimple() as SentenceContext<Any>
             sentenceEditor.text = eg.sentence
 
         })
@@ -593,7 +607,7 @@ class Demo(
         styleEditor.text = eg.style
         referencesEditor.text = eg.references
         //formatEditor.text = eg.format
-        sentenceEditor.sentenceContext = ContextSimple()
+        sentenceEditor.sentenceContext = ContextSimple() as SentenceContext<Any>
         sentenceEditor.text = eg.sentence
     }
 

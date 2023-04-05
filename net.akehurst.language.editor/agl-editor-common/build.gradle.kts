@@ -22,7 +22,8 @@ kotlinxReflect {
         "net.akehurst.language.agl.syntaxAnalyser",
         "net.akehurst.language.agl.sppt",
         "net.akehurst.language.api.style",
-        "net.akehurst.language.agl.grammar.scopes"
+        "net.akehurst.language.agl.grammar.scopes",
+        "net.akehurst.language.agl.api.automaton"
     ))
 }
 

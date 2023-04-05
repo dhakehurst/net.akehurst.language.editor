@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.ace
+package net.akehurst.language.editor.browser.ace
+
 
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.editor.common.AglComponents

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.akehurst.language.editor.codemirror
+package net.akehurst.language.editor.browser.codemirror
 
 
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
+import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.common.AglEditorJsAbstract
@@ -34,7 +35,7 @@ class AglErrorAnnotation(
     val row = line - 1
 }
 
-fun <AsmType:Any, ContextType:Any> AglEditor<AsmType, ContextType>.attachToCodeMirror(
+fun <AsmType:Any, ContextType:Any> Agl.attachToCodeMirror(
     containerElement:Element,
     cmEditor: codemirror.view.EditorView,
     languageId: String,
@@ -143,7 +144,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
          */
     }
 
-    override fun configureSyntaxAnalyser(configuration: String) {
+    override fun configureSyntaxAnalyser(configuration: Map<String,Any>) {
         /*
         this.aceEditor.getSession()?.also { session ->
             this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, session.id, configuration)
@@ -159,7 +160,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
-    override fun updateGrammar() {
+    override fun updateProcessor() {
         this.clearErrorMarkers()
         /*
         this.aceEditor.getSession()?.also { session ->

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.monaco
+package net.akehurst.language.editor.browser.monaco
 
 import monaco.CancellationToken
 import monaco.Position

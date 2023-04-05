@@ -44,7 +44,7 @@ class TabView(
             val header = document.createElement("tab-header")
             nav.appendChild(header)
             header.textContent = tab.getAttribute("id")
-            header.addEventListener("click", { e: Event ->
+            header.addEventListener("click", { _ ->
                 this.tabSelect(header, tab)
             })
             if (null==firstHeader) {

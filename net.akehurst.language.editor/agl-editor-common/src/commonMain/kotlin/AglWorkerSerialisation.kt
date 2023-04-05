@@ -20,6 +20,7 @@ import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.komposite.api.DatatypeModel
 import net.akehurst.kotlin.komposite.processor.komposite
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
+import net.akehurst.language.api.style.AglStyleModel
 
 
 object AglWorkerSerialisation {
@@ -125,6 +126,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseStyleAsm() {
+
         /*
         serialiser.confgureFromKompositeString(
             """
@@ -144,6 +146,15 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
         // use DslBuilder rather than KompositeProcessor as it is faster
         serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.agl.grammar.style") {
+                dataType("AglStyleModelDefault") {
+                    constructorArguments {
+                        composite("rules", "List") {
+                            typeArgument("net.akehurst.language.api.style.AglStyleRule")
+                        }
+                    }
+                }
+            }
             namespace("net.akehurst.language.api.style") {
                 dataType("AglStyleRule") {
                     constructorArguments {
@@ -167,6 +178,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseScopesAsm() {
+
         /*
         serialiser.confgureFromKompositeString(
             """
@@ -195,7 +207,7 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(komposite {
             namespace("net.akehurst.language.agl.grammar.scopes") {
-                dataType("ScopeModel") {
+                dataType("ScopeModelAgl") {
                     mutableProperties {
                         composite("scopes", "Map") {
                             typeArgument("String")
@@ -323,8 +335,12 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
         // use DslBuilder rather than KompositeProcessor as it is faster
         serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.agl.api.automaton") {
+                enumType("ParseAction")
+            }
             namespace("net.akehurst.language.agl.syntaxAnalyser") {
                 dataType("ContextSimple") {
+                    typeParameters("E")
                     mutableProperties {
                         composite("rootScope","ScopeSimple") { typeArgument("E") }
                     }
@@ -346,6 +362,7 @@ object AglWorkerSerialisation {
                         composite("sessionId","String")
                         composite("success","Boolean")
                         composite("message","String")
+                        composite("issues","List") { typeArgument("LanguageIssue") }
                     }
                 }
                 dataType("MessageSyntaxAnalyserConfigure") {
@@ -353,7 +370,10 @@ object AglWorkerSerialisation {
                         composite("languageId","String")
                         composite("editorId","String")
                         composite("sessionId","String")
-                        composite("configuration","Any")
+                        composite("configuration","Map") {
+                            typeArgument("String")
+                            typeArgument("Any")
+                        }
                     }
                 }
                 dataType("MessageSyntaxAnalyserConfigureResponse") {
@@ -472,17 +492,19 @@ object AglWorkerSerialisation {
         /*
         serialiser.confgureFromKompositeString(
             """
-            namespace net.akehurst.language.api.asm {
-                datatype AsmElementPath {
-                    composite-val value:String
-                }
+            namespace net.akehurst.language.agl.syntaxAnalyser {
                 datatype ScopeSimple {
                     reference-val parent: ScopeSimple<E>?
                     composite-val forReferenceInParent:String
                     composite-val forTypeName:String
-                    
+
                     composite-var childScopes:Map<String,ScopeSimple<E>>
                     composite-var items:Map<String,Map<String,E>>
+                }
+            }
+            namespace net.akehurst.language.api.asm {
+                datatype AsmElementPath {
+                    composite-val value:String
                 }
                 datatype AsmSimple {
                     composite-var rootElements: List<AsmElementSimple>
@@ -510,6 +532,29 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
         // use DslBuilder rather than String as it is faster
         serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.agl.syntaxAnalyser") {
+                dataType("ScopeSimple") {
+                    typeParameters("E")
+                    constructorArguments {
+                        reference("parent", "ScopeSimple") { typeArgument("E") }
+                        composite("forReferenceInParent", "String")
+                        composite("forTypeName", "String")
+                    }
+                    mutableProperties {
+                        composite("childScopes", "Map") {
+                            typeArgument("String")
+                            typeArgument("ScopeSimple")
+                        }
+                        composite("items", "Map") {
+                            typeArgument("String")
+                            typeArgument("Map") {
+                                typeArgument("String")
+                                typeArgument("E")
+                            }
+                        }
+                    }
+                }
+            }
             namespace("net.akehurst.language.api.asm") {
                 dataType("AsmElementPath") {
                     constructorArguments {
@@ -539,6 +584,7 @@ object AglWorkerSerialisation {
                 dataType("AsmElementProperty") {
                     constructorArguments {
                         composite("name", "String")
+                        composite("declaration", "net.akehurst.language.api.typeModel.PropertyDeclaration")
                         composite("value", "Any")
                         composite("isReference", "Boolean")
                     }
@@ -547,26 +593,6 @@ object AglWorkerSerialisation {
                     constructorArguments {
                         composite("reference", "String")
                         reference("value", "AsmElementSimple")
-                    }
-                }
-                dataType("ScopeSimple") {
-                    constructorArguments {
-                        reference("parent", "ScopeSimple") { typeArgument("E") }
-                        composite("forReferenceInParent", "String")
-                        composite("forTypeName", "String")
-                    }
-                    mutableProperties {
-                        composite("childScopes", "Map") {
-                            typeArgument("String")
-                            typeArgument("ScopeSimple")
-                        }
-                        composite("items", "Map") {
-                            typeArgument("String")
-                            typeArgument("Map") {
-                                typeArgument("String")
-                                typeArgument("E")
-                            }
-                        }
                     }
                 }
             }
@@ -649,12 +675,12 @@ object AglWorkerSerialisation {
                         composite("name","String")
                     }
                     mutableProperties {
-                        composite("rule","List") {
-                            typeArgument("RuleItemAbstract")
+                        composite("grammarRule","List") {
+                            typeArgument("GrammarRuleDefault")
                         }
                     }
                 }
-                dataType("RuleDefault") {
+                dataType("GrammarRuleDefault") {
                     constructorArguments {
                         reference("grammar","GrammarDefault")
                         composite("name","String")

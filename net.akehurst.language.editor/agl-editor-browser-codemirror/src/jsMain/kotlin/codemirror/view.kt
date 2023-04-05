@@ -1,6 +1,14 @@
 package codemirror.view
 
-external class EditorView{
+import codemirror.state.EditorStateConfig
+
+external class EditorView(config: EditorViewConfig) {
 
 }
 
+external interface EditorViewConfig : EditorStateConfig {
+    var state: dynamic
+    var parent: dynamic
+    var root: dynamic
+    var dispatch: dynamic
+}

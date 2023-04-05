@@ -9,7 +9,7 @@ val runtimeClasspath by configurations.getting {
     attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.jvm)
 }
 application {
-    mainClassName = "net.akehurst.language.editor.web.server.MainKt"
+    mainClass.set( "net.akehurst.language.editor.web.server.MainKt")
 }
 
 val version_kaf:String by project

@@ -29,13 +29,6 @@ class AglComponents<AsmType : Any, ContextType : Any>(
     val logger: AglEditorLogger
 ) {
     private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder<AsmType, ContextType>(languageId)
-        .also {
-            it.aglOptions = Agl.options {
-                semanticAnalysis {
-                    active(false)
-                }
-            }
-        }
     private var _styleHandler = AglStyleHandler(languageId)
 
     val languageDefinition get() = _languageDefinition
@@ -43,20 +36,22 @@ class AglComponents<AsmType : Any, ContextType : Any>(
 
     val styleHandler get() = _styleHandler
 
-    var context: SentenceContext? = null
+    var context: SentenceContext<Any>? = null
     var sppt: SharedPackedParseTree? = null
     //var asm: Any? = null
 
     var languageIdentity: String
         get() = languageDefinition.identity
         set(value) {
-            val grammarObservers = this._languageDefinition.grammarObservers
-            val styleObservers = this._languageDefinition.styleObservers
-            val formatObservers = this._languageDefinition.formatObservers
+            val grammarStrObservers = this._languageDefinition.grammarStrObservers
+            val scopeStrObservers = this._languageDefinition.scopeStrObservers
+            val styleStrObservers = this._languageDefinition.styleStrObservers
+            val formatterStrObservers = this._languageDefinition.formatterStrObservers
             this._languageDefinition = Agl.registry.findOrPlaceholder(value)
-            this._languageDefinition.grammarObservers.addAll(grammarObservers)
-            this._languageDefinition.styleObservers.addAll(styleObservers)
-            this._languageDefinition.formatObservers.addAll(formatObservers)
+            this._languageDefinition.grammarStrObservers.addAll(grammarStrObservers)
+            this._languageDefinition.scopeStrObservers.addAll(scopeStrObservers)
+            this._languageDefinition.styleStrObservers.addAll(styleStrObservers)
+            this._languageDefinition.formatterStrObservers.addAll(formatterStrObservers)
 
             this._styleHandler = AglStyleHandler(value)
             this.sppt = null

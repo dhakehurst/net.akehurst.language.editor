@@ -4,21 +4,16 @@ import net.akehurst.language.editor.worker.AglSharedWorker
 
 fun main() {
     val worker = AglSharedWorker<Any,Any>().also {
-        Agl.registry.register<Any,Any>(
+        Agl.registry.register(
             identity = "user-language",
-            grammar = "",
-            targetGrammar = null,
-            defaultGoalRule = null,
+            grammarStr = "",
             buildForDefaultGoal = false,
-            style = "",
-            format = "",
-            syntaxAnalyserResolver = null,
-            semanticAnalyserResolver = null,
-            Agl.options {
+            aglOptions = Agl.options {
                 semanticAnalysis {
                     active(false)
                 }
-            }
+            },
+            configuration = Agl.configurationDefault()
         ).identity
     }
     worker.start()

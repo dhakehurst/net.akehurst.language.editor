@@ -50,19 +50,24 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     protected fun createProcessor(port: Any, message: MessageProcessorCreate) {
         if (message.grammarStr.isNullOrBlank()) {
             this._languageDefinition.remove(message.languageId)
-            sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "reset"))
+            sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "reset", emptyList()))
         } else {
             try {
                 val ld = Agl.registry.findOrPlaceholder<AsmType, ContextType>(message.languageId)
-                if (ld.grammarIsModifiable) {
+                if (ld.isModifiable) {
                     ld.grammarStr = message.grammarStr
                 }
                 _languageDefinition[message.languageId] = ld
                 //check that grammar is well-defined and a processor can be created from it
                 val proc = ld.processor // should throw exception if there are problems
-                sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "OK"))
+                if (null==proc) {
+                    ld.issues
+                    sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, false, "Error", ld.issues.all.toList()))
+                } else {
+                    sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, true, "OK", emptyList()))
+                }
             } catch (t: Throwable) {
-                sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, false, t.message!!))
+                sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, false, t.message!!, emptyList()))
             }
         }
     }
@@ -71,7 +76,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
         val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
         val grmr = ld.processor?.grammar
         if (null != grmr) {
-            val issues = ld.syntaxAnalyser?.configure(ContextFromGrammar(grmr), message.configuration as String)
+            val issues = ld.syntaxAnalyser?.configure(ContextFromGrammar(grmr), message.configuration)
             sendMessage(
                 port, MessageSyntaxAnalyserConfigureResponse(
                     message.languageId, message.editorId, message.sessionId,
@@ -101,9 +106,9 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             val style = AglStyleHandler(message.languageId)
             this._styleHandler[message.languageId] = style
             val result = Agl.registry.agl.style.processor!!.process(message.css)
-            val rules: List<AglStyleRule>? = result.asm
-            if (null != rules) {
-                rules.forEach { rule ->
+            val styleMdl = result.asm
+            if (null != styleMdl) {
+                styleMdl.rules.forEach { rule ->
                     rule.selector.forEach { sel -> style.mapClass(sel) }
                 }
                 sendMessage(port, MessageSetStyleResult(message.languageId, message.editorId, message.sessionId, true, "OK"))
@@ -125,7 +130,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
 
             val treeStr = serialiseParseTreeToStringJson(result.sppt?.root)
             val treeStrEncoded = treeStr?.let { JsonString.encode(it) } //double encode treeStr as it itself is json
-            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues, treeStrEncoded))
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues.all.toList(), treeStrEncoded))
             result.sppt?.let {sppt ->
                 this.sendParseLineTokens(port, message.languageId, message.editorId, message.sessionId, sppt)
                 this.syntaxAnalysis(port, message, proc, sppt)
@@ -152,7 +157,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             val context = message.context as ContextType?
             val result = proc.syntaxAnalysis(sppt, Agl.options {  syntaxAnalysis { context(context) }})
             val asmTree = result.asm //createAsmTree(asm) ?: "No Asm"
-            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues, asmTree))
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues.all.toList(), asmTree))
             this.semanticAnalysis(port, message, proc, result.asm, result.locationMap)
         } catch (t: Throwable) {
             sendMessage(
@@ -179,7 +184,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                     syntaxAnalysis { context(context) }
                     semanticAnalysis { locationMap(locationMap) }
                 })
-                sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", result.issues))
+                sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", result.issues.all.toList()))
             } else {
                 //no analysis possible
             }

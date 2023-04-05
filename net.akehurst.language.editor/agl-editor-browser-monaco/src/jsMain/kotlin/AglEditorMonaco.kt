@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.monaco
+package net.akehurst.language.editor.browser.monaco
 
 import ResizeObserver
 import kotlinx.browser.document
@@ -36,7 +36,7 @@ import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
-fun <AsmType:Any, ContextType:Any> AglEditor<AsmType, ContextType>.attachToCodeMirror(
+fun <AsmType:Any, ContextType:Any> Agl.attachToMonaco(
     containerElement:Element,
     monacoEditor: IStandaloneCodeEditor,
     languageId: String,
@@ -108,7 +108,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     private fun init_() {
         try {
-            this.connectWorker(AglTokenizerByWorkerMonaco(this, this.agl))
+            this.connectWorker(AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl))
             val themeData = objectJS {
                 base = "vs"
                 inherit = false
@@ -158,13 +158,13 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun configureSyntaxAnalyser(configuration: String) {
+    override fun configureSyntaxAnalyser(configuration: Map<String,Any>) {
         //this.aceEditor.getSession()?.also { session ->
             this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, "", configuration) //TODO: sessionId
         //}
     }
 
-    override fun updateGrammar() {
+    override fun updateProcessor() {
         this.clearErrorMarkers()
         this.aglWorker.createProcessor(languageIdentity, editorId, "", this.agl.languageDefinition.grammarStr) //TODO: sessionId
         this.workerTokenizer.reset()
@@ -173,13 +173,13 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     override fun updateStyle() {
         val aglStyleClass = this.agl.styleHandler.aglStyleClass
-        val str = this.agl.languageDefinition.style
-        if (null != str && str.isNotEmpty()) {
+        val styleStr = this.agl.languageDefinition.styleStr
+        if (null != styleStr && styleStr.isNotBlank()) {
             this.agl.styleHandler.reset()
-            val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process(str).asm
-            if(null!=rules) {
+            val styleMdl = Agl.registry.agl.style.processor!!.process(styleStr).asm //Why parse this again here !
+            if(null!=styleMdl) {
                 var mappedCss = ""
-                rules.forEach { rule ->
+                styleMdl.rules.forEach { rule ->
                     val ruleClasses = rule.selector.map{
                         val mappedSelName = this.agl.styleHandler.mapClass(it)
                         ".monaco_$mappedSelName"
@@ -214,7 +214,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 this.containerElement.ownerDocument?.querySelector("head")?.appendChild(
                     styleElement
                 )
-                this.aglWorker.setStyle(languageIdentity, editorId, "", str) //TODO: sessionId
+                this.aglWorker.setStyle(languageIdentity, editorId, "", styleStr) //TODO: sessionId
 
                 // need to update because token style types may have changed, not just their attributes
                 this.processSentence()
@@ -353,6 +353,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 }
                 LanguageProcessorPhase.SYNTAX_ANALYSIS -> ""
                 LanguageProcessorPhase.SEMANTIC_ANALYSIS -> ""
+                LanguageProcessorPhase.FORMATTER -> ""
+                LanguageProcessorPhase.ALL -> ""
             }
             objectJSTyped<IMarkerData> {
                 code = null

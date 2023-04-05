@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.monaco
+package net.akehurst.language.editor.browser.monaco
 
 import monaco.IRange
 import monaco.editor.IModelDecorationOptions
 import monaco.editor.IModelDeltaDecoration
+import monaco.editor.IStandaloneCodeEditor
 import net.akehurst.language.editor.common.*
 
 class ModelDecorationOptions(
@@ -39,8 +40,8 @@ class ModelDecorationOptions(
     override var zindex: dynamic = null
 ) : IModelDecorationOptions
 
-class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
-    val aglEditor: AglEditorMonaco<AsmType, ContextType>,
+internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
+    val monacoEditor: IStandaloneCodeEditor,
     val agl: AglComponents<AsmType, ContextType>
 ) : monaco.languages.TokensProvider, AglTokenizerByWorker {
 
@@ -119,7 +120,7 @@ class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
             }
         }.toTypedArray()
         val curDes = this.decs[lineNum] ?: emptyArray()
-        val d = aglEditor.monacoEditor.deltaDecorations(curDes, decs)
+        val d = monacoEditor.deltaDecorations(curDes, decs)
         this.decs[lineNum] = d
     }
 

@@ -37,12 +37,13 @@ data class MessageProcessorCreate(
 data class MessageProcessorCreateResponse(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val success: Boolean,
-    val message: String
+    val message: String,
+    val issues: List<LanguageIssue>
 ) : AglWorkerMessage("MessageProcessorCreateResponse")
 
 data class MessageSyntaxAnalyserConfigure(
     override val languageId: String, override val editorId: String, override val sessionId: String,
-    val configuration: Any?
+    val configuration: Map<String,Any>
 ) : AglWorkerMessage("MessageSyntaxAnalyserConfigure")
 data class MessageSyntaxAnalyserConfigureResponse(
     override val languageId: String, override val editorId: String, override val sessionId: String,

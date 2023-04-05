@@ -13,8 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * Copyright (C) 2020 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-package net.akehurst.language.editor.ace
+package net.akehurst.language.editor.browser.ace
+
 
 import ResizeObserver
 import ace.AceAnnotation
@@ -26,6 +42,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.style.AglStyle
+import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogLevel
@@ -45,7 +62,7 @@ class AglErrorAnnotation(
     val row = line - 1
 }
 
-fun <AsmType:Any, ContextType:Any> AglEditor<AsmType, ContextType>.attachToAce(
+fun <AsmType:Any, ContextType:Any> Agl.attachToAce(
     containerElement:Element,
     aceEditor: ace.Editor,
     languageId: String,
@@ -115,7 +132,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         resizeObserver.observe(this.containerElement)
 
         this.updateLanguage(null)
-        this.updateGrammar()
+        this.updateProcessor()
         this.updateStyle()
     }
 
@@ -141,7 +158,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun configureSyntaxAnalyser(configuration: String) {
+    override fun configureSyntaxAnalyser(configuration: Map<String,Any>) {
         this.aceEditor.getSession()?.also { session ->
             this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, session.id, configuration)
         }
@@ -155,7 +172,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
-    override fun updateGrammar() {
+    override fun updateProcessor() {
         this.clearErrorMarkers()
         this.aceEditor.getSession()?.also { session ->
             this.aglWorker.createProcessor(this.languageIdentity, editorId, session.id, this.agl.languageDefinition.grammarStr)
@@ -172,10 +189,10 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                 val str = this.editorSpecificStyleStr
                 if (null != str && str.isNotEmpty()) {
                     this.agl.styleHandler.reset()
-                    val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process(str).asm //TODO: pass context?
-                    if (null != rules) {
+                    val styleMdl: AglStyleModel? = Agl.registry.agl.style.processor!!.process(str).asm //TODO: pass context?
+                    if (null != styleMdl) {
                         var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
-                        rules.forEach { rule ->
+                        styleMdl.rules.forEach { rule ->
                             val ruleClasses = rule.selector.map{
                                 val mappedSelName = this.agl.styleHandler.mapClass(it)
                                 ".ace_$mappedSelName"
@@ -334,6 +351,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                 }
                 LanguageProcessorPhase.SYNTAX_ANALYSIS -> "Error ${issue.message}"
                 LanguageProcessorPhase.SEMANTIC_ANALYSIS -> "Error ${issue.message}"
+                LanguageProcessorPhase.FORMATTER -> "Error ${issue.message}"
+                LanguageProcessorPhase.ALL -> "Error ${issue.message}"
             }
             val errType = when (issue.kind) {
                 LanguageIssueKind.ERROR -> "error"

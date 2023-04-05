@@ -48,6 +48,7 @@ val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {
 
 val workerTaskDev = tasks.register<Copy>("copyAglEditorWorkerJsDev") {
     dependsOn(":application-agl-editor-worker:jsBrowserDevelopmentWebpack")
+    dependsOn(":application-agl-editor-worker:jsBrowserDevelopmentExecutableDistribution")
     dependsOn("jsProcessResources")
     from("$buildDir/../application-agl-editor-worker/developmentExecutable") {
         include("application-agl-editor-worker.js")

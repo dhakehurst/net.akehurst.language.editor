@@ -52,7 +52,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     /**
      * The context for syntax and semantic analysis of the sentence (text) in the editor
      */
-    var sentenceContext: SentenceContext?
+    var sentenceContext: SentenceContext<Any>?
 
     /**
      * the content of the editor
@@ -64,7 +64,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
      */
     val logger: AglEditorLogger
 
-    fun configureSyntaxAnalyser(configuration: String)
+    fun configureSyntaxAnalyser(configuration: Map<String,Any>)
 
     fun onParse(handler: (ParseEvent) -> Unit)
 

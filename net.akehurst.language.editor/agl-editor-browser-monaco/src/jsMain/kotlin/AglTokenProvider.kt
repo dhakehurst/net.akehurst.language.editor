@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.monaco
+package net.akehurst.language.editor.browser.monaco
 
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.editor.common.AglComponents

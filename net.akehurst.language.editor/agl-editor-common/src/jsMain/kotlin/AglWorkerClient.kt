@@ -111,7 +111,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         this.sendToWorker(MessageProcessorCreate(languageId, editorId, sessionId, grammarStr))
     }
 
-    fun configureSyntaxAnalyser(languageId: String, editorId: String, sessionId: String, configuration: String) {
+    fun configureSyntaxAnalyser(languageId: String, editorId: String, sessionId: String, configuration: Map<String,Any>) {
         this.sendToWorker(MessageSyntaxAnalyserConfigure(languageId, editorId, sessionId, configuration))
     }
 
