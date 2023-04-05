@@ -335,7 +335,7 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
         // use DslBuilder rather than KompositeProcessor as it is faster
         serialiser.confgureFromKompositeModel(komposite {
-            namespace("net.akehurst.language.agl.api.automaton") {
+            namespace("net.akehurst.language.api.automaton") {
                 enumType("ParseAction")
             }
             namespace("net.akehurst.language.agl.syntaxAnalyser") {

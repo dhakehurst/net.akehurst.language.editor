@@ -26,6 +26,7 @@ import net.akehurst.language.api.analyser.ScopeModel
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.api.processor.SentenceContext
+import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.browser.ace.attachToAce
@@ -339,10 +340,10 @@ class Demo(
     val trees = TreeView.initialise(document)
 
     val exampleSelect = document.querySelector("select#example") as HTMLElement
-    val sentenceEditor = editors["sentence-text"]!!
+    val sentenceEditor = editors["sentence-text"]!! as AglEditor<AsmSimple, ContextSimple>
     val grammarEditor = editors["language-grammar"]!!
-    val styleEditor = editors["language-style"]!!
-    val referencesEditor = editors["language-references"]!!
+    val styleEditor = editors["language-style"]!! as AglEditor<AglStyleModel, ContextSimple>
+    val referencesEditor = editors["language-references"]!! as AglEditor<ScopeModel, ContextSimple>
     //val formatEditor = editors["language-format"]!!
 
     fun configure() {
@@ -377,6 +378,7 @@ class Demo(
 
         grammarEditor.onParse { event ->
             when {
+                event.isStart -> Unit
                 event.success -> {
                     try {
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
@@ -398,6 +400,7 @@ class Demo(
         }
         grammarEditor.onSyntaxAnalysis { event ->
             when {
+                event.isStart -> Unit
                 event.success -> {
                     val grammar = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
                     //grammarContext = ContextFromGrammar(grammar.last()) //TODO: multiple grammars
@@ -415,12 +418,13 @@ class Demo(
 
                 event.failure -> grammarAsContext = null
             }
-            referencesEditor.sentenceContext = grammarAsContext as SentenceContext<Any>
-            styleEditor.sentenceContext = grammarAsContext as SentenceContext<Any>
+            referencesEditor.sentenceContext = grammarAsContext
+            styleEditor.sentenceContext = grammarAsContext
         }
 
         styleEditor.onSyntaxAnalysis { event ->
             when {
+                event.isStart -> Unit
                 event.success -> {
                     try {
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
@@ -436,12 +440,12 @@ class Demo(
                     sentenceEditor.languageDefinition.styleStr = ""
                 }
 
-                else -> {
-                }
+                else -> Unit
             }
         }
         referencesEditor.onSyntaxAnalysis { event ->
             when {
+                event.isStart -> Unit
                 event.success -> {
                     try {
                         sentenceScopeModel = event.asm as ScopeModel
@@ -594,7 +598,7 @@ class Demo(
             styleEditor.text = eg.style
             referencesEditor.text = eg.references
             //formatEditor.text = eg.format
-            sentenceEditor.sentenceContext = ContextSimple() as SentenceContext<Any>
+            sentenceEditor.sentenceContext = ContextSimple()
             sentenceEditor.text = eg.sentence
 
         })
@@ -607,7 +611,7 @@ class Demo(
         styleEditor.text = eg.style
         referencesEditor.text = eg.references
         //formatEditor.text = eg.format
-        sentenceEditor.sentenceContext = ContextSimple() as SentenceContext<Any>
+        sentenceEditor.sentenceContext = ContextSimple()
         sentenceEditor.text = eg.sentence
     }
 

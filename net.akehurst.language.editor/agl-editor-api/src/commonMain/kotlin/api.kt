@@ -52,7 +52,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     /**
      * The context for syntax and semantic analysis of the sentence (text) in the editor
      */
-    var sentenceContext: SentenceContext<Any>?
+    var sentenceContext: ContextType?
 
     /**
      * the content of the editor

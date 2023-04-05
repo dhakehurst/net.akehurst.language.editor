@@ -15,15 +15,18 @@ kotlinxReflect {
     forReflection.set(listOf(
         "net.akehurst.language.editor.common",
         "net.akehurst.language.editor.common.messages",
+
+        "net.akehurst.language.api.automaton",
         "net.akehurst.language.api.asm",
         "net.akehurst.language.api.parser",
         "net.akehurst.language.api.processor",
+        "net.akehurst.language.api.style",
+
         "net.akehurst.language.agl.grammar.grammar.asm",
         "net.akehurst.language.agl.syntaxAnalyser",
         "net.akehurst.language.agl.sppt",
-        "net.akehurst.language.api.style",
         "net.akehurst.language.agl.grammar.scopes",
-        "net.akehurst.language.agl.api.automaton"
+        "net.akehurst.language.agl.grammar.style"
     ))
 }
 

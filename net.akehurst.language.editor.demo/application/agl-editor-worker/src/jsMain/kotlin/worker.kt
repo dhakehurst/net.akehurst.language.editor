@@ -6,7 +6,7 @@ fun main() {
     val worker = AglSharedWorker<Any,Any>().also {
         Agl.registry.register(
             identity = "user-language",
-            grammarStr = "",
+            grammarStr = null,
             buildForDefaultGoal = false,
             aglOptions = Agl.options {
                 semanticAnalysis {

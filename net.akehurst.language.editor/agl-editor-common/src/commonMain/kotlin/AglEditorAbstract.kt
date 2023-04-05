@@ -64,7 +64,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             this.updateStyle()
         }
 
-    override var sentenceContext: SentenceContext<Any>?
+    override var sentenceContext: ContextType?
         get() = this.agl.context
         set(value) {
             this.agl.context = value

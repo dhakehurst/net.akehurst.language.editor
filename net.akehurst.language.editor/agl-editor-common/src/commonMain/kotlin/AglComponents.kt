@@ -36,7 +36,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
 
     val styleHandler get() = _styleHandler
 
-    var context: SentenceContext<Any>? = null
+    var context: ContextType? = null
     var sppt: SharedPackedParseTree? = null
     //var asm: Any? = null
 
