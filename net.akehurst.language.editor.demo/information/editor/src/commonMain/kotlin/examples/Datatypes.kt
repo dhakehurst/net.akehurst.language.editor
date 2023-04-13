@@ -59,14 +59,14 @@ object Datatypes {
     """.trimIndent()
 
     val references = """
-        identify unit by §nothing
-        scope unit {
-            identify primitive by ID
-            identify datatype by ID
-            identify collection by ID
+        identify Unit by §nothing
+        scope Unit {
+            identify Primitive by id
+            identify Datatype by id
+            identify Collection by id
         }
         references {
-            in typeReference property type refers-to primitive|datatype|collection
+            in TypeReference property type refers-to Primitive|Datatype|Collection
         }
     """.trimIndent()
 

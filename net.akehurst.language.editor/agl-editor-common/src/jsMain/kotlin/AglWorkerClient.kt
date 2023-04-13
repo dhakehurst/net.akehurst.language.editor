@@ -79,6 +79,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
     }
 
     private fun receiveMessageFromWorker(msg: AglWorkerMessage) {
+        this.agl.logger.log(LogLevel.Trace, "Received message: $msg",null)
         if (this.agl.languageIdentity==msg.languageId && this.agl.editorId == msg.editorId) { //TODO: should  test for sessionId also
             when (msg) {
                 is MessageSetStyleResult -> this.setStyleResult(msg)
@@ -99,6 +100,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
     fun sendToWorker(msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
         //val jsObj = msg.toJsObject()
         //val str = AglWorkerMessage.serialise(msg)
+        this.agl.logger.log(LogLevel.Trace, "Sending message: $msg",null)
         val str = AglWorkerSerialisation.serialise(msg)
         if (this.sharedWorker) {
             (this.worker as SharedWorker).port.postMessage(str, transferables)

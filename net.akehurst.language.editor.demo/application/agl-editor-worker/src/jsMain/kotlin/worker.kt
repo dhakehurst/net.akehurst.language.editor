@@ -5,7 +5,7 @@ import net.akehurst.language.editor.worker.AglSharedWorker
 fun main() {
     val worker = AglSharedWorker<Any,Any>().also {
         Agl.registry.register(
-            identity = "user-language",
+            identity = "language-user",
             grammarStr = null,
             buildForDefaultGoal = false,
             aglOptions = Agl.options {

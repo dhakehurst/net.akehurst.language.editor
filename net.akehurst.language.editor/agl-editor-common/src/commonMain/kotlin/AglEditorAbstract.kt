@@ -29,8 +29,11 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     protected val agl = AglComponents<AsmType, ContextType> (languageId, editorId, logger)
 
     init {
-        this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
-        this.agl.languageDefinition.styleObservers.add { _, _ -> this.updateStyle() }
+        //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
+        this.agl.languageDefinition.grammarStrObservers.add{ _, _ -> this.updateProcessor(); this.updateStyle() }
+        this.agl.languageDefinition.scopeStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
+        this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.updateStyle() }
+        //this.agl.languageDefinition.formatterStrObservers.add { _, _ -> }
     }
 
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()

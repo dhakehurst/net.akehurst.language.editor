@@ -22,6 +22,7 @@ kotlinxReflect {
         "net.akehurst.language.api.processor",
         "net.akehurst.language.api.style",
 
+        "net.akehurst.language.agl.grammar.grammar",
         "net.akehurst.language.agl.grammar.grammar.asm",
         "net.akehurst.language.agl.syntaxAnalyser",
         "net.akehurst.language.agl.sppt",

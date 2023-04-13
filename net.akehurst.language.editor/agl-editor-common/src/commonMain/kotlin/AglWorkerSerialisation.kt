@@ -338,6 +338,10 @@ object AglWorkerSerialisation {
             namespace("net.akehurst.language.api.automaton") {
                 enumType("ParseAction")
             }
+            namespace("net.akehurst.language.agl.grammar.grammar") {
+                dataType("ContextFromGrammar") {
+                }
+            }
             namespace("net.akehurst.language.agl.syntaxAnalyser") {
                 dataType("ContextSimple") {
                     typeParameters("E")

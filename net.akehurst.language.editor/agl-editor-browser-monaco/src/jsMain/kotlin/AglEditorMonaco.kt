@@ -36,14 +36,14 @@ import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
-fun <AsmType:Any, ContextType:Any> Agl.attachToMonaco(
-    containerElement:Element,
+fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
+    containerElement: Element,
     monacoEditor: IStandaloneCodeEditor,
     languageId: String,
     editorId: String,
     workerScriptName: String,
     sharedWorker: Boolean
-) : AglEditor<AsmType, ContextType> {
+): AglEditor<AsmType, ContextType> {
     return AglEditorMonaco<AsmType, ContextType>(
         containerElement = containerElement,
         monacoEditor = monacoEditor,
@@ -61,7 +61,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     languageId: String,
     workerScriptName: String,
     sharedWorker: Boolean
-) : AglEditorJsAbstract<AsmType , ContextType>(languageId, editorId,workerScriptName,sharedWorker) {
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, workerScriptName, sharedWorker) {
 
     companion object {
         private val init = js(
@@ -158,9 +158,9 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun configureSyntaxAnalyser(configuration: Map<String,Any>) {
+    override fun configureSyntaxAnalyser(configuration: Map<String, Any>) {
         //this.aceEditor.getSession()?.also { session ->
-            this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, "", configuration) //TODO: sessionId
+        this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, "", configuration) //TODO: sessionId
         //}
     }
 
@@ -177,10 +177,10 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         if (null != styleStr && styleStr.isNotBlank()) {
             this.agl.styleHandler.reset()
             val styleMdl = Agl.registry.agl.style.processor!!.process(styleStr).asm //Why parse this again here !
-            if(null!=styleMdl) {
+            if (null != styleMdl) {
                 var mappedCss = ""
                 styleMdl.rules.forEach { rule ->
-                    val ruleClasses = rule.selector.map{
+                    val ruleClasses = rule.selector.map {
                         val mappedSelName = this.agl.styleHandler.mapClass(it)
                         ".monaco_$mappedSelName"
                     }
@@ -195,6 +195,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                                 "italic" -> AglStyle("font-style", oldStyle.value)
                                 else -> oldStyle
                             }
+
                             else -> oldStyle
                         }
                         Pair(style.name, style)
@@ -340,31 +341,38 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        val monIssues = issues.map { issue ->
-            val errMsg:String = when(issue.phase) {
-                LanguageProcessorPhase.PARSE ->{
+        val monIssues = issues.mapNotNull { issue ->
+            var errMsg: String? = null
+            when (issue.phase) {
+                LanguageProcessorPhase.GRAMMAR -> Unit
+                LanguageProcessorPhase.PARSE -> {
                     val expected = issue.data as Set<String>?
-                    when {
+                    errMsg = when {
                         null == expected -> "Syntax Error"
                         expected.isEmpty() -> "Syntax Error"
                         1 == expected.size -> "Syntax Error, expected: $expected"
                         else -> "Syntax Error, expected one of: $expected"
                     }
                 }
-                LanguageProcessorPhase.SYNTAX_ANALYSIS -> ""
-                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> ""
-                LanguageProcessorPhase.FORMATTER -> ""
-                LanguageProcessorPhase.ALL -> ""
+
+                LanguageProcessorPhase.SYNTAX_ANALYSIS -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.FORMATTER -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.ALL -> errMsg = "Error ${issue.message}"
             }
-            objectJSTyped<IMarkerData> {
-                code = null
-                severity = MarkerSeverity.Error
-                startLineNumber = issue.location?.line ?: 0
-                startColumn = issue.location?.column ?: 0
-                endLineNumber = issue.location?.line ?: 0
-                endColumn = issue.location?.column ?: 0
-                this.message = errMsg
-                source = null
+            if (null != errMsg) {
+                objectJSTyped<IMarkerData> {
+                    code = null
+                    severity = MarkerSeverity.Error
+                    startLineNumber = issue.location?.line ?: 0
+                    startColumn = issue.location?.column ?: 0
+                    endLineNumber = issue.location?.line ?: 0
+                    endColumn = issue.location?.column ?: 0
+                    this.message = errMsg
+                    source = null
+                }
+            } else {
+                null
             }
         }
         monaco.editor.setModelMarkers(this.monacoEditor.getModel(), "", monIssues.toTypedArray())

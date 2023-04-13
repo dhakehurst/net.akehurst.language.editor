@@ -151,7 +151,7 @@ div#agl-demo > article > header > section.agl-menubar > h1 {
     flex-basis: content;
 }
 
-div#agl-demo > article > header > section.agl-menubar > h2 {
+div#agl-demo > article > header > section.agl-menubar  h2 {
     margin: 5px;
     font-size: 1em;
     flex-basis: content;
@@ -168,26 +168,29 @@ div#agl-demo > article > header > section.agl-menubar > nav > a:hover {
     background-color: aqua;
 }
 
-div#agl-demo > article > header > section.agl-options {
+div#agl-demo > article > header   section.agl-options {
     display: flex;
     flex-direction: column;
 }
 
-div#agl-demo > article > header > section.agl-options div {
+div#agl-demo > article > header   section.agl-options div {
     display: flex;
     flex-direction: row;
 }
 
-div#agl-demo > article > header > section.agl-options select {
+div#agl-demo > article > header   section.agl-options select {
     height: inherit;
-    padding: 5px;
+    padding: 1px;
 }
 
-div#agl-demo > article > header > section.agl-options div * {
+div#agl-demo > article > header   section.agl-options div * {
+
+}
+
+div#agl-demo > article > header   section.agl-options label {
     margin: 5px;
-}
-
-div#agl-demo > article > header > section.agl-options label {
+    font-size: 1em;
+    font-weight: bold;
     white-space: nowrap;
 }
 
@@ -227,6 +230,13 @@ div#agl-demo agl-editor {
     display: grid;
     grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
 }
+
+div#agl-demo section.configuration {
+    margin: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
 
 .ace_marker_text_error {
     position: absolute;

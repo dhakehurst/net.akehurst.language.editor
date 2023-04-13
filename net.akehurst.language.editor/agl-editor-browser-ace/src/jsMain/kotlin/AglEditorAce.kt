@@ -62,8 +62,8 @@ class AglErrorAnnotation(
     val row = line - 1
 }
 
-fun <AsmType:Any, ContextType:Any> Agl.attachToAce(
-    containerElement:Element,
+fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
+    containerElement: Element,
     aceEditor: ace.Editor,
     languageId: String,
     editorId: String,
@@ -82,7 +82,7 @@ fun <AsmType:Any, ContextType:Any> Agl.attachToAce(
 
 //FIXME: some inefficiency due to some updates being triggered multiple times
 private class AglEditorAce<AsmType : Any, ContextType : Any>(
-    val containerElement:Element,
+    val containerElement: Element,
     val aceEditor: ace.Editor,
     languageId: String,
     editorId: String,
@@ -158,7 +158,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun configureSyntaxAnalyser(configuration: Map<String,Any>) {
+    override fun configureSyntaxAnalyser(configuration: Map<String, Any>) {
         this.aceEditor.getSession()?.also { session ->
             this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, session.id, configuration)
         }
@@ -193,7 +193,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                     if (null != styleMdl) {
                         var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
                         styleMdl.rules.forEach { rule ->
-                            val ruleClasses = rule.selector.map{
+                            val ruleClasses = rule.selector.map {
                                 val mappedSelName = this.agl.styleHandler.mapClass(it)
                                 ".ace_$mappedSelName"
                             }
@@ -208,6 +208,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                                         "italic" -> AglStyle("font-style", oldStyle.value)
                                         else -> oldStyle
                                     }
+
                                     else -> oldStyle
                                 }
                                 Pair(style.name, style)
@@ -276,11 +277,11 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         this.aceEditor.renderer.updateText()
         val sess = this.aceEditor.getSession()
         if (null == sess) {
-            this.log(LogLevel.Error, "session is null ??",null)
+            this.log(LogLevel.Error, "session is null ??", null)
         } else {
             val bgt = sess.bgTokenizer
             if (null == bgt) {
-                this.log(LogLevel.Error, "bgTokenizer is null ??",null)
+                this.log(LogLevel.Error, "bgTokenizer is null ??", null)
             } else {
                 bgt.start(0)
             }
@@ -337,34 +338,41 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        val aceIssues = issues.map { issue ->
+        val aceIssues = issues.mapNotNull { issue ->
             val aceColumn = issue.location?.let { it.column - 1 } ?: 0
-            val errMsg: String = when (issue.phase) {
+            var errMsg: String? = null
+            when (issue.phase) {
+                LanguageProcessorPhase.GRAMMAR -> Unit
                 LanguageProcessorPhase.PARSE -> {
                     val expected = issue.data as Set<String>?
-                    when {
+                    errMsg = when {
                         null == expected -> "Syntax Error"
                         expected.isEmpty() -> "Syntax Error"
                         1 == expected.size -> "Syntax Error, expected: $expected"
                         else -> "Syntax Error, expected one of: $expected"
                     }
                 }
-                LanguageProcessorPhase.SYNTAX_ANALYSIS -> "Error ${issue.message}"
-                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> "Error ${issue.message}"
-                LanguageProcessorPhase.FORMATTER -> "Error ${issue.message}"
-                LanguageProcessorPhase.ALL -> "Error ${issue.message}"
+
+                LanguageProcessorPhase.SYNTAX_ANALYSIS -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.FORMATTER -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.ALL -> errMsg = "Error ${issue.message}"
             }
-            val errType = when (issue.kind) {
-                LanguageIssueKind.ERROR -> "error"
-                LanguageIssueKind.WARNING -> "warning"
-                LanguageIssueKind.INFORMATION -> "information"
-            }
-            objectJSTyped<AceAnnotation> {
-                row = issue.location?.let { it.line - 1 } ?: 0
-                column = aceColumn
-                text = errMsg //issue.message
-                type = errType
-                raw = null
+            if (null != errMsg) {
+                val errType = when (issue.kind) {
+                    LanguageIssueKind.ERROR -> "error"
+                    LanguageIssueKind.WARNING -> "warning"
+                    LanguageIssueKind.INFORMATION -> "information"
+                }
+                objectJSTyped<AceAnnotation> {
+                    row = issue.location?.let { it.line - 1 } ?: 0
+                    column = aceColumn
+                    text = errMsg //issue.message
+                    type = errType
+                    raw = null
+                }
+            } else {
+                null
             }
         }
         // add/update annotations to indicate errors in gutter

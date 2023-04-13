@@ -127,27 +127,18 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val goal = message.goalRuleName
             val result = if (null == goal) proc.parse(message.text) else proc.parse(message.text, Agl.parseOptions { goalRuleName(goal) })
-
-            val treeStr = serialiseParseTreeToStringJson(result.sppt?.root)
-            val treeStrEncoded = treeStr?.let { JsonString.encode(it) } //double encode treeStr as it itself is json
-            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues.all.toList(), treeStrEncoded))
-            result.sppt?.let {sppt ->
+            val sppt = result.sppt
+            if (null==sppt) {
+                sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, false, "Parse Failed", result.issues.all.toList(), null))
+            } else {
+                val treeStr = serialiseParseTreeToStringJson(sppt.root)
+                val treeStrEncoded = treeStr?.let { JsonString.encode(it) } //double encode treeStr as it itself is json
+                sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues.all.toList(), treeStrEncoded))
                 this.sendParseLineTokens(port, message.languageId, message.editorId, message.sessionId, sppt)
                 this.syntaxAnalysis(port, message, proc, sppt)
             }
         } catch (t: Throwable) {
-            sendMessage(
-                port,
-                MessageParseResult(
-                    message.languageId,
-                    message.editorId,
-                    message.sessionId,
-                    false,
-                    "Exception during parse - ${t::class.simpleName} - ${t.message!!}",
-                    emptyList(),
-                    null
-                )
-            )
+            sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, false, "Exception during parse - ${t::class.simpleName} - ${t.message!!}", emptyList(), null))
         }
     }
 
@@ -156,50 +147,29 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList(), null))
             val context = message.context as ContextType?
             val result = proc.syntaxAnalysis(sppt, Agl.options {  syntaxAnalysis { context(context) }})
-            val asmTree = result.asm //createAsmTree(asm) ?: "No Asm"
-            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues.all.toList(), asmTree))
-            this.semanticAnalysis(port, message, proc, result.asm, result.locationMap)
+            val asm = result.asm
+            if (null==asm) {
+                sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "SyntaxAnalysis Failed", result.issues.all.toList(), null))
+            } else {
+                sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, true, "Success", result.issues.all.toList(), asm))
+                this.semanticAnalysis(port, message, proc, asm, result.locationMap)
+            }
         } catch (t: Throwable) {
-            sendMessage(
-                port,
-                MessageSyntaxAnalysisResult(
-                    message.languageId,
-                    message.editorId,
-                    message.sessionId,
-                    false,
-                    "Exception during syntaxAnalysis - ${t::class.simpleName} - ${t.message!!}",
-                    emptyList(),
-                    null
-                )
-            )
+            sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Exception during syntaxAnalysis - ${t::class.simpleName} - ${t.message!!}", emptyList(), null))
         }
     }
 
-    private fun semanticAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor<AsmType, ContextType>, asm: AsmType?, locationMap: Map<Any, InputLocation>) {
+    private fun semanticAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor<AsmType, ContextType>, asm: AsmType, locationMap: Map<Any, InputLocation>) {
         try {
             sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList()))
             val context = message.context as ContextType
-            if (null != asm) {
-                val result = proc.semanticAnalysis(asm, Agl.options {
-                    syntaxAnalysis { context(context) }
-                    semanticAnalysis { locationMap(locationMap) }
-                })
-                sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", result.issues.all.toList()))
-            } else {
-                //no analysis possible
-            }
+            val result = proc.semanticAnalysis(asm, Agl.options {
+                syntaxAnalysis { context(context) }
+                semanticAnalysis { locationMap(locationMap) }
+            })
+            sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", result.issues.all.toList()))
         } catch (t: Throwable) {
-            sendMessage(
-                port,
-                MessageSemanticAnalysisResult(
-                    message.languageId,
-                    message.editorId,
-                    message.sessionId,
-                    false,
-                    "Exception during semanticAnalysis - ${t::class.simpleName} - ${t.message!!}",
-                    emptyList()
-                )
-            )
+            sendMessage( port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Exception during semanticAnalysis - ${t::class.simpleName} - ${t.message!!}", emptyList()))
         }
     }
 
