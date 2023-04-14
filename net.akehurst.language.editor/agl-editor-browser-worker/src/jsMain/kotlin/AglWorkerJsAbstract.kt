@@ -34,9 +34,6 @@ import org.w3c.dom.MessageEvent
 
 abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract<AsmType, ContextType>() {
 
-    private var _languageDefinition: MutableMap<String, LanguageDefinition<AsmType, ContextType>> = mutableMapOf()
-    private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
-
     override fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic>) {
         //val str = AglWorkerMessage.serialise(msg)
         try {

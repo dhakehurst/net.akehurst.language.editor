@@ -76,15 +76,15 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
         val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
         val grmr = ld.processor?.grammar
         if (null != grmr) {
-            val issues = ld.syntaxAnalyser?.configure(ContextFromGrammar(grmr), message.configuration)
-            sendMessage(
-                port, MessageSyntaxAnalyserConfigureResponse(
-                    message.languageId, message.editorId, message.sessionId,
-                    true,
-                    "OK",
-                    issues ?: emptyList()
-                )
-            )
+            //val issues = ld.syntaxAnalyser?.configure(ContextFromGrammar(grmr), message.configuration)
+            //sendMessage(
+            //    port, MessageSyntaxAnalyserConfigureResponse(
+            //        message.languageId, message.editorId, message.sessionId,
+            //        true,
+            //        "OK",
+            //        issues ?: emptyList()
+            //    )
+            //)
         } else {
             sendMessage(
                 port, MessageSyntaxAnalyserConfigureResponse(
@@ -145,8 +145,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     private fun syntaxAnalysis(port: Any, message: MessageProcessRequest, proc: LanguageProcessor<AsmType, ContextType>, sppt: SharedPackedParseTree) {
         try {
             sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList(), null))
-            val context = message.context as ContextType?
-            val result = proc.syntaxAnalysis(sppt, Agl.options {  syntaxAnalysis { context(context) }})
+            val result = proc.syntaxAnalysis(sppt)
             val asm = result.asm
             if (null==asm) {
                 sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "SyntaxAnalysis Failed", result.issues.all.toList(), null))
@@ -164,8 +163,10 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Start", emptyList()))
             val context = message.context as ContextType
             val result = proc.semanticAnalysis(asm, Agl.options {
-                syntaxAnalysis { context(context) }
-                semanticAnalysis { locationMap(locationMap) }
+                semanticAnalysis {
+                    locationMap(locationMap)
+                    context(context)
+                }
             })
             sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, false, "Success", result.issues.all.toList()))
         } catch (t: Throwable) {

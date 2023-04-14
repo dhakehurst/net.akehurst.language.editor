@@ -53,7 +53,7 @@ class test_AglWorkerSerialisation {
         )
         val context = ContextSimple()
         val asm = asmSimple(result.asm!!, context) {
-            root("Root") {
+            element("Root") {
                 propertyElementExplicitType("content", "Elem1") {
                     propertyString("propString", "stringValue")
                     propertyListOfString("propListString", listOf("Hello", "World"))
@@ -435,7 +435,7 @@ class test_AglWorkerSerialisation {
         )
         val context = ContextSimple()
         val expected = asmSimple(result.asm!!, context) {
-            root("Root") {
+            element("Root") {
                 propertyElementExplicitType("content", "Elem1") {
                     propertyString("propString", "stringValue")
                     propertyListOfString("propListString", listOf("Hello", "World"))
@@ -828,7 +828,7 @@ class test_AglWorkerSerialisation {
         )
         val context = ContextSimple()
         val asm = asmSimple(result.asm!!, context) {
-            root("Elem") {
+            element("Elem") {
                 propertyString("id", "e1")
                 propertyElementExplicitType("s1", "ScopedElem") {
                     propertyString("id", "se1")

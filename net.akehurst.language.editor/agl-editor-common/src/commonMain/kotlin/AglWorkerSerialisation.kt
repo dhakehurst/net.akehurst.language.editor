@@ -35,6 +35,7 @@ object AglWorkerSerialisation {
             agl_editor_common.KotlinxReflectForModule.registerUsedClasses()
             //TODO: enable kserialisation/komposite/reflect to auto add these some how!!
             initialiseApiTypes()
+            initialiseTypeModel()
             initialiseStyleAsm()
             initialiseScopesAsm()
             initialiseGrammarAsm()
@@ -45,42 +46,7 @@ object AglWorkerSerialisation {
         }
     }
 
-    //TODO: define the Komposite defs below using a builder rather than parsed string
-// to improve performance
     private fun initialiseApiTypes() {
-        /*
-        serialiser.confgureFromKompositeString(
-            """
-            namespace net.akehurst.language.editor.common {
-                datatype AglToken {
-                    composite-val styles: Array<String>
-                    composite-val value: String
-                    composite-val line: Int
-                    composite-val column: Int
-                }
-            }
-            namespace net.akehurst.language.api.parser {
-                datatype InputLocation{
-                    composite-val position:Int
-                    composite-val column: Int
-                    composite-val line: Int
-                    composite-val length: Int
-                }
-            }
-            namespace net.akehurst.language.api.processor {
-                enum LanguageIssueKind
-                enum LanguageProcessorPhase
-                datatype LanguageIssue {
-                    composite-val kind: LanguageIssueKind
-                    composite-val phase: LanguageProcessorPhase
-                    composite-val location: InputLocation?
-                    composite-val message: String
-                    composite-val data: Any?
-                }
-            }
-            """.trimIndent()
-        )
-         */
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(komposite {
             namespace("net.akehurst.language.editor.common") {
@@ -125,26 +91,23 @@ object AglWorkerSerialisation {
         })
     }
 
-    private fun initialiseStyleAsm() {
-
-        /*
-        serialiser.confgureFromKompositeString(
-            """
-            namespace net.akehurst.language.api.style {
-                datatype AglStyleRule {
-                    composite-val selector: String
-                    composite-var styles: Map<String,AglStyle>
-                }
-                datatype AglStyle {
-                    composite-val name: String
-                    composite-val value: String
+    private fun initialiseTypeModel() {
+        serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.api.typeModel") {
+                dataType("PropertyDeclaration") {
+                    constructorArguments {
+                        composite("styles", "Array") { typeArgument("String") }
+                        composite("value", "String")
+                        composite("line", "Int")
+                        composite("column", "Int")
+                    }
                 }
             }
-            """.trimIndent()
-        )
-         */
+        })
+    }
+
+    private fun initialiseStyleAsm() {
         //classes registered with KotlinxReflect via gradle plugin
-        // use DslBuilder rather than KompositeProcessor as it is faster
         serialiser.confgureFromKompositeModel(komposite {
             namespace("net.akehurst.language.agl.grammar.style") {
                 dataType("AglStyleModelDefault") {
@@ -178,32 +141,6 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseScopesAsm() {
-
-        /*
-        serialiser.confgureFromKompositeString(
-            """
-            namespace net.akehurst.language.agl.grammar.scopes {
-                datatype ScopeModel {
-                    composite-var scopes: Map<String,ScopeDefinition>
-                    composite-var references: List<ReferenceDefinition>
-                }
-                datatype ScopeDefinition {
-                    composite-val scopeFor: String
-                    composite-var identifiables: List<Identifiable>
-                }
-                datatype Identifiable {
-                    composite-val typeName: String
-                    composite-val propertyName: String
-                }
-                datatype ReferenceDefinition {
-                    composite-val inTypeName: String
-                    composite-val referringPropertyName: String
-                    composite-val refersToTypeName: List<String>
-                }
-            }
-            """.trimIndent()
-        )
-         */
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(komposite {
             namespace("net.akehurst.language.agl.grammar.scopes") {
@@ -244,96 +181,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseMessages() {
-        /*
-        serialiser.confgureFromKompositeString(
-            """
-            namespace net.akehurst.language.editor.common.messages {
-                datatype MessageProcessorCreate {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val grammarStr: String
-                }
-                datatype MessageProcessorCreateResponse {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val success: Boolean
-                    composite-val message: String
-                }
-                datatype MessageSyntaxAnalyserConfigure {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val configuration: Any
-                }
-                datatype MessageSyntaxAnalyserConfigureResponse {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val success: Boolean
-                    composite-val message: String
-                    composite-val issues: List<LanguageIssue>
-                }                
-                datatype MessageProcessRequest {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val goalRuleName: String?
-                    composite-val text: String
-                    composite-val context: Any?
-                }
-                datatype MessageParseResult {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val success: Boolean
-                    composite-val message: String
-                    composite-val issues: List<LanguageIssue>
-                    composite-val treeSerialised: String?
-                }
-                datatype MessageSyntaxAnalysisResult {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val success: Boolean
-                    composite-val message: String
-                    composite-val issues: List<LanguageIssue>
-                    composite-val asm: Any?
-                }
-                datatype MessageSemanticAnalysisResult {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val success: Boolean
-                    composite-val message: String
-                    composite-val issues: ArListray<LanguageIssue>
-                }
-                datatype MessageParserInterruptRequest {
-                     composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val reason: String
-                }
-                datatype MessageLineTokens {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val success: Boolean
-                    composite-val message: String
-                    composite-val lineTokens: Array<Array<AglToken>>
-                }
-                datatype MessageSetStyle {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val css: String
-                }
-                datatype MessageSetStyleResult {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val success: Boolean
-                    composite-val message: String
-                }
-                datatype MessageCodeCompleteRequest {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val goalRuleName: String?
-                    composite-val text: String
-                    composite-val position: Int
-                }
-                datatype MessageCodeCompleteResult {
-                    composite-val languageId : String  composite-val editorId : String  composite-val sessionId: String
-                    composite-val success: Boolean
-                    composite-val message: String
-                    composite-val completionItems: Array<Pair<String, String>>?
-                }
-            }
-            namespace net.akehurst.language.agl.syntaxAnalyser {
-                datatype ContextSimple {
-                    composite-var rootScope: ScopeSimple<AsmElementPath>
-                }
-            }
-        """.trimIndent()
-        )*/
         //classes registered with KotlinxReflect via gradle plugin
-        // use DslBuilder rather than KompositeProcessor as it is faster
         serialiser.confgureFromKompositeModel(komposite {
             namespace("net.akehurst.language.api.automaton") {
                 enumType("ParseAction")
@@ -492,49 +340,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseAsmSimple() {
-        //TODO: add type arg to ScopeSimple<E>
-        /*
-        serialiser.confgureFromKompositeString(
-            """
-            namespace net.akehurst.language.agl.syntaxAnalyser {
-                datatype ScopeSimple {
-                    reference-val parent: ScopeSimple<E>?
-                    composite-val forReferenceInParent:String
-                    composite-val forTypeName:String
-
-                    composite-var childScopes:Map<String,ScopeSimple<E>>
-                    composite-var items:Map<String,Map<String,E>>
-                }
-            }
-            namespace net.akehurst.language.api.asm {
-                datatype AsmElementPath {
-                    composite-val value:String
-                }
-                datatype AsmSimple {
-                    composite-var rootElements: List<AsmElementSimple>
-                }
-                datatype AsmElementSimple {
-                    composite-val asmPath: AsmElementPath
-                    reference-val asm: AsmSimple
-                    composite-val typeName: String
-                    
-                    composite-var properties: Map<String, AsmElementProperty>
-                }
-                datatype AsmElementProperty {
-                    composite-val name: String
-                    composite-val value: Any?
-                    composite-val isReference: Boolean
-                }
-                datatype AsmElementReference {
-                    composite-val reference: String
-                    reference-val value: AsmElementSimple?
-                }
-            }
-        """.trimIndent()
-        )
-         */
         //classes registered with KotlinxReflect via gradle plugin
-        // use DslBuilder rather than String as it is faster
         serialiser.confgureFromKompositeModel(komposite {
             namespace("net.akehurst.language.agl.syntaxAnalyser") {
                 dataType("ScopeSimple") {
@@ -604,67 +410,6 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseGrammarAsm() {
-        /*
-        serialiser.confgureFromKompositeString(
-            """
-            namespace net.akehurst.language.agl.grammar.grammar.asm {
-                datatype NamespaceDefault {
-                    composite-val qualifiedName: String
-                }
-                datatype GrammarDefault {
-                    composite-val namespace : Namespace
-                    composite-val name : String
-                    composite-var rule : List<RuleItemAbstract>
-                }
-                datatype RuleDefault {
-                    reference-val grammar: GrammarDefault
-                    composite-val name: String
-                    composite-val isOverride: Boolean
-                    composite-val isSkip: Boolean
-                    composite-val isLeaf: Boolean
-                    composite-var rhs: RuleItemAbstract
-                }
-                datatype RuleItemAbstract { }
-                datatype EmptyRuleDefault : RuleItemAbstract { }
-                datatype ChoiceAbstract : RuleItemAbstract {}
-                datatype ChoiceLongestDefault : ChoiceAbstract {
-                    composite-val alternative: List<ConcatenationDefault>
-                }
-                datatype ChoicePriorityDefault : ChoiceAbstract { 
-                    composite-val alternative: List<ConcatenationDefault>
-                }
-                datatype ConcatenationDefault : RuleItemAbstract {
-                    composite-val items: List<ConcatenationItem>
-                }
-                datatype ConcatenationItemAbstract : RuleItemAbstract { }
-                datatype SimpleItemAbstract : ConcatenationItemAbstract { }
-                datatype GroupDefault : SimpleItemAbstract {
-                    composite-val choice : ChoiceAbstract
-                }
-                datatype NonTerminalDefault : RuleItemAbstract {
-                    composite-val name: String
-                    reference-val owningGrammar: Grammar
-                    composite-val embedded: Boolean
-                }
-                datatype TerminalDefault : RuleItemAbstract {
-                    composite-val value: String
-                    composite-val isPattern: Boolean
-                }
-                datatype SeparatedListDefault : RuleItemAbstract {
-                    composite-val min: Int
-                    composite-val max: Int
-                    composite-val item: SimpleItemAbstract
-                    composite-val separator: SimpleItem
-                }
-                datatype SimpleListDefault : RuleItemAbstract {
-                    composite-val min: Int
-                    composite-val max: Int
-                    composite-val item: SimpleItemAbstract
-                }
-            }
-        """.trimIndent()
-        )
-        */
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(komposite {
             namespace("net.akehurst.language.agl.grammar.grammar.asm") {

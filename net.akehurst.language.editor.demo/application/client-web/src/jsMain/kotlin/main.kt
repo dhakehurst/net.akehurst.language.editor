@@ -22,7 +22,9 @@ import monaco.editor.IStandaloneEditorConstructionOptions
 import net.akehurst.kotlin.html5.create
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
+import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
 import net.akehurst.language.api.analyser.ScopeModel
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
@@ -351,7 +353,7 @@ class Demo(
     val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<AsmSimple, ContextSimple>
     val grammarEditor = editors[Constants.grammarEditorId]!!
     val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
-    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<ScopeModel, ContextFromGrammar>
+    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<ScopeModel, ContextFromTypeModel>
     //val formatEditor = editors["language-format"]!!
 
     fun configure() {
@@ -381,7 +383,8 @@ class Demo(
         styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
         referencesEditor.editorSpecificStyleStr = Agl.registry.agl.scopes.styleStr
 
-        val grammarAsContext = ContextFromGrammar()
+        val styleContext = ContextFromGrammar()
+        val scopeContext = ContextFromTypeModel()
         var sentenceScopeModel: ScopeModel? = null
 
         grammarEditor.onParse { event ->
@@ -411,23 +414,17 @@ class Demo(
                 event.isStart -> Unit
                 event.success -> {
                     val grammar = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
-                    //grammarContext = ContextFromGrammar(grammar.last()) //TODO: multiple grammars
-                    grammarAsContext.createScopeFrom(grammar.last())
-                    //grammar.forEach { g ->
-                    //    g.allResolvedGrammarRule.forEach { r ->
-                    //        grammarAsContext?.rootScope?.addToScope(r.name, "Rule", AsmElementPath("${g.name}/rules/${r.name}"))
-                    //    }
-                    //    g.allResolvedTerminal.forEach { term ->
-                    //        val ref = if (term.isPattern) "\"${term.value}\"" else "'${term.value}'"
-                    //        grammarAsContext?.rootScope?.addToScope(ref, "Rule", AsmElementPath("${g.name}/terminals/${ref}"))
-                    //    }
-                    //}
+                    styleContext.createScopeFrom(grammar.last())
+                    scopeContext.createScopeFrom(TypeModelFromGrammar(grammar.last()))
                 }
 
-                event.failure -> grammarAsContext.clear()
+                event.failure -> {
+                    styleContext.clear()
+                    scopeContext.clear()
+                }
             }
-            referencesEditor.sentenceContext = grammarAsContext
-            styleEditor.sentenceContext = grammarAsContext
+            referencesEditor.sentenceContext = scopeContext
+            styleEditor.sentenceContext = styleContext
         }
 
         styleEditor.onSyntaxAnalysis { event ->
@@ -580,7 +577,6 @@ class Demo(
                         val rts = (event.asm as AsmSimple).rootElements
                         when {
                             rts.size == 0 -> "<Empty>"
-                            rts.size == 1 -> rts[0]
                             else -> rts
                         }
                     } else {
