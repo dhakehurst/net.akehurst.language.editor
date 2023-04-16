@@ -38,7 +38,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
     protected fun connectWorker(workerTokenizer: AglTokenizerByWorker) {
         this.workerTokenizer = workerTokenizer
         this.aglWorker.initialise()
-        this.aglWorker.setStyleResult = { message -> if (message.success) this.resetTokenization() else this.log(LogLevel.Error, message.message,null) }
+        this.aglWorker.setStyleResult = { message -> if (message.status==MessageStatus.SUCCESS) this.resetTokenization() else this.log(LogLevel.Error, message.message,null) }
         this.aglWorker.processorCreateResult = this::processorCreateResult
         this.aglWorker.syntaxAnalyserConfigureResult = this::syntaxAnalyserConfigureResult
         this.aglWorker.parseResult = this::parseResult
@@ -49,7 +49,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
 
     private fun processorCreateResult(message: MessageProcessorCreateResponse) {
         if (message.editorId == this.editorId && message.languageId == this.languageIdentity) {
-            if (message.success) {
+            if (message.status==MessageStatus.SUCCESS) {
                 when (message.message) {
                     "OK" -> {
                         this.log(LogLevel.Debug, "New Processor created for ${editorId}", null)
@@ -73,16 +73,16 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
     }
 
     private fun syntaxAnalyserConfigureResult(message:MessageSyntaxAnalyserConfigureResponse) {
-        if (message.success) {
-            //?
-        } else {
+        if (message.status==MessageStatus.FAILURE) {
             this.log(LogLevel.Error, "SyntaxAnalyserConfigure failed for ${this.languageIdentity}: ${message.message}",null)
+        } else {
+            // nothing
         }
         this.createIssueMarkers(message.issues.toList())
     }
 
     private fun lineTokens(event: MessageLineTokens) {
-        if (event.success) {
+        if (event.status==MessageStatus.SUCCESS) {
             this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}",null)
             this.workerTokenizer.receiveTokens(event.lineTokens)
             this.resetTokenization()
@@ -92,54 +92,60 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
     }
 
     private fun parseResult(event: MessageParseResult) {
-        if (event.success) {
-            this.resetTokenization()
-            this.createIssueMarkers(event.issues.toList())
-            val treeStr = event.treeSerialised
-            val treeJS = treeStr?.let {
-                val unescaped = JsonString.decode(it) // double decode the string as it itself is json
-                JSON.parse<Any>(unescaped)
+        when(event.status) {
+            MessageStatus.START ->{
+                this.notifyParse(ParseEvent(EventStatus.START, "Start", null, emptyList()))
             }
-            this.notifyParse(ParseEvent(true, "Success", treeJS, event.issues.toList()))
-        } else {
-            if ("Start" == event.message) {
-                this.notifyParse(ParseEvent(false, "Start", null, emptyList()))
-            } else {
+            MessageStatus.FAILURE ->{
                 // a failure to parse is not an 'error' in the editor - we expect some parse failures
                 this.log(LogLevel.Debug, "Cannot parse text in ${this.editorId} for language ${this.languageIdentity}: ${event.message}",null)
                 // parse failed so re-tokenize from scan
                 this.workerTokenizer.reset()
                 this.resetTokenization()
                 this.createIssueMarkers(event.issues.toList())
-                this.notifyParse(ParseEvent(false, event.message, null, event.issues.toList()))
+                this.notifyParse(ParseEvent(EventStatus.FAILURE, event.message, null, event.issues.toList()))
+            }
+            MessageStatus.SUCCESS -> {
+                this.resetTokenization()
+                this.createIssueMarkers(event.issues.toList())
+                val treeStr = event.treeSerialised
+                val treeJS = treeStr?.let {
+                    val unescaped = JsonString.decode(it) // double decode the string as it itself is json
+                    JSON.parse<Any>(unescaped)
+                }
+                this.notifyParse(ParseEvent(EventStatus.SUCCESS, "Success", treeJS, event.issues.toList()))
             }
         }
     }
 
     private fun syntaxAnalysisResult(event: MessageSyntaxAnalysisResult) {
-        if (event.success) {
-            this.createIssueMarkers(event.issues.toList())
-            this.notifySyntaxAnalysis(SyntaxAnalysisEvent(true, "Success", event.asm, event.issues.toList()))
-        } else {
-            if ("Start" == event.message) {
-                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(false, "Start", null, emptyList()))
-            } else {
+        when(event.status) {
+            MessageStatus.START ->{
+                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.START, "Start", null, emptyList()))
+            }
+            MessageStatus.FAILURE ->{
                 this.createIssueMarkers(event.issues.toList())
-                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(false, event.message, event.asm, event.issues.toList()))
+                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.FAILURE, event.message, event.asm, event.issues.toList()))
+            }
+            MessageStatus.SUCCESS -> {
+                this.createIssueMarkers(event.issues.toList())
+                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.SUCCESS, "Success", event.asm, event.issues.toList()))
             }
         }
     }
 
     private fun semanticAnalysisResult(event: MessageSemanticAnalysisResult) {
-        if (event.success) {
-            this.createIssueMarkers(event.issues.toList())
-            this.notifySemanticAnalysis(SemanticAnalysisEvent(true, "Success", event.issues.toList()))
-        } else {
-            if ("Start" == event.message) {
-                this.notifySemanticAnalysis(SemanticAnalysisEvent(false, "Start", emptyList()))
-            } else {
+        when(event.status) {
+            MessageStatus.START ->{
+                this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.START, "Start",null, emptyList()))
+            }
+            MessageStatus.FAILURE ->{
                 this.createIssueMarkers(event.issues.toList())
-                this.notifySemanticAnalysis(SemanticAnalysisEvent(false, event.message, event.issues.toList()))
+                this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.FAILURE, event.message, event.asm, event.issues.toList()))
+            }
+            MessageStatus.SUCCESS -> {
+                this.createIssueMarkers(event.issues.toList())
+                this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.SUCCESS, "Success", event.asm, event.issues.toList()))
             }
         }
     }

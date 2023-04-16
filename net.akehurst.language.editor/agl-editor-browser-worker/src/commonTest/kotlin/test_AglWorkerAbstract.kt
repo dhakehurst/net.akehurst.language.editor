@@ -26,7 +26,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.sppt.SPPTNode
-import net.akehurst.language.api.typeModel.TypeModel
+import net.akehurst.language.api.typemodel.TypeModel
 import net.akehurst.language.editor.common.messages.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test

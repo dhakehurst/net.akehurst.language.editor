@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.*
@@ -121,7 +122,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         this.sendToWorker(MessageParserInterruptRequest(languageId, editorId, sessionId, "New parse request"))
     }
 
-    fun processSentence(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context: Any?) {
+    fun processSentence(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context: SentenceContext<Any>?) {
         this.sendToWorker(MessageProcessRequest(languageId, editorId, sessionId, goalRuleName, sentence, context))
     }
 

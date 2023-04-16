@@ -25,6 +25,10 @@ enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, Al
 
 interface AglEditor<AsmType : Any, ContextType : Any> {
 
+    /*
+     * identifies the editor, important that it is unique wrt to each SharedWorker
+     * used to identify source and target of messages to/from the worker
+     */
     val editorId: String
 
     /**
@@ -79,6 +83,8 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     fun destroy()
 }
 
+enum class EventStatus{ START, FAILURE, SUCCESS }
+
 /**
  * Three kinds of event,
  * Start -> success==false, message==Start
@@ -86,13 +92,13 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
  * Failure -> success==false
  */
 class ParseEvent(
-    val success: Boolean,
+    val status: EventStatus,
     val message: String,
     val tree: Any?,
     val issues: List<LanguageIssue>
 ) {
-    val isStart:Boolean = false==success && "Start"==message
-    val failure:Boolean= success.not() && isStart.not()
+    val isStart:Boolean = status==EventStatus.START
+    val failure:Boolean= status==EventStatus.FAILURE
 }
 
 /**
@@ -102,13 +108,13 @@ class ParseEvent(
  * Failure -> success==false
  */
 class SyntaxAnalysisEvent(
-    val success:Boolean,
+    val status: EventStatus,
     val message: String,
     val asm:Any?,
     val issues: List<LanguageIssue>
 ) {
-    val isStart:Boolean = false==success && "Start"==message
-    val failure:Boolean= success.not() && isStart.not()
+    val isStart:Boolean = status==EventStatus.START
+    val failure:Boolean= status==EventStatus.FAILURE
 }
 
 /**
@@ -118,10 +124,11 @@ class SyntaxAnalysisEvent(
  * Failure -> success==false
  */
 class SemanticAnalysisEvent(
-    val success:Boolean,
+    val status: EventStatus,
     val message: String,
+    val asm:Any?,
     val issues: List<LanguageIssue>
 ) {
-    val isStart:Boolean = false==success && "Start"==message
-    val failure:Boolean= success.not() && isStart.not()
+    val isStart:Boolean = status==EventStatus.START
+    val failure:Boolean= status==EventStatus.FAILURE
 }

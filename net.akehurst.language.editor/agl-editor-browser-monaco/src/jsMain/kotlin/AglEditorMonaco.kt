@@ -28,6 +28,7 @@ import monaco.editor.ITokenThemeRule
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageProcessorPhase
+import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.api.*
@@ -261,7 +262,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     override fun processSentence() {
         this.clearErrorMarkers()
         this.aglWorker.interrupt(languageIdentity, editorId, "")//TODO: get session
-        this.aglWorker.processSentence(languageIdentity, editorId, "", this.agl.goalRule, this.text, this.agl.context)
+        this.aglWorker.processSentence(languageIdentity, editorId, "", this.agl.goalRule, this.text, this.agl.context as SentenceContext<Any>)
     }
 
     /*

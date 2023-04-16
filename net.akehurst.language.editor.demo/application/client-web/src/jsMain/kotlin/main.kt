@@ -31,6 +31,7 @@ import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.EventStatus
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.browser.ace.attachToAce
 import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
@@ -70,7 +71,7 @@ object Constants {
 fun main() {
 
     createBaseDom("div#agl-demo")
-    val logger = DemoLogger()
+    val logger = DemoLogger(LogLevel.All)
 
     val loggingLevel = document.querySelector("#agl-demo-logging-level")!! as HTMLSelectElement
     loggingLevel.addEventListener("change", {
@@ -369,7 +370,7 @@ class Demo(
         Agl.registry.unregister(Constants.sentenceLanguageId)
         sentenceEditor.languageIdentity = Agl.registry.register(
             identity = Constants.sentenceLanguageId,
-            grammarStr = null,
+            grammarStr = "",
             buildForDefaultGoal = false,
             aglOptions = Agl.options {
                 semanticAnalysis {
@@ -385,52 +386,45 @@ class Demo(
 
         val styleContext = ContextFromGrammar()
         val scopeContext = ContextFromTypeModel()
-        var sentenceScopeModel: ScopeModel? = null
+        //var sentenceScopeModel: ScopeModel? = null
 
-        grammarEditor.onParse { event ->
-            when {
-                event.isStart -> Unit
-                event.success -> {
+        grammarEditor.onSemanticAnalysis { event ->
+            when(event.status) {
+                EventStatus.START -> Unit
+
+                EventStatus.FAILURE -> {
+                    styleContext.clear()
+                    scopeContext.clear()
+                    console.error(grammarEditor.editorId + ": " + event.message)
+                    sentenceEditor.languageDefinition.grammarStr = ""
+                }
+                EventStatus.SUCCESS -> {
+                    styleContext.clear()
+                    scopeContext.clear()
+                    val grammar = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
+                    styleContext.createScopeFrom(grammar.last())
+                    scopeContext.createScopeFrom(TypeModelFromGrammar(grammar.last()))
                     try {
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
                     } catch (t: Throwable) {
                         console.error(grammarEditor.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.grammarStr = null
+                        sentenceEditor.languageDefinition.grammarStr = ""
                     }
-                }
-
-                event.failure -> {
-                    console.error(grammarEditor.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.grammarStr = null
-                }
-
-                else -> {
-                }
-            }
-        }
-        grammarEditor.onSyntaxAnalysis { event ->
-            when {
-                event.isStart -> Unit
-                event.success -> {
-                    val grammar = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
-                    styleContext.createScopeFrom(grammar.last())
-                    scopeContext.createScopeFrom(TypeModelFromGrammar(grammar.last()))
-                }
-
-                event.failure -> {
-                    styleContext.clear()
-                    scopeContext.clear()
                 }
             }
             referencesEditor.sentenceContext = scopeContext
             styleEditor.sentenceContext = styleContext
         }
 
-        styleEditor.onSyntaxAnalysis { event ->
-            when {
-                event.isStart -> Unit
-                event.success -> {
+        styleEditor.onSemanticAnalysis { event ->
+            when(event.status) {
+                EventStatus.START -> Unit
+                EventStatus.FAILURE -> {
+                    console.error(styleEditor.editorId + ": " + event.message)
+                    sentenceEditor.languageDefinition.styleStr = ""
+                }
+                EventStatus.SUCCESS -> {
                     try {
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
                         sentenceEditor.languageDefinition.styleStr = styleEditor.text
@@ -439,33 +433,22 @@ class Demo(
                         sentenceEditor.languageDefinition.styleStr = ""
                     }
                 }
-
-                event.failure -> {
-                    console.error(styleEditor.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.styleStr = ""
-                }
-
-                else -> Unit
             }
         }
-        referencesEditor.onSyntaxAnalysis { event ->
-            when {
-                event.isStart -> Unit
-                event.success -> {
+        referencesEditor.onSemanticAnalysis { event ->
+            when(event.status) {
+                EventStatus.START -> Unit
+                EventStatus.FAILURE -> {
+                    console.error(referencesEditor.editorId + ": " + event.message)
+                }
+                EventStatus.SUCCESS -> {
                     try {
-                        sentenceScopeModel = event.asm as ScopeModel
+                        //sentenceScopeModel = event.asm as ScopeModel?
                         console.asDynamic().debug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
                         sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
                     } catch (t: Throwable) {
                         console.error(referencesEditor.editorId + ": " + t.message, t)
                     }
-                }
-
-                event.failure -> {
-                    console.error(referencesEditor.editorId + ": " + event.message)
-                }
-
-                else -> {
                 }
             }
         }
@@ -490,14 +473,13 @@ class Demo(
         )
 
         sentenceEditor.onParse { event ->
-            when {
-                event.success -> {
+            when(event.status) {
+                EventStatus.START ->loading(true, true)
+                EventStatus.FAILURE -> loading(false, false)
+                EventStatus.SUCCESS -> {
                     trees["parse"]!!.loading = false
                     trees["parse"]!!.root = event.tree
                 }
-
-                event.isStart -> loading(true, true)
-                else -> loading(false, false)
             }
         }
 
@@ -566,12 +548,37 @@ class Demo(
         )
 
         sentenceEditor.onSyntaxAnalysis { event ->
-            when {
-                event.isStart -> {
+            when(event.status) {
+                EventStatus.START -> {
+                    //trees["ast"]!!.loading = true
+                }
+                EventStatus.FAILURE -> {//Failure
+                    console.error(event.message)
+                    trees["ast"]!!.loading = false
+                    trees["ast"]!!.root = event.asm
+                }
+                EventStatus.SUCCESS -> {
+                    trees["ast"]!!.loading = false
+                    trees["ast"]!!.root = if (event.asm is AsmSimple) {
+                        val rts = (event.asm as AsmSimple).rootElements
+                        when {
+                            rts.size == 0 -> "<Empty>"
+                            else -> rts
+                        }
+                    } else {
+                        "<Unknown>"
+                    }
+                }
+            }
+        }
+
+        sentenceEditor.onSemanticAnalysis { event ->
+            when(event.status) {
+                EventStatus.START -> {
                     //trees["ast"]!!.loading = true
                 }
 
-                event.success -> {
+                EventStatus.SUCCESS -> {
                     trees["ast"]!!.loading = false
                     trees["ast"]!!.root = if (event.asm is AsmSimple) {
                         val rts = (event.asm as AsmSimple).rootElements
@@ -584,10 +591,10 @@ class Demo(
                     }
                 }
 
-                else -> {//Failure
+                EventStatus.FAILURE -> {//Failure
                     console.error(event.message)
                     trees["ast"]!!.loading = false
-                    trees["ast"]!!.root = event.asm
+                    //trees["ast"]!!.root = event.asm
                 }
             }
         }
@@ -615,11 +622,11 @@ class Demo(
         styleEditor.text = eg.style
         referencesEditor.text = eg.references
         //formatEditor.text = eg.format
+        sentenceEditor.text = eg.sentence
         sentenceEditor.sentenceContext = ContextSimple()
-        sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
         sentenceEditor.languageDefinition.styleStr = styleEditor.text
         sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
-        sentenceEditor.text = eg.sentence
+        sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
     }
 
     fun finalize() {

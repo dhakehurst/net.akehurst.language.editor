@@ -17,16 +17,34 @@
 package net.akehurst.language.editor.application.client.web
 
 import net.akehurst.language.editor.api.LogLevel
-import kotlin.js.Console
-import kotlin.reflect.KFunction1
 
-fun Console.fatal(vararg o: Any?): Unit = console.asDynamic().debug()
-fun Console.debug(vararg o: Any?): Unit = console.asDynamic().debug()
-fun Console.trace(vararg o: Any?): Unit = console.asDynamic().debug()
+class DemoLogger(
+    var level: LogLevel
+) {
 
-class DemoLogger {
+    fun logFatal(msg: String?) {
+        console.error("Fatal: $msg")
+    }
 
-    var level = LogLevel.Information
+    fun logError(msg: String?) {
+        console.error("Error: $msg")
+    }
+
+    fun logWarn(msg: String?) {
+        console.warn("Warn: $msg")
+    }
+
+    fun logInfo(msg: String?) {
+        console.info("Info: $msg")
+    }
+
+    fun logDebug(msg: String?) {
+        console.asDynamic().debug("Debug: $msg")
+    }
+
+    fun logTrace(msg: String?) {
+        console.asDynamic().debug("Trace: $msg")
+    }
 
     fun log(lvl: LogLevel, msg: String, t: Throwable?) {
         when {
@@ -37,18 +55,18 @@ class DemoLogger {
 
     private fun logAll(lvl: LogLevel, msg: String, t: Throwable?) {
         val func = when (lvl) {
-            LogLevel.Fatal -> console::fatal
-            LogLevel.Error -> console::error
-            LogLevel.Warning -> console::warn
-            LogLevel.Information -> console::info
-            LogLevel.Debug -> console::debug
-            LogLevel.Trace -> console::trace
+            LogLevel.Fatal -> this::logFatal
+            LogLevel.Error -> this::logError
+            LogLevel.Warning -> this::logWarn
+            LogLevel.Information -> this::logInfo
+            LogLevel.Debug -> this::logDebug
+            LogLevel.Trace -> this::logTrace
             else -> error("Internal Error: cannot log a message to '$lvl'")
         }
         if (null == t) {
-            func(arrayOf(msg))
+            func(msg)
         } else {
-            func(arrayOf(msg))
+            func(msg)
             t.printStackTrace()
         }
     }
