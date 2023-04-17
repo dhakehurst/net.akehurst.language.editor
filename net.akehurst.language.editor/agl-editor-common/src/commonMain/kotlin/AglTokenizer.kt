@@ -22,7 +22,7 @@ interface AglTokenizerByWorker {
 
     var acceptingTokens: Boolean
 
-    fun receiveTokens(lineTokens: Array<Array<AglToken>>)
+    fun receiveTokens(lineTokens: List<List<AglToken>>)
     fun reset()
 
 }

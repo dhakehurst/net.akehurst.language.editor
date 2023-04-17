@@ -55,7 +55,7 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
         this.tokensByLine.clear()
     }
 
-    override fun receiveTokens(tokens: Array<Array<AglToken>>) {
+    override fun receiveTokens(tokens: List<List<AglToken>>) {
         if (this.acceptingTokens) {
             tokens.forEachIndexed { index, tokens ->
                 this.tokensByLine[index] = tokens.toList()

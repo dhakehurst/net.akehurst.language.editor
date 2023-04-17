@@ -17,14 +17,13 @@
 package net.akehurst.language.editor.worker
 
 import net.akehurst.kotlin.json.JsonString
-import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
+import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageProcessor
 import net.akehurst.language.api.sppt.SPPTNode
 import net.akehurst.language.api.sppt.SharedPackedParseTree
-import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.messages.*
 
@@ -194,11 +193,11 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     private fun semanticAnalysis(port: Any, message: MessageProcessRequest<ContextType>, proc: LanguageProcessor<AsmType, ContextType>, asm: AsmType, locationMap: Map<Any, InputLocation>) {
         try {
             sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.START, "Start", emptyList(), null))
-            val context = message.context as ContextType
             val result = proc.semanticAnalysis(asm, Agl.options {
                 semanticAnalysis {
                     locationMap(locationMap)
-                    context(context)
+                    context(message.context)
+                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS,false)
                 }
             })
             sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(),asm))
@@ -227,11 +226,37 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                 val lineTokens = sppt.tokensByLineAll().mapIndexed { lineNum, leaves ->
                     style.transformToTokens(leaves)
                 }
-                val lt = lineTokens.map { it.toTypedArray() }.toTypedArray()
-                sendMessage(port, MessageLineTokens(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", lt))
+                sendMessage(port, MessageLineTokens(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", lineTokens))
             } catch (t: Throwable) {
-                sendMessage(port, MessageLineTokens(languageId, editorId, sessionId, MessageStatus.FAILURE, t.message!!, emptyArray()))
+                sendMessage(port, MessageLineTokens(languageId, editorId, sessionId, MessageStatus.FAILURE, t.message!!, emptyList()))
             }
+        }
+    }
+
+    private fun grammarAmbiguityAnalysis(port: Any, message: MessageGrammarAmbiguityAnalysisRequest) {
+        try {
+            sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.START,null, emptyList()))
+            val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
+            val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
+            val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(listOf(proc.grammar!!), Agl.options {
+                semanticAnalysis {
+                    locationMap(proc.syntaxAnalyser!!.locationMap)
+                    //context(message.context)
+                }
+            })
+            sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS,null, result.issues.all.toList()))
+        } catch (t: Throwable) {
+            sendMessage(
+                port,
+                MessageGrammarAmbiguityAnalysisResult(
+                    message.languageId,
+                    message.editorId,
+                    message.sessionId,
+                    MessageStatus.FAILURE,
+                    "Exception during ambiguityAnalysis - ${t::class.simpleName} - ${t.message!!}",
+                    emptyList()
+                )
+            )
         }
     }
 

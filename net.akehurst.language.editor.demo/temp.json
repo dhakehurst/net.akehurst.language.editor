@@ -1,117 +1,248 @@
 {
   "$type": "$OBJECT",
-  "$class": "net.akehurst.language.editor.common.messages.MessageProcessRequest",
-  "languageId": "net.akehurst.language.agl.AglStyle",
-  "editorId": "language-style",
-  "sessionId": "session3",
-  "goalRuleName": null,
-  "text": "'primitive' {\n  foreground: purple;\n  font-style: bold;\n}\n'class' {\n  foreground: purple;\n  font-style: bold;\n}\nID2 {\n  foreground: blue;\n  font-style: italic;\n}\n'{' {\n  foreground: darkgreen;\n  font-style: bold;\n}\n'}' {\n  foreground: darkgreen;\n  font-style: bold;\n}\nproperty {\n  background: lightgray;\n}\ntypeReference {\n  foreground: green;\n  background: lightblue;\n}",
-  "context": {
+  "$class": "net.akehurst.language.editor.common.messages.MessageSemanticAnalysisResult",
+  "languageId": "testLang",
+  "editorId": "tesEditor",
+  "sessionId": "testSession",
+  "status": {
+    "$type": "$ENUM",
+    "$class": "net.akehurst.language.editor.common.messages.MessageStatus",
+    "$value": "SUCCESS"
+  },
+  "message": "OK",
+  "issues": {
+    "$type": "$LIST",
+    "$elements": []
+  },
+  "asm": {
     "$type": "$OBJECT",
-    "$class": "net.akehurst.language.agl.syntaxAnalyser.ContextSimple",
-    "rootScope": {
-      "$type": "$OBJECT",
-      "$class": "net.akehurst.language.api.asm.ScopeSimple",
-      "parent": null,
-      "forReferenceInParent": "",
-      "forTypeName": "§root",
-      "childScopes": {
-        "$type": "$MAP",
-        "$entries": []
-      },
-      "items": {
-        "$type": "$MAP",
-        "$entries": [
-          {
-            "$key": "Rule",
-            "$value": {
-              "$type": "$MAP",
-              "$entries": [
-                {
-                  "$key": "WS",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/WS"
-                  }
-                },
-                {
-                  "$key": "unit",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/unit"
-                  }
-                },
-                {
-                  "$key": "declaration",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/declaration"
-                  }
-                },
-                {
-                  "$key": "primitive",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/primitive"
-                  }
-                },
-                {
-                  "$key": "datatype",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/datatype"
-                  }
-                },
-                {
-                  "$key": "property",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/property"
-                  }
-                },
-                {
-                  "$key": "typeReference",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/typeReference"
-                  }
-                },
-                {
-                  "$key": "typeArguments",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/typeArguments"
-                  }
-                },
-                {
-                  "$key": "ID",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/ID"
-                  }
-                },
-                {
-                  "$key": "type",
-                  "$value": {
-                    "$type": "$OBJECT",
-                    "$class": "net.akehurst.language.api.asm.AsmElementPath",
-                    "value": "Test/type"
-                  }
+    "$class": "net.akehurst.language.api.asm.AsmSimple",
+    "rootElements": {
+      "$type": "$LIST",
+      "$elements": [
+        {
+          "$type": "$OBJECT",
+          "$class": "net.akehurst.language.api.asm.AsmElementSimple",
+          "asmPath": {
+            "$type": "$OBJECT",
+            "$class": "net.akehurst.language.api.asm.AsmElementPath",
+            "value": "/0"
+          },
+          "asm": {
+            "$ref": "/asm"
+          },
+          "typeName": "Unit",
+          "properties": {
+            "$type": "$MAP",
+            "$entries": [
+              {
+                "$key": "declaration",
+                "$value": {
+                  "$type": "$OBJECT",
+                  "$class": "net.akehurst.language.api.asm.AsmElementProperty",
+                  "name": "declaration",
+                  "childIndex": {
+                    "$type": "$PRIMITIVE",
+                    "$class": "kotlin.Int",
+                    "$value": 0
+                  },
+                  "value": {
+                    "$type": "$LIST",
+                    "$elements": [
+                      {
+                        "$type": "$OBJECT",
+                        "$class": "net.akehurst.language.api.asm.AsmElementSimple",
+                        "asmPath": {
+                          "$type": "$OBJECT",
+                          "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                          "value": "/0/declaration/0"
+                        },
+                        "asm": {
+                          "$ref": "/asm"
+                        },
+                        "typeName": "Primitive",
+                        "properties": {
+                          "$type": "$MAP",
+                          "$entries": [
+                            {
+                              "$key": "id",
+                              "$value": {
+                                "$type": "$OBJECT",
+                                "$class": "net.akehurst.language.api.asm.AsmElementProperty",
+                                "name": "id",
+                                "childIndex": {
+                                  "$type": "$PRIMITIVE",
+                                  "$class": "kotlin.Int",
+                                  "$value": 0
+                                },
+                                "value": "String",
+                                "isReference": false
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "$type": "$OBJECT",
+                        "$class": "net.akehurst.language.api.asm.AsmElementSimple",
+                        "asmPath": {
+                          "$type": "$OBJECT",
+                          "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                          "value": "/0/declaration/1"
+                        },
+                        "asm": {
+                          "$ref": "/asm"
+                        },
+                        "typeName": "Datatype",
+                        "properties": {
+                          "$type": "$MAP",
+                          "$entries": [
+                            {
+                              "$key": "id",
+                              "$value": {
+                                "$type": "$OBJECT",
+                                "$class": "net.akehurst.language.api.asm.AsmElementProperty",
+                                "name": "id",
+                                "childIndex": {
+                                  "$type": "$PRIMITIVE",
+                                  "$class": "kotlin.Int",
+                                  "$value": 0
+                                },
+                                "value": "A",
+                                "isReference": false
+                              }
+                            },
+                            {
+                              "$key": "property",
+                              "$value": {
+                                "$type": "$OBJECT",
+                                "$class": "net.akehurst.language.api.asm.AsmElementProperty",
+                                "name": "property",
+                                "childIndex": {
+                                  "$type": "$PRIMITIVE",
+                                  "$class": "kotlin.Int",
+                                  "$value": 0
+                                },
+                                "value": {
+                                  "$type": "$LIST",
+                                  "$elements": [
+                                    {
+                                      "$type": "$OBJECT",
+                                      "$class": "net.akehurst.language.api.asm.AsmElementSimple",
+                                      "asmPath": {
+                                        "$type": "$OBJECT",
+                                        "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                                        "value": "/0/declaration/1/property/0"
+                                      },
+                                      "asm": {
+                                        "$ref": "/asm"
+                                      },
+                                      "typeName": "Property",
+                                      "properties": {
+                                        "$type": "$MAP",
+                                        "$entries": [
+                                          {
+                                            "$key": "id",
+                                            "$value": {
+                                              "$type": "$OBJECT",
+                                              "$class": "net.akehurst.language.api.asm.AsmElementProperty",
+                                              "name": "id",
+                                              "childIndex": {
+                                                "$type": "$PRIMITIVE",
+                                                "$class": "kotlin.Int",
+                                                "$value": 0
+                                              },
+                                              "value": "a",
+                                              "isReference": false
+                                            }
+                                          },
+                                          {
+                                            "$key": "typeReference",
+                                            "$value": {
+                                              "$type": "$OBJECT",
+                                              "$class": "net.akehurst.language.api.asm.AsmElementProperty",
+                                              "name": "typeReference",
+                                              "childIndex": {
+                                                "$type": "$PRIMITIVE",
+                                                "$class": "kotlin.Int",
+                                                "$value": 0
+                                              },
+                                              "value": {
+                                                "$type": "$OBJECT",
+                                                "$class": "net.akehurst.language.api.asm.AsmElementSimple",
+                                                "asmPath": {
+                                                  "$type": "$OBJECT",
+                                                  "$class": "net.akehurst.language.api.asm.AsmElementPath",
+                                                  "value": "/0/declaration/1/property/0/typeReference"
+                                                },
+                                                "asm": {
+                                                  "$ref": "/asm"
+                                                },
+                                                "typeName": "TypeReference",
+                                                "properties": {
+                                                  "$type": "$MAP",
+                                                  "$entries": [
+                                                    {
+                                                      "$key": "type",
+                                                      "$value": {
+                                                        "$type": "$OBJECT",
+                                                        "$class": "net.akehurst.language.api.asm.AsmElementProperty",
+                                                        "name": "type",
+                                                        "childIndex": {
+                                                          "$type": "$PRIMITIVE",
+                                                          "$class": "kotlin.Int",
+                                                          "$value": 0
+                                                        },
+                                                        "value": {
+                                                          "$type": "$OBJECT",
+                                                          "$class": "net.akehurst.language.api.asm.AsmElementReference",
+                                                          "reference": "String",
+                                                          "value": null
+                                                        },
+                                                        "isReference": true
+                                                      }
+                                                    },
+                                                    {
+                                                      "$key": "typeArguments",
+                                                      "$value": {
+                                                        "$type": "$OBJECT",
+                                                        "$class": "net.akehurst.language.api.asm.AsmElementProperty",
+                                                        "name": "typeArguments",
+                                                        "childIndex": {
+                                                          "$type": "$PRIMITIVE",
+                                                          "$class": "kotlin.Int",
+                                                          "$value": 0
+                                                        },
+                                                        "value": null,
+                                                        "isReference": false
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              "isReference": false
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                },
+                                "isReference": false
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "isReference": false
                 }
-              ]
-            }
+              }
+            ]
           }
-        ]
-      }
+        }
+      ]
     }
   }
 }

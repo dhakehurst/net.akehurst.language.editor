@@ -932,6 +932,36 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.context as ContextFromTypeModel, actual.context as ContextFromTypeModel)
     }
 
+    @Test
+    fun MessageProcessRequest_com_user_grammar_with_extends() {
+        val userGrammar = """
+                namespace test
+                grammar Base {
+                    A = 'a' ;
+                }
+                grammar Test extends Base {
+                    S = A ;
+                }
+            """.trimIndent()
+        val expected = MessageProcessRequest(
+            Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId,
+            null,
+            userGrammar,
+            null
+        )
+
+        val jsonStr = AglWorkerSerialisation.serialise(expected)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<ContextSimple>>(jsonStr)
+
+        assertEquals(expected.languageId, actual.languageId)
+        assertEquals(expected.editorId, actual.editorId)
+        assertEquals(expected.sessionId, actual.sessionId)
+        assertEquals(expected.goalRuleName, actual.goalRuleName)
+        assertEquals(expected.text, actual.text)
+        assertEquals(expected.context, actual.context)
+    }
+
+
     // --- MessageParseResult ---
     @Test
     fun MessageParseResult_com_Start() {
@@ -1057,9 +1087,7 @@ class test_AglWorkerSerialisation {
             MessageStatus.SUCCESS,
             "OK",
             emptyList(),
-            asmSimple() {
-
-            }
+            listOf(proc.grammar!!)
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
@@ -1117,14 +1145,32 @@ class test_AglWorkerSerialisation {
     }
 
     @Test
-    fun MessageSemanticAnalysisResult_com_OK() {
+    fun MessageSemanticAnalysisResult_com_OK_with_reference() {
         val expected = MessageSemanticAnalysisResult(
             "testLang", "tesEditor", "testSession",
             MessageStatus.SUCCESS,
             "OK",
             emptyList(),
             asmSimple() {
-
+                element("Unit") {
+                    propertyListOfElement("declaration") {
+                        element("Primitive") {
+                            propertyString("id", "String")
+                        }
+                        element("Datatype") {
+                            propertyString("id", "A")
+                            propertyListOfElement("property") {
+                                element("Property") {
+                                    propertyString("id", "a")
+                                    propertyElementExplicitType("typeReference", "TypeReference") {
+                                        reference("type", "String")
+                                        propertyNull("typeArguments")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         )
 
@@ -1137,7 +1183,6 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.message, actual.message)
         assertEquals(expected.issues, actual.issues)
     }
-
 
     @Test
     fun MessageProcessRequest_com_ContextFromTypeModel() {

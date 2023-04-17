@@ -209,11 +209,11 @@ div#agl-demo tab#Sentence {
     grid-template-areas: "sentence trees";
 }
 
-div#agl-demo section#sentence {
+div#agl-demo tab#Sentence section.sentence {
     grid-area: sentence;
 }
 
-div#agl-demo section#trees {
+div#agl-demo tab#Sentence section.trees {
     grid-area: trees;
     background-color: blanchedalmond;
 }
@@ -229,6 +229,22 @@ div#agl-demo tab#ast {
 div#agl-demo agl-editor {
     display: grid;
     grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+div#agl-demo tab#Grammar {
+    grid-template-columns: 5fr 4fr;
+    grid-template-areas: "grammar typemodel";
+}
+
+div#agl-demo tab#Grammar section.grammar {
+    grid-area: grammar;
+}
+
+div#agl-demo tab#Grammar section.typemodel {
+    grid-area: typemodel;
+    background-color: blanchedalmond;
+    display: flex;
+    flex-direction: column;
 }
 
 div#agl-demo section.configuration {

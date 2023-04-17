@@ -6,13 +6,13 @@ import org.w3c.dom.asList
 import org.w3c.dom.events.Event
 
 class TreeViewFunctions<T>(
-        val label: (node: T) -> String,
-        val hasChildren: (node: T) -> Boolean,
-        val children: (node: T) -> Array<T>
+    val label: (root: Any?, node: T) -> String,
+    val hasChildren: (node: T) -> Boolean,
+    val children: (node: T) -> Array<T>
 )
 
 class TreeView(
-        val element: Element
+    val element: Element
 ) {
 
     companion object {
@@ -30,7 +30,7 @@ class TreeView(
 
     val document: Document get() = element.ownerDocument!!
 
-    private var _loadingElement:Element = this.document.createElement("div")
+    private var _loadingElement: Element = this.document.createElement("div")
     private var _loading = false
     var loading
         get() = this._loading
@@ -41,27 +41,31 @@ class TreeView(
 
     var treeFunctions: TreeViewFunctions<Any>? = null
 
-    var root: Any?
-        get() = null
-        set(value) {
-            while (null != this.element.firstChild) {
-                this.element.removeChild(this.element.firstChild!!)
-            }
-            if (null == value) {
-            } else {
-                this.addNode(this.element, value)
-            }
-        }
-
     init {
         this._loadingElement.setAttribute("class", "treeview-loading")
     }
 
-    fun addNode(parentElement: Element, node: Any) {
+    fun setRoots(roots: List<Any>) {
+        this.clear()
+        when {
+            roots.isEmpty() -> addNode(this.element, null, "<Empty>")
+            else -> roots.forEach {
+                this.addNode(this.element, it, it)
+            }
+        }
+    }
+
+    fun clear() {
+        while (null != this.element.firstChild) {
+            this.element.removeChild(this.element.firstChild!!)
+        }
+    }
+
+    fun addNode(parentElement: Element, root:Any?, node: Any) {
         if (this.treeFunctions!!.hasChildren(node)) {
             val branchEl = document.createElement("treeview-branch")
             parentElement.append(branchEl)
-            this.setLabel(branchEl, this.treeFunctions!!.label(node))
+            this.setLabel(branchEl, this.treeFunctions!!.label(root, node))
             val childrenEl = document.createElement("treeview-children")
             branchEl.append(childrenEl)
             branchEl.addEventListener("click", {
@@ -74,14 +78,14 @@ class TreeView(
                 if (null == childrenEl.firstChild) {
                     val children = this.treeFunctions!!.children(node)
                     children.forEach {
-                        this.addNode(childrenEl, it)
+                        this.addNode(childrenEl, root, it)
                     }
                 }
             })
         } else {
             val leafEl = document.createElement("treeview-leaf")
             parentElement.append(leafEl)
-            this.setLabel(leafEl, this.treeFunctions!!.label(node))
+            this.setLabel(leafEl, this.treeFunctions!!.label(root, node))
             leafEl.addEventListener("click", { it.stopPropagation() })
         }
     }
@@ -92,7 +96,7 @@ class TreeView(
         nodeElement.appendChild(span)
     }
 
-    private fun showLoading(visible:Boolean) {
+    private fun showLoading(visible: Boolean) {
         while (null != this.element.firstChild) {
             this.element.removeChild(this.element.firstChild!!)
         }

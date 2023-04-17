@@ -102,11 +102,13 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                 // parse failed so re-tokenize from scan
                 this.workerTokenizer.reset()
                 this.resetTokenization()
+                clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 this.notifyParse(ParseEvent(EventStatus.FAILURE, event.message, null, event.issues.toList()))
             }
             MessageStatus.SUCCESS -> {
                 this.resetTokenization()
+                clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 val treeStr = event.treeSerialised
                 val treeJS = treeStr?.let {
@@ -124,10 +126,12 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                 this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.START, "Start", null, emptyList()))
             }
             MessageStatus.FAILURE ->{
+                clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.FAILURE, event.message, event.asm, event.issues.toList()))
             }
             MessageStatus.SUCCESS -> {
+                clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.SUCCESS, "Success", event.asm, event.issues.toList()))
             }
@@ -140,10 +144,12 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                 this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.START, "Start",null, emptyList()))
             }
             MessageStatus.FAILURE ->{
+                clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.FAILURE, event.message, event.asm, event.issues.toList()))
             }
             MessageStatus.SUCCESS -> {
+                clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.SUCCESS, "Success", event.asm, event.issues.toList()))
             }

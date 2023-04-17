@@ -30,6 +30,7 @@ import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.api.style.AglStyleModel
+import net.akehurst.language.api.typemodel.*
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
 import net.akehurst.language.editor.api.LogLevel
@@ -184,12 +185,18 @@ fun createBaseDom(appDivSelector: String) {
                         class_.add("language")
                         htmlElement("tabview") {
                             htmlElement("tab") {
-                                attribute.id = "grammar"
+                                attribute.id = "Grammar"
                                 section {
+                                    class_.add("grammar")
                                     htmlElement("agl-editor") {
                                         attribute.id = Constants.grammarEditorId
                                         attribute.set("agl-language", Constants.grammarLanguageId)
                                     }
+                                }
+                                section {
+                                    class_.add("typemodel")
+                                    h3 { content = "Type Model" }
+                                    htmlElement("treeview") { attribute.id = "typemodel" }
                                 }
                             }
                             htmlElement("tab") {
@@ -286,7 +293,7 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
             AlternativeEditors.MONACO -> createMonaco(element)
             AlternativeEditors.CODEMIRROR -> createCodeMirror(element)
         }
-        ed.logger.bind =  { lvl, msg, t -> logger.log(lvl,msg,t)}
+        ed.logger.bind = { lvl, msg, t -> logger.log(lvl, msg, t) }
         Pair(element.id, ed)// (editorId)
     }
 
@@ -389,7 +396,7 @@ class Demo(
         //var sentenceScopeModel: ScopeModel? = null
 
         grammarEditor.onSemanticAnalysis { event ->
-            when(event.status) {
+            when (event.status) {
                 EventStatus.START -> Unit
 
                 EventStatus.FAILURE -> {
@@ -398,12 +405,13 @@ class Demo(
                     console.error(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
+
                 EventStatus.SUCCESS -> {
                     styleContext.clear()
                     scopeContext.clear()
-                    val grammar = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
-                    styleContext.createScopeFrom(grammar.last())
-                    scopeContext.createScopeFrom(TypeModelFromGrammar(grammar.last()))
+                    val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
+                    styleContext.createScopeFrom(grammars)
+                    scopeContext.createScopeFrom(TypeModelFromGrammar(grammars))
                     try {
                         console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
@@ -418,12 +426,13 @@ class Demo(
         }
 
         styleEditor.onSemanticAnalysis { event ->
-            when(event.status) {
+            when (event.status) {
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
                     console.error(styleEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.styleStr = ""
                 }
+
                 EventStatus.SUCCESS -> {
                     try {
                         console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
@@ -436,11 +445,12 @@ class Demo(
             }
         }
         referencesEditor.onSemanticAnalysis { event ->
-            when(event.status) {
+            when (event.status) {
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
                     console.error(referencesEditor.editorId + ": " + event.message)
                 }
+
                 EventStatus.SUCCESS -> {
                     try {
                         //sentenceScopeModel = event.asm as ScopeModel?
@@ -460,8 +470,97 @@ class Demo(
     }
 
     private fun connectTrees() {
+        trees["typemodel"]!!.treeFunctions = TreeViewFunctions<dynamic>(
+            label = { root, it ->
+                when (it) {
+                    is String -> it
+                    is List<*> -> "List"
+                    is TypeModel -> "model ${it.name}"
+                    is Map.Entry<String, RuleType> -> {
+                        val ruleName = it.key
+                        val type = it.value
+                        when (type) {
+                            is ElementType -> when {
+                                type.supertypes.isEmpty() -> "$ruleName : ${type.signature(type.typeModel)}"
+                                else -> "$ruleName : ${type.signature(type.typeModel)} -> ${type.supertypes.joinToString { it.signature(type.typeModel) }}"
+                            }
+
+                            else -> "$ruleName : ${type.signature(root as TypeModel?)}"
+                        }
+
+                    }
+
+                    is PropertyDeclaration -> "${it.name} : ${it.type.signature(root as TypeModel)}"
+                    else -> error("Internal Error: type ${it::class.simpleName} not handled")
+                }
+            },
+            hasChildren = {
+                when (it) {
+                    is String -> false
+                    is List<*> -> true
+                    is TypeModel -> it.allTypes.isNotEmpty()
+                    is Map.Entry<String, RuleType> -> {
+                        val type = it.value
+                        when (type) {
+                            is AnyType -> false
+                            is ListSimpleType -> false
+                            is ListSeparatedType -> false
+                            is NothingType -> false
+                            is StringType -> false
+                            is UnnamedSuperTypeType -> false
+                            is StructuredRuleType -> when (type) {
+                                is TupleType -> type.property.isNotEmpty()
+                                is ElementType -> type.property.isNotEmpty()
+                            }
+                        }
+                    }
+
+                    is PropertyDeclaration -> false
+                    else -> error("Internal Error: type ${it::class.simpleName} not handled")
+                }
+            },
+            children = {
+                when (it) {
+                    is String -> emptyArray<Any>()
+                    is List<*> -> it.toArray()
+                    is TypeModel -> it.types.entries.toTypedArray()
+                    is Map.Entry<String, RuleType> -> {
+                        val type = it.value
+                        when (type) {
+                            is AnyType -> emptyArray<Any>()
+                            is ListSimpleType -> emptyArray<Any>()
+                            is ListSeparatedType -> emptyArray<Any>()
+                            is NothingType -> emptyArray<Any>()
+                            is StringType -> emptyArray<Any>()
+                            is UnnamedSuperTypeType -> emptyArray<Any>()
+                            is StructuredRuleType -> when (type) {
+                                is TupleType -> type.property.values.toTypedArray()
+                                is ElementType -> type.property.values.toTypedArray()
+                            }
+                        }
+                    }
+
+                    is PropertyDeclaration -> emptyArray<Any>()
+                    else -> error("Internal Error: type ${it::class.simpleName} not handled")
+                }
+            }
+        )
+        grammarEditor.onSemanticAnalysis { event ->
+            when (event.status) {
+                EventStatus.START -> trees["typemodel"]!!.loading=true
+                EventStatus.FAILURE -> trees["typemodel"]!!.loading=false
+                EventStatus.SUCCESS -> {
+                    val typemodels = (event.asm as List<Grammar>).map {
+                        TypeModelFromGrammar(it)
+                    }
+                    trees["typemodel"]!!.loading = false
+                    trees["typemodel"]!!.setRoots(typemodels)
+                }
+            }
+        }
+
         trees["parse"]!!.treeFunctions = TreeViewFunctions<dynamic>(
-            label = {
+            label = { root, it ->
                 when (it.isBranch) {
                     false -> "${it.name} = ${it.nonSkipMatchedText}"
                     true -> it.name
@@ -473,18 +572,18 @@ class Demo(
         )
 
         sentenceEditor.onParse { event ->
-            when(event.status) {
-                EventStatus.START ->loading(true, true)
+            when (event.status) {
+                EventStatus.START -> loading(true, true)
                 EventStatus.FAILURE -> loading(false, false)
                 EventStatus.SUCCESS -> {
                     trees["parse"]!!.loading = false
-                    trees["parse"]!!.root = event.tree
+                    trees["parse"]!!.setRoots(event.tree?.let { listOf(it)}?: emptyList())
                 }
             }
         }
 
         trees["ast"]!!.treeFunctions = TreeViewFunctions<dynamic>(
-            label = {
+            label = { root, it ->
                 when {
                     it is Array<*> -> ": Array"
                     it is List<*> -> ": List"
@@ -548,53 +647,51 @@ class Demo(
         )
 
         sentenceEditor.onSyntaxAnalysis { event ->
-            when(event.status) {
+            when (event.status) {
                 EventStatus.START -> {
                     //trees["ast"]!!.loading = true
                 }
+
                 EventStatus.FAILURE -> {//Failure
                     console.error(event.message)
                     trees["ast"]!!.loading = false
-                    trees["ast"]!!.root = event.asm
+                    when(event.asm) {
+                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                        else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
+                    }
                 }
+
                 EventStatus.SUCCESS -> {
                     trees["ast"]!!.loading = false
-                    trees["ast"]!!.root = if (event.asm is AsmSimple) {
-                        val rts = (event.asm as AsmSimple).rootElements
-                        when {
-                            rts.size == 0 -> "<Empty>"
-                            else -> rts
-                        }
-                    } else {
-                        "<Unknown>"
+                    when(event.asm) {
+                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                        else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
                     }
                 }
             }
         }
 
         sentenceEditor.onSemanticAnalysis { event ->
-            when(event.status) {
+            when (event.status) {
                 EventStatus.START -> {
                     //trees["ast"]!!.loading = true
-                }
-
-                EventStatus.SUCCESS -> {
-                    trees["ast"]!!.loading = false
-                    trees["ast"]!!.root = if (event.asm is AsmSimple) {
-                        val rts = (event.asm as AsmSimple).rootElements
-                        when {
-                            rts.size == 0 -> "<Empty>"
-                            else -> rts
-                        }
-                    } else {
-                        "<Unknown>"
-                    }
                 }
 
                 EventStatus.FAILURE -> {//Failure
                     console.error(event.message)
                     trees["ast"]!!.loading = false
-                    //trees["ast"]!!.root = event.asm
+                    //when(event.asm) {
+                    //    is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                    //    else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
+                    //}
+                }
+
+                EventStatus.SUCCESS -> {
+                    trees["ast"]!!.loading = false
+                    when(event.asm) {
+                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                        else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
+                    }
                 }
             }
         }
@@ -609,9 +706,12 @@ class Demo(
             styleEditor.text = eg.style
             referencesEditor.text = eg.references
             //formatEditor.text = eg.format
+            sentenceEditor.text = ""
             sentenceEditor.sentenceContext = ContextSimple()
+            sentenceEditor.languageDefinition.styleStr = styleEditor.text
+            sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
+            sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
             sentenceEditor.text = eg.sentence
-
         })
 
         // select initial example
@@ -622,11 +722,11 @@ class Demo(
         styleEditor.text = eg.style
         referencesEditor.text = eg.references
         //formatEditor.text = eg.format
-        sentenceEditor.text = eg.sentence
         sentenceEditor.sentenceContext = ContextSimple()
         sentenceEditor.languageDefinition.styleStr = styleEditor.text
         sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
+        sentenceEditor.text = eg.sentence
     }
 
     fun finalize() {

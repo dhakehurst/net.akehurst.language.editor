@@ -543,8 +543,21 @@ object AglWorkerSerialisation {
                         composite("qualifiedName", "String")
                     }
                 }
+                dataType("GrammarReferenceDefault") {
+                    constructorArguments {
+                        composite("localNamespace", "Namespace")
+                        composite("nameOrQName", " String")
+                    }
+                    mutableProperties {
+                        reference("resolved", "GrammarAbstract")
+                    }
+                }
                 dataType("GrammarDefault") {
                     superTypes("GrammarAbstract")
+                    constructorArguments {
+                        composite("namespace", "Namespace")
+                        composite("name", "String")
+                    }
                 }
                 dataType("GrammarAbstract") {
                     superTypes("net.akehurst.language.api.grammar.Grammar")
@@ -553,6 +566,9 @@ object AglWorkerSerialisation {
                         composite("name", "String")
                     }
                     mutableProperties {
+                        composite("extends", "List") {
+                            typeArgument("GrammarReferenceDefault")
+                        }
                         composite("grammarRule", "List") {
                             typeArgument("GrammarRuleDefault")
                         }
@@ -631,7 +647,7 @@ object AglWorkerSerialisation {
                     superTypes("RuleItemAbstract")
                     constructorArguments {
                         composite("embeddedGoalName", "String")
-                        reference("embeddedGrammar", "Grammar")
+                        composite("embeddedGrammarReference", "GrammarReferenceDefault")
                     }
                 }
                 dataType("SeparatedListDefault") {

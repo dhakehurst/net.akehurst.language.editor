@@ -90,16 +90,16 @@ grammar SQL {
     """.trimIndent()
 
     val references = """
-        identify table-definition by table-id
-        scope table-definition {
-            identify column-definition by column-id
-        }
-        references {
-            in select property table-ref refers-to table-definition
-            in update property table-ref refers-to table-definition
-            in delete property table-ref refers-to table-definition
-            in insert property table-ref refers-to table-definition
-        }
+identify Table-definition by table-id
+scope Table-definition {
+    identify Column-definition by column-id
+}
+references {
+    in Select property table-ref refers-to Table-definition
+    in Update property table-ref refers-to Table-definition
+    in Delete property table-ref refers-to Table-definition
+    in Insert property table-ref refers-to Table-definition
+}
     """.trimIndent()
 
     val style = """

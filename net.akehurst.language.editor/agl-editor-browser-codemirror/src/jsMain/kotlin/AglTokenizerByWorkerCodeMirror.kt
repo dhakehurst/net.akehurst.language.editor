@@ -30,7 +30,7 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
         this.tokensByLine.clear()
     }
 
-    override fun receiveTokens(tokens: Array<Array<AglToken>>) {
+    override fun receiveTokens(tokens: List<List<AglToken>>) {
         if (this.acceptingTokens) {
             tokens.forEachIndexed { index, tokens ->
                 // could get empty tokens for a line from a partial parse
