@@ -301,7 +301,8 @@ object AglWorkerSerialisation {
                         composite("languageId", "String")
                         composite("editorId", "String")
                         composite("sessionId", "String")
-                        composite("grammarStr", "String")
+                        composite("grammarStr", "String", true)
+                        composite("scopeModelStr", "String", true)
                     }
                 }
                 dataType("MessageProcessorCreateResponse") {

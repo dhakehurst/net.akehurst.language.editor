@@ -79,6 +79,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     private val errorProcessMarkerIds = mutableListOf<Int>()
     private val _annotations = mutableListOf<AceAnnotation>()
 
+    override val sessionId: String get() = this.aceEditor.getSession()?.id ?: "none"
+
     override var text: String
         get() {
             try {
@@ -155,15 +157,6 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             this.containerElement.removeClass(oldAglStyleClass)
         }
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
-    }
-
-    override fun updateProcessor() {
-        this.clearErrorMarkers()
-        this.aceEditor.getSession()?.also { session ->
-            this.aglWorker.createProcessor(this.languageIdentity, editorId, session.id, this.agl.languageDefinition.grammarStr)
-            this.workerTokenizer.reset()
-            this.resetTokenization() //new processor so find new tokens, first by scan
-        }
     }
 
     override fun updateStyle() {

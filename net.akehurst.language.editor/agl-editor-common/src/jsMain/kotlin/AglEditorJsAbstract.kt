@@ -156,4 +156,20 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
         }
     }
 
+    override fun updateProcessor() {
+        val gs = this.agl.languageDefinition.grammarStr
+        if (null==gs || gs.isNotBlank()) {
+            this.clearErrorMarkers()
+            this.aglWorker.createProcessor(
+                this.languageIdentity,
+                this.editorId,
+                this.sessionId,
+                this.agl.languageDefinition.grammarStr,
+                this.agl.languageDefinition.scopeModelStr
+            ) //TODO: sessionId
+            this.workerTokenizer.reset()
+            this.resetTokenization() //new processor so find new tokens, first by scan
+        }
+    }
+
 }

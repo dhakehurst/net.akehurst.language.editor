@@ -20,6 +20,7 @@ import codemirror.view.EditorViewConfig
 import kotlinx.browser.document
 import monaco.editor.IStandaloneEditorConstructionOptions
 import net.akehurst.kotlin.html5.create
+import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
@@ -381,7 +382,7 @@ class Demo(
             buildForDefaultGoal = false,
             aglOptions = Agl.options {
                 semanticAnalysis {
-                    active(false)
+                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             },
             configuration = Agl.configurationDefault()
@@ -498,7 +499,7 @@ class Demo(
                 when (it) {
                     is String -> false
                     is List<*> -> true
-                    is TypeModel -> it.allTypes.isNotEmpty()
+                    is TypeModel -> it.allTypesByRuleName.isNotEmpty()
                     is Map.Entry<String, RuleType> -> {
                         val type = it.value
                         when (type) {
@@ -523,7 +524,7 @@ class Demo(
                 when (it) {
                     is String -> emptyArray<Any>()
                     is List<*> -> it.toArray()
-                    is TypeModel -> it.types.entries.toTypedArray()
+                    is TypeModel -> it.allTypesByRuleName.entries.toTypedArray()
                     is Map.Entry<String, RuleType> -> {
                         val type = it.value
                         when (type) {
@@ -597,7 +598,10 @@ class Demo(
                             v is List<*> -> "${it.name} : List"
                             v is Set<*> -> "${it.name} : Set"
                             v is AsmElementSimple -> "${it.name} : ${v.typeName}"
-                            v is AsmElementReference -> "& ${v.reference} : ${v.value?.typeName}"
+                            v is AsmElementReference -> when(v.value) {
+                                null-> "&'${v.reference}' = <unresolved reference>"
+                                else -> "&'${v.reference}' = ${v.value?.asmPath?.value} : ${v.value?.typeName}"
+                            }
                             it.name == "'${v}'" -> "${it.name}"
                             v is String -> "${it.name} = '${v}'"
                             else -> "${it.name} = ${v}"

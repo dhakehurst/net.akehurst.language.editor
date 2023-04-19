@@ -34,25 +34,25 @@ namespace net.akehurst.language
 grammar SQL {
     skip WS = "\s+" ;
 
-    statementList = terminated-statement+ ;
+    statementList = terminatedStatement+ ;
 
-    terminated-statement = statement ';' ;
+    terminatedStatement = statement ';' ;
     statement
         = select
         | update
         | delete
         | insert
-        | table-definition
+        | tableDefinition
         ;
 
-    select = SELECT columns FROM table-ref ;
-    update = UPDATE table-ref SET column-values ;
-    delete = DELETE FROM table-ref  ;
-    insert = INSERT INTO table-ref '(' columns ')' VALUES '(' values ')' ;
+    select = SELECT columns FROM tableRef ;
+    update = UPDATE tableRef SET columnValueList ;
+    delete = DELETE FROM tableRef  ;
+    insert = INSERT INTO tableRef '(' columns ')' VALUES '(' values ')' ;
 
-    columns = [column-ref-or-any / ',']+ ;
-    column-values = [column-value/ ',']+ ;
-    column-value = column-ref '=' value ;
+    columns = [columnRefOrAny / ',']+ ;
+    columnValueList = [columnValue/ ',']+ ;
+    columnValue = columnRef '=' value ;
 
     values = [value /',']+ ;
     value
@@ -60,18 +60,21 @@ grammar SQL {
         | STRING
         ;
 
-    table-definition = CREATE TABLE table-id '(' column-definition-list ')' ;
-    column-definition-list = [column-definition / ',']+ ;
-    column-definition = column-id datatype-ref datatype-size? ;
+    tableDefinition = CREATE TABLE table-id '(' columnDefinitionList ')' ;
+    columnDefinitionList = [columnDefinition / ',']+ ;
+    columnDefinition = column-id datatype-ref datatype-size? ;
     datatype-size = '(' INTEGER ')' ;
 
-    leaf table-id = ID ;
-    leaf table-ref = ID ;
-    column-ref-or-any = '*' | column-ref ;
-    leaf column-id = ID ;
-    leaf column-ref = ID ;
-    leaf datatype-ref = ID ;
+    columnRefOrAny = columnAny | columnRef ;
 
+    tableRef = REF ;
+    columnRef = REF ;
+    columnAny = '*' ;
+
+    leaf table-id = ID ;
+    leaf column-id = ID ;
+    leaf REF = ID ;
+    leaf datatype-ref = ID ;
     leaf ID = "[A-Za-z_][A-Za-z0-9_]*" ;
     leaf INTEGER = "[0-9]+" ;
     leaf STRING = "'[^']*'";
@@ -90,15 +93,12 @@ grammar SQL {
     """.trimIndent()
 
     val references = """
-identify Table-definition by table-id
-scope Table-definition {
-    identify Column-definition by column-id
+identify TableDefinition by table-id
+scope TableDefinition {
+    identify ColumnDefinition by column-id
 }
 references {
-    in Select property table-ref refers-to Table-definition
-    in Update property table-ref refers-to Table-definition
-    in Delete property table-ref refers-to Table-definition
-    in Insert property table-ref refers-to Table-definition
+    in TableRef property ref refers-to TableDefinition
 }
     """.trimIndent()
 

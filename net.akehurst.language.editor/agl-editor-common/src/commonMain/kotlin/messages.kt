@@ -31,9 +31,22 @@ abstract class AglWorkerMessage(
 
 data class MessageProcessorCreate(
     override val languageId: String, override val editorId: String, override val sessionId: String,
-    val grammarStr: String?
+    val grammarStr: String?,
+    val scopeModelStr:String?
 ) : AglWorkerMessage("MessageProcessorCreate") {
-    override fun toString(): String = "${super.action}(languageId=$languageId, editorId=$editorId, sessionId=$sessionId, grammarStr='...')"
+    override fun toString(): String {
+        val gs = when{
+            null==grammarStr -> "null"
+            grammarStr.isBlank() -> "''"
+            else -> "'...'"
+        }
+        val ss = when{
+            null==scopeModelStr -> "null"
+            scopeModelStr.isBlank() -> "''"
+            else -> "'...'"
+        }
+        return "${super.action}(languageId=$languageId, editorId=$editorId, sessionId=$sessionId, grammarStr=$gs, scopeModelStr=$ss)"
+    }
 }
 
 data class MessageProcessorCreateResponse(

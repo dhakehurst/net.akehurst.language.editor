@@ -85,6 +85,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     val languageThemePrefix = this.languageIdentity + "-"
 
+    override val sessionId: String get() = "none"
+
     override var text: String
         get() {
             try {
@@ -163,13 +165,6 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         //this.aceEditor.getSession()?.also { session ->
         this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, "", configuration) //TODO: sessionId
         //}
-    }
-
-    override fun updateProcessor() {
-        this.clearErrorMarkers()
-        this.aglWorker.createProcessor(languageIdentity, editorId, "", this.agl.languageDefinition.grammarStr) //TODO: sessionId
-        this.workerTokenizer.reset()
-        this.resetTokenization() //new processor so find new tokens, first by scan
     }
 
     override fun updateStyle() {

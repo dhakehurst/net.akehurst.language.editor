@@ -56,7 +56,7 @@ class test_AglWorkerSerialisation {
             """.trimIndent()
         )
         val context = ContextSimple()
-        val asm = asmSimple( result.asm!!, context) {
+        val asm = asmSimple(result.asm!!, context) {
             element("Root") {
                 propertyElementExplicitType("content", "Elem1") {
                     propertyString("propString", "stringValue")
@@ -720,10 +720,7 @@ class test_AglWorkerSerialisation {
     // --- MessageProcessorCreate ---
     @Test
     fun MessageProcessorCreate_com_null() {
-        val expected = MessageProcessorCreate(
-            languageId, editorId, sessionId,
-            null
-        )
+        val expected = MessageProcessorCreate(languageId, editorId, sessionId, null, null)
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreate>(jsonStr)
@@ -733,10 +730,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun MessageProcessorCreate_com_blank() {
-        val expected = MessageProcessorCreate(
-            languageId, editorId, sessionId,
-            ""
-        )
+        val expected = MessageProcessorCreate(languageId, editorId, sessionId, "", null)
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreate>(jsonStr)
@@ -746,10 +740,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun MessageProcessorCreate_com_grammar() {
-        val expected = MessageProcessorCreate(
-            languageId, editorId, sessionId,
-            "namespace test grammar Test { rule1 = 'a' ; }"
-        )
+        val expected = MessageProcessorCreate(languageId, editorId, sessionId, "namespace test grammar Test { rule1 = 'a' ; }", null)
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreate>(jsonStr)
@@ -1129,7 +1120,7 @@ class test_AglWorkerSerialisation {
             MessageStatus.FAILURE,
             "Error",
             listOf(
-                LanguageIssue(LanguageIssueKind.ERROR,LanguageProcessorPhase.SEMANTIC_ANALYSIS,InputLocation(0,1,1,1),"error")
+                LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.SEMANTIC_ANALYSIS, InputLocation(0, 1, 1, 1), "error")
             ),
             null
         )

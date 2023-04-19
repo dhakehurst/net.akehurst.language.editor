@@ -1,3 +1,4 @@
+import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.editor.worker.AglSharedWorker
 
@@ -10,7 +11,7 @@ fun main() {
             buildForDefaultGoal = false,
             aglOptions = Agl.options {
                 semanticAnalysis {
-                    active(false)
+                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             },
             configuration = Agl.configurationDefault()

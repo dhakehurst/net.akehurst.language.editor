@@ -18,10 +18,12 @@ package net.akehurst.language.editor.worker
 
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
 import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
 import net.akehurst.language.api.asm.AsmSimple
+import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
@@ -61,11 +63,36 @@ class test_AglWorkerAbstract {
 
     }
 
-    companion object {
+    private companion object {
+        val aglGrammarId = Agl.registry.agl.grammarLanguageIdentity
         val languageId = "test-languageId"
         val editorId = "test-editorId"
         val sessionId = "test-sessionId"
         val port = TestPort()
+
+        fun checkEquals(exp: AglWorkerMessage, act: AglWorkerMessage) {
+            when {
+                exp is MessageSyntaxAnalysisResult && act is MessageSyntaxAnalysisResult -> {
+                    assertEquals(exp.languageId, act.languageId)
+                    assertEquals(exp.editorId, act.editorId)
+                    assertEquals(exp.sessionId, act.sessionId)
+                    assertEquals(exp.status, act.status)
+                    assertEquals(exp.issues, act.issues)
+                    assertEquals((exp.asm as AsmSimple?)?.asString("  "), (act.asm as AsmSimple?)?.asString("  "),"MessageSyntaxAnalysisResult")
+                }
+
+                exp is MessageSemanticAnalysisResult && act is MessageSemanticAnalysisResult -> {
+                    assertEquals(exp.languageId, act.languageId)
+                    assertEquals(exp.editorId, act.editorId)
+                    assertEquals(exp.sessionId, act.sessionId)
+                    assertEquals(exp.status, act.status)
+                    assertEquals(exp.issues, act.issues)
+                    assertEquals((exp.asm as AsmSimple?)?.asString("  "), (act.asm as AsmSimple?)?.asString("  "),"MessageSemanticAnalysisResult")
+                }
+
+                else -> assertEquals(exp, act)
+            }
+        }
     }
 
     @BeforeTest
@@ -89,7 +116,7 @@ class test_AglWorkerAbstract {
                 S = 'a' ;
             }
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, grammarStr))
+        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, null))
 
         assertEquals(
             sut.sent, listOf<Any>(
@@ -104,7 +131,7 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, grammarStr))
+        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, null))
 
         assertEquals(
             listOf<Any>(
@@ -126,18 +153,14 @@ class test_AglWorkerAbstract {
     @Test
     fun sentence_MessageProcessRequest_blank_ContextSimple_parse_failure() {
         val sut = TestAglWorker<Any, Any>()
-        // -- MessageProcessorCreate -->
-        sut.receive(
-            port, MessageProcessorCreate(
-                languageId, editorId, sessionId,
-                """
+        val grammarStr = """
                 namespace test
                 grammar Test {
                     S = 'a' ;
                 }
             """.trimIndent()
-            )
-        )
+        // -- MessageProcessorCreate -->
+        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, null))
         sut.sent.clear()
 
         // -- MessageProcessRequest -->
@@ -166,7 +189,7 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr))
+        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr, null))
 
         assertEquals(
             listOf<Any>(
@@ -181,7 +204,7 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr))
+        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr, null))
         sut.sent.clear()
 
         val userGrammar = """
@@ -265,7 +288,7 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr))
+        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr, null))
         sut.sent.clear()
 
         val userGrammar = """
@@ -346,6 +369,125 @@ class test_AglWorkerAbstract {
         }
     }
 
+    @Test
+    fun grammar_MessageProcessRequest_user_grammar_with_reference() {
+        val sut = TestAglWorker<Any, Any>()
+        val userGrammar = """
+            namespace test
+            
+            grammar Test {
+                skip leaf WS = "\s+" ;
+                skip leaf COMMENT = "//[^\n]*(\n)" ;
+            
+                unit = declaration* ;
+                declaration = datatype | primitive | collection ;
+                primitive = 'primitive' ID ;
+                collection = 'collection' ID typeParameters? ;
+                typeParameters = '<' typeParameterList '>' ;
+                typeParameterList = [ID / ',']+ ;
+                datatype = 'datatype' ID '{' property* '}' ;
+                property = ID ':' typeReference ;
+                typeReference = type typeArguments? ;
+                typeArguments = '<' typeArgumentList '>' ;
+                typeArgumentList = [typeReference / ',']+ ;
+            
+                leaf ID = "[A-Za-z_][A-Za-z0-9_]*" ;
+                leaf type = ID;
+            }
+        """
+        val scopeStr = """
+                identify Unit by §nothing
+                scope Unit {
+                    identify Primitive by id
+                    identify Datatype by id
+                    identify Collection by id
+                }
+                references {
+                    in TypeReference property type refers-to Primitive|Datatype|Collection
+                }
+            """
+        val grammar = Agl.registry.agl.grammar.processor!!.process(userGrammar).asm!!.first()
+        val scopeModel = Agl.registry.agl.scopes.processor!!.process(
+            scopeStr,
+            Agl.options { semanticAnalysis { context(ContextFromTypeModel(TypeModelFromGrammar(grammar))) } }
+        ).asm!!
+        val sentence = """
+            primitive String
+            datatype A {
+                a : String
+            }
+        """.trimIndent()
+
+        // create userGrammar
+        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, userGrammar, scopeStr))
+        // set style for agl grammar (is this needed?)
+        sut.receive(port, MessageSetStyle(languageId, editorId, sessionId, ""))
+        // process the userGrammar sentence
+        sut.receive(port, MessageProcessRequest(languageId, editorId, sessionId, "unit", sentence, ContextSimple()))
+
+        sut.sent.forEach {
+            println(it)
+        }
+        val expectedAsmSyn = asmSimple {
+            element("Unit") {
+                propertyListOfElement("declaration") {
+                    element("Primitive") {
+                        propertyString("id", "String")
+                    }
+                    element("Datatype") {
+                        propertyString("id", "A")
+                        propertyListOfElement("property") {
+                            element("Property") {
+                                propertyString("id", "a")
+                                propertyElementExplicitType("typeReference", "TypeReference") {
+                                    reference("type", "String")
+                                    propertyString("typeArguments", null)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        val expectedAsmSem = asmSimple(scopeModel, ContextSimple(), true) {
+            element("Unit") {
+                propertyListOfElement("declaration") {
+                    element("Primitive") {
+                        propertyString("id", "String")
+                    }
+                    element("Datatype") {
+                        propertyString("id", "A")
+                        propertyListOfElement("property") {
+                            element("Property") {
+                                propertyString("id", "a")
+                                propertyElementExplicitType("typeReference", "TypeReference") {
+                                    reference("type", "String")
+                                    propertyString("typeArguments", null)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        val expected = listOf<Any>(
+            MessageProcessorCreateResponse(languageId, editorId, sessionId, MessageStatus.SUCCESS, "OK", emptyList()),
+            MessageSetStyleResult(languageId, editorId, sessionId, MessageStatus.SUCCESS, "OK"),
+            MessageParseResult(languageId, editorId, sessionId, MessageStatus.START, "Start", emptyList(), null),
+            MessageParseResult(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", emptyList(), "serialised sppt"),
+            MessageLineTokens(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", emptyList()),
+            MessageSyntaxAnalysisResult(languageId, editorId, sessionId, MessageStatus.START, "Start", emptyList(), null),
+            MessageSyntaxAnalysisResult(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", emptyList(), expectedAsmSyn),
+            MessageSemanticAnalysisResult(languageId, editorId, sessionId, MessageStatus.START, "Start", emptyList(), null),
+            MessageSemanticAnalysisResult(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", emptyList(), expectedAsmSem)
+        )
+
+        for (i in expected.indices) {
+            val exp = expected[i]
+            val act = sut.sent[i]
+            checkEquals(exp as AglWorkerMessage, act as AglWorkerMessage)
+        }
+    }
 
     @Test
     fun style_MessageProcessorCreate_agl_style_language() {
@@ -353,7 +495,7 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.styleLanguageIdentity, editorId, sessionId, grammarStr))
+        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.styleLanguageIdentity, editorId, sessionId, grammarStr, null))
 
         assertEquals(
             listOf<Any>(
@@ -380,12 +522,7 @@ class test_AglWorkerAbstract {
             )
         )
 
-        sut.receive(
-            port, MessageProcessorCreate(
-                languageId, editorId, sessionId,
-                userGrammar
-            )
-        )
+        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, userGrammar, null))
 
         sut.sent.clear()
         // expect
@@ -411,165 +548,6 @@ class test_AglWorkerAbstract {
                     languageId, editorId, sessionId, MessageStatus.FAILURE, "Parse Failed", listOf(
                         LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.PARSE, InputLocation(0, 1, 1, 1), "^", setOf("'a'"))
                     ), null
-                )
-            ), sut.sent
-        )
-    }
-
-
-    @Test
-    fun receive_MessageSyntaxAnalyserConfigure_empty_configuration() {
-        //Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyser =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g))}
-
-        val sut = TestAglWorker<Any, Any>()
-        sut.receive(
-            port, MessageProcessorCreate(
-                languageId, editorId, sessionId,
-                """
-                namespace test
-                grammar Test {
-                    S = 'a' ;
-                }
-            """.trimIndent()
-            )
-        )
-        sut.sent.clear()
-
-        sut.receive(
-            port, MessageSyntaxAnalyserConfigure(
-                languageId, editorId, sessionId,
-                emptyMap()
-            )
-        )
-
-        assertEquals(
-            listOf<Any>(
-                MessageSyntaxAnalyserConfigureResponse(languageId, editorId, sessionId, MessageStatus.SUCCESS, "OK", emptyList())
-            ), sut.sent
-        )
-    }
-
-    @Test
-    fun receive_MessageSyntaxAnalyserConfigure_error_parse() {
-        //Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g))}
-
-        val sut = TestAglWorker<Any, Any>()
-        sut.receive(
-            port, MessageProcessorCreate(
-                languageId, editorId, sessionId,
-                """
-                namespace test
-                grammar Test {
-                    S = 'a' ;
-                }
-            """.trimIndent()
-            )
-        )
-        sut.sent.clear()
-
-        sut.receive(
-            port, MessageSyntaxAnalyserConfigure(
-                languageId, editorId, sessionId,
-                emptyMap()
-            )
-        )
-
-        assertEquals(
-            listOf<Any>(
-                MessageSyntaxAnalyserConfigureResponse(
-                    languageId, editorId, sessionId, MessageStatus.FAILURE, "OK", listOf(
-                        LanguageIssue(
-                            LanguageIssueKind.ERROR,
-                            LanguageProcessorPhase.PARSE,
-                            InputLocation(0, 1, 1, 1),
-                            "^garbage",
-                            setOf("'identify'", "'scope'", "'references'", "<EOT>")
-                        )
-                    )
-                )
-            ), sut.sent
-        )
-    }
-
-    @Test
-    fun receive_MessageSyntaxAnalyserConfigure_error_syntaxAnalysis_1() {
-        //Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g))}
-//TODO:...fix, test was supposed to check scope model errors
-        val sut = TestAglWorker<Any, Any>()
-        sut.receive(
-            port, MessageProcessorCreate(
-                languageId, editorId, sessionId,
-                """
-                namespace test
-                grammar Test {
-                    S = a ;
-                    leaf a = 'a' ;
-                }
-            """.trimIndent()
-            )
-        )
-        sut.sent.clear()
-
-        sut.receive(
-            port, MessageSyntaxAnalyserConfigure(
-                languageId, editorId, sessionId,
-                emptyMap()
-            )
-        )
-
-        assertEquals(
-            listOf<Any>(
-                MessageSyntaxAnalyserConfigureResponse(
-                    languageId, editorId, sessionId, MessageStatus.SUCCESS, "OK", listOf(
-                        LanguageIssue(
-                            LanguageIssueKind.ERROR,
-                            LanguageProcessorPhase.SYNTAX_ANALYSIS,
-                            InputLocation(9, 10, 1, 2),
-                            "In root scope 'X' not found as identifiable type"
-                        )
-                    )
-                )
-            ), sut.sent
-        )
-    }
-
-    @Test
-    fun receive_MessageSyntaxAnalyserConfigure_error_syntaxAnalysis_2() {
-        //Agl.registry.findOrPlaceholder<AsmSimple, ContextSimple>(languageId).syntaxAnalyserResolver =  { g -> SyntaxAnalyserSimple(TypeModelFromGrammar(g))}
-//TODO:...fix, test was supposed to check scope model errors
-        val sut = TestAglWorker<Any, Any>()
-        sut.receive(
-            port, MessageProcessorCreate(
-                languageId, editorId, sessionId,
-                """
-                namespace test
-                grammar Test {
-                    S = a ;
-                    leaf a = 'a' ;
-                }
-            """.trimIndent()
-            )
-        )
-        sut.sent.clear()
-
-        sut.receive(
-            port, MessageSyntaxAnalyserConfigure(
-                languageId, editorId, sessionId,
-                emptyMap()
-            )
-        )
-
-        assertEquals(
-            listOf<Any>(
-                MessageSyntaxAnalyserConfigureResponse(
-                    languageId, editorId, sessionId, MessageStatus.SUCCESS, "OK", listOf(
-                        LanguageIssue(
-                            LanguageIssueKind.ERROR,
-                            LanguageProcessorPhase.SYNTAX_ANALYSIS,
-                            InputLocation(14, 15, 1, 1),
-                            "In root scope 'b' not found for identifying property of 'S'"
-                        )
-                    )
                 )
             ), sut.sent
         )

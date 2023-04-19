@@ -110,8 +110,8 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         }
     }
 
-    fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String?) {
-        this.sendToWorker(MessageProcessorCreate(languageId, editorId, sessionId, grammarStr))
+    fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String?, scopeModelStr:String?) {
+        this.sendToWorker(MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, scopeModelStr))
     }
 
     fun configureSyntaxAnalyser(languageId: String, editorId: String, sessionId: String, configuration: Map<String,Any>) {

@@ -24,6 +24,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     override val editorId: String
 ) : AglEditor<AsmType, ContextType> {
 
+    abstract val sessionId:String
+
     override val logger = AglEditorLogger()
 
     protected val agl = AglComponents<AsmType, ContextType> (languageId, editorId, logger)
