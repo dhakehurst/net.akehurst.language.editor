@@ -76,33 +76,115 @@ div#agl-demo treeview {
     font-size: 1em;
     line-height: 1.4em;
     overflow: auto;
+
+    --spacing : 0.7rem;
+    --radius  : 7px;
+
 }
 div#agl-demo treeview treeview-children {
-    margin: 0;
     padding: 0;
-    margin-left: 10px;
     display: none;
+    margin-left  : 0;
 }
 
 div#agl-demo treeview treeview-leaf {
-    display: block;
+    display      : block;
+    position     : relative;
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
+}
+
+div#agl-demo treeview treeview-leaf span {
+    display      : block;
+    position     : relative;
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
 }
 
 div#agl-demo treeview treeview-branch {
     cursor: pointer;
     user-select: none;
     display: block;
+    position     : relative;
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
 }
 
-div#agl-demo treeview treeview-branch:before {
-    content: "\25B6";
-    color: black;
-    display: inline-block;
-    margin-right: 6px;
+div#agl-demo treeview treeview-branch span {
+    display      : block;
+    position     : relative;
+    padding-left : calc(2 * var(--radius));
 }
 
-div#agl-demo treeview treeview-branch[open]:before {
-    transform: rotate(90deg);
+div#agl-demo treeview treeview-branch span:hover {
+    background-color: azure;
+}
+
+/* vertical lines */
+div#agl-demo treeview treeview-children > treeview-leaf  {
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
+    border-left : 2px solid #ddd;
+    position: relative;
+}
+div#agl-demo treeview treeview-children > treeview-branch  {
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
+    border-left : 2px solid #ddd;
+    position: relative;
+}
+
+div#agl-demo treeview treeview-children  > treeview-branch:last-child {
+    border-color : transparent;
+}
+
+/* horizontal lines */
+div#agl-demo treeview treeview-children treeview-branch:before {
+    content      : '';
+    display      : block;
+    position     : absolute;
+    top          : calc(var(--spacing) / -2);
+    left         : -2px;
+    width        : calc(var(--spacing));
+    height       : calc(var(--spacing));
+    border       : solid #ddd;
+    border-width : 0 0 2px 2px;
+}
+
+div#agl-demo treeview treeview-children treeview-leaf:before {
+    content      : '';
+    display      : block;
+    position     : absolute;
+    top          : calc(var(--spacing) / -2);
+    left         : -2px;
+    width        : calc(var(--spacing));
+    height       : calc(var(--spacing));
+    border       : solid #ddd;
+    border-width : 0 0 2px 2px;
+}
+
+/* Markers */
+div#agl-demo treeview treeview-leaf > span:before {
+    content: " ";
+    text-align: center;
+    line-height : calc(2 * var(--radius) - 2px);
+}
+
+div#agl-demo treeview treeview-branch > span:before {
+    content: "+";
+    text-align: center;
+    line-height : calc(2 * var(--radius) - 2px);
+
+    display       : block;
+    position      : absolute;
+    top           : calc(var(--spacing) / 2 - var(--radius));
+    left          : calc(-1 * var(--radius) );
+    width         : calc(2 * var(--radius));
+    height        : calc(2 * var(--radius));
+    border-radius : 50%;
+    background    : #ddd;
+
+}
+
+div#agl-demo treeview treeview-branch[open] > span:before {
+    content: "-";
+    text-align: center;
+    line-height : calc(2 * var(--radius) - 2px);
 }
 
 div#agl-demo treeview treeview-branch[open] > treeview-children {

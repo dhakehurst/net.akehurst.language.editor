@@ -477,9 +477,9 @@ class Demo(
                     is String -> it
                     is List<*> -> "List"
                     is TypeModel -> "model ${it.name}"
-                    is Map.Entry<String, RuleType> -> {
+                    is Map.Entry<String, TypeUsage> -> {
                         val ruleName = it.key
-                        val type = it.value
+                        val type = it.value.type
                         when (type) {
                             is ElementType -> when {
                                 type.supertypes.isEmpty() -> "$ruleName : ${type.signature(type.typeModel)}"
@@ -491,7 +491,7 @@ class Demo(
 
                     }
 
-                    is PropertyDeclaration -> "${it.name} : ${it.type.signature(root as TypeModel)}"
+                    is PropertyDeclaration -> "${it.name} : ${it.typeUse.signature(root as TypeModel, 0)}"
                     else -> error("Internal Error: type ${it::class.simpleName} not handled")
                 }
             },
@@ -499,9 +499,9 @@ class Demo(
                 when (it) {
                     is String -> false
                     is List<*> -> true
-                    is TypeModel -> it.allTypesByRuleName.isNotEmpty()
-                    is Map.Entry<String, RuleType> -> {
-                        val type = it.value
+                    is TypeModel -> it.allRuleNameToType.isNotEmpty()
+                    is Map.Entry<String, TypeUsage> -> {
+                        val type = it.value.type
                         when (type) {
                             is AnyType -> false
                             is ListSimpleType -> false
@@ -524,9 +524,9 @@ class Demo(
                 when (it) {
                     is String -> emptyArray<Any>()
                     is List<*> -> it.toArray()
-                    is TypeModel -> it.allTypesByRuleName.entries.toTypedArray()
-                    is Map.Entry<String, RuleType> -> {
-                        val type = it.value
+                    is TypeModel -> it.allRuleNameToType.entries.toTypedArray()
+                    is Map.Entry<String, TypeUsage> -> {
+                        val type = it.value.type
                         when (type) {
                             is AnyType -> emptyArray<Any>()
                             is ListSimpleType -> emptyArray<Any>()
@@ -632,8 +632,8 @@ class Demo(
             },
             children = {
                 when {
-                    it is Array<*> -> (it as Array<*>)
-                    it is Collection<*> -> (it as Collection<*>).toTypedArray()
+                    it is Array<*> -> it
+                    it is Collection<*> -> it.toTypedArray()
                     it is AsmElementSimple -> it.properties.values.toTypedArray()
                     it is AsmElementProperty -> {
                         val v = it.value

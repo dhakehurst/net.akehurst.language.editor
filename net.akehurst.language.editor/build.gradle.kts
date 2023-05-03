@@ -18,12 +18,12 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 
 plugins {
-    kotlin("multiplatform") version ("1.8.20") apply false
+    kotlin("multiplatform") version ("1.8.21") apply false
     id("org.jetbrains.dokka") version ("1.8.10") apply false
     id("com.github.gmazzo.buildconfig") version ("3.1.0") apply false
     id("nu.studer.credentials") version ("3.0")
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.8.20") apply false
-    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version("1.8.20") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.8.21") apply false
+    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version("1.8.21") apply false
 }
 val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8
 val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8
@@ -175,5 +175,9 @@ subprojects {
         useGpgCmd()
         val publishing = project.properties["publishing"] as PublishingExtension
         sign(publishing.publications)
+    }
+
+    rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
+        rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().version = "1.22.19"
     }
 }

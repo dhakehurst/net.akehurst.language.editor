@@ -666,6 +666,11 @@ object AglWorkerSerialisation {
                         composite("item", "SimpleItemAbstract")
                     }
                 }
+                dataType("OptionalItemDefault") {
+                    constructorArguments {
+                        composite("item", "RuleItemAbstract")
+                    }
+                }
             }
         })
     }
