@@ -56,6 +56,17 @@ data class MessageProcessorCreateResponse(
     val issues: List<LanguageIssue>
 ) : AglWorkerMessage("MessageProcessorCreateResponse")
 
+data class MessageProcessorDelete(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
+) : AglWorkerMessage("MessageProcessorDelete") {
+}
+
+data class MessageProcessorDeleteResponse(
+    override val languageId: String, override val editorId: String, override val sessionId: String,
+    val status: MessageStatus,
+    val message: String
+) : AglWorkerMessage("MessageProcessorDeleteResponse")
+
 data class MessageSyntaxAnalyserConfigure(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val configuration: Map<String, Any>

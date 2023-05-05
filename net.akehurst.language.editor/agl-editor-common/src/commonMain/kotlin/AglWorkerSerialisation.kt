@@ -517,6 +517,7 @@ object AglWorkerSerialisation {
         serialiser.confgureFromKompositeModel(komposite {
             namespace("net.akehurst.language.api.grammar") {
                 dataType("Grammar") {}
+                dataType("RuleItem") {}
             }
             namespace("net.akehurst.language.agl.grammar.grammar") {
                 dataType("AglGrammarGrammar") {
@@ -587,7 +588,9 @@ object AglWorkerSerialisation {
                         composite("rhs", "RuleItemAbstract")
                     }
                 }
-                dataType("RuleItemAbstract") {}
+                dataType("RuleItemAbstract") {
+                    superTypes("net.akehurst.language.api.grammar.RuleItem")
+                }
                 dataType("EmptyRuleDefault") {
                     superTypes("RuleItemAbstract")
                 }
@@ -598,7 +601,7 @@ object AglWorkerSerialisation {
                     superTypes("ChoiceAbstract")
                     constructorArguments {
                         composite("alternative", "List") {
-                            typeArgument("ConcatenationDefault")
+                            typeArgument("net.akehurst.language.api.grammar.RuleItem")
                         }
                     }
                 }
@@ -606,7 +609,15 @@ object AglWorkerSerialisation {
                     superTypes("ChoiceAbstract")
                     constructorArguments {
                         composite("alternative", "List") {
-                            typeArgument("ConcatenationDefault")
+                            typeArgument("net.akehurst.language.api.grammar.RuleItem")
+                        }
+                    }
+                }
+                dataType("ChoiceAmbiguousDefault") {
+                    superTypes("ChoiceAbstract")
+                    constructorArguments {
+                        composite("alternative", "List") {
+                            typeArgument("net.akehurst.language.api.grammar.RuleItem")
                         }
                     }
                 }
@@ -614,7 +625,7 @@ object AglWorkerSerialisation {
                     superTypes("RuleItemAbstract")
                     constructorArguments {
                         composite("items", "List") {
-                            typeArgument("ConcatenationItemAbstract")
+                            typeArgument("net.akehurst.language.api.grammar.RuleItem")
                         }
                     }
                 }
@@ -627,14 +638,14 @@ object AglWorkerSerialisation {
                 dataType("GroupDefault") {
                     superTypes("ConcatenationItemAbstract")
                     constructorArguments {
-                        composite("choice", "ChoiceAbstract")
+                        composite("groupedContent", "net.akehurst.language.api.grammar.RuleItem")
                     }
                 }
                 dataType("NonTerminalDefault") {
                     superTypes("RuleItemAbstract")
                     constructorArguments {
                         composite("name", "String")
-                        reference("owningRule", "Rule")
+//                        reference("owningRule", "Rule")
                     }
                 }
                 dataType("TerminalDefault") {
@@ -668,7 +679,7 @@ object AglWorkerSerialisation {
                 }
                 dataType("OptionalItemDefault") {
                     constructorArguments {
-                        composite("item", "RuleItemAbstract")
+                        composite("item", "net.akehurst.language.api.grammar.RuleItem")
                     }
                 }
             }

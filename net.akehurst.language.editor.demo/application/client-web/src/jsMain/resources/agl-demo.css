@@ -83,7 +83,7 @@ div#agl-demo treeview {
 }
 div#agl-demo treeview treeview-children {
     padding: 0;
-    display: none;
+    display: none; /* hide children when closed/default */
     margin-left  : 0;
 }
 
@@ -192,7 +192,7 @@ div#agl-demo treeview treeview-branch[open] > span:before {
 }
 
 div#agl-demo treeview treeview-branch[open] > treeview-children {
-    display: block;
+    display: block; /* show children when open */
 }
 
 /* ----------  demo ---------- */

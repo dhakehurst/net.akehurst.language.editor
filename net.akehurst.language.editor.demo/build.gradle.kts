@@ -16,6 +16,7 @@
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
+import org.gradle.internal.jvm.Jvm
 
 plugins {
     kotlin("multiplatform") version ("1.8.21") apply false
@@ -27,6 +28,11 @@ plugins {
 val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8
 val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8
 val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+
+println("===============================================")
+println("Gradle: ${GradleVersion.current()}")
+println("JVM: ${Jvm.current()} '${Jvm.current().javaHome}'")
+println("===============================================")
 
 allprojects {
 
@@ -106,8 +112,5 @@ subprojects {
         "commonTestImplementation"(kotlin("test-annotations-common"))
     }
 
-    rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
-        rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().version = "1.22.19"
-    }
 
 }

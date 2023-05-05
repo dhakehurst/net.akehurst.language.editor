@@ -65,10 +65,35 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
     }
 
     override fun serialiseParseTreeToStringJson(spptNode: SPPTNode?) : String? {
-        return spptNode?.let {
-            val jsObj = parseTreeToJS(it)
-            return JSON.stringify(jsObj)
+        try {
+            return spptNode?.let {
+                val jsObj = parseTreeToJS2(it)
+                return JSON.stringify(jsObj)
+            }
+        } catch (t:Throwable) {
+            error("Error trying to serialise SPPT to JSON: ${t.message}")
         }
+    }
+
+    private fun parseTreeToJS2(spptNode: SPPTNode): dynamic {
+        val deep = DeepRecursiveFunction<SPPTNode, dynamic> {
+            when (it) {
+                is SPPTLeaf -> objectJS {
+                    isBranch = false
+                    name = it.name
+                    nonSkipMatchedText = escapeCtrlCodes(it.nonSkipMatchedText)
+                }
+                is SPPTBranch -> objectJS {
+                    isBranch = true
+                    name = it.name
+                    children = it.children.map {
+                        callRecursive(it)
+                    }.toTypedArray()
+                }
+                else -> error("Not supported")
+            }
+        }
+        return deep(spptNode)
     }
 
     private fun parseTreeToJS(spptNode: SPPTNode): dynamic {

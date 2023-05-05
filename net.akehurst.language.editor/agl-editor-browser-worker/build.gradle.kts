@@ -8,6 +8,7 @@ val version_kjson:String by project
 dependencies {
     commonMainApi(project(":agl-editor-common"))
     commonMainApi("net.akehurst.language:agl-processor:$version_agl")
+    //commonMainApi(platform("net.akehurst.language:agl-processor"))
     commonMainImplementation("net.akehurst.kotlin.json:json:$version_kjson")
 }
 

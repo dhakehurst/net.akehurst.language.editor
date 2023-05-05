@@ -22,6 +22,7 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageProcessor
+import net.akehurst.language.api.processor.LanguageProcessorConfiguration
 import net.akehurst.language.api.sppt.SPPTNode
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.common.AglStyleHandler
@@ -48,12 +49,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
 
     protected fun createProcessor(port: Any, message: MessageProcessorCreate) {
         when {
-            null == message.grammarStr -> {
-                this._languageDefinition.remove(message.languageId)
-                sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "reset", emptyList()))
-            }
-
-            message.grammarStr!!.isBlank() -> {
+            message.grammarStr.isNullOrBlank() -> {
                 //do nothing
             }
 
@@ -63,13 +59,18 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                     if (ld.isModifiable) {
                         ld.grammarStr = message.grammarStr
                         ld.scopeModelStr = message.scopeModelStr
+                        // TODO: needs to be an argument
+                        ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<AsmType, ContextType>
                     }
                     _languageDefinition[message.languageId] = ld
                     //check that grammar is well-defined and a processor can be created from it
                     val proc = ld.processor // should throw exception if there are problems
                     if (null == proc) {
                         ld.issues
-                        sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, MessageStatus.FAILURE, "Error", ld.issues.all.toList()))
+                        sendMessage(
+                            port,
+                            MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, MessageStatus.FAILURE, "Error", ld.issues.all.toList())
+                        )
                     } else {
                         sendMessage(port, MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "OK", emptyList()))
                     }
@@ -78,6 +79,12 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                 }
             }
         }
+    }
+
+    protected fun deleteProcessor(port: Any, message: MessageProcessorDelete) {
+        this._languageDefinition.remove(message.languageId)
+        Agl.registry.unregister(message.languageId)
+        sendMessage(port, MessageProcessorDeleteResponse(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "OK"))
     }
 
     protected fun configureSyntaxAnalyser(port: Any, message: MessageSyntaxAnalyserConfigure) {
@@ -137,11 +144,17 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             val result = if (null == goal) proc.parse(message.text) else proc.parse(message.text, Agl.parseOptions { goalRuleName(goal) })
             val sppt = result.sppt
             if (null == sppt) {
-                sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, MessageStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null))
+                sendMessage(
+                    port,
+                    MessageParseResult(message.languageId, message.editorId, message.sessionId, MessageStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null)
+                )
             } else {
                 val treeStr = serialiseParseTreeToStringJson(sppt.root)
                 val treeStrEncoded = treeStr?.let { JsonString.encode(it) } //double encode treeStr as it itself is json
-                sendMessage(port, MessageParseResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), treeStrEncoded))
+                sendMessage(
+                    port,
+                    MessageParseResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), treeStrEncoded)
+                )
                 this.sendParseLineTokens(port, message.languageId, message.editorId, message.sessionId, sppt)
                 this.syntaxAnalysis(port, message, proc, sppt)
             }
@@ -169,10 +182,21 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             if (null == asm) {
                 sendMessage(
                     port,
-                    MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.FAILURE, "SyntaxAnalysis Failed", result.issues.all.toList(), null)
+                    MessageSyntaxAnalysisResult(
+                        message.languageId,
+                        message.editorId,
+                        message.sessionId,
+                        MessageStatus.FAILURE,
+                        "SyntaxAnalysis Failed",
+                        result.issues.all.toList(),
+                        null
+                    )
                 )
             } else {
-                sendMessage(port, MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), asm))
+                sendMessage(
+                    port,
+                    MessageSyntaxAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), asm)
+                )
                 this.semanticAnalysis(port, message, proc, asm, result.locationMap)
             }
         } catch (t: Throwable) {
@@ -191,17 +215,26 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
         }
     }
 
-    private fun semanticAnalysis(port: Any, message: MessageProcessRequest<ContextType>, proc: LanguageProcessor<AsmType, ContextType>, asm: AsmType, locationMap: Map<Any, InputLocation>) {
+    private fun semanticAnalysis(
+        port: Any,
+        message: MessageProcessRequest<ContextType>,
+        proc: LanguageProcessor<AsmType, ContextType>,
+        asm: AsmType,
+        locationMap: Map<Any, InputLocation>
+    ) {
         try {
             sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.START, "Start", emptyList(), null))
             val result = proc.semanticAnalysis(asm, Agl.options {
                 semanticAnalysis {
                     locationMap(locationMap)
                     context(message.context)
-                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS,false)
+                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             })
-            sendMessage(port, MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(),asm))
+            sendMessage(
+                port,
+                MessageSemanticAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), asm)
+            )
         } catch (t: Throwable) {
             sendMessage(
                 port,
@@ -236,7 +269,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
 
     private fun grammarAmbiguityAnalysis(port: Any, message: MessageGrammarAmbiguityAnalysisRequest) {
         try {
-            sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.START,null, emptyList()))
+            sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.START, null, emptyList()))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(listOf(proc.grammar!!), Agl.options {
@@ -245,7 +278,10 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                     //context(message.context)
                 }
             })
-            sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS,null, result.issues.all.toList()))
+            sendMessage(
+                port,
+                MessageGrammarAmbiguityAnalysisResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, null, result.issues.all.toList())
+            )
         } catch (t: Throwable) {
             sendMessage(
                 port,
