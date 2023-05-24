@@ -16,6 +16,7 @@
 package net.akehurst.language.editor.common.serialisation
 
 import net.akehurst.kotlin.json.json
+import net.akehurst.kotlinx.reflect.KotlinxReflect
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
@@ -268,6 +269,7 @@ class test_AglWorkerSerialisation {
                                     entry({ string("content") }) {
                                         objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                             property("name", "content")
+                                            property("childIndex", 0)
                                             property("value") {
                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
                                                     property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content") } }
@@ -278,6 +280,7 @@ class test_AglWorkerSerialisation {
                                                             entry({ string("propString") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propString")
+                                                                    property("childIndex", 0)
                                                                     property("value", "stringValue")
                                                                     property("isReference", false)
                                                                 }
@@ -285,6 +288,7 @@ class test_AglWorkerSerialisation {
                                                             entry({ string("propListString") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propListString")
+                                                                    property("childIndex", 1)
                                                                     property("value") {
                                                                         listObject {
                                                                             string("Hello")
@@ -297,6 +301,7 @@ class test_AglWorkerSerialisation {
                                                             entry({ string("propListElem") }) {
                                                                 objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                     property("name", "propListElem")
+                                                                    property("childIndex", 2)
                                                                     property("value") {
                                                                         listObject {
                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
@@ -315,6 +320,7 @@ class test_AglWorkerSerialisation {
                                                                                         entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
+                                                                                                property("childIndex", 0)
                                                                                                 property("value", "e1")
                                                                                                 property("isReference", false)
                                                                                             }
@@ -322,6 +328,7 @@ class test_AglWorkerSerialisation {
                                                                                         entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
+                                                                                                property("childIndex", 1)
                                                                                                 property("value") {
                                                                                                     objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
                                                                                                         property("reference", "e2")
@@ -350,6 +357,7 @@ class test_AglWorkerSerialisation {
                                                                                         entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
+                                                                                                property("childIndex", 0)
                                                                                                 property("value", "e2")
                                                                                                 property("isReference", false)
                                                                                             }
@@ -357,6 +365,7 @@ class test_AglWorkerSerialisation {
                                                                                         entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
+                                                                                                property("childIndex", 1)
                                                                                                 property("value") {
                                                                                                     objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
                                                                                                         property("reference", "e3")
@@ -385,6 +394,7 @@ class test_AglWorkerSerialisation {
                                                                                         entry({ string("id") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "id")
+                                                                                                property("childIndex", 0)
                                                                                                 property("value", "e3")
                                                                                                 property("isReference", false)
                                                                                             }
@@ -392,6 +402,7 @@ class test_AglWorkerSerialisation {
                                                                                         entry({ string("ref") }) {
                                                                                             objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
                                                                                                 property("name", "ref")
+                                                                                                property("childIndex", 1)
                                                                                                 property("value") {
                                                                                                     objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
                                                                                                         property("reference", "e1")

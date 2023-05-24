@@ -9,6 +9,9 @@ dependencies {
 
     commonMainImplementation("net.akehurst.kotlinx:kotlinx-reflect:$version_kotlinx")
     commonMainImplementation("net.akehurst.kotlin.kserialisation:kserialisation-json:$version_kserialisation")
+
+    commonMainImplementation("net.akehurst.kotlinx:kotlinx-collections:$version_kotlinx")
+
 }
 
 kotlinxReflect {
