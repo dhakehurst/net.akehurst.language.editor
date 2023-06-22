@@ -122,9 +122,6 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
             this.updateStyle()
         }
     */
-    override fun finalize() {
-        //this.aglWorker.worker.terminate()
-    }
 
     override fun destroy() {
         //this.aglWorker.worker.terminate()

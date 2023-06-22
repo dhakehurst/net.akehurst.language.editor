@@ -15,7 +15,8 @@ dependencies {
 }
 
 kotlinxReflect {
-    forReflection.set(listOf(
+
+    forReflectionMain.set(listOf(
         "net.akehurst.language.editor.common",
         "net.akehurst.language.editor.common.messages",
 

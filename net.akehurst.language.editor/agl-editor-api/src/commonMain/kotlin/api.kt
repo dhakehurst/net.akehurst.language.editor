@@ -78,8 +78,6 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun clearErrorMarkers()
 
-    fun finalize()
-
     fun destroy()
 }
 

@@ -1209,7 +1209,7 @@ class test_AglWorkerSerialisation {
             """
         ).asm!!.first()
         val context = ContextFromTypeModel()
-        context.createScopeFrom(TypeModelFromGrammar(grammar))
+        context.createScopeFrom(TypeModelFromGrammar.createFrom(grammar))
         val expected = MessageProcessRequest(
             "testLang", "tesEditor", "testSession",
             "rule1",

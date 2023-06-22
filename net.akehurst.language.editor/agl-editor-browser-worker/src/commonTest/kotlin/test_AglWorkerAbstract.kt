@@ -30,7 +30,6 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.sppt.SPPTNode
-import net.akehurst.language.api.typemodel.TypeModel
 import net.akehurst.language.editor.common.messages.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -409,7 +408,7 @@ class test_AglWorkerAbstract {
         val grammar = Agl.registry.agl.grammar.processor!!.process(userGrammar).asm!!.first()
         val scopeModel = Agl.registry.agl.scopes.processor!!.process(
             scopeStr,
-            Agl.options { semanticAnalysis { context(ContextFromTypeModel(TypeModelFromGrammar(grammar))) } }
+            Agl.options { semanticAnalysis { context(ContextFromTypeModel(TypeModelFromGrammar.createFrom(grammar))) } }
         ).asm!!
         val sentence = """
             primitive String

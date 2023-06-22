@@ -43,18 +43,34 @@ class AglComponents<AsmType : Any, ContextType : Any>(
     var languageIdentity: String
         get() = languageDefinition.identity
         set(value) {
-            val grammarStrObservers = this._languageDefinition.grammarStrObservers
-            val scopeStrObservers = this._languageDefinition.scopeStrObservers
-            val styleStrObservers = this._languageDefinition.styleStrObservers
-            val formatterStrObservers = this._languageDefinition.formatterStrObservers
-            this._languageDefinition = Agl.registry.findOrPlaceholder(value)
-            this._languageDefinition.grammarStrObservers.addAll(grammarStrObservers)
-            this._languageDefinition.scopeStrObservers.addAll(scopeStrObservers)
-            this._languageDefinition.styleStrObservers.addAll(styleStrObservers)
-            this._languageDefinition.formatterStrObservers.addAll(formatterStrObservers)
+            if (languageDefinition.identity ==value) {
+                //do NOT update, could end up in a loop and run out of memory with observer adding!
+                // it did for version 1.9.0-RC of kotlin on JS
+            } else {
+                val grammarStrObservers = this._languageDefinition.grammarStrObservers
+                val scopeStrObservers = this._languageDefinition.scopeStrObservers
+                val styleStrObservers = this._languageDefinition.styleStrObservers
+                val formatterStrObservers = this._languageDefinition.formatterStrObservers
+                this._languageDefinition = Agl.registry.findOrPlaceholder(value)
+                //this._languageDefinition.grammarStrObservers.addAll(grammarStrObservers)
+                //this._languageDefinition.scopeStrObservers.addAll(scopeStrObservers)
+                //this._languageDefinition.styleStrObservers.addAll(styleStrObservers)
+                // this._languageDefinition.formatterStrObservers.addAll(formatterStrObservers)
 
-            this._styleHandler = AglStyleHandler(value)
-            this.sppt = null
-            //this.asm = null
+                _addAll(this._languageDefinition.grammarStrObservers, grammarStrObservers)
+                _addAll(this._languageDefinition.scopeStrObservers, scopeStrObservers)
+                _addAll(this._languageDefinition.styleStrObservers, styleStrObservers)
+                _addAll(this._languageDefinition.formatterStrObservers, formatterStrObservers)
+
+                this._styleHandler = AglStyleHandler(value)
+                this.sppt = null
+                //this.asm = null
+            }
         }
+
+    private fun <T> _addAll(tgt:MutableList<T>, src:List<T>) {
+        for (i in src) {
+            tgt.add(i)
+        }
+    }
 }

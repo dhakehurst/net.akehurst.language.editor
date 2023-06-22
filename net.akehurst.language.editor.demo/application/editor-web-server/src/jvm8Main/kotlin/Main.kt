@@ -28,7 +28,7 @@ import io.ktor.server.sessions.*
 import io.ktor.util.generateNonce
 import java.io.File
 
-fun main(args: Array<String>) {
+fun main() {
     println("PWD: " + File(".").absolutePath)
     val application = EditorApplication
     application.start()

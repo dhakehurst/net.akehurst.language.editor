@@ -17,17 +17,18 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.gradle.plugins.BuildConfigExtension
 import org.gradle.internal.jvm.Jvm
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 
 plugins {
-    kotlin("multiplatform") version ("1.8.21") apply false
-    id("org.jetbrains.dokka") version ("1.8.10") apply false
+    kotlin("multiplatform") version ("1.9.0-RC") apply false
+    id("org.jetbrains.dokka") version ("1.8.20") apply false
     id("com.github.gmazzo.buildconfig") version ("3.1.0") apply false
     id("nu.studer.credentials") version ("3.0")
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.8.21") apply false
-    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version("1.8.21") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.9.0-RC") apply false
+    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version("1.9.0-RC") apply false
 }
-val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8
-val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_8
+val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
+val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
 val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
 
 println("===============================================")
@@ -80,22 +81,31 @@ subprojects {
 
     configure<KotlinMultiplatformExtension> {
         jvm("jvm8") {
-            val main by compilations.getting {
-                compilerOptions.configure {
-                    languageVersion.set(kotlin_languageVersion)
-                    apiVersion.set(kotlin_apiVersion)
-                    jvmTarget.set(jvmTargetVersion)
+            compilations {
+                val main by getting {
+                    compilerOptions.configure {
+                        languageVersion.set(kotlin_languageVersion)
+                        apiVersion.set(kotlin_apiVersion)
+                        jvmTarget.set(jvmTargetVersion)
+                    }
                 }
-            }
-            val test by compilations.getting {
-                compilerOptions.configure {
-                    languageVersion.set(kotlin_languageVersion)
-                    apiVersion.set(kotlin_apiVersion)
-                    jvmTarget.set(jvmTargetVersion)
+                val test by getting {
+                    compilerOptions.configure {
+                        languageVersion.set(kotlin_languageVersion)
+                        apiVersion.set(kotlin_apiVersion)
+                        jvmTarget.set(jvmTargetVersion)
+                    }
                 }
             }
         }
         js("js",IR) {
+            generateTypeScriptDefinitions()
+            tasks.withType<KotlinJsCompile>().configureEach {
+                kotlinOptions {
+                    moduleKind = "es"
+                    useEsClasses = true
+                }
+            }
             nodejs()
             browser {
                 webpackTask {
@@ -126,7 +136,7 @@ subprojects {
     tasks.named("publish").get().dependsOn("javadocJar")
 
     dependencies {
-        "commonMainApi"(platform("net.akehurst.bom:kotlin:1.8.21"))
+        //"commonMainApi"(platform("net.akehurst.bom:kotlin:1.8.21"))
 
         "commonTestImplementation"(kotlin("test"))
         "commonTestImplementation"(kotlin("test-annotations-common"))

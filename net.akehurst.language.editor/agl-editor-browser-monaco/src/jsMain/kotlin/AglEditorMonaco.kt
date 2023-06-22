@@ -149,10 +149,6 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         //this.monacoEditor.destroy()
     }
 
-    override fun finalize() {
-        //this.aglWorker.worker.terminate()
-    }
-
     override fun updateLanguage(oldId: String?) {
         if (null != oldId) {
             val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)

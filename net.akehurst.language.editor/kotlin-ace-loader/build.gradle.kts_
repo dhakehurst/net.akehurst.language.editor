@@ -1,4 +1,4 @@
-
+import org.gradle.api.tasks.Copy
 
 dependencies {
     jsMainImplementation(npm("loader-utils","2.0.0"))
@@ -25,8 +25,8 @@ kotlin {
 tasks.named<Copy>("jsProductionLibraryCompileSync") {
    duplicatesStrategy = DuplicatesStrategy.WARN
 }
-tasks.named<Copy>("jsDevelopmentLibraryCompileSync") {
-   duplicatesStrategy = DuplicatesStrategy.WARN
+tasks.named<org.jetbrains.kotlin.gradle.targets.js.ir.DefaultIncrementalSyncTask>("jsDevelopmentLibraryCompileSync") {
+   //duplicatesStrategy = DuplicatesStrategy.WARN
 }
 configure<PublishingExtension> {
     publications.withType<MavenPublication> {

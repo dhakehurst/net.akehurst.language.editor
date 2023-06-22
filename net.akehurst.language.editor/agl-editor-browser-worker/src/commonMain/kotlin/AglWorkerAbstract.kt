@@ -34,7 +34,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
 
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
-    protected abstract fun serialiseParseTreeToStringJson(spptNode: SPPTNode?): String?
+    protected abstract fun serialiseParseTreeToStringJson(sentence:String, sppt: SharedPackedParseTree?) : String?
 
     protected fun receiveAglWorkerMessage(port: Any, msg: AglWorkerMessage) {
         when (msg) {
@@ -149,7 +149,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                     MessageParseResult(message.languageId, message.editorId, message.sessionId, MessageStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null)
                 )
             } else {
-                val treeStr = serialiseParseTreeToStringJson(sppt.root)
+                val treeStr = serialiseParseTreeToStringJson(message.text, sppt)
                 val treeStrEncoded = treeStr?.let { JsonString.encode(it) } //double encode treeStr as it itself is json
                 sendMessage(
                     port,

@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.application.client.web
+package demo
 
-import codemirror.view.EditorViewConfig
-import kotlinx.browser.document
-import monaco.editor.IStandaloneEditorConstructionOptions
-import net.akehurst.kotlin.html5.create
 import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
@@ -33,26 +29,44 @@ import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
 import net.akehurst.language.editor.api.LogLevel
-import net.akehurst.language.editor.browser.ace.attachToAce
-import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
-import net.akehurst.language.editor.browser.monaco.attachToMonaco
-import net.akehurst.language.editor.common.objectJS
-import net.akehurst.language.editor.common.objectJSTyped
-import net.akehurst.language.editor.demo.BuildConfig
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.examples.*
-import net.akehurst.language.editor.technology.gui.widgets.TabView
-import net.akehurst.language.editor.technology.gui.widgets.TreeView
-import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
-import net.akehurst.language.typemodel.api.*
-import org.w3c.dom.*
 
-external var aglScriptBasePath: dynamic = definedExternally
-val workerScriptName = "${aglScriptBasePath}/application-agl-editor-worker.js"
+
+
+//external var aglScriptBasePath: dynamic = definedExternally
+//val workerScriptName = "${aglScriptBasePath}/application-agl-editor-worker.js"
 var demo: Demo? = null
 
+fun runDemo() {
+
+    //createBaseDom("div#agl-demo")
+    val logger = DemoLogger(LogLevel.All)
+
+    /*
+        val loggingLevel = document.querySelector("#agl-demo-logging-level")!! as HTMLSelectElement
+        loggingLevel.addEventListener("change", {
+            val optionStr = loggingLevel.value
+            val ll = LogLevel.valueOf(optionStr)
+            logger.level = ll
+        })
+
+        val editorChoice = document.querySelector("#agl-options-editor")!! as HTMLSelectElement
+        editorChoice.addEventListener("change", {
+            val optionStr = editorChoice.value
+            val edKind = AlternativeEditors.valueOf(optionStr)
+            createDemo(edKind, logger)
+        })
+    */
+//    TabView.initialise(document)
+    initialiseExamples()
+
+    createDemo(AlternativeEditors.DUMMY, logger)
+
+}
+
 enum class AlternativeEditors {
-    ACE, MONACO, CODEMIRROR
+    DUMMY
 }
 
 object Constants {
@@ -69,34 +83,9 @@ object Constants {
     val formatLanguageId = Agl.registry.agl.formatLanguageIdentity
 }
 
-fun main() {
-    try {
-        createBaseDom("div#agl-demo")
-        val logger = DemoLogger(LogLevel.All)
 
-        val loggingLevel = document.querySelector("#agl-demo-logging-level")!! as HTMLSelectElement
-        loggingLevel.addEventListener("change", {
-            val optionStr = loggingLevel.value
-            val ll = LogLevel.valueOf(optionStr)
-            logger.level = ll
-        })
 
-        val editorChoice = document.querySelector("#agl-options-editor")!! as HTMLSelectElement
-        editorChoice.addEventListener("change", {
-            val optionStr = editorChoice.value
-            val edKind = AlternativeEditors.valueOf(optionStr)
-            createDemo(edKind, logger)
-        })
-
-        TabView.initialise(document)
-        initialiseExamples()
-
-        createDemo(AlternativeEditors.ACE, logger)
-    } catch (t: Throwable) {
-        console.error(t)
-    }
-}
-
+/*
 fun createBaseDom(appDivSelector: String) {
     val appDiv = document.querySelector(appDivSelector)!!
     while (null != appDiv.firstChild) {
@@ -258,9 +247,9 @@ fun createBaseDom(appDivSelector: String) {
         }
     }
 }
-
+*/
 fun initialiseExamples() {
-    val exampleSelect = document.querySelector("select#example") as HTMLElement
+//    val exampleSelect = document.querySelector("select#example") as HTMLElement
     Examples.add(Datatypes.example)
     Examples.add(SQL.example)
     Examples.add(GraphvizDot.example)
@@ -270,19 +259,19 @@ fun initialiseExamples() {
     Examples.add(TraceabilityQuery.example)
     Examples.add(MScript.example)
     Examples.add(Xml.example)
-
-    Examples.map.forEach { eg ->
-        val option = document.createElement("option")
-        exampleSelect.appendChild(option);
-        option.setAttribute("value", eg.value.id);
-        option.textContent = eg.value.label;
-    }
+    /*
+        Examples.map.forEach { eg ->
+            val option = document.createElement("option")
+            exampleSelect.appendChild(option);
+            option.setAttribute("value", eg.value.id);
+            option.textContent = eg.value.label;
+        }
+     */
 }
 
 fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
-    if (null != demo) {
-        demo!!.finalize()
-    }
+    //if (null != demo) { demo!!.finalize() }
+    /*
     val editorEls = document.querySelectorAll("agl-editor")
     val editors = editorEls.asList().associate { node ->
         val element = node as Element
@@ -298,56 +287,25 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
         ed.logger.bind = { lvl, msg, t -> logger.log(lvl, msg, t) }
         Pair(element.id, ed)// (editorId)
     }
+     */
 
-    demo = Demo(editors)
+    val editors = mapOf<String, AglEditor<Any, Any>>(
+        Constants.sentenceEditorId to createDummyEditor(Constants.sentenceEditorId, Constants.sentenceLanguageId),
+        Constants.grammarEditorId to createDummyEditor(Constants.grammarEditorId, Constants.grammarLanguageId),
+        Constants.styleEditorId to createDummyEditor(Constants.styleEditorId, Constants.styleLanguageId),
+        Constants.referencesEditorId to createDummyEditor(Constants.referencesEditorId, Constants.referencesLanguageId)
+    )
+    editors.forEach { (k, v) ->
+        v.logger.bind = { lvl, msg, t -> logger.log(lvl, msg, t) }
+    }
+    demo = Demo(editors, logger)
     demo!!.configure()
 }
 
-fun createAce(editorElement: Element): AglEditor<Any, Any> {
-    val editorId = editorElement.id
-    val languageId = editorElement.getAttribute("agl-language")!!
-    val ed: ace.Editor = ace.Editor(
-        ace.VirtualRenderer(editorElement, null),
-        ace.Ace.createEditSession(""),
-        objectJS { } //options are set later in init_
-    )
-    val aceOptions = objectJS {
-        editor = objectJS {
-            enableBasicAutocompletion = true
-            enableSnippets = true
-            enableLiveAutocompletion = false
-        }
-        renderer = {
-
-        }
-    }
-    ed.setOptions(aceOptions.editor)
-    ed.renderer.setOptions(aceOptions.renderer)
-    return Agl.attachToAce(editorElement, ed, languageId, editorId, workerScriptName, true)
+fun createDummyEditor(editorId: String, languageId: String): AglEditor<Any, Any> {
+    return EditorDummy<Any, Any>(languageId, editorId)
 }
 
-fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
-    val editorId = editorElement.id
-    val languageId = editorElement.getAttribute("agl-language")!!
-    val editorOptions = objectJSTyped<IStandaloneEditorConstructionOptions> {
-        value = ""
-        wordBasedSuggestions = false
-    }
-    val ed = monaco.editor.create(editorElement, editorOptions, null)
-    return Agl.attachToMonaco(editorElement, ed, languageId, editorId, workerScriptName, true)
-}
-
-fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
-    val editorId = editorElement.id
-    val languageId = editorElement.getAttribute("agl-language")!!
-    val editorOptions = objectJSTyped<EditorViewConfig> {
-        doc = "hello"
-        //extensions= [keymap.of(defaultKeymap)],
-        parent = editorElement
-    }
-    val ed = codemirror.view.EditorView(editorOptions)
-    return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, workerScriptName, true)
-}
 
 //fun createFirepad(editorElement: Element): AglEditor<Any, Any> {
 //    val id = editorElement.id
@@ -355,11 +313,12 @@ fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
 //}
 
 class Demo(
-    val editors: Map<String, AglEditor<*, *>>
+    val editors: Map<String, AglEditor<*, *>>,
+    val logger: DemoLogger
 ) {
-    val trees = TreeView.initialise(document)
+    //val trees = TreeView.initialise(document)
 
-    val exampleSelect = document.querySelector("select#example") as HTMLElement
+    //val exampleSelect = document.querySelector("select#example") as HTMLElement
     val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<AsmSimple, ContextSimple>
     val grammarEditor = editors[Constants.grammarEditorId]!!
     val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
@@ -368,8 +327,8 @@ class Demo(
 
     fun configure() {
         this.connectEditors()
-        this.connectTrees()
-        this.configExampleSelector()
+        //this.connectTrees()
+        //this.configExampleSelector()
     }
 
     private fun connectEditors() {
@@ -404,7 +363,7 @@ class Demo(
                 EventStatus.FAILURE -> {
                     styleContext.clear()
                     scopeContext.clear()
-                    console.error(grammarEditor.editorId + ": " + event.message)
+                    logger.logError(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
 
@@ -415,10 +374,10 @@ class Demo(
                     styleContext.createScopeFrom(grammars)
                     scopeContext.createScopeFrom(TypeModelFromGrammar.createFrom(grammars.first()))
                     try {
-                        console.asDynamic().debug("Debug: Grammar parse success, resetting sentence processor")
+                        logger.logDebug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
                     } catch (t: Throwable) {
-                        console.error(grammarEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, grammarEditor.editorId + ": " + t.message, t)
                         sentenceEditor.languageDefinition.grammarStr = ""
                     }
                 }
@@ -431,16 +390,16 @@ class Demo(
             when (event.status) {
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
-                    console.error(styleEditor.editorId + ": " + event.message)
+                    logger.logError(styleEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.styleStr = ""
                 }
 
                 EventStatus.SUCCESS -> {
                     try {
-                        console.asDynamic().debug("Debug: Style parse success, resetting sentence style")
+                        logger.logDebug("Debug: Style parse success, resetting sentence style")
                         sentenceEditor.languageDefinition.styleStr = styleEditor.text
                     } catch (t: Throwable) {
-                        console.error(styleEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, styleEditor.editorId + ": " + t.message, t)
                         sentenceEditor.languageDefinition.styleStr = ""
                     }
                 }
@@ -450,16 +409,16 @@ class Demo(
             when (event.status) {
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
-                    console.error(referencesEditor.editorId + ": " + event.message)
+                    logger.logError(referencesEditor.editorId + ": " + event.message)
                 }
 
                 EventStatus.SUCCESS -> {
                     try {
                         //sentenceScopeModel = event.asm as ScopeModel?
-                        console.asDynamic().debug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
+                        logger.logDebug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
                         sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
                     } catch (t: Throwable) {
-                        console.error(referencesEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, referencesEditor.editorId + ": " + t.message, t)
                     }
                 }
             }
@@ -467,10 +426,10 @@ class Demo(
     }
 
     private fun loading(parse: Boolean, ast: Boolean) {
-        trees["parse"]!!.loading = parse
-        trees["ast"]!!.loading = ast
+   //     trees["parse"]!!.loading = parse
+    //    trees["ast"]!!.loading = ast
     }
-
+/*
     private fun connectTrees() {
         trees["typemodel"]!!.treeFunctions = TreeViewFunctions<dynamic>(
             label = { root, it ->
@@ -500,7 +459,7 @@ class Demo(
                 when (it) {
                     is String -> false
                     is List<*> -> true
-                    is TypeModel -> it.allTypesByName.isNotEmpty()
+                    is TypeModel -> it.allRuleNameToType.isNotEmpty()
                     is Map.Entry<String, TypeUsage> -> {
                         val type = it.value.type
                         when (type) {
@@ -525,7 +484,7 @@ class Demo(
                 when (it) {
                     is String -> emptyArray<Any>()
                     is List<*> -> it.toArray()
-                    is TypeModel -> it.allTypesByName.entries.toTypedArray()
+                    is TypeModel -> it.allRuleNameToType.entries.toTypedArray()
                     is Map.Entry<String, TypeUsage> -> {
                         val type = it.value.type
                         when (type) {
@@ -734,12 +693,7 @@ class Demo(
         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
         sentenceEditor.text = eg.sentence
     }
-
-    fun finalize() {
-        editors.values.forEach {
-            it.destroy()
-        }
-    }
+*/
 }
 
 

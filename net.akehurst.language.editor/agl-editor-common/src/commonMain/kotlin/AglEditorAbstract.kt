@@ -47,10 +47,14 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         get() = this.agl.languageIdentity
         set(value) {
             val oldId = this.agl.languageIdentity
-            this.agl.languageIdentity = value
-            this.updateLanguage(oldId)
-            this.updateProcessor()
-            this.updateStyle()
+            if (oldId==value ) {
+                //same, no need to update
+            } else {
+                this.agl.languageIdentity = value
+                this.updateLanguage(oldId)
+                this.updateProcessor()
+                this.updateStyle()
+            }
         }
 
     override val languageDefinition: LanguageDefinition<AsmType, ContextType>

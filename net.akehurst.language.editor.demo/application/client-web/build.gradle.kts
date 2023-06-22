@@ -29,7 +29,7 @@ kotlin {
     }
     sourceSets {
         val jvm8Main by getting {
-            resources.srcDir("$buildDir/distributions")
+            resources.srcDir("$buildDir/dist/js/developmentExecutable")
         }
     }
 }
@@ -38,7 +38,7 @@ val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {
     dependsOn(":application-agl-editor-worker:jsBrowserProductionWebpack")
     dependsOn(":application-agl-editor-worker:jsBrowserDistribution")
     dependsOn("jsProcessResources")
-    from("$buildDir/../application-agl-editor-worker/distributions") {
+    from("$buildDir/../application-agl-editor-worker/dist/js/productionExecutable") {
         include("application-agl-editor-worker.js")
         include("application-agl-editor-worker.js.map")
     }
@@ -50,7 +50,7 @@ val workerTaskDev = tasks.register<Copy>("copyAglEditorWorkerJsDev") {
     dependsOn(":application-agl-editor-worker:jsBrowserDevelopmentWebpack")
     dependsOn(":application-agl-editor-worker:jsBrowserDevelopmentExecutableDistribution")
     dependsOn("jsProcessResources")
-    from("$buildDir/../application-agl-editor-worker/developmentExecutable") {
+    from("$buildDir/../application-agl-editor-worker/dist/js/developmentExecutable") {
         include("application-agl-editor-worker.js")
         include("application-agl-editor-worker.js.map")
     }
