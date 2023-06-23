@@ -55,7 +55,14 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
 
             else -> {
                 try {
-                    val ld = Agl.registry.findOrPlaceholder<AsmType, ContextType>(message.languageId)
+                    val ld = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
+                        message.languageId,
+                        Agl.options {
+                            semanticAnalysis {
+                                option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+                            }
+                        }
+                    )
                     if (ld.isModifiable) {
                         ld.grammarStr = message.grammarStr
                         ld.scopeModelStr = message.scopeModelStr
