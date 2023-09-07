@@ -25,6 +25,11 @@ enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, Al
 
 interface AglEditor<AsmType : Any, ContextType : Any> {
 
+    /**
+     * the underlying editor
+     */
+    val baseEditor: Any
+
     /*
      * identifies the editor, important that it is unique wrt to each SharedWorker
      * used to identify source and target of messages to/from the worker
@@ -64,11 +69,17 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     var text: String
 
     /**
+     * update the editor and process the text if true
+     * (can be useful to be able to switch this off)
+     */
+    var doUpdate: Boolean
+
+    /**
      * destination for logging messages
      */
     val logger: AglEditorLogger
 
-    fun configureSyntaxAnalyser(configuration: Map<String,Any>)
+    fun configureSyntaxAnalyser(configuration: Map<String, Any>)
 
     fun onParse(handler: (ParseEvent) -> Unit)
 
@@ -81,7 +92,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     fun destroy()
 }
 
-enum class EventStatus{ START, FAILURE, SUCCESS }
+enum class EventStatus { START, FAILURE, SUCCESS }
 
 /**
  * Three kinds of event,
@@ -95,8 +106,8 @@ class ParseEvent(
     val tree: Any?,
     val issues: List<LanguageIssue>
 ) {
-    val isStart:Boolean = status==EventStatus.START
-    val failure:Boolean= status==EventStatus.FAILURE
+    val isStart: Boolean = status == EventStatus.START
+    val failure: Boolean = status == EventStatus.FAILURE
 }
 
 /**
@@ -108,11 +119,11 @@ class ParseEvent(
 class SyntaxAnalysisEvent(
     val status: EventStatus,
     val message: String,
-    val asm:Any?,
+    val asm: Any?,
     val issues: List<LanguageIssue>
 ) {
-    val isStart:Boolean = status==EventStatus.START
-    val failure:Boolean= status==EventStatus.FAILURE
+    val isStart: Boolean = status == EventStatus.START
+    val failure: Boolean = status == EventStatus.FAILURE
 }
 
 /**
@@ -124,9 +135,9 @@ class SyntaxAnalysisEvent(
 class SemanticAnalysisEvent(
     val status: EventStatus,
     val message: String,
-    val asm:Any?,
+    val asm: Any?,
     val issues: List<LanguageIssue>
 ) {
-    val isStart:Boolean = status==EventStatus.START
-    val failure:Boolean= status==EventStatus.FAILURE
+    val isStart: Boolean = status == EventStatus.START
+    val failure: Boolean = status == EventStatus.FAILURE
 }

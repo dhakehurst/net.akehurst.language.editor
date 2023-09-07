@@ -28,16 +28,16 @@ import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.collections.mutableStackOf
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.editor.worker.external.createStringifyStream
 import org.w3c.dom.MessageEvent
 
 abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract<AsmType, ContextType>() {
 
     override fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic>) {
-        //val str = AglWorkerMessage.serialise(msg)
         try {
             val str = AglWorkerSerialisation.serialise(msg)
             port.postMessage(str, transferables)
-        } catch (t:Throwable) {
+        } catch (t: Throwable) {
             val str = "Error: Worker cannot sendMessage: ${t.message}"
             port.postMessage(str, transferables)
         }
@@ -62,54 +62,22 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
         }
     }
 
-    override fun serialiseParseTreeToStringJson(sentence:String, sppt: SharedPackedParseTree?) : String? {
+
+    override fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String? =
+        serialiseParseTreeToStringJson1(sentence, sppt)
+
+
+    private fun serialiseParseTreeToStringJson1(sentence: String, sppt: SharedPackedParseTree?): String? {
         try {
-            return sppt?.let {
+            return if (null == sppt) {
+                null
+            } else {
                 val root = objectJS {
                     children = mutableListOf<dynamic>()
                 }
                 val stack = mutableStackOf<dynamic>()
                 stack.push(root)
                 val walker = object : SpptWalker {
-                    override fun beginBranch(option: Int, ruleName: String, startPosition: Int, nextInputPosition: Int) {
-                        stack.push(objectJS {
-                            isBranch = true
-                            isSkip = false
-                            name = ruleName
-                            children = mutableListOf<dynamic>()
-                        })
-                    }
-
-                    override fun endBranch(opt: Int, ruleName: String, startPosition: Int, nextInputPosition: Int) {
-                        val node = stack.pop()
-                        node.children = (node.children as MutableList<dynamic>).toTypedArray()
-                        val parent = stack.peek()
-                        (parent.children as MutableList<dynamic>).add(node)
-                    }
-
-                    override fun error(msg: String, path: () -> List<SpptPathNode>) {
-                        val parent = stack.peek()
-                        val node = objectJS {
-                            isBranch = false
-                            isSkip = false
-                            name = "ERROR"
-                            nonSkipMatchedText = msg
-                        }
-                        (parent.children as MutableList<dynamic>).add(node)
-                    }
-
-                    override fun leaf(ruleName: String, startPosition: Int, nextInputPosition: Int) {
-                        val parent = stack.peek()
-                        val matchedText = sentence.substring(startPosition, nextInputPosition)
-                        val node = objectJS {
-                            isBranch = false
-                            isSkip = false
-                            name = ruleName
-                            nonSkipMatchedText = escapeCtrlCodes(matchedText)
-                        }
-                        (parent.children as MutableList<dynamic>).add(node)
-                    }
-
                     override fun skip(startPosition: Int, nextInputPosition: Int) {
                         val parent = stack.peek()
                         val matchedText = sentence.substring(startPosition, nextInputPosition)
@@ -122,92 +90,131 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                         (parent.children as MutableList<dynamic>).add(node)
                     }
 
+                    override fun beginTree() {}
+
+                    override fun endTree() {}
+
+                    override fun leaf(nodeInfo: SpptDataNodeInfo) {
+                        val parent = stack.peek()
+                        val matchedText = sentence.substring(nodeInfo.node.startPosition, nodeInfo.node.nextInputNoSkip)
+                        val node = objectJS {
+                            isBranch = false
+                            isSkip = false
+                            name = nodeInfo.node.rule.tag
+                            nonSkipMatchedText = escapeCtrlCodes(matchedText)
+                        }
+                        if (nodeInfo.alt.index == 0) {
+                            (parent.children as MutableList<dynamic>).add(node)
+                        } else {
+                            //TODO:
+                        }
+                    }
+
+                    override fun beginBranch(nodeInfo: SpptDataNodeInfo) {
+                        stack.push(objectJS {
+                            isBranch = true
+                            isSkip = false
+                            name = nodeInfo.node.rule.tag
+                            children = mutableListOf<dynamic>()
+                        })
+                    }
+
+                    override fun endBranch(nodeInfo: SpptDataNodeInfo) {
+                        val node = stack.pop()
+                        node.children = (node.children as MutableList<dynamic>).toTypedArray()
+                        val parent = stack.peek()
+                        if (nodeInfo.alt.index == 0) {
+                            (parent.children as MutableList<dynamic>).add(node)
+                        } else {
+                            //TODO:
+                        }
+                    }
+
+                    override fun beginEmbedded(nodeInfo: SpptDataNodeInfo) {
+                        this.beginBranch(nodeInfo)
+                    }
+
+                    override fun endEmbedded(nodeInfo: SpptDataNodeInfo) {
+                        this.endBranch(nodeInfo)
+                    }
+
+                    override fun error(msg: String, path: () -> List<SpptDataNode>) {
+                        val parent = stack.peek()
+                        val node = objectJS {
+                            isBranch = false
+                            isSkip = false
+                            name = "ERROR"
+                            nonSkipMatchedText = msg
+                        }
+                        (parent.children as MutableList<dynamic>).add(node)
+                    }
                 }
 
-                sppt.traverseTreeDepthFirst(walker)
+                sppt.traverseTreeDepthFirst(walker, true)
 
-                return JSON.stringify((root.children as MutableList<dynamic>)[0])
-
-                //val jsObj = parseTreeToJS2(it)
-                //return JSON.stringify(jsObj)
+                val obj = (root.children as MutableList<dynamic>)[0]
+                JSON.stringify(obj)
             }
-        } catch (t:Throwable) {
+        } catch (t: Throwable) {
             error("Error trying to serialise SPPT to JSON: ${t.message}")
         }
     }
 
-    private fun parseTreeToJS2(spptNode: SPPTNode): dynamic {
-        val deep = DeepRecursiveFunction<SPPTNode, dynamic> {
-            when (it) {
-                is SPPTLeaf -> objectJS {
-                    isBranch = false
-                    name = it.name
-                    nonSkipMatchedText = escapeCtrlCodes(it.nonSkipMatchedText)
-                }
-                is SPPTBranch -> objectJS {
-                    isBranch = true
-                    name = it.name
-                    children = it.children.map {
-                        callRecursive(it)
-                    }.toTypedArray()
-                }
-                else -> error("Not supported")
-            }
-        }
-        return deep(spptNode)
-    }
+    private fun serialiseParseTreeToStringJson2(sentence: String, sppt: SharedPackedParseTree?): String? {
+        try {
+            return if (null == sppt) {
+                null
+            } else {
+                //TODO, try serialising just the TreeData, because main knows the sentence already
+                val sb = StringBuilder()
+                val walker = object : SpptWalker {
+                    override fun skip(startPosition: Int, nextInputPosition: Int) {
+                        val matchedText = sentence.substring(startPosition, nextInputPosition)
+                        sb.append("<SKIP>:'${escapeCtrlCodes(matchedText)}'")
+                    }
 
-    private fun parseTreeToJS(spptNode: SPPTNode): dynamic {
-        return when (spptNode) {
-            is SPPTLeaf -> objectJS {
-                isBranch = false
-                name = spptNode.name
-                nonSkipMatchedText = escapeCtrlCodes(spptNode.nonSkipMatchedText)
-            }
-            is SPPTBranch -> objectJS {
-                isBranch = true
-                name = spptNode.name
-                children = spptNode.children.map {
-                    parseTreeToJS(it)
-                }.toTypedArray()
-            }
-            else -> error("Not supported")
-        }
-    }
+                    override fun beginTree() {}
 
-    private fun escapeCtrlCodes(input:String) : String = input
-        .replace(Regex("\n"),"\\n")
-        .replace(Regex("\r"),"\\r")
-        .replace(Regex("\t"),"\\t")
+                    override fun endTree() {}
 
-    /*
-    private fun createAsmTree(asm: Any?): Any? {
-        return if (null == asm) {
-            null
-        } else {
-            when (asm) {
-                is AsmSimple ->{
-                    createAsmTree(asm.rootElements)
-                }
-                is AsmElementSimple -> {
-                    objectJS {
-                        isAsmElementSimple = true
-                        typeName = asm.typeName
-                        properties = asm.properties.map {
-                            objectJS {
-                                isAsmElementProperty = true
-                                name = it.name
-                                value = createAsmTree(it.value)
-                            }
-                        }.toTypedArray()
+                    override fun leaf(nodeInfo: SpptDataNodeInfo) {
+                        val matchedText = sentence.substring(nodeInfo.node.startPosition, nodeInfo.node.nextInputNoSkip)
+                        sb.append("${nodeInfo.node.rule.tag}:'${escapeCtrlCodes(matchedText)}'")
+                    }
+
+                    override fun beginBranch(nodeInfo: SpptDataNodeInfo) {
+                        sb.append("${nodeInfo.node.rule.tag}{")
+                    }
+
+                    override fun endBranch(nodeInfo: SpptDataNodeInfo) {
+                        sb.append("}")
+                    }
+
+                    override fun beginEmbedded(nodeInfo: SpptDataNodeInfo) {
+                        this.beginBranch(nodeInfo)
+                    }
+
+                    override fun endEmbedded(nodeInfo: SpptDataNodeInfo) {
+                        this.endBranch(nodeInfo)
+                    }
+
+                    override fun error(msg: String, path: () -> List<SpptDataNode>) {
+                        sb.append("<ERROR>:'${escapeCtrlCodes(msg)}'")
                     }
                 }
-                is List<*> -> asm.map {
-                    createAsmTree(it)
-                }.toTypedArray()
-                else -> JSON.stringify(asm)
+                sppt.traverseTreeDepthFirst(walker, true)
+
+                sb.toString()
             }
+        } catch (t: Throwable) {
+            error("Error trying to serialise SPPT to JSON: ${t.message}")
         }
     }
-*/
+
+    private fun escapeCtrlCodes(input: String): String = input
+        .replace("\n", "\u23CE")
+        .replace("\t", "\u2B72")
+        .replace(Regex("\r"), "")
+
+
 }

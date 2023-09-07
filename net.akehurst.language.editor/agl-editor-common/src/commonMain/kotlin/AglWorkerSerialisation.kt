@@ -21,6 +21,7 @@ import net.akehurst.kotlin.komposite.api.DatatypeModel
 import net.akehurst.kotlin.komposite.processor.komposite
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
 import net.akehurst.language.api.style.AglStyleModel
+import kotlin.reflect.KClass
 
 
 object AglWorkerSerialisation {
@@ -578,13 +579,13 @@ object AglWorkerSerialisation {
                 }
                 dataType("GrammarRuleDefault") {
                     constructorArguments {
-                        reference("grammar", "GrammarDefault")
                         composite("name", "String")
                         composite("isOverride", "Boolean")
                         composite("isSkip", "Boolean")
                         composite("isLeaf", "Boolean")
                     }
                     mutableProperties {
+                        reference("grammar", "GrammarDefault")
                         composite("rhs", "RuleItemAbstract")
                     }
                 }
@@ -687,20 +688,29 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseSPPT() {
-        //Cannot currently do this, serialising the SPPT implementation classes is too complex
-        /*
-        serialiser.confgureDatatypeModel(
-            """
-            namespace net.akehurst.language.agl.sppt {
-                SharedPackedParseTreeDefault {
-                    composite-val root: SPPTNode,
-                    composite-val seasons: Int,
-                    composite-val maxNumHeads: Int
+        serialiser.confgureFromKompositeModel(komposite {
+            namespace("net.akehurst.language.agl.sppt") {
+                dataType("TreeDataComplete") {
+                    typeParameters("CN")
+                    constructorArguments {
+                        composite("forStateSetNumber", "Int", false)
+                    }
+                    mutableProperties {
+                        composite("root", "CN", true)
+                        composite("initialSkip", "TreeDataComplete", true) { typeArgument("CN") }
+                        composite("completeChildren", "Map", false) {
+                            typeArgument("CN")
+                            typeArgument("Map") {
+                                typeArgument("Int")
+                                typeArgument("List") {
+                                    typeArgument("CN")
+                                }
+                            }
+                        }
+                    }
                 }
             }
-            """.trimIndent())
-         */
-        //classes registered with KotlinxReflect via gradle plugin
+        })
     }
 
     fun confgureFromKompositeString(datatypeModel: String) {

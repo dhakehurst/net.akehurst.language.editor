@@ -22,14 +22,15 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
+import net.akehurst.language.agl.sppt.TreeDataComplete
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.grammar.Grammar
-import net.akehurst.language.api.grammar.Terminal
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
+import net.akehurst.language.api.sppt.SpptDataNode
 import net.akehurst.language.editor.common.AglWorkerSerialisation
 import net.akehurst.language.editor.common.messages.*
 import kotlin.test.Test
@@ -965,6 +966,14 @@ class test_AglWorkerSerialisation {
 
 
     // --- MessageParseResult ---
+
+    @Test
+    fun test_TreeDataComplete() {
+        val sut = TreeDataComplete<SpptDataNode>(0)
+
+TODO()
+    }
+
     @Test
     fun MessageParseResult_com_Start() {
         val expected = MessageParseResult(
@@ -1229,4 +1238,6 @@ class test_AglWorkerSerialisation {
         assertEquals((expected.context as ContextFromTypeModel).rootScope.findOrNull("e1", "Elem"), (actual.context as ContextFromTypeModel).rootScope.findOrNull("e1", "Elem"))
 
     }
+
+
 }

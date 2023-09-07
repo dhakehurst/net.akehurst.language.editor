@@ -22,45 +22,28 @@ class DemoLogger(
     var level: LogLevel
 ) {
 
-    fun logFatal(msg: String?) {
-        console.error("Fatal: $msg")
-    }
+    fun logFatal(msg: String?)= log(LogLevel.Fatal, msg, null)
+    fun logError(msg: String?) = log(LogLevel.Error, msg, null)
+    fun logWarn(msg: String?)= log(LogLevel.Warning, msg, null)
+    fun logInfo(msg: String?) = log(LogLevel.Information, msg, null)
+    fun logDebug(msg: String?) = log(LogLevel.Debug, msg, null)
+    fun logTrace(msg: String?) = log(LogLevel.Trace, msg, null)
 
-    fun logError(msg: String?) {
-        console.error("Error: $msg")
-    }
-
-    fun logWarn(msg: String?) {
-        console.warn("Warn: $msg")
-    }
-
-    fun logInfo(msg: String?) {
-        console.info("Info: $msg")
-    }
-
-    fun logDebug(msg: String?) {
-        console.asDynamic().debug("Debug: $msg")
-    }
-
-    fun logTrace(msg: String?) {
-        console.asDynamic().debug("Trace: $msg")
-    }
-
-    fun log(lvl: LogLevel, msg: String, t: Throwable?) {
+    fun log(lvl: LogLevel, msg: String?, t: Throwable?) {
         when {
             lvl <= level -> logAll(lvl, msg, t)
             else -> Unit
         }
     }
 
-    private fun logAll(lvl: LogLevel, msg: String, t: Throwable?) {
+    private fun logAll(lvl: LogLevel, msg: String?, t: Throwable?) {
         val func = when (lvl) {
-            LogLevel.Fatal -> this::logFatal
-            LogLevel.Error -> this::logError
-            LogLevel.Warning -> this::logWarn
-            LogLevel.Information -> this::logInfo
-            LogLevel.Debug -> this::logDebug
-            LogLevel.Trace -> this::logTrace
+            LogLevel.Fatal -> this::consoleFatal
+            LogLevel.Error ->this::consoleError
+            LogLevel.Warning -> this::consoleWarn
+            LogLevel.Information -> this::consoleInfo
+            LogLevel.Debug -> this::consoleDebug
+            LogLevel.Trace -> this::consoleTrace
             else -> error("Internal Error: cannot log a message to '$lvl'")
         }
         if (null == t) {
@@ -70,4 +53,11 @@ class DemoLogger(
             t.printStackTrace()
         }
     }
+
+    private fun consoleFatal(msg: String?) = console.error("Fatal: $msg")
+    private fun consoleError(msg: String?) = console.error("Error: $msg")
+    private fun consoleWarn(msg: String?) = console.warn("Warn: $msg")
+    private fun consoleInfo(msg: String?) = console.info("Info: $msg")
+    private fun consoleDebug(msg: String?) = console.asDynamic().debug("Debug: $msg")
+    private fun consoleTrace(msg: String?) = console.asDynamic().debug("Trace: $msg")
 }

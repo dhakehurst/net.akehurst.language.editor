@@ -203,10 +203,20 @@ div#agl-demo {
 
 div#agl-demo dialog {
     z-index: 99;
+    max-width: 800px;
+}
+
+div#agl-demo dialog article section {
+    display: flex;
+    flex-direction: column;
 }
 
 div#agl-demo dialog::backdrop {
     background-color: #e0e0e099;
+}
+
+div#agl-demo dialog p {
+    margin: 5px;
 }
 
 div#agl-demo > article {
@@ -331,6 +341,15 @@ div#agl-demo tab#Grammar section.typemodel {
     background-color: blanchedalmond;
     display: flex;
     flex-direction: column;
+}
+
+div#agl-demo tab#Grammar article > header {
+    display: flex;
+    flex-direction: row;
+}
+
+div#agl-demo tab#Grammar article > header > p {
+    margin: 0.5em;
 }
 
 div#agl-demo section.configuration {

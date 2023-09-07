@@ -18,3 +18,8 @@ kotlin {
         }
     }
 }
+
+
+//tasks.getByName("jsBrowserProductionWebpack").dependsOn("jsProductionLibraryCompileSync")
+//tasks.getByName("jsBrowserProductionLibraryPrepare").dependsOn("jsProductionExecutableCompileSync")
+//tasks.getByName("jsNodeProductionLibraryPrepare").dependsOn("jsProductionExecutableCompileSync")

@@ -80,6 +80,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             this.processSentence()
         }
 
+    override var doUpdate:Boolean = true
+
     override fun onParse(handler: (ParseEvent) -> Unit) {
         this._onParseHandler.add(handler)
     }

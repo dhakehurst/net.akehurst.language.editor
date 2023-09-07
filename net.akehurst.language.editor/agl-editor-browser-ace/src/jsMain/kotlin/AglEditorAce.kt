@@ -65,7 +65,6 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     )
 }
 
-//FIXME: some inefficiency due to some updates being triggered multiple times
 private class AglEditorAce<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     val aceEditor: ace.Editor,
@@ -78,6 +77,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
     private val _annotations = mutableListOf<AceAnnotation>()
+
+    override val baseEditor: Any get() = this.aceEditor
 
     override val sessionId: String get() = this.aceEditor.getSession()?.id ?: "none"
 
@@ -111,9 +112,9 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         this.aceEditor.getSession()?.bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer as ace.Tokenizer, this.aceEditor)
         this.aceEditor.getSession()?.bgTokenizer?.setDocument(this.aceEditor.getSession()?.getDocument())
         this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
-        this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl))
+        this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl, this.aglWorker))
 
-        this.aceEditor.on("change") { event -> this.update() }
+        this.aceEditor.on("change") { _ -> this.update() }
 
         val resizeObserver = ResizeObserver { entries -> onResize(entries) }
         resizeObserver.observe(this.containerElement)
@@ -131,7 +132,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     fun format() {
         val proc = this.agl.languageDefinition.processor
         if (null != proc) {
-            val pos = this.aceEditor.getSelection().getCursor()
+            //val pos = this.aceEditor.getSelection().getCursor()
             val result = proc.format(this.text)
             if (null != result.sentence) {
                 this.aceEditor.setValue(result.sentence!!, -1)
@@ -219,12 +220,14 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     }
 
     private fun update() {
-        this.workerTokenizer.reset()
-        window.clearTimeout(parseTimeout)
-        this.parseTimeout = window.setTimeout({
-            this.workerTokenizer.acceptingTokens = true
-            this.processSentence()
-        }, 500)
+        if (doUpdate) {
+            this.workerTokenizer.reset()
+            window.clearTimeout(parseTimeout)
+            this.parseTimeout = window.setTimeout({
+                this.workerTokenizer.acceptingTokens = true
+                this.processSentence()
+            }, 500)
+        }
     }
 
     @JsName("onResize")
@@ -263,10 +266,12 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     }
 
     override fun processSentence() {
-        this.clearErrorMarkers()
-        this.aceEditor.getSession()?.also { session ->
-            this.aglWorker.interrupt(this.languageIdentity, editorId, session.id)
-            this.aglWorker.processSentence(this.languageIdentity, editorId, session.id, this.agl.goalRule, this.text, this.agl.context as SentenceContext<Any>?)
+        if (doUpdate) {
+            this.clearErrorMarkers()
+            this.aceEditor.getSession()?.also { session ->
+                this.aglWorker.interrupt(this.languageIdentity, editorId, session.id)
+                this.aglWorker.processSentence(this.languageIdentity, editorId, session.id, this.agl.goalRule, this.text, this.agl.context as SentenceContext<Any>?)
+            }
         }
     }
 
@@ -330,6 +335,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                 LanguageProcessorPhase.SYNTAX_ANALYSIS -> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.SEMANTIC_ANALYSIS -> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.FORMATTER -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.INTERPRETER-> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.GENERATOR-> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.ALL -> errMsg = "Error ${issue.message}"
             }
             if (null != errMsg) {

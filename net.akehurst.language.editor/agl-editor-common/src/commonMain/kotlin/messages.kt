@@ -18,6 +18,7 @@ package net.akehurst.language.editor.common.messages
 
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.common.AglToken
+import kotlin.math.min
 
 enum class MessageStatus { START, FAILURE, SUCCESS }
 
@@ -32,16 +33,16 @@ abstract class AglWorkerMessage(
 data class MessageProcessorCreate(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val grammarStr: String?,
-    val scopeModelStr:String?
+    val scopeModelStr: String?
 ) : AglWorkerMessage("MessageProcessorCreate") {
     override fun toString(): String {
-        val gs = when{
-            null==grammarStr -> "null"
+        val gs = when {
+            null == grammarStr -> "null"
             grammarStr.isBlank() -> "''"
             else -> "'...'"
         }
-        val ss = when{
-            null==scopeModelStr -> "null"
+        val ss = when {
+            null == scopeModelStr -> "null"
             scopeModelStr.isBlank() -> "''"
             else -> "'...'"
         }
@@ -86,15 +87,20 @@ data class MessageProcessRequest<ContextType : Any>(
     val text: String,
     val context: ContextType?
 ) : AglWorkerMessage("MessageProcessRequest") {
-    override fun toString(): String = "${super.action}(languageId=$languageId, editorId=$editorId, sessionId=$sessionId, goalRuleName=$goalRuleName, context=$context, text='...')"
+    override fun toString(): String = "${super.action}(languageId=$languageId, editorId=$editorId, sessionId=$sessionId, goalRuleName=$goalRuleName, context=$context, text='${
+        text.substring(
+            0,
+            min(10, text.length)
+        )
+    }')"
 }
 
 data class MessageParseResult(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>, // custom serialisation because auto serialisation of SPPT impl classes is too complex
-    val treeSerialised: String?
+    val issues: List<LanguageIssue>,
+    val treeSerialised: String? // custom serialisation because auto serialisation of SPPT impl classes is too complex
 ) : AglWorkerMessage("MessageParseResult") {
     override fun toString(): String =
         "${super.action}(languageId=$languageId, editorId=$editorId, sessionId=$sessionId, status=$status, message=$message, issues=$issues, treeSerialised='...')"
@@ -160,7 +166,8 @@ data class MessageCodeCompleteResult(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val status: MessageStatus,
     val message: String,
-    val completionItems: Array<CompletionItem>?
+    val issues: List<LanguageIssue>,
+    val completionItems: List<CompletionItem>?
 ) : AglWorkerMessage("MessageCodeCompleteResult")
 
 data class MessageGrammarAmbiguityAnalysisRequest(
@@ -172,6 +179,6 @@ data class MessageGrammarAmbiguityAnalysisRequest(
 data class MessageGrammarAmbiguityAnalysisResult(
     override val languageId: String, override val editorId: String, override val sessionId: String,
     val status: MessageStatus,
-    val message:String?,
+    val message: String?,
     val issues: List<LanguageIssue>
-): AglWorkerMessage("MessageGrammarAmbiguityAnalysisResult")
+) : AglWorkerMessage("MessageGrammarAmbiguityAnalysisResult")

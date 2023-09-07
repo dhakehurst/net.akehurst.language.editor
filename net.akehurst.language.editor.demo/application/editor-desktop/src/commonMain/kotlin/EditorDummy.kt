@@ -6,6 +6,8 @@ class EditorDummy<AsmType : Any, ContextType : Any>(
     editorId: String,
 ) : AglEditorAbstract<AsmType, ContextType>(languageId, editorId) {
 
+    override val baseEditor: Any = this
+
     override val sessionId: String get() = ""
 
     private var _text: String = ""

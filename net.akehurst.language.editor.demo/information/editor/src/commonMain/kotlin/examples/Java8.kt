@@ -513,20 +513,19 @@ grammar Packages extends Interfaces {
           foreground: purple;
           font-style: bold;
         }
-        'private' {
-          foreground: purple;
+        CLASS_MODIFIER, FIELD_MODIFIER, METHOD_MODIFIER, CONSTRUCTOR_MODIFIER, INTERFACE_MODIFIER {
+          foreground: darkred;
           font-style: bold;
         }
         IDENTIFIER {
           foreground: blue;
           font-style: italic;
         }
-        '{' {
+        '{', '}' {
           foreground: darkgreen;
-          font-style: bold;
         }
-        '}' {
-          foreground: darkgreen;
+        Literal {
+          foreground: darkblue;
           font-style: bold;
         }
     """.trimIndent()

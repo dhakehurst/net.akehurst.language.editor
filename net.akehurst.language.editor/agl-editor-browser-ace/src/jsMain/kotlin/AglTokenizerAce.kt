@@ -57,13 +57,13 @@ class AglTokenizerAce<AsmType : Any, ContextType : Any>(
     val aglTokenizer = AglTokenizer(agl)
 
     // --- ace.Ace.Tokenizer ---
-    override fun getLineTokens(line: String, pState: ace.LineState?, row: Int): ace.LineTokens {
+    override fun getLineTokens(line: String, state: ace.LineState?, row: Int): ace.LineTokens {
         val sppt = this.agl.sppt
-        val state = if (null == pState) AglLineStateAce(0, "") else pState as AglLineStateAce
+        val state2 = if (null == state) AglLineStateAce(0, "") else state as AglLineStateAce
         return if (null == sppt) {
-            this.getLineTokensByScan(line, state, row)
+            this.getLineTokensByScan(line, state2, row)
         } else {
-            this.getLineTokensByParse(line, state, row)
+            this.getLineTokensByParse(line, state2, row)
         }
     }
 

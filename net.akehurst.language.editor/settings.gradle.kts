@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+println("===============================================")
+println("Gradle: ${GradleVersion.current()}")
+println("JVM: ${org.gradle.internal.jvm.Jvm.current()} '${org.gradle.internal.jvm.Jvm.current().javaHome}'")
+println("===============================================")
+
 pluginManagement {
     repositories {
         mavenLocal {

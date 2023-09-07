@@ -17,6 +17,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.sppt.SPPTParser
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.Element
@@ -111,7 +112,9 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                 clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 val treeStr = event.treeSerialised
+
                 val treeJS = treeStr?.let {
+                    //this.agl.languageDefinition.processor!!.spptParser.parse(treeStr)
                     val unescaped = JsonString.decode(it) // double decode the string as it itself is json
                     JSON.parse<Any>(unescaped)
                 }

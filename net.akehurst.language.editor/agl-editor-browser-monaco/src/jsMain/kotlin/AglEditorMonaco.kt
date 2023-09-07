@@ -58,8 +58,8 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
 private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     val monacoEditor: IStandaloneCodeEditor,
-    editorId: String,
     languageId: String,
+    editorId: String,
     workerScriptName: String,
     sharedWorker: Boolean
 ) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, workerScriptName, sharedWorker) {
@@ -84,6 +84,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     }
 
     val languageThemePrefix = this.languageIdentity + "-"
+
+    override val baseEditor: Any get() = this.monacoEditor
 
     override val sessionId: String get() = "none"
 
@@ -131,10 +133,16 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
             monaco.editor.setModelLanguage(this.monacoEditor.getModel(), languageIdentity)
             monaco.editor.setTheme(aglGlobalTheme)
 
-            monaco.languages.setTokensProvider(this.languageIdentity, this.workerTokenizer as monaco.languages.TokensProvider)
-            monaco.languages.registerCompletionItemProvider(this.languageIdentity, AglCompletionProviderMonaco(this.agl))
+            monaco.languages.setTokensProvider(
+                this.languageIdentity,
+                this.workerTokenizer as monaco.languages.TokensProvider
+            )
+            monaco.languages.registerCompletionItemProvider(
+                this.languageIdentity,
+                AglCompletionProviderMonaco(this.agl)
+            )
 
-            this.onChange { this.onEditorTextChange() }
+            this.onChange { this.update() }
 
             val resizeObserver = ResizeObserver { entries -> onResize(entries) }
             resizeObserver.observe(this.containerElement)
@@ -151,10 +159,11 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: String?) {
         if (null != oldId) {
-            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
+            val oldAglStyleClass =
+                AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
             this.containerElement.removeClass(oldAglStyleClass)
-            this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
         }
+        this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
     override fun configureSyntaxAnalyser(configuration: Map<String, Any>) {
@@ -164,66 +173,72 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     }
 
     override fun updateStyle() {
-        val aglStyleClass = this.agl.styleHandler.aglStyleClass
-        val styleStr = this.agl.languageDefinition.styleStr
-        if (null != styleStr && styleStr.isNotBlank()) {
-            this.agl.styleHandler.reset()
-            val styleMdl = Agl.registry.agl.style.processor!!.process(styleStr).asm //Why parse this again here !
-            if (null != styleMdl) {
-                var mappedCss = ""
-                styleMdl.rules.forEach { rule ->
-                    val ruleClasses = rule.selector.map {
-                        val mappedSelName = this.agl.styleHandler.mapClass(it)
-                        ".monaco_$mappedSelName"
-                    }
-                    val cssClasses = listOf(".$aglStyleClass") + ruleClasses
-                    val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
-                    mappedRule.styles = rule.styles.values.associate { oldStyle ->
-                        val style = when (oldStyle.name) {
-                            "foreground" -> AglStyle("color", oldStyle.value)
-                            "background" -> AglStyle("background-color", oldStyle.value)
-                            "font-style" -> when (oldStyle.value) {
-                                "bold" -> AglStyle("font-weight", oldStyle.value)
-                                "italic" -> AglStyle("font-style", oldStyle.value)
+        if (this.containerElement.isConnected) {
+            val aglStyleClass = this.agl.styleHandler.aglStyleClass
+            val styleStr = this.editorSpecificStyleStr
+            if (null != styleStr && styleStr.isNotBlank()) {
+                this.agl.styleHandler.reset()
+                val styleMdl = Agl.registry.agl.style.processor!!.process(styleStr).asm //Why parse this again here !
+                if (null != styleMdl) {
+                    var mappedCss = ""
+                    styleMdl.rules.forEach { rule ->
+                        val ruleClasses = rule.selector.map {
+                            val mappedSelName = this.agl.styleHandler.mapClass(it)
+                            ".monaco_$mappedSelName"
+                        }
+                        val cssClasses = listOf(".$aglStyleClass") + ruleClasses
+                        val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
+                        mappedRule.styles = rule.styles.values.associate { oldStyle ->
+                            val style = when (oldStyle.name) {
+                                "foreground" -> AglStyle("color", oldStyle.value)
+                                "background" -> AglStyle("background-color", oldStyle.value)
+                                "font-style" -> when (oldStyle.value) {
+                                    "bold" -> AglStyle("font-weight", oldStyle.value)
+                                    "italic" -> AglStyle("font-style", oldStyle.value)
+                                    else -> oldStyle
+                                }
+
                                 else -> oldStyle
                             }
+                            Pair(style.name, style)
+                        }.toMutableMap()
+                        mappedCss = mappedCss + "\n" + mappedRule.toCss()
+                    }
+                    val cssText: String = mappedCss
+                    // remove the current style element for 'languageId' (which is used as the theme name) from the container
+                    // else the theme css is not reapplied
+                    val curStyle =
+                        (this.containerElement.getRootNode() as ParentNode).querySelector("style#" + this.languageIdentity)
+                    curStyle?.remove()
 
-                            else -> oldStyle
-                        }
-                        Pair(style.name, style)
-                    }.toMutableMap()
-                    mappedCss = mappedCss + "\n" + mappedRule.toCss()
+                    //add style element
+                    val styleElement = this.containerElement.ownerDocument?.createElement("style")!!
+                    styleElement.setAttribute("id", this.languageIdentity)
+                    styleElement.textContent = cssText
+                    this.containerElement.ownerDocument?.querySelector("head")?.appendChild(
+                        styleElement
+                    )
+                    this.aglWorker.setStyle(languageIdentity, editorId, "", styleStr) //TODO: sessionId
+
+                    // need to update because token style types may have changed, not just their attributes
+                    this.update()
+                    this.resetTokenization()
+                } else {
+                    //TODO: cannot process style rules
                 }
-                val cssText: String = mappedCss
-                // remove the current style element for 'languageId' (which is used as the theme name) from the container
-                // else the theme css is not reapplied
-                val curStyle = (this.containerElement.getRootNode() as ParentNode).querySelector("style#" + this.languageIdentity)
-                curStyle?.remove()
-
-                //add style element
-                val styleElement = this.containerElement.ownerDocument?.createElement("style")!!
-                styleElement.setAttribute("id", this.languageIdentity)
-                styleElement.textContent = cssText
-                this.containerElement.ownerDocument?.querySelector("head")?.appendChild(
-                    styleElement
-                )
-                this.aglWorker.setStyle(languageIdentity, editorId, "", styleStr) //TODO: sessionId
-
-                // need to update because token style types may have changed, not just their attributes
-                this.processSentence()
-            } else {
-                //TODO: cannot process style rules
             }
         }
     }
 
-    private fun onEditorTextChange() {
-        this.workerTokenizer.reset()
-        window.clearTimeout(parseTimeout)
-        this.parseTimeout = window.setTimeout({
-            this.workerTokenizer.acceptingTokens = true
-            this.processSentence()
-        }, 500)
+    private fun update() {
+        if (doUpdate) {
+            this.workerTokenizer.reset()
+            window.clearTimeout(parseTimeout)
+            this.parseTimeout = window.setTimeout({
+                this.workerTokenizer.acceptingTokens = true
+                this.processSentence()
+            }, 500)
+        }
     }
 
     @JsName("onResize")
@@ -251,9 +266,18 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     }
 
     override fun processSentence() {
-        this.clearErrorMarkers()
-        this.aglWorker.interrupt(languageIdentity, editorId, "")//TODO: get session
-        this.aglWorker.processSentence(languageIdentity, editorId, "", this.agl.goalRule, this.text, this.agl.context as SentenceContext<Any>)
+        if (doUpdate) {
+            this.clearErrorMarkers()
+            this.aglWorker.interrupt(languageIdentity, editorId, "")//TODO: get session
+            this.aglWorker.processSentence(
+                languageIdentity,
+                editorId,
+                "",
+                this.agl.goalRule,
+                this.text,
+                this.agl.context as SentenceContext<Any>?
+            )
+        }
     }
 
     /*
@@ -315,7 +339,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
             }
         }
     }
-*/
+    */
     private fun convertColor(value: String?): String? {
         if (null == value) {
             return null
@@ -350,6 +374,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 LanguageProcessorPhase.SYNTAX_ANALYSIS -> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.SEMANTIC_ANALYSIS -> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.FORMATTER -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.INTERPRETER -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.GENERATOR -> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.ALL -> errMsg = "Error ${issue.message}"
             }
             if (null != errMsg) {

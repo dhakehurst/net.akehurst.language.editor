@@ -23,7 +23,7 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
 
     val aglTokenizer = AglTokenizer(agl)
     override var acceptingTokens = false
-    val tokensByLine = mutableMapOf<Int, List<AglToken>>()
+    override val tokensByLine = mutableMapOf<Int, List<AglToken>>()
 
     override fun reset() {
         this.acceptingTokens = false

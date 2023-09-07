@@ -30,6 +30,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.sppt.SPPTNode
+import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.common.messages.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -49,7 +50,7 @@ class test_AglWorkerAbstract {
             sent.add(rmsg)
         }
 
-        override fun serialiseParseTreeToStringJson(spptNode: SPPTNode?): String? {
+        override fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String? {
             return "serialised sppt"
         }
 

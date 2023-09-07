@@ -47,7 +47,7 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
 
     val aglTokenizer = AglTokenizer(agl)
     override var acceptingTokens = false
-    val tokensByLine = mutableMapOf<Int, List<AglToken>>()
+    override val tokensByLine = mutableMapOf<Int, List<AglToken>>()
     val decs = mutableMapOf<Int, Array<String>>()
 
     override fun reset() {

@@ -10,8 +10,6 @@ dependencies {
     commonMainApi("net.akehurst.language:agl-processor:$version_agl")
     //commonMainApi(platform("net.akehurst.language:agl-processor"))
     commonMainImplementation("net.akehurst.kotlin.json:json:$version_kjson")
-
-    jsMainImplementation(npm("big-json", "3.2.0"))
 }
 
 kotlin {

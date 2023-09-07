@@ -28,6 +28,13 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
     val sharedWorker: Boolean
 ) {
 
+    companion object {
+        fun terminateSharedWorker(workerScriptName: String) {
+            val w = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+            w.port.close()
+        }
+    }
+
     lateinit var worker: AbstractWorker
     var setStyleResult: (message: MessageSetStyleResult) -> Unit = { _ -> }
     var processorCreateResult: (message: MessageProcessorCreateResponse) -> Unit = { _ -> }
@@ -130,4 +137,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         this.sendToWorker(MessageSetStyle(languageId, editorId, sessionId, css))
     }
 
+    fun getCompletionItems() {
+
+    }
 }

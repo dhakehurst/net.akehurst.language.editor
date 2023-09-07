@@ -19,11 +19,13 @@ package net.akehurst.language.editor.browser.ace
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.editor.common.AglComponents
+import net.akehurst.language.editor.common.AglWorkerClient
 import net.akehurst.language.editor.common.objectJS
 
 
 class AglCodeCompleter<AsmType : Any, ContextType : Any>(
-    val agl: AglComponents<AsmType, ContextType>
+    val agl: AglComponents<AsmType, ContextType>,
+    val aglWorker: AglWorkerClient<AsmType, ContextType>
 ) {
 
     // called by Ace
@@ -46,11 +48,25 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
         val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val goalRule = this.agl.goalRule
-            val result = proc.expectedTerminalsAt(editor.getValue(), pos, 1, Agl.options { parse { goalRuleName(goalRule) } })
+            val result = proc.expectedTerminalsAt(
+                editor.getValue(),
+                pos,
+                1,
+                Agl.options {
+                    parse {
+                        goalRuleName(goalRule)
+                        //reportErrors(false) // errors used to get expectedAt !
+                    }
+                })
             result.items
         } else {
             emptyList()
         }
+    }
+
+    private fun getCompletionItemsFromWorker(editor: ace.Editor, pos: Int): List<CompletionItem> {
+        this.aglWorker.getCompletionItems()
+TODO()
     }
 
 }

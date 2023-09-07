@@ -52,15 +52,15 @@ class AglComponents<AsmType : Any, ContextType : Any>(
                 val styleStrObservers = this._languageDefinition.styleStrObservers
                 val formatterStrObservers = this._languageDefinition.formatterStrObservers
                 this._languageDefinition = Agl.registry.findOrPlaceholder(value)
-                //this._languageDefinition.grammarStrObservers.addAll(grammarStrObservers)
-                //this._languageDefinition.scopeStrObservers.addAll(scopeStrObservers)
-                //this._languageDefinition.styleStrObservers.addAll(styleStrObservers)
-                // this._languageDefinition.formatterStrObservers.addAll(formatterStrObservers)
+                this._languageDefinition.grammarStrObservers.addAll(grammarStrObservers)
+                this._languageDefinition.scopeStrObservers.addAll(scopeStrObservers)
+                this._languageDefinition.styleStrObservers.addAll(styleStrObservers)
+                this._languageDefinition.formatterStrObservers.addAll(formatterStrObservers)
 
-                _addAll(this._languageDefinition.grammarStrObservers, grammarStrObservers)
-                _addAll(this._languageDefinition.scopeStrObservers, scopeStrObservers)
-                _addAll(this._languageDefinition.styleStrObservers, styleStrObservers)
-                _addAll(this._languageDefinition.formatterStrObservers, formatterStrObservers)
+                //_addAll(this._languageDefinition.grammarStrObservers, grammarStrObservers)
+                //_addAll(this._languageDefinition.scopeStrObservers, scopeStrObservers)
+                //_addAll(this._languageDefinition.styleStrObservers, styleStrObservers)
+                //_addAll(this._languageDefinition.formatterStrObservers, formatterStrObservers)
 
                 this._styleHandler = AglStyleHandler(value)
                 this.sppt = null

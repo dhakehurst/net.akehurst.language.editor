@@ -65,6 +65,8 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
 
+    override val baseEditor: Any get() = this.cmEditor
+
     override val sessionId: String get() = "none"
 
     /*

@@ -15,6 +15,7 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.api.sppt.LeafData
 import net.akehurst.language.api.sppt.SPPTLeaf
 
 class AglStyleHandler(
@@ -41,7 +42,7 @@ class AglStyleHandler(
         return cssClass
     }
 
-    private fun mapToCssClasses(leaf: SPPTLeaf): List<String> {
+    private fun mapToCssClasses(leaf: LeafData): List<String> {
         val metaTagClasses = leaf.metaTags.mapNotNull { this.mapTokenTypeToClass(it) }
         val otherClasses = if (!leaf.tagList.isEmpty()) {
             leaf.tagList.mapNotNull { this.mapTokenTypeToClass(it) }
@@ -56,7 +57,7 @@ class AglStyleHandler(
         }
     }
 
-    fun transformToTokens(leafs: List<SPPTLeaf>): List<AglToken> {
+    fun transformToTokens(leafs: List<LeafData>): List<AglToken> {
         return leafs.map { leaf ->
             val cssClasses = this.mapToCssClasses(leaf)
             var beforeEOL = leaf.matchedText
