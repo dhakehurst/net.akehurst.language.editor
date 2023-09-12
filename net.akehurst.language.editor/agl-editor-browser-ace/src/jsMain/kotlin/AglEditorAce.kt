@@ -34,6 +34,7 @@ import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.objectJSTyped
+import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -47,21 +48,23 @@ class AglErrorAnnotation(
     val row = line - 1
 }
 
+/**
+ * e.g.
+ * worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+ */
 fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     containerElement: Element,
     aceEditor: ace.Editor,
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
+    worker:AbstractWorker
 ): AglEditor<AsmType, ContextType> {
     return AglEditorAce<AsmType, ContextType>(
         containerElement = containerElement,
         aceEditor = aceEditor,
         languageId = languageId,
         editorId = editorId,
-        workerScriptName = workerScriptName,
-        sharedWorker = sharedWorker
+        worker = worker
     )
 }
 
@@ -70,9 +73,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     val aceEditor: ace.Editor,
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, workerScriptName, sharedWorker) {
+    worker:AbstractWorker
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
@@ -100,6 +102,14 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
     var parseTimeout: dynamic = null
 
+    /**
+     * hack, allows this lib not to have a dependency on ace,
+     * but usage must set this to return a 'real' ace.Range object
+     * to avoid ace errors and get proper support for Markers
+     * The 'ace.Range' used here is just an interface - not a real ace.Range class
+     */
+    var createRange: (ace.Range) -> ace.Range = { it }
+
     init {
         this.init_()
     }
@@ -109,9 +119,10 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
         //TODO: set session and mouseHandler options
 
-        this.aceEditor.getSession()?.bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer as ace.Tokenizer, this.aceEditor)
+//        this.aceEditor.getSession()?.bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer as ace.Tokenizer, this.aceEditor)
+        this.aceEditor.getSession()?.bgTokenizer?.tokenizer = this.workerTokenizer as ace.Tokenizer
         this.aceEditor.getSession()?.bgTokenizer?.setDocument(this.aceEditor.getSession()?.getDocument())
-        this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
+        //this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
         this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl, this.aglWorker))
 
         this.aceEditor.on("change") { _ -> this.update() }
@@ -369,7 +380,12 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             val row = issue.location?.let { it.line - 1 } ?: 0
             val startColumn = issue.location?.let { it.column - 1 } ?: 0
             val endColumn = startColumn + (issue.location?.length ?: 1)
-            val range = ace.Range(row, startColumn, row, endColumn)
+            val range =  objectJSTyped<ace.Range> {
+                this.startRow = row
+                this.startColumn = startColumn
+                this.endRow = row
+                this.endColumn = endColumn
+            }
             val cls = "ace_marker_text_$errType"
             val errMrkId = this.aceEditor.getSession()?.addMarker(range, cls, "text")
             if (null != errMrkId) this.errorParseMarkerIds.add(errMrkId)

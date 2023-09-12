@@ -3,13 +3,7 @@
  */
 package ace
 
-@JsModule("net.akehurst.language.editor-kotlin-ace-loader!?id=ace/editor&name=Editor")
-@JsNonModule
-external class Editor(
-        renderer: VirtualRenderer,
-        session: EditSession,
-        options:Any?
-)  {
+external interface Editor {
     val commands: dynamic
     var completers: Array<dynamic> //TODO:
     val renderer: dynamic

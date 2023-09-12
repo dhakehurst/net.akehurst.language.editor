@@ -16,13 +16,12 @@
 package net.akehurst.language.editor.common.serialisation
 
 import net.akehurst.kotlin.json.json
-import net.akehurst.kotlinx.reflect.KotlinxReflect
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.sppt.TreeDataComplete
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
-import net.akehurst.language.agl.sppt.TreeDataComplete
+import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeModelSimple
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.grammar.Grammar
@@ -916,7 +915,7 @@ class test_AglWorkerSerialisation {
             }
         """
         val proc = Agl.processorFromStringDefault(grammarStr).processor!!
-        val context = ContextFromTypeModel(proc.typeModel)
+        val context = ContextFromTypeModel(proc.grammar!!.qualifiedName,proc.typeModel)
         val expected = MessageProcessRequest(
             languageId, editorId, sessionId,
             "rule1",
@@ -1218,7 +1217,7 @@ TODO()
             """
         ).asm!!.first()
         val context = ContextFromTypeModel()
-        context.createScopeFrom(TypeModelFromGrammar.createFrom(grammar))
+        context.createScopeFrom(grammar.qualifiedName,GrammarTypeModelSimple.createFrom(grammar))
         val expected = MessageProcessRequest(
             "testLang", "tesEditor", "testSession",
             "rule1",

@@ -1,5 +1,6 @@
 val version_agl_editor: String by project
 val version_html_builder: String by project
+val version_ace: String by project
 
 dependencies {
 
@@ -10,6 +11,9 @@ dependencies {
     jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-codemirror:$version_agl_editor")
 
     jsMainImplementation("net.akehurst.kotlin.html5:html-builder:$version_html_builder")
+
+    jsMainImplementation(npm("ace-builds", version_ace))
+    jsMainImplementation(npm("net.akehurst.language.editor-kotlin-ace-loader", "1.5.1"))
 
     //result of this will be copied into resources
     //jsMainImplementation(project(":technology-agl-editor-worker"))

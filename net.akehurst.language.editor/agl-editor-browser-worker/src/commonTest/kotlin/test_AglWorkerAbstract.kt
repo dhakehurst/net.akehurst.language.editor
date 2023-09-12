@@ -16,12 +16,10 @@
 
 package net.akehurst.language.editor.worker
 
-import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserSimple
-import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
+import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeModelSimple
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.grammar.Grammar
@@ -29,7 +27,6 @@ import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.sppt.SPPTNode
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.common.messages.*
 import kotlin.test.BeforeTest
@@ -409,7 +406,7 @@ class test_AglWorkerAbstract {
         val grammar = Agl.registry.agl.grammar.processor!!.process(userGrammar).asm!!.first()
         val scopeModel = Agl.registry.agl.scopes.processor!!.process(
             scopeStr,
-            Agl.options { semanticAnalysis { context(ContextFromTypeModel(TypeModelFromGrammar.createFrom(grammar))) } }
+            Agl.options { semanticAnalysis { context(ContextFromTypeModel(grammar.qualifiedName, GrammarTypeModelSimple.createFrom(grammar))) } }
         ).asm!!
         val sentence = """
             primitive String

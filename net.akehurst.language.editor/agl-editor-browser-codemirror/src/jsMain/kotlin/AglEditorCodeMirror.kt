@@ -23,6 +23,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
+import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
 
 class AglErrorAnnotation(
@@ -40,16 +41,14 @@ fun <AsmType:Any, ContextType:Any> Agl.attachToCodeMirror(
     cmEditor: codemirror.view.EditorView,
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
+    worker: AbstractWorker
 ) : AglEditor<AsmType, ContextType> {
     return AglEditorCodeMirror<AsmType, ContextType>(
         containerElement = containerElement,
         cmEditor = cmEditor,
         languageId = languageId,
         editorId = editorId,
-        workerScriptName = workerScriptName,
-        sharedWorker = sharedWorker
+        worker = worker
     )
 }
 
@@ -58,9 +57,8 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     val cmEditor: codemirror.view.EditorView,
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, workerScriptName, sharedWorker) {
+    worker:AbstractWorker
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()

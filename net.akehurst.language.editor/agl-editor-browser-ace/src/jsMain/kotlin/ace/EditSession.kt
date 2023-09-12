@@ -1,14 +1,6 @@
-/*
- * Based on [https://github.com/daemontus/kotlin-ace-wrapper]
- */
 package ace
 
-/**
- * https://ace.c9.io/#nav=api&api=edit_session
- */
-@JsModule("net.akehurst.language.editor-kotlin-ace-loader!?id=ace/edit_session&name=EditSession")
-@JsNonModule
-external class EditSession {
+external interface EditSession {
     val id: String
     var bgTokenizer: BackgroundTokenizer?
 
@@ -28,13 +20,9 @@ external interface AceAnnotation {
     var raw: String?
 }
 
-@JsModule("net.akehurst.language.editor-kotlin-ace-loader!?id=ace/range&name=Range")
-@JsNonModule
-external class Range(
-        startRow:Int,
-        startColumn:Int,
-        endRow:Int,
-        endColumn:Int
-) {
-
+external interface Range{
+    var startRow:Int
+    var startColumn:Int
+    var endRow:Int
+    var endColumn:Int
 }

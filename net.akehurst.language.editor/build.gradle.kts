@@ -103,9 +103,9 @@ subprojects {
         }
         js("js",IR) {
             generateTypeScriptDefinitions()
+            useEsModules()
             tasks.withType<KotlinJsCompile>().configureEach {
                 kotlinOptions {
-                    moduleKind = "es"
                     useEsClasses = true
                 }
             }

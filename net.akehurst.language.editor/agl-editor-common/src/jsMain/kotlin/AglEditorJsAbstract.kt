@@ -20,19 +20,19 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.sppt.SPPTParser
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.messages.*
+import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
 
 abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
+    worker:AbstractWorker
 ) : AglEditorAbstract<AsmType, ContextType>(languageId, editorId) {
 
     protected abstract fun resetTokenization()
     protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)
 
-    protected var aglWorker = AglWorkerClient(super.agl, workerScriptName, sharedWorker)
+    protected var aglWorker = AglWorkerClient(super.agl, worker)
     protected lateinit var workerTokenizer: AglTokenizerByWorker
 
     // must be called by subclass

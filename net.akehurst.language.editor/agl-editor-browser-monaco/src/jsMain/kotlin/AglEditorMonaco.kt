@@ -34,6 +34,7 @@ import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.editor.common.messages.*
+import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -42,16 +43,14 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
     monacoEditor: IStandaloneCodeEditor,
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
+    worker:AbstractWorker
 ): AglEditor<AsmType, ContextType> {
     return AglEditorMonaco<AsmType, ContextType>(
         containerElement = containerElement,
         monacoEditor = monacoEditor,
         languageId = languageId,
         editorId = editorId,
-        workerScriptName = workerScriptName,
-        sharedWorker = sharedWorker
+        worker = worker
     )
 }
 
@@ -60,9 +59,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     val monacoEditor: IStandaloneCodeEditor,
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, workerScriptName, sharedWorker) {
+    worker:AbstractWorker
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
 
     companion object {
         private val init = js(

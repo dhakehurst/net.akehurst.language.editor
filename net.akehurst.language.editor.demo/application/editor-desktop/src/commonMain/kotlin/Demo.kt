@@ -21,7 +21,8 @@ import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
+import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeModelSimple
+import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeNamespaceFromGrammar
 import net.akehurst.language.api.analyser.ScopeModel
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
@@ -371,8 +372,9 @@ class Demo(
                     styleContext.clear()
                     scopeContext.clear()
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
+                    val firstGrammar = grammars.first()
                     styleContext.createScopeFrom(grammars)
-                    scopeContext.createScopeFrom(TypeModelFromGrammar.createFrom(grammars.first()))
+                    scopeContext.createScopeFrom(firstGrammar.qualifiedName,GrammarTypeModelSimple.createFrom(firstGrammar))
                     try {
                         logger.logDebug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text

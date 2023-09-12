@@ -29,28 +29,23 @@ import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
-import org.w3c.dom.Element
-import org.w3c.dom.HTMLDivElement
-import org.w3c.dom.HTMLElement
-import org.w3c.dom.HTMLTextAreaElement
+import org.w3c.dom.*
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent
 import kotlin.js.RegExp
 
-fun <AsmType : Any, ContextType : Any> Agl.attachToElement(
+fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     containerElement: Element,
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
+    worker: AbstractWorker
 ): AglEditor<AsmType, ContextType> {
     return AglEditorDefault<AsmType, ContextType>(
         containerElement = containerElement,
         languageId = languageId,
         editorId = editorId,
-        workerScriptName = workerScriptName,
-        sharedWorker = sharedWorker
+        worker = worker
     )
 }
 
@@ -59,9 +54,8 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     languageId: String,
     editorId: String,
-    workerScriptName: String,
-    sharedWorker: Boolean
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, workerScriptName, sharedWorker) {
+    worker:AbstractWorker
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
 
     override val baseEditor: Any get() = this
     override var text: String

@@ -98,20 +98,15 @@ subprojects {
             }
         }
         js("js", IR) {
-
-            //generateTypeScriptDefinitions()
-            //tasks.withType<KotlinJsCompile>().configureEach {
-            //    kotlinOptions {
-            //        moduleKind = "es"
-            //        useEsClasses = true
-            //    }
-            //}
-            nodejs()
-            browser {
-                webpackTask {
-                    //outputFileName = "${project.group}-${project.name}.js"
+            generateTypeScriptDefinitions()
+            useEsModules()
+            tasks.withType<KotlinJsCompile>().configureEach {
+                kotlinOptions {
+                    useEsClasses = true
                 }
             }
+            nodejs {}
+            browser {}
         }
         //macosX64("macosX64") {
         // uncomment stuff below too

@@ -26,11 +26,12 @@ import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
+import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeModelSimple
+import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeNamespaceFromGrammar
 import net.akehurst.language.api.analyser.ScopeModel
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammar.Grammar
-import net.akehurst.language.api.grammarTypeModel.GrammarTypeModel
+import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
@@ -47,6 +48,7 @@ import net.akehurst.language.editor.information.examples.*
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
+import net.akehurst.language.editor.worker.AglSharedWorker
 import net.akehurst.language.typemodel.api.*
 import org.w3c.dom.*
 
@@ -351,9 +353,9 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
 fun createAce(editorElement: Element): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
-    val ed: ace.Editor = ace.Editor(
-        ace.VirtualRenderer(editorElement, null),
-        ace.Ace.createEditSession(""),
+    val ed: aceDemo.Editor = aceDemo.Editor(
+        aceDemo.VirtualRenderer(editorElement, null),
+        aceDemo.Ace.createEditSession(""),
         objectJS { } //options are set later in init_
     )
     val aceOptions = objectJS {
@@ -368,7 +370,8 @@ fun createAce(editorElement: Element): AglEditor<Any, Any> {
     }
     ed.setOptions(aceOptions.editor)
     ed.renderer.setOptions(aceOptions.renderer)
-    return Agl.attachToAce(editorElement, ed, languageId, editorId, workerScriptName, true)
+    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+    return Agl.attachToAce(editorElement, ed, languageId, editorId, worker)
 }
 
 fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
@@ -379,7 +382,8 @@ fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
         wordBasedSuggestions = false
     }
     val ed = monaco.editor.create(editorElement, editorOptions, null)
-    return Agl.attachToMonaco(editorElement, ed, languageId, editorId, workerScriptName, true)
+    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+    return Agl.attachToMonaco(editorElement, ed, languageId, editorId, worker)
 }
 
 fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
@@ -391,7 +395,8 @@ fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
         parent = editorElement
     }
     val ed = codemirror.view.EditorView(editorOptions)
-    return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, workerScriptName, true)
+    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+    return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, worker)
 }
 
 //fun createFirepad(editorElement: Element): AglEditor<Any, Any> {
@@ -459,8 +464,9 @@ class Demo(
                     styleContext.clear()
                     scopeContext.clear()
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
+                    val firstGrammar = grammars.first()
                     styleContext.createScopeFrom(grammars)
-                    scopeContext.createScopeFrom(TypeModelFromGrammar.createFrom(grammars.first()))
+                    scopeContext.createScopeFrom(firstGrammar.qualifiedName,GrammarTypeModelSimple.createFrom(firstGrammar))
                     try {
                         logger.logDebug(" Grammar parse success")
                         if (doUpdate) {
@@ -532,17 +538,17 @@ class Demo(
                 when (it) {
                     is String -> it
                     is List<*> -> "List"
-                    is GrammarTypeModel -> "model ${it.name}"
-                    is Pair<String, TypeUsage> -> {
+                    is GrammarTypeNamespace -> "model ${it.name}"
+                    is Pair<String, TypeInstance> -> {
                         val type = it.second.type
                         val ruleName = it.first
                         when (type) {
-                            is ElementType -> when {
-                                type.supertypes.isEmpty() -> "$ruleName : ${type.signature(type.typeModel)}"
-                                else -> "$ruleName : ${type.signature(type.typeModel)} -> ${type.supertypes.joinToString { it.signature(type.typeModel) }}"
+                            is DataType -> when {
+                                type.supertypes.isEmpty() -> "$ruleName : ${type.signature(type.namespace)}"
+                                else -> "$ruleName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace) }}"
                             }
 
-                            else -> "$ruleName : ${type.signature(root as TypeModel?)}"
+                            else -> "$ruleName : ${type.signature(root as TypeNamespace?)}"
                         }
                     }
 
@@ -554,20 +560,16 @@ class Demo(
                 when (it) {
                     is String -> false
                     is List<*> -> true
-                    is GrammarTypeModel -> it.allTypesByRuleName.isNotEmpty()
-                    is Pair<String, TypeUsage> -> {
+                    is GrammarTypeNamespace -> it.allTypesByRuleName.isNotEmpty()
+                    is Pair<String, TypeInstance> -> {
                         val type = it.second.type
                         when (type) {
-                            is AnyType -> false
-                            is ListSimpleType -> false
-                            is ListSeparatedType -> false
-                            is NothingType -> false
-                            is PrimitiveType -> false
-                            is UnnamedSuperTypeType -> false
-                            is StructuredRuleType -> when (type) {
+                            is StructuredType -> when (type) {
                                 is TupleType -> type.property.isNotEmpty()
-                                is ElementType -> type.property.isNotEmpty()
+                                is DataType -> type.property.isNotEmpty()
+                                else -> false
                             }
+                            else -> false
                         }
                     }
 
@@ -579,20 +581,16 @@ class Demo(
                 when (it) {
                     is String -> emptyArray<Any>()
                     is List<*> -> it.toArray()
-                    is GrammarTypeModel -> it.allTypesByRuleName.toTypedArray()
-                    is Pair<String, TypeUsage> -> {
+                    is GrammarTypeNamespace -> it.allTypesByRuleName.toTypedArray()
+                    is Pair<String, TypeInstance> -> {
                         val type = it.second.type
                         when (type) {
-                            is AnyType -> emptyArray<Any>()
-                            is ListSimpleType -> emptyArray<Any>()
-                            is ListSeparatedType -> emptyArray<Any>()
-                            is NothingType -> emptyArray<Any>()
-                            is PrimitiveType -> emptyArray<Any>()
-                            is UnnamedSuperTypeType -> emptyArray<Any>()
-                            is StructuredRuleType -> when (type) {
+                            is StructuredType -> when (type) {
                                 is TupleType -> type.property.values.toTypedArray()
-                                is ElementType -> type.property.values.toTypedArray()
+                                is DataType -> type.property.values.toTypedArray()
+                                else -> emptyArray<Any>()
                             }
+                            else -> emptyArray<Any>()
                         }
                     }
 
@@ -607,7 +605,7 @@ class Demo(
                 EventStatus.FAILURE -> trees["typemodel"]!!.loading = false
                 EventStatus.SUCCESS -> {
                     val typemodels = (event.asm as List<Grammar>).map {
-                        TypeModelFromGrammar.createFrom(it)
+                        GrammarTypeModelSimple.createFrom(it)
                     }
                     trees["typemodel"]!!.loading = false
                     trees["typemodel"]!!.setRoots(typemodels)

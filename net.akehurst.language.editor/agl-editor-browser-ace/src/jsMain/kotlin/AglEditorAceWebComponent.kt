@@ -1,3 +1,4 @@
+/*
 package net.akehurst.language.editor.browser.ace
 
 import kotlinx.browser.document
@@ -189,4 +190,4 @@ abstract class AglEditorAceWebComponent<AsmType : Any, ContextType : Any> : HTML
             this.languageId!!, this.editorId!!, this.workerScript!!, true
         )
     }
-}
+}*/

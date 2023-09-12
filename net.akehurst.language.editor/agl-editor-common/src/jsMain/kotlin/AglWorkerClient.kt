@@ -24,8 +24,7 @@ import org.w3c.dom.events.EventTarget
 
 class AglWorkerClient<AsmType : Any, ContextType : Any>(
     val agl: AglComponents<AsmType, ContextType>,
-    val workerScriptName: String,
-    val sharedWorker: Boolean
+    val worker: AbstractWorker
 ) {
 
     companion object {
@@ -35,7 +34,8 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         }
     }
 
-    lateinit var worker: AbstractWorker
+    //lateinit var worker: AbstractWorker
+    val sharedWorker: Boolean = this.worker is SharedWorker
     var setStyleResult: (message: MessageSetStyleResult) -> Unit = { _ -> }
     var processorCreateResult: (message: MessageProcessorCreateResponse) -> Unit = { _ -> }
     var syntaxAnalyserConfigureResult: (message: MessageSyntaxAnalyserConfigureResponse) -> Unit = { _ -> }
@@ -46,11 +46,11 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
     var codeCompleteResult: (message: MessageCodeCompleteResult) -> Unit = { _ -> }
 
     fun initialise() {
-        this.worker = if (this.sharedWorker) {
-            SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-        } else {
-            Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-        }
+//        this.worker = if (this.sharedWorker) {
+//            SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+//        } else {
+//            Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+//        }
         this.worker.onerror = {
             this.agl.logger.log(LogLevel.Error, it.toString(), null)
         }

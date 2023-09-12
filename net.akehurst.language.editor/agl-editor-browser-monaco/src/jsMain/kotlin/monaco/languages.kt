@@ -1,4 +1,4 @@
-@file:JsModule("monaco-editor/esm/vs/editor/editor.api")
+@file:JsModule("monaco-editor/esm/vs/editor/editor.api.js")
 @file:JsNonModule
 
 @file:JsQualifier("languages")

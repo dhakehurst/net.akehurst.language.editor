@@ -17,16 +17,15 @@
 package net.akehurst.language.editor.browser.ace
 
 
-import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.AglTokenizer
 
-class AglBackgroundTokenizer(
-        tok: ace.Tokenizer,
-        ed: ace.Editor
-) : ace.BackgroundTokenizer(tok, ed) {
-}
+//class AglBackgroundTokenizer(
+//        tok: ace.Tokenizer,
+//        ed: ace.Editor
+//) : ace.BackgroundTokenizer(tok, ed) {
+//}
 
 class AglLineStateAce(
         val lineNumber: Int,
