@@ -132,7 +132,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             val styleMdl = result.asm
             if (null != styleMdl) {
                 styleMdl.rules.forEach { rule ->
-                    rule.selector.forEach { sel -> style.mapClass(sel) }
+                    rule.selector.forEach { sel -> style.mapClass(sel.value) }
                 }
                 sendMessage(port, MessageSetStyleResult(message.languageId, message.editorId, message.sessionId, MessageStatus.SUCCESS, "OK"))
             } else {
@@ -316,7 +316,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             sendMessage(port, MessageCodeCompleteResult(message.languageId, message.editorId, message.sessionId, MessageStatus.START, "Start", emptyList(), null))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
-            val result = proc.expectedTerminalsAt(
+            val result = proc.expectedItemsAt(
                 message.text,
                 message.position,
                 1,

@@ -167,11 +167,15 @@ object AglWorkerSerialisation {
             }
             namespace("net.akehurst.language.api.style", imports = listOf("kotlin", "kotlin.collections")) {
                 dataType("AglStyleRule") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "selector", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "selector", "AglStyleSelector")
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "styles", "Map", listOf("String", "AglStyle"))
-
                 }
+                dataType("AglStyleSelector"){
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "AglStyleSelectorKind")
+                }
+                enumType("AglStyleSelectorKind", listOf("LITERAL", "PATTERN", "RULE_NAME"))
                 dataType("AglStyle") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")

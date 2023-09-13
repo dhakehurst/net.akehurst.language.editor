@@ -26,9 +26,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.processor.SentenceContext
-import net.akehurst.language.api.style.AglStyle
-import net.akehurst.language.api.style.AglStyleModel
-import net.akehurst.language.api.style.AglStyleRule
+import net.akehurst.language.api.style.*
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglEditorJsAbstract
@@ -180,10 +178,10 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                         var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
                         styleMdl.rules.forEach { rule ->
                             val ruleClasses = rule.selector.map {
-                                val mappedSelName = this.agl.styleHandler.mapClass(it)
-                                ".ace_$mappedSelName"
+                                val mappedSelName = this.agl.styleHandler.mapClass(it.value)
+                                AglStyleSelector(".ace_$mappedSelName",it.kind)
                             }
-                            val cssClasses = listOf(".$aglStyleClass") + ruleClasses
+                            val cssClasses = listOf(AglStyleSelector(".$aglStyleClass",AglStyleSelectorKind.LITERAL)) + ruleClasses
                             val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
                             mappedRule.styles = rule.styles.values.associate { oldStyle ->
                                 val style = when (oldStyle.name) {

@@ -31,6 +31,8 @@ import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
+import net.akehurst.language.api.style.AglStyleSelector
+import net.akehurst.language.api.style.AglStyleSelectorKind
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.editor.common.messages.*
@@ -181,10 +183,10 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                     var mappedCss = ""
                     styleMdl.rules.forEach { rule ->
                         val ruleClasses = rule.selector.map {
-                            val mappedSelName = this.agl.styleHandler.mapClass(it)
-                            ".monaco_$mappedSelName"
+                            val mappedSelName = this.agl.styleHandler.mapClass(it.value)
+                            AglStyleSelector(".monaco_$mappedSelName",it.kind)
                         }
-                        val cssClasses = listOf(".$aglStyleClass") + ruleClasses
+                        val cssClasses = listOf(AglStyleSelector(".$aglStyleClass",AglStyleSelectorKind.LITERAL)) + ruleClasses
                         val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
                         mappedRule.styles = rule.styles.values.associate { oldStyle ->
                             val style = when (oldStyle.name) {

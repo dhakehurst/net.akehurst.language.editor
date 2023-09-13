@@ -60,7 +60,7 @@ class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
         return if (null == proc) {
             emptyList()
         } else {
-            val result = proc.expectedTerminalsAt(text, offset, 1, Agl.options { parse { goalRuleName(goalRule) } })
+            val result = proc.expectedItemsAt(text, offset, 1, Agl.options { parse { goalRuleName(goalRule) } })
             result.items
         }
     }
