@@ -422,25 +422,23 @@ object AglWorkerSerialisation {
             }
             namespace("net.akehurst.language.agl.grammar.grammar.asm", imports = listOf("kotlin", "kotlin.collections")) {
                 dataType("NamespaceDefault") {
-
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
-
                 }
                 dataType("GrammarReferenceDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "localNamespace", "Namespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "localNamespace", "NamespaceDefault")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "nameOrQName", " String")
 
                     propertyOf(setOf(MEMBER, REFERENCE), "resolved", "GrammarAbstract")
                 }
                 dataType("GrammarDefault") {
                     superTypes("GrammarAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "Namespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "NamespaceDefault")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
                 }
                 dataType("GrammarAbstract") {
                     superTypes("net.akehurst.language.api.grammar.Grammar")
 
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "Namespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "NamespaceDefault")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "extends", "List", listOf("GrammarReferenceDefault"))

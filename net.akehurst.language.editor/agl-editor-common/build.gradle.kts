@@ -1,5 +1,13 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+
 plugins {
+    kotlin("multiplatform")
     id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin")
+}
+
+kotlin {
+    (project.ext["configureCommon"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
 }
 
 val version_kserialisation:String by project
@@ -34,14 +42,6 @@ kotlinxReflect {
         "net.akehurst.language.agl.grammar.scopes",
         "net.akehurst.language.agl.grammar.style"
     ))
-}
-
-kotlin {
-    sourceSets {
-        val commonMain by getting {
-            kotlin.srcDir("$buildDir/kotlinxReflect/genSrc/commonMain")
-        }
-    }
 }
 
 configure<PublishingExtension> {

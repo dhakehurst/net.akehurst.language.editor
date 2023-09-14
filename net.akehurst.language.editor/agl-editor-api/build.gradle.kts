@@ -1,5 +1,11 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+
 plugins {
-   id("net.akehurst.kotlin.gradle.plugin.exportPublic")
+    kotlin("multiplatform")
+}
+
+kotlin {
+    (project.ext["configureCommon"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
 }
 
 val version_agl:String by project

@@ -708,7 +708,7 @@ class test_AglWorkerSerialisation {
         }
 
         val actual = AglWorkerSerialisation.deserialise<Grammar>(json.toStringJson())
-        val result = Agl.registry.agl.grammar.processor!!.process(
+        val expResult = Agl.registry.agl.grammar.processor!!.process(
             sentence = """
                 namespace test.test
                 grammar Test {
@@ -716,7 +716,7 @@ class test_AglWorkerSerialisation {
                 }
             """.trimIndent()
         )
-        val expected = result.asm!![0]
+        val expected = expResult.asm!![0]
 
         assertEquals(expected.namespace, actual.namespace)
         assertEquals(expected.name, actual.name)

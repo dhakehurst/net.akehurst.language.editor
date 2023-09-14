@@ -24,12 +24,9 @@ plugins {
     id("org.jetbrains.dokka") version ("1.8.20") apply false
     id("com.github.gmazzo.buildconfig") version ("4.1.2") apply false
     id("nu.studer.credentials") version ("3.0")
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version("1.9.10") apply false
-    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version("1.9.10") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version ("1.9.10") apply false
+    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version ("1.9.10") apply false
 }
-val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
-val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
-val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
 
 println("===============================================")
 println("Gradle: ${GradleVersion.current()}")
@@ -49,8 +46,10 @@ allprojects {
 }
 
 subprojects {
+    val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
+    val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
+    val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
 
-    apply(plugin = "org.jetbrains.kotlin.multiplatform")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "org.jetbrains.dokka")
@@ -59,7 +58,7 @@ subprojects {
 
     repositories {
         mavenLocal {
-            content{
+            content {
                 includeGroupByRegex("net\\.akehurst.+")
             }
         }
@@ -73,16 +72,42 @@ subprojects {
         val now = java.time.Instant.now()
         fun fBbuildStamp(): String = java.time.format.DateTimeFormatter.ISO_DATE_TIME.withZone(java.time.ZoneId.of("UTC")).format(now)
         fun fBuildDate(): String = java.time.format.DateTimeFormatter.ofPattern("yyyy-MMM-dd").withZone(java.time.ZoneId.of("UTC")).format(now)
-        fun fBuildTime(): String= java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss z").withZone(java.time.ZoneId.of("UTC")).format(now)
+        fun fBuildTime(): String = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss z").withZone(java.time.ZoneId.of("UTC")).format(now)
 
-        packageName("${project.group}.${project.name.replace("-",".")}")
+        packageName("${project.group}.${project.name.replace("-", ".")}")
         buildConfigField("String", "version", "\"${project.version}\"")
         buildConfigField("String", "buildStamp", "\"${fBbuildStamp()}\"")
         buildConfigField("String", "buildDate", "\"${fBuildDate()}\"")
         buildConfigField("String", "buildTime", "\"${fBuildTime()}\"")
     }
 
-    configure<KotlinMultiplatformExtension> {
+    fun KotlinMultiplatformExtension.configureJs() {
+        js("js", IR) {
+            binaries.library()
+            generateTypeScriptDefinitions()
+            useEsModules()
+            tasks.withType<KotlinJsCompile>().configureEach {
+                kotlinOptions {
+                    useEsClasses = true
+                }
+            }
+            nodejs()
+            browser {
+                webpackTask {
+                    outputFileName = "${project.group}-${project.name}.js"
+                }
+            }
+        }
+        sourceSets {
+            val commonMain by getting {
+                kotlin.srcDir("$buildDir/generated/kotlin")
+            }
+            all {
+                languageSettings.optIn("kotlin.ExperimentalStdlibApi")
+            }
+        }
+    }
+    fun KotlinMultiplatformExtension.configureJvm() {
         jvm("jvm8") {
             compilations {
                 val main by getting {
@@ -101,24 +126,6 @@ subprojects {
                 }
             }
         }
-        js("js",IR) {
-            generateTypeScriptDefinitions()
-            useEsModules()
-            tasks.withType<KotlinJsCompile>().configureEach {
-                kotlinOptions {
-                    useEsClasses = true
-                }
-            }
-            nodejs()
-            browser {
-                webpackTask {
-                    outputFileName = "${project.group}-${project.name}.js"
-                }
-            }
-        }
-        //macosX64("macosX64") {
-        // uncomment stuff below too
-        //}
         sourceSets {
             val commonMain by getting {
                 kotlin.srcDir("$buildDir/generated/kotlin")
@@ -128,6 +135,13 @@ subprojects {
             }
         }
     }
+    fun KotlinMultiplatformExtension.configureCommon() {
+        configureJs()
+        configureJvm()
+    }
+    project.ext.set("configureJs", KotlinMultiplatformExtension::configureJs )
+    project.ext.set("configureJvm", KotlinMultiplatformExtension::configureJvm)
+    project.ext.set("configureCommon", KotlinMultiplatformExtension::configureCommon)
 
     val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
 
@@ -137,13 +151,6 @@ subprojects {
         from(dokkaHtml.outputDirectory)
     }
     tasks.named("publish").get().dependsOn("javadocJar")
-
-    dependencies {
-        //"commonMainApi"(platform("net.akehurst.bom:kotlin:1.8.21"))
-
-        "commonTestImplementation"(kotlin("test"))
-        "commonTestImplementation"(kotlin("test-annotations-common"))
-    }
 
     fun getProjectProperty(s: String) = project.findProperty(s) as String?
 
@@ -201,6 +208,6 @@ subprojects {
 
     configurations.all {
         // Check for updates every build
-        resolutionStrategy.cacheChangingModulesFor( 0, "seconds")
+        resolutionStrategy.cacheChangingModulesFor(0, "seconds")
     }
 }
