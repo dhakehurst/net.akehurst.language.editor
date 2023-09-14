@@ -18,6 +18,7 @@ package net.akehurst.language.editor.browser.ace
 
 import ResizeObserver
 import ace.AceAnnotation
+import ace.IRange
 import kotlinx.browser.window
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
@@ -46,32 +47,39 @@ class AglErrorAnnotation(
     val row = line - 1
 }
 
+interface Ace {
+    fun createRange(startRow:Int, startColumn:Int, endRow:Int, endColumn:Int): IRange
+}
+
 /**
  * e.g.
  * worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
  */
 fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     containerElement: Element,
-    aceEditor: ace.Editor,
+    aceEditor: ace.IEditor,
     languageId: String,
     editorId: String,
-    worker:AbstractWorker
+    worker: AbstractWorker,
+    ace:Ace
 ): AglEditor<AsmType, ContextType> {
     return AglEditorAce<AsmType, ContextType>(
         containerElement = containerElement,
         aceEditor = aceEditor,
         languageId = languageId,
         editorId = editorId,
-        worker = worker
+        worker = worker,
+        ace=ace
     )
 }
 
 private class AglEditorAce<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
-    val aceEditor: ace.Editor,
+    val aceEditor: ace.IEditor,
     languageId: String,
     editorId: String,
-    worker:AbstractWorker
+    worker: AbstractWorker,
+    val ace:Ace
 ) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
@@ -99,14 +107,6 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         }
 
     var parseTimeout: dynamic = null
-
-    /**
-     * hack, allows this lib not to have a dependency on ace,
-     * but usage must set this to return a 'real' ace.Range object
-     * to avoid ace errors and get proper support for Markers
-     * The 'ace.Range' used here is just an interface - not a real ace.Range class
-     */
-    var createRange: (ace.Range) -> ace.Range = { it }
 
     init {
         this.init_()
@@ -179,9 +179,9 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                         styleMdl.rules.forEach { rule ->
                             val ruleClasses = rule.selector.map {
                                 val mappedSelName = this.agl.styleHandler.mapClass(it.value)
-                                AglStyleSelector(".ace_$mappedSelName",it.kind)
+                                AglStyleSelector(".ace_$mappedSelName", it.kind)
                             }
-                            val cssClasses = listOf(AglStyleSelector(".$aglStyleClass",AglStyleSelectorKind.LITERAL)) + ruleClasses
+                            val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
                             val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
                             mappedRule.styles = rule.styles.values.associate { oldStyle ->
                                 val style = when (oldStyle.name) {
@@ -344,8 +344,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                 LanguageProcessorPhase.SYNTAX_ANALYSIS -> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.SEMANTIC_ANALYSIS -> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.FORMATTER -> errMsg = "Error ${issue.message}"
-                LanguageProcessorPhase.INTERPRETER-> errMsg = "Error ${issue.message}"
-                LanguageProcessorPhase.GENERATOR-> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.INTERPRETER -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.GENERATOR -> errMsg = "Error ${issue.message}"
                 LanguageProcessorPhase.ALL -> errMsg = "Error ${issue.message}"
             }
             if (null != errMsg) {
@@ -378,12 +378,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             val row = issue.location?.let { it.line - 1 } ?: 0
             val startColumn = issue.location?.let { it.column - 1 } ?: 0
             val endColumn = startColumn + (issue.location?.length ?: 1)
-            val range =  objectJSTyped<ace.Range> {
-                this.startRow = row
-                this.startColumn = startColumn
-                this.endRow = row
-                this.endColumn = endColumn
-            }
+            val range = ace.createRange( row, startColumn, row, endColumn)
             val cls = "ace_marker_text_$errType"
             val errMrkId = this.aceEditor.getSession()?.addMarker(range, cls, "text")
             if (null != errMrkId) this.errorParseMarkerIds.add(errMrkId)

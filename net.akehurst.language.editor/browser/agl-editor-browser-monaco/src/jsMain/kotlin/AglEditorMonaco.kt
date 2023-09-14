@@ -21,10 +21,12 @@ import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
+import monaco.IDisposable
 import monaco.MarkerSeverity
-import monaco.editor.IMarkerData
-import monaco.editor.IStandaloneCodeEditor
-import monaco.editor.ITokenThemeRule
+import monaco.editor.*
+import monaco.languages.CompletionItemProvider
+import monaco.languages.ILanguageExtensionPoint
+import monaco.languages.TokensProvider
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageProcessorPhase
@@ -35,7 +37,6 @@ import net.akehurst.language.api.style.AglStyleSelector
 import net.akehurst.language.api.style.AglStyleSelectorKind
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
-import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
@@ -45,15 +46,28 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
     monacoEditor: IStandaloneCodeEditor,
     languageId: String,
     editorId: String,
-    worker:AbstractWorker
+    worker: AbstractWorker,
+    monaco: Monaco
 ): AglEditor<AsmType, ContextType> {
     return AglEditorMonaco<AsmType, ContextType>(
         containerElement = containerElement,
         monacoEditor = monacoEditor,
         languageId = languageId,
         editorId = editorId,
-        worker = worker
+        worker = worker,
+        monaco = monaco
     )
+}
+
+interface Monaco {
+    fun defineTheme(themeName: String, themeData: IStandaloneThemeData)
+    fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>)
+    fun setModelLanguage(model: ITextModel, languageId: String)
+    fun setTheme(themeName: String)
+
+    fun register(language: ILanguageExtensionPoint)
+    fun setTokensProvider(languageId: String, provider: TokensProvider): IDisposable
+    fun registerCompletionItemProvider(languageId: String, provider: CompletionItemProvider): IDisposable
 }
 
 private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
@@ -61,7 +75,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     val monacoEditor: IStandaloneCodeEditor,
     languageId: String,
     editorId: String,
-    worker:AbstractWorker
+    worker: AbstractWorker,
+    val monaco: Monaco
 ) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
 
     companion object {
@@ -122,22 +137,22 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
             // https://github.com/Microsoft/monaco-editor/issues/338
             // all editors on the same page must share the same theme!
             // hence we create a global theme and modify it as needed.
-            monaco.editor.defineTheme(aglGlobalTheme, themeData);
+            monaco.defineTheme(aglGlobalTheme, themeData);
 
-            monaco.languages.register(objectJSTyped<monaco.languages.ILanguageExtensionPoint> {
+            monaco.register(objectJSTyped<monaco.languages.ILanguageExtensionPoint> {
                 id = languageIdentity
             })
             //val languageId = this.languageId
             //val editorOptions = js("{language: languageId, value: initialContent, theme: theme, wordBasedSuggestions:false}")
 
-            monaco.editor.setModelLanguage(this.monacoEditor.getModel(), languageIdentity)
-            monaco.editor.setTheme(aglGlobalTheme)
+            monaco.setModelLanguage(this.monacoEditor.getModel(), languageIdentity)
+            monaco.setTheme(aglGlobalTheme)
 
-            monaco.languages.setTokensProvider(
+            monaco.setTokensProvider(
                 this.languageIdentity,
                 this.workerTokenizer as monaco.languages.TokensProvider
             )
-            monaco.languages.registerCompletionItemProvider(
+            monaco.registerCompletionItemProvider(
                 this.languageIdentity,
                 AglCompletionProviderMonaco(this.agl)
             )
@@ -184,9 +199,9 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                     styleMdl.rules.forEach { rule ->
                         val ruleClasses = rule.selector.map {
                             val mappedSelName = this.agl.styleHandler.mapClass(it.value)
-                            AglStyleSelector(".monaco_$mappedSelName",it.kind)
+                            AglStyleSelector(".monaco_$mappedSelName", it.kind)
                         }
-                        val cssClasses = listOf(AglStyleSelector(".$aglStyleClass",AglStyleSelectorKind.LITERAL)) + ruleClasses
+                        val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
                         val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
                         mappedRule.styles = rule.styles.values.associate { oldStyle ->
                             val style = when (oldStyle.name) {
@@ -251,7 +266,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     }
 
     override fun clearErrorMarkers() {
-        monaco.editor.setModelMarkers(this.monacoEditor.getModel(), "", emptyArray())
+        monaco.setModelMarkers(this.monacoEditor.getModel(), "", emptyArray())
     }
 
     fun onChange(handler: (String) -> Unit) {
@@ -393,7 +408,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 null
             }
         }
-        monaco.editor.setModelMarkers(this.monacoEditor.getModel(), "", monIssues.toTypedArray())
+        monaco.setModelMarkers(this.monacoEditor.getModel(), "", monIssues.toTypedArray())
     }
 
 }

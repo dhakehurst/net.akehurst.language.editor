@@ -3,7 +3,7 @@
  */
 package ace
 
-external interface Editor {
+external interface IEditor {
     val commands: dynamic
     var completers: Array<dynamic> //TODO:
     val renderer: dynamic

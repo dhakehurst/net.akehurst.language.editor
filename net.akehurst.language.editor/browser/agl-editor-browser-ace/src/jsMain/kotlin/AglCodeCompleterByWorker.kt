@@ -29,7 +29,7 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
 
     // called by Ace
     @JsName("getCompletions")
-    fun getCompletions(editor: ace.Editor, session: ace.EditSession, pos: dynamic, prefix: dynamic, callback: dynamic) {
+    fun getCompletions(editor: ace.IEditor, session: ace.EditSession, pos: dynamic, prefix: dynamic, callback: dynamic) {
         val posn = session.getDocument().positionToIndex(pos, 0)
         val wordList = this.getCompletionItems(editor, posn)
         val aceCi = wordList.map { ci ->
@@ -42,7 +42,7 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
         callback(null, aceCi)
     }
 
-    private fun getCompletionItems(editor: ace.Editor, pos: Int): List<CompletionItem> {
+    private fun getCompletionItems(editor: ace.IEditor, pos: Int): List<CompletionItem> {
         //TODO: get worker to provide this
         val proc = this.agl.languageDefinition.processor
         return if (null != proc) {

@@ -17,6 +17,7 @@ package net.akehurst.language.editor.common.serialisation
 
 import net.akehurst.kotlin.json.json
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
+import net.akehurst.language.agl.grammarTypeModel.grammarTypeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.sppt.TreeDataComplete
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
@@ -32,6 +33,8 @@ import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.sppt.SpptDataNode
 import net.akehurst.language.editor.common.AglWorkerSerialisation
 import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.typemodel.api.TypeModel
+import net.akehurst.language.typemodel.api.typeModel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -728,6 +731,253 @@ class test_AglWorkerSerialisation {
         }
     }
 
+    @Test
+    fun TypeModel_serialise() {
+        val tm = typeModel("test") {
+            namespace("test") {
+                primitiveType("Primitive")
+                enumType("Enum", listOf("A", "B", "C"))
+            }
+        }
+
+        val actual = AglWorkerSerialisation.toJsonDocument(tm)
+
+        val expected = json("serialised") {
+            objectReferenceable("net.akehurst.language.typemodel.simple.TypeModelSimple") {
+                property("name", "test")
+                property("namespace") {
+                    mapObject {
+                        entry({ string("test") }) {
+                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeNamespaceSimple") {
+                                property("qualifiedName", "test")
+                                property("importsStr") {
+                                    listObject { string("std") }
+                                }
+                                property("allTypesByName") {
+                                    mapObject {
+                                        entry({ string("Primitive") }) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.PrimitiveTypeSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("name", "Primitive")
+                                            }
+                                        }
+                                        entry({ string("Enum") }) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.EnumTypeSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("name", "Enum")
+                                                property("literals") {
+                                                    listObject { string("A"); string("B"); string("C") }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                property("allNamespace") {
+                    listObject {
+                        reference("/namespace/\$entries/0/\$value")
+                    }
+                }
+            }
+        }
+
+        assertEquals(expected.toFormattedJsonString("  ", "  "), actual.toFormattedJsonString("  ", "  "))
+    }
+
+    @Test
+    fun TypeModel_deserialise() {
+        val json = json("serialised") {
+            objectReferenceable("net.akehurst.language.typemodel.simple.TypeModelSimple") {
+                property("name", "test")
+                property("namespace") {
+                    mapObject {
+                        entry({ string("test") }) {
+                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeNamespaceSimple") {
+                                property("qualifiedName", "test")
+                                property("importsStr") {
+                                    listObject { string("std") }
+                                }
+                                property("allTypesByName") {
+                                    mapObject {
+                                        entry({ string("Primitive") }) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.PrimitiveTypeSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("name", "Primitive")
+                                            }
+                                        }
+                                        entry({ string("Enum") }) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.EnumTypeSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("name", "Enum")
+                                                property("literals") {
+                                                    listObject { string("A"); string("B"); string("C") }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                property("allNamespace") {
+                    listObject {
+                        reference("/namespace/\$entries/0/\$value")
+                    }
+                }
+            }
+        }
+
+        val actual = AglWorkerSerialisation.deserialise<TypeModel>(json.toStringJson())
+        val expected = typeModel("test") {
+            namespace("test") {
+                primitiveType("Primitive")
+                enumType("Enum", listOf("A", "B", "C"))
+            }
+        }
+
+        assertEquals(expected.asString(), actual.asString())
+    }
+
+    @Test
+    fun GrammarTypeModel_serialise() {
+        val tm = grammarTypeModel("test", "test", "", imports = emptyList()) {
+            stringTypeFor("A")
+            dataType("S", "S") {
+                propertyPrimitiveType("a","String",true, 0)
+                propertyListTypeOf("l", "String", false,1)
+            }
+        }
+
+        val actual = AglWorkerSerialisation.toJsonDocument(tm)
+
+        val expected = json("serialised") {
+            objectReferenceable("net.akehurst.language.typemodel.simple.TypeModelSimple") {
+                property("name", "test")
+                property("namespace") {
+                    mapObject {
+                        entry({ string("test") }) {
+                            objectReferenceable("net.akehurst.language.agl.grammarTypeModel.GrammarTypeNamespaceSimple") {
+                                property("allRuleNameToType") {
+                                    mapObject {
+                                        entry({string("A")}) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("typeName", "String")
+                                                property("typeArguments") { listObject {  } }
+                                                property("isNullable", false)
+                                            }
+                                        }
+                                        entry({string("S")}) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("typeName", "S")
+                                                property("typeArguments") { listObject {  } }
+                                                property("isNullable", false)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                property("qualifiedName", "test")
+                                property("importsStr") { listObject {  } }
+                                property("allTypesByName") {
+                                    mapObject {
+                                        entry({ string("A") }) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.PrimitiveTypeSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("name", "Primitive")
+                                            }
+                                        }
+                                        entry({ string("S") }) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.EnumTypeSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("name", "Enum")
+                                                property("literals") {
+                                                    listObject { string("A"); string("B"); string("C") }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                property("allNamespace") {
+                    listObject {
+                        reference("/namespace/\$entries/0/\$value")
+                    }
+                }
+            }
+        }
+
+        assertEquals(expected.toFormattedJsonString("  ", "  "), actual.toFormattedJsonString("  ", "  "))
+    }
+
+    @Test
+    fun GrammarTypeModel_deserialise() {
+        val json = json("serialised") {
+            objectReferenceable("net.akehurst.language.typemodel.simple.TypeModelSimple") {
+                property("name", "test")
+                property("namespace") {
+                    mapObject {
+                        entry({ string("test") }) {
+                            objectReferenceable("net.akehurst.language.agl.grammarTypeModel.GrammarTypeNamespaceSimple") {
+                                property("allRuleNameToType") {
+                                    mapObject {
+                                        entry({string("A")}) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("typeName", "String")
+                                                property("typeArguments") { listObject {  } }
+                                                property("isNullable", false)
+                                            }
+                                        }
+                                        entry({string("S")}) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("typeName", "S")
+                                                property("typeArguments") { listObject {  } }
+                                                property("isNullable", false)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                property("qualifiedName", "test")
+                                property("importsStr") { listObject {  } }
+                                property("allTypesByName") {
+                                    mapObject {
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                property("allNamespace") {
+                    listObject {
+                        reference("/namespace/\$entries/0/\$value")
+                    }
+                }
+            }
+        }
+
+        val actual = AglWorkerSerialisation.deserialise<TypeModel>(json.toStringJson())
+        val expected = typeModel("test") {
+            namespace("test") {
+                primitiveType("Primitive")
+                enumType("Enum", listOf("A", "B", "C"))
+            }
+        }
+
+        assertEquals(expected.asString(), actual.asString())
+    }
+
     // --- MessageProcessorCreate ---
     @Test
     fun MessageProcessorCreate_com_null() {
@@ -915,7 +1165,7 @@ class test_AglWorkerSerialisation {
             }
         """
         val proc = Agl.processorFromStringDefault(grammarStr).processor!!
-        val context = ContextFromTypeModel(proc.grammar!!.qualifiedName,proc.typeModel)
+        val context = ContextFromTypeModel(proc.grammar!!.qualifiedName, proc.typeModel)
         val expected = MessageProcessRequest(
             languageId, editorId, sessionId,
             "rule1",
@@ -970,7 +1220,7 @@ class test_AglWorkerSerialisation {
     fun test_TreeDataComplete() {
         val sut = TreeDataComplete<SpptDataNode>(0)
 
-TODO()
+        TODO()
     }
 
     @Test
@@ -1217,7 +1467,7 @@ TODO()
             """
         ).asm!!.first()
         val context = ContextFromTypeModel()
-        context.createScopeFrom(grammar.qualifiedName,GrammarTypeModelSimple.createFrom(grammar))
+        context.createScopeFrom(grammar.qualifiedName, GrammarTypeModelSimple.createFrom(grammar))
         val expected = MessageProcessRequest(
             "testLang", "tesEditor", "testSession",
             "rule1",

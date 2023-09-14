@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-@file:JsModule("monaco-editor/esm/vs/editor/editor.api.js")
-@file:JsNonModule
-
 package monaco
 
 import org.w3c.dom.Element
@@ -62,13 +59,4 @@ external interface IRange {
     var startColumn: Int
     var startLineNumber: Int
 
-}
-
-external class Position(
-    lineNumber: Int,
-    column: Int
-) : IPosition {
-    override val lineNumber: Int
-    override val column: Int
-    //...
 }

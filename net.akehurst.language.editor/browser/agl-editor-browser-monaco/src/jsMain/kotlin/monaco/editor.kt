@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-@file:JsModule("monaco-editor/esm/vs/editor/editor.api.js")
-@file:JsNonModule
-
-@file:JsQualifier("editor")
-
 package monaco.editor
 
 import monaco.IDisposable
@@ -26,17 +21,6 @@ import monaco.IPosition
 import monaco.IRange
 import monaco.MarkerSeverity
 import org.w3c.dom.Element
-
-
-external fun create(element: Element, options: IStandaloneEditorConstructionOptions?, override: IEditorOverrideServices?): IStandaloneCodeEditor
-
-external fun defineTheme(themeName: String, themeData: IStandaloneThemeData)
-
-external fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>)
-
-external fun setModelLanguage(model: ITextModel, languageId: String )
-
-external fun setTheme(themeName:String)
 
 external enum class EndOfLinePreference {
     TextDefined,

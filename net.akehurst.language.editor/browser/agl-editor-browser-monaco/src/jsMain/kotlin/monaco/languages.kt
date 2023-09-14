@@ -1,13 +1,24 @@
-@file:JsModule("monaco-editor/esm/vs/editor/editor.api.js")
-@file:JsNonModule
-
-@file:JsQualifier("languages")
+/**
+ * Copyright (C) 2020 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package monaco.languages
 
 import monaco.CancellationToken
 import monaco.IDisposable
-import monaco.Position
+import monaco.IPosition
 import monaco.editor.ITextModel
 
 external interface ILanguageExtensionPoint {
@@ -46,7 +57,7 @@ external interface CompletionItemProvider {
     /**
      * Provide completion items for the given position and document.
      */
-    fun provideCompletionItems(model: ITextModel, position: Position, context: CompletionContext, token: CancellationToken): CompletionList?
+    fun provideCompletionItems(model: ITextModel, position: IPosition, context: CompletionContext, token: CancellationToken): CompletionList?
 
     /**
      * Given a completion item fill in more data, like [doc-comment](#CompletionItem.documentation)
@@ -54,7 +65,7 @@ external interface CompletionItemProvider {
      *
      * The editor will only resolve a completion item once.
      */
-    fun resolveCompletionItem(model: ITextModel, position: Position, item: CompletionItem, token: CancellationToken): CompletionList?
+    fun resolveCompletionItem(model: ITextModel, position: IPosition, item: CompletionItem, token: CancellationToken): CompletionList?
 }
 
 external interface CompletionList {
@@ -88,7 +99,6 @@ external enum class CompletionItemKind {
     Keyword, Text, Color, File, Reference,
     Customcolor, Folder, TypeParameter, Snippet
 }
-
 
 /**
  * A completion item represents a text snippet that is
@@ -180,6 +190,3 @@ external interface CompletionItem {
     //val command: Command?
 }
 
-external fun register(language: ILanguageExtensionPoint)
-external fun setTokensProvider(languageId: String, provider: TokensProvider): IDisposable
-external fun registerCompletionItemProvider(languageId: String, provider: CompletionItemProvider): IDisposable

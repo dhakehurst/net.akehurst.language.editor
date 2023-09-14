@@ -9,7 +9,7 @@ external interface EditSession {
     fun removeMarker(id:Int)
     fun setAnnotations(errors: Array<AceAnnotation>)
     fun getDocument(): dynamic
-    fun addMarker(range: Range, cls: String, type: String): Int
+    fun addMarker(range: IRange, cls: String, type: String): Int
 }
 
 external interface AceAnnotation {
@@ -20,7 +20,7 @@ external interface AceAnnotation {
     var raw: String?
 }
 
-external interface Range{
+external interface IRange{
     var startRow:Int
     var startColumn:Int
     var endRow:Int

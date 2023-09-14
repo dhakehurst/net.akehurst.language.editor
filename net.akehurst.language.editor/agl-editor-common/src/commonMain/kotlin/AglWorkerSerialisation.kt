@@ -51,7 +51,7 @@ object AglWorkerSerialisation {
     private fun initialiseApiTypes() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("ApiType") {
-            namespace("net.akehurst.language.editor.common", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.editor.common", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglToken") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "styles", "Array", listOf("String"))
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
@@ -59,7 +59,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "column", "Int")
                 }
             }
-            namespace("net.akehurst.language.api.parser", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.api.parser", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("InputLocation") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "position", "Int")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "column", "Int")
@@ -67,7 +67,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "length", "Int")
                 }
             }
-            namespace("net.akehurst.language.api.processor", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.api.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 enumType("LanguageIssueKind", emptyList())
                 enumType("LanguageProcessorPhase", emptyList())
                 dataType("LanguageIssue") {
@@ -87,71 +87,167 @@ object AglWorkerSerialisation {
 
     private fun initialiseTypeModel() {
         serialiser.confgureFromKompositeModel(typeModel("TypeModel") {
-            namespace("net.akehurst.language.agl.syntaxAnalyser", imports = listOf("kotlin", "kotlin.collections")) {
-                dataType("TypeModelFromGrammar") {
-                    superTypes("net.akehurst.language.agl.agl.typemodel.TypeModelAbstract")
+            namespace(
+                "net.akehurst.language.agl.syntaxAnalyser",
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.grammarTypeModel")
+            )
+            {
+                dataType("GrammarTypeNamespaceFromGrammar") {
+                    superTypes("GrammarTypeNamespaceAbstract")
                 }
             }
-            namespace("net.akehurst.language.agl.agl.typemodel", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace(
+                "net.akehurst.language.agl.grammarTypeModel",
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typemodel.simple")
+            )
+            {
+                dataType("GrammarTypeNamespaceSimple") {
+                    superTypes("GrammarTypeNamespaceAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "importsStr", "List") { typeArgument("String") }
+                }
+                dataType("GrammarTypeNamespaceAbstract") {
+                    superTypes("TypeNamespaceAbstract") TODO("fix this...seems to be createing rather than finding!")
+
+                    propertyOf(setOf(MEMBER, COMPOSITE), "allRuleNameToType", "Map") {
+                        typeArgument("String")
+                        typeArgument("TypeInstance")
+                    }
+                }
+            }
+            namespace(
+                "net.akehurst.language.typemodel.simple",
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.api.typemodel")
+            )
+            {
+                dataType("SimpleTypeModelStdLib") {
+                    superTypes("TypeNamespaceAbstract")
+                }
                 dataType("TypeModelSimple") {
                     superTypes("TypeModelAbstract")
+                    propertyOf(setOf(CONSTRUCTOR), "name", "String")
                 }
                 dataType("TypeModelAbstract") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "String")
+                    superTypes("TypeModel")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
 
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rules", "Map", listOf("String", "net.akehurst.language.api.typemodel.RuleType"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "namespace", "Map") {
+                        typeArgument("String")
+                        typeArgument("TypeNamespace")
+                    }
+                    propertyOf(setOf(MEMBER, REFERENCE), "allNamespace", "List") { typeArgument("TypeNamespace") }
+                    //propertyOf(setOf(MEMBER, COMPOSITE), "rules", "Map", listOf("String", "net.akehurst.language.api.typemodel.RuleType"))
                 }
+                dataType("TypeInstanceSimple") {
+                    superTypes("TypeInstance")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isNullable", "Boolean")
+                }
+                dataType("TypeNamespaceSimple") {
+                    superTypes("TypeNamespaceAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "importsStr", "List") { typeArgument("String") }
+                }
+                dataType("TypeNamespaceAbstract") {
+                    superTypes("TypeNamespace")
+
+                    propertyOf(setOf(MEMBER, COMPOSITE), "allTypesByName", "Map") {
+                        typeArgument("String")
+                        typeArgument("TypeDefinition")
+                    }
+                }
+                dataType("TypeDefinitionAbstract") {
+                    superTypes("TypeDefinition")
+                    propertyOf(setOf(MEMBER, COMPOSITE), "typeParameters", "List") { typeArgument("String") }
+                }
+                dataType("PrimitiveTypeSimple") {
+                    superTypes("TypeDefinitionSimpleAbstract", "PrimitiveType")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                }
+                dataType("EnumTypeSimple") {
+                    superTypes("TypeDefinitionSimpleAbstract", "EnumType")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "literals", "List") { typeArgument("String") }
+                }
+                dataType("UnnamedSuperTypeTypeSimple") {
+                    superTypes("TypeDefinitionSimpleAbstract", "UnnamedSuperTypeType")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "id", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "subtypes", "List") { typeArgument("TypeInstance") }
+                }
+                dataType("StructuredTypeSimpleAbstract") {
+                    superTypes("TypeDefinitionSimpleAbstract", "StructuredTypeSimple")
+                    propertyOf(setOf(MEMBER, COMPOSITE), "properties", "Map") {
+                        typeArgument("Int")
+                        typeArgument("PropertyDeclaration")
+                    }
+                    propertyOf(setOf(MEMBER, REFERENCE), "property", "Map") {
+                        typeArgument("String")
+                        typeArgument("PropertyDeclaration")
+                    }
+                }
+                dataType("TupleTypeSimple") {
+                    superTypes("StructuredTypeSimpleAbstract", "TupleType")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
+
+                }
+                dataType("DataTypeSimple") {
+                    superTypes("StructuredTypeSimpleAbstract", "DataType")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+
+                    propertyOf(setOf(MEMBER, REFERENCE), "supertypes", "List", listOf("DataType"))
+                    propertyOf(setOf(MEMBER, REFERENCE), "subtypes", "List", listOf("DataType"))
+                }
+                dataType("CollectionTypeSimple") {
+                    superTypes("StructuredTypeSimpleAbstract", "CollectionType")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeParameters", "String")
+
+                    propertyOf(setOf(MEMBER, REFERENCE), "supertypes", "List", listOf("CollectionType"))
+                }
+                dataType("PropertyDeclarationSimple") {
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "owner", "StructuredType")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeInstance", "TypeInstance")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "characteristics", "Set") { typeArgument("PropertyCharacteristic") }
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "index", "Int")
+                }
+                enumType("PropertyCharacteristic", listOf())
             }
-            namespace("net.akehurst.language.api.typemodel", imports = listOf("kotlin", "kotlin.collections")) {
-                dataType("TypeModel") {}
-                dataType("RuleType") {}
-                dataType("StringType") {
-                    superTypes("RuleType")
+            namespace("net.akehurst.language.api.typemodel", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                dataType("TypeModel") { }
+                dataType("TypeNamespace") {}
+                dataType("TypeInstance") {}
+                dataType("TypeDefinition") {}
+                dataType("PrimitiveType") {
+                    superTypes("TypeDefinition")
                 }
-                dataType("AnyType") {
-                    superTypes("RuleType")
+                dataType("EnumType") {
+                    superTypes("TypeDefinition")
                 }
-                dataType("NothingType") {
-                    superTypes("RuleType")
-                }
-                dataType("UnnamedSuperTypeType") {
-                    superTypes("RuleType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "subtypes", "List", listOf("RuleType"))
-                }
-                dataType("ListSimpleType") {
-                    superTypes("RuleType")
-
-                    propertyOf(setOf(MEMBER, REFERENCE), "elementType", "RuleType")
-                }
-                dataType("ListSeparatedType") {
-                    superTypes("RuleType")
-
-                    propertyOf(setOf(MEMBER, REFERENCE), "itemType", "RuleType")
-                    propertyOf(setOf(MEMBER, REFERENCE), "separatorType", "RuleType")
-                }
-                dataType("StructuredRuleType") {
-                    superTypes("RuleType")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "property", "Map", listOf("String", "PropertyDeclaration"))
+                dataType("StructuredType") {
+                    superTypes("TypeDefinition")
                 }
                 dataType("TupleType") {
                     superTypes("StructuredRuleType")
                 }
-                dataType("ElementType") {
+                dataType("DataType") {
                     superTypes("StructuredRuleType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "typeModel", "TypeModel")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-
-                    propertyOf(setOf(MEMBER, REFERENCE), "supertypes", "Set", listOf("ElementType"))
-                    propertyOf(setOf(MEMBER, REFERENCE), "subtypes", "List", listOf("ElementType"))
                 }
                 dataType("PropertyDeclaration") {
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "owner", "StructuredRuleType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "type", "RuleType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isNullable", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "childIndex", "Int")
+                }
+                enumType("PropertyCharacteristic", listOf())
+                dataType("UnnamedSuperTypeType") {
+                    superTypes("TypeDefinition")
+                }
+                dataType("CollectionType") {
+                    superTypes("TypeDefinition")
                 }
             }
         })
@@ -160,18 +256,18 @@ object AglWorkerSerialisation {
     private fun initialiseStyleAsm() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("StyleAsm") {
-            namespace("net.akehurst.language.agl.grammar.style", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglStyleModelDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "rules", "List", listOf("net.akehurst.language.api.style.AglStyleRule"))
                 }
             }
-            namespace("net.akehurst.language.api.style", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.api.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglStyleRule") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "selector", "AglStyleSelector")
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "styles", "Map", listOf("String", "AglStyle"))
                 }
-                dataType("AglStyleSelector"){
+                dataType("AglStyleSelector") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "AglStyleSelectorKind")
                 }
@@ -187,10 +283,10 @@ object AglWorkerSerialisation {
     private fun initialiseScopesAsm() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("ScopesAsm") {
-            namespace("net.akehurst.language.agl.grammar.scopes", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.scopes", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("ScopeModelAgl") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "scopes", "Map",listOf("String","ScopeDefinition"))
-                    propertyOf(setOf(MEMBER, COMPOSITE), "references", "List",listOf("ReferenceDefinition"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "scopes", "Map", listOf("String", "ScopeDefinition"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "references", "List", listOf("ReferenceDefinition"))
                 }
                 dataType("ScopeDefinition") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scopeFor", "String")
@@ -213,25 +309,28 @@ object AglWorkerSerialisation {
     private fun initialiseMessages() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("Messages") {
-            namespace("net.akehurst.language.api.automaton", imports = listOf(
-                "kotlin", "kotlin.collections")) {
+            namespace(
+                "net.akehurst.language.api.automaton", imports = mutableListOf(
+                    "kotlin", "kotlin.collections"
+                )
+            ) {
                 enumType("ParseAction", emptyList())
             }
-            namespace("net.akehurst.language.agl.grammar.grammar", imports = listOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.syntaxAnalyser")) {
+            namespace("net.akehurst.language.agl.grammar.grammar", imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.syntaxAnalyser")) {
                 dataType("ContextFromGrammar") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple",listOf("String"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
                 }
             }
-            namespace("net.akehurst.language.agl.syntaxAnalyser", imports = listOf("kotlin", "kotlin.collections","net.akehurst.language.agl.syntaxAnalyser")) {
+            namespace("net.akehurst.language.agl.syntaxAnalyser", imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.syntaxAnalyser")) {
                 dataType("ContextSimple") {
                     typeParameters("E")
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple",listOf("E"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("E"))
                 }
                 dataType("ContextFromTypeModel") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple",listOf("String"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
                 }
             }
-            namespace("net.akehurst.language.editor.common.messages", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.editor.common.messages", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 enumType("MessageStatus", emptyList())
                 dataType("MessageProcessorCreate") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -252,7 +351,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "configuration", "Map",listOf("String","Any"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "configuration", "Map", listOf("String", "Any"))
                 }
                 dataType("MessageSyntaxAnalyserConfigureResponse") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -266,9 +365,9 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String", emptyList(),true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String", emptyList(), true)
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "Any",  emptyList(),true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "Any", emptyList(), true)
                 }
                 dataType("MessageParseResult") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -276,8 +375,8 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List",listOf("LanguageIssue"))
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "treeSerialised", "String", emptyList(),true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "treeSerialised", "String", emptyList(), true)
                 }
                 dataType("MessageSyntaxAnalysisResult") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -286,7 +385,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asm", "Any", emptyList(),true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asm", "Any", emptyList(), true)
                 }
                 dataType("MessageSemanticAnalysisResult") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -295,7 +394,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asm", "Any", emptyList(),true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asm", "Any", emptyList(), true)
                 }
                 dataType("MessageParserInterruptRequest") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -309,7 +408,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "lineTokens", "Array", listOf("Array","AglToken"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "lineTokens", "Array", listOf("Array", "AglToken"))
                 }
                 dataType("MessageSetStyle") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -347,25 +446,25 @@ object AglWorkerSerialisation {
     private fun initialiseAsmSimple() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("AsmSimple") {
-            namespace("net.akehurst.language.agl.syntaxAnalyser", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.syntaxAnalyser", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("ScopeSimple") {
                     typeParameters("AsmElementIdType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "parent", "ScopeSimple",listOf("AsmElementIdType"))
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "parent", "ScopeSimple", listOf("AsmElementIdType"))
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forReferenceInParent", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forTypeName", "String")
 
-                        propertyOf(setOf(MEMBER, COMPOSITE), "scopeMap", "Map",listOf("String","ScopeSimple"))
-                        propertyOf(setOf(MEMBER, COMPOSITE), "childScopes", "Map",listOf("AsmElementIdType","ScopeSimple"))
-                        propertyOf(setOf(MEMBER, COMPOSITE), "items", "Map") {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "scopeMap", "Map", listOf("String", "ScopeSimple"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "childScopes", "Map", listOf("AsmElementIdType", "ScopeSimple"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "items", "Map") {
+                        typeArgument("String")
+                        typeArgument("Map") {
                             typeArgument("String")
-                            typeArgument("Map") {
-                                typeArgument("String")
-                                typeArgument("AsmElementIdType")
-                            }
+                            typeArgument("AsmElementIdType")
                         }
+                    }
                 }
             }
-            namespace("net.akehurst.language.api.asm", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.api.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AsmElementPath") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
                 }
@@ -396,31 +495,31 @@ object AglWorkerSerialisation {
     private fun initialiseGrammarAsm() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("GrammarAsm") {
-            namespace("net.akehurst.language.api.grammar", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.api.grammar", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("Grammar") {}
                 dataType("RuleItem") {}
             }
-            namespace("net.akehurst.language.agl.grammar.grammar", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.grammar", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglGrammarGrammar") {
                     superTypes("GrammarAbstract")
                 }
             }
-            namespace("net.akehurst.language.agl.grammar.scopes", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.scopes", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglScopesGrammar") {
                     superTypes("GrammarAbstract")
                 }
             }
-            namespace("net.akehurst.language.agl.grammar.style", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglStyleGrammar") {
                     superTypes("GrammarAbstract")
                 }
             }
-            namespace("net.akehurst.language.agl.grammar.format", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.format", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglFormatGrammar") {
                     superTypes("GrammarAbstract")
                 }
             }
-            namespace("net.akehurst.language.agl.grammar.grammar.asm", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.grammar.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("NamespaceDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
                 }
@@ -524,13 +623,13 @@ object AglWorkerSerialisation {
 
     private fun initialiseSPPT() {
         serialiser.confgureFromKompositeModel(typeModel("SPPT") {
-            namespace("net.akehurst.language.agl.sppt", imports = listOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.sppt", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("TreeDataComplete") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forStateSetNumber", "Int")
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "root", "CN", emptyList(), true)
                     propertyOf(setOf(MEMBER, COMPOSITE), "initialSkip", "TreeDataComplete", listOf("CN"), true)
-                    propertyOf(setOf(MEMBER, COMPOSITE), "completeChildren", "Map", emptyList(),false) {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "completeChildren", "Map", emptyList(), false) {
                         typeArgument("CN")
                         typeArgument("Map") {
                             typeArgument("Int")

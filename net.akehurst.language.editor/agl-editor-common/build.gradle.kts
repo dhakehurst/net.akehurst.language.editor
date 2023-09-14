@@ -28,13 +28,14 @@ kotlinxReflect {
         "net.akehurst.language.editor.common",
         "net.akehurst.language.editor.common.messages",
 
+        "net.akehurst.language.api.typemodel",
         "net.akehurst.language.api.automaton",
         "net.akehurst.language.api.asm",
         "net.akehurst.language.api.parser",
         "net.akehurst.language.api.processor",
         "net.akehurst.language.api.style",
-        "net.akehurst.language.api.typemodel",
 
+        "net.akehurst.language.typemodel.simple",
         "net.akehurst.language.agl.grammar.grammar",
         "net.akehurst.language.agl.grammar.grammar.asm",
         "net.akehurst.language.agl.syntaxAnalyser",

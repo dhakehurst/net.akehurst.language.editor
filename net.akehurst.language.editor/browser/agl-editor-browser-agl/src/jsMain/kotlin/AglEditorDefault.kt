@@ -69,7 +69,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        TODO("not implemented")
+        //TODO("not implemented")
     }
 
     override val sessionId: String get() = "session" //TODO

@@ -101,6 +101,9 @@ subprojects {
         sourceSets {
             val commonMain by getting {
                 kotlin.srcDir("$buildDir/generated/kotlin")
+                dependencies {
+                    implementation(kotlin("test"))
+                }
             }
             all {
                 languageSettings.optIn("kotlin.ExperimentalStdlibApi")
@@ -129,6 +132,9 @@ subprojects {
         sourceSets {
             val commonMain by getting {
                 kotlin.srcDir("$buildDir/generated/kotlin")
+                dependencies {
+                    implementation(kotlin("test"))
+                }
             }
             all {
                 languageSettings.optIn("kotlin.ExperimentalStdlibApi")

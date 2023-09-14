@@ -17,7 +17,7 @@
 package net.akehurst.language.editor.browser.monaco
 
 import monaco.CancellationToken
-import monaco.Position
+import monaco.IPosition
 import monaco.editor.ITextModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
@@ -30,7 +30,7 @@ class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
 
     override fun provideCompletionItems(
         model: ITextModel,
-        position: Position,
+        position: IPosition,
         context: monaco.languages.CompletionContext,
         token: CancellationToken
     ): monaco.languages.CompletionList? {
@@ -49,7 +49,7 @@ class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun resolveCompletionItem(model: ITextModel, position: Position, item: monaco.languages.CompletionItem, token: CancellationToken): monaco.languages.CompletionList? {
+    override fun resolveCompletionItem(model: ITextModel, position: IPosition, item: monaco.languages.CompletionItem, token: CancellationToken): monaco.languages.CompletionList? {
         return null
     }
 

@@ -1,6 +1,5 @@
-package aceDemo
+package ace
 
-import ace.EditSession
 import org.w3c.dom.Element
 
 @JsModule("ace-builds/src-noconflict/ace.js")
@@ -19,7 +18,7 @@ external class Editor(
     renderer: VirtualRenderer,
     session: EditSession,
     options:Any?
-) : ace.Editor {
+) : ace.IEditor {
     override val commands: dynamic
     override var completers: Array<dynamic> //TODO:
     override  val renderer: dynamic
@@ -42,3 +41,17 @@ external class VirtualRenderer(
     container: Element,
     theme: String?
 )
+
+@JsModule("net.akehurst.language.editor-kotlin-ace-loader!?id=ace/range&name=Range")
+@JsNonModule
+external class Range(
+    startRow:Int,
+    startColumn:Int,
+    endRow:Int,
+    endColumn:Int
+) : IRange {
+    override var startRow: Int
+    override var startColumn: Int
+    override var endRow: Int
+    override var endColumn: Int
+}

@@ -16,10 +16,17 @@
 
 package net.akehurst.language.editor.application.client.web
 
+import ace.IRange
 import codemirror.view.EditorViewConfig
 import kotlinx.browser.document
-import kotlinx.browser.window
+import monaco.IDisposable
+import monaco.editor.IMarkerData
 import monaco.editor.IStandaloneEditorConstructionOptions
+import monaco.editor.IStandaloneThemeData
+import monaco.editor.ITextModel
+import monaco.languages.CompletionItemProvider
+import monaco.languages.ILanguageExtensionPoint
+import monaco.languages.TokensProvider
 import net.akehurst.kotlin.html5.create
 import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
@@ -27,28 +34,32 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
 import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeModelSimple
-import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeNamespaceFromGrammar
 import net.akehurst.language.api.analyser.ScopeModel
-import net.akehurst.language.api.asm.*
+import net.akehurst.language.api.asm.AsmElementProperty
+import net.akehurst.language.api.asm.AsmElementReference
+import net.akehurst.language.api.asm.AsmElementSimple
+import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
 import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.browser.ace.Ace
 import net.akehurst.language.editor.browser.ace.attachToAce
+import net.akehurst.language.editor.browser.agl.attachToAglEditor
 import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
+import net.akehurst.language.editor.browser.demo.BuildConfig
+import net.akehurst.language.editor.browser.monaco.Monaco
 import net.akehurst.language.editor.browser.monaco.attachToMonaco
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
-import net.akehurst.language.editor.demo.BuildConfig
 import net.akehurst.language.editor.information.Example
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.examples.*
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
-import net.akehurst.language.editor.worker.AglSharedWorker
 import net.akehurst.language.typemodel.api.*
 import org.w3c.dom.*
 
@@ -57,7 +68,7 @@ val workerScriptName = "${aglScriptBasePath}/application-agl-editor-worker.js"
 var demo: Demo? = null
 
 enum class AlternativeEditors {
-    ACE, MONACO, CODEMIRROR
+    ACE, MONACO, CODEMIRROR, AGL
 }
 
 object Constants {
@@ -223,15 +234,15 @@ fun createBaseDom(appDivSelector: String) {
                                     }
                                 }
                                 article {
-                                /*  TODO:
-                                       header {
-                                        button {
-                                            attribute.id = "buttonAnalyseGrammar"
-                                            content="Analyse"
+                                    /*  TODO:
+                                           header {
+                                            button {
+                                                attribute.id = "buttonAnalyseGrammar"
+                                                content="Analyse"
+                                            }
+                                            p { content="WARNING: this can take a long while" }
                                         }
-                                        p { content="WARNING: this can take a long while" }
-                                    }
-                                    */
+                                        */
                                     section {
                                         class_.add("typemodel")
                                         h3 { content = "Type Model" }
@@ -286,8 +297,9 @@ fun createBaseDom(appDivSelector: String) {
                                 attribute.id = "agl-options-editor"
                                 //attribute.name = "editor-choice"
                                 option(value = AlternativeEditors.ACE.name, selected = true) { content = "Ace" }
-                                //option(value = AlternativeEditors.MONACO.name) { content = "Monaco" }
+                                option(value = AlternativeEditors.MONACO.name) { content = "Monaco" }
                                 //option(value = AlternativeEditors.CODEMIRROR.name) { content = "CodeMirror" }
+                                option(value = AlternativeEditors.AGL.name, selected = true) { content = "Minimal (Agl)" }
                             }
                         }
                     }
@@ -341,6 +353,7 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
             AlternativeEditors.ACE -> createAce(element)
             AlternativeEditors.MONACO -> createMonaco(element)
             AlternativeEditors.CODEMIRROR -> createCodeMirror(element)
+            AlternativeEditors.AGL -> createAgl(element)
         }
         ed.logger.bind = { lvl, msg, t -> logger.log(lvl, msg, t) }
         Pair(element.id, ed)// (editorId)
@@ -353,9 +366,9 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
 fun createAce(editorElement: Element): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
-    val ed: aceDemo.Editor = aceDemo.Editor(
-        aceDemo.VirtualRenderer(editorElement, null),
-        aceDemo.Ace.createEditSession(""),
+    val ed: ace.Editor = ace.Editor(
+        ace.VirtualRenderer(editorElement, null),
+        ace.Ace.createEditSession(""),
         objectJS { } //options are set later in init_
     )
     val aceOptions = objectJS {
@@ -371,7 +384,13 @@ fun createAce(editorElement: Element): AglEditor<Any, Any> {
     ed.setOptions(aceOptions.editor)
     ed.renderer.setOptions(aceOptions.renderer)
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    return Agl.attachToAce(editorElement, ed, languageId, editorId, worker)
+
+    val ace = object:Ace {
+        override fun createRange(startRow: Int, startColumn: Int, endRow: Int, endColumn: Int): IRange {
+            return ace.Range(startRow, startColumn, endRow, endColumn)
+        }
+    }
+    return Agl.attachToAce(editorElement, ed, languageId, editorId, worker, ace)
 }
 
 fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
@@ -383,7 +402,18 @@ fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
     }
     val ed = monaco.editor.create(editorElement, editorOptions, null)
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    return Agl.attachToMonaco(editorElement, ed, languageId, editorId, worker)
+
+    val monaco = object : Monaco {
+        override fun defineTheme(themeName: String, themeData: IStandaloneThemeData) = monaco.editor.defineTheme(themeName, themeData)
+        override  fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>) = monaco.editor.setModelMarkers(model,owner,markers)
+        override fun setModelLanguage(model: ITextModel, languageId: String) = monaco.editor.setModelLanguage(model, languageId)
+        override  fun setTheme(themeName: String) = monaco.editor.setTheme(themeName)
+
+        override  fun register(language: ILanguageExtensionPoint) = monaco.languages.register(language)
+        override  fun setTokensProvider(languageId: String, provider: TokensProvider): IDisposable = monaco.languages.setTokensProvider(languageId,provider)
+        override  fun registerCompletionItemProvider(languageId: String, provider: CompletionItemProvider): IDisposable = monaco.languages.registerCompletionItemProvider(languageId,provider)
+    }
+    return Agl.attachToMonaco(editorElement, ed, languageId, editorId, worker, monaco)
 }
 
 fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
@@ -398,6 +428,15 @@ fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
     return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, worker)
 }
+
+fun createAgl(editorElement: Element): AglEditor<Any, Any> {
+    val editorId = editorElement.id
+    val languageId = editorElement.getAttribute("agl-language")!!
+
+    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+    return Agl.attachToAglEditor(editorElement, languageId, editorId, worker)
+}
+
 
 //fun createFirepad(editorElement: Element): AglEditor<Any, Any> {
 //    val id = editorElement.id
@@ -466,7 +505,7 @@ class Demo(
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
                     val firstGrammar = grammars.first()
                     styleContext.createScopeFrom(grammars)
-                    scopeContext.createScopeFrom(firstGrammar.qualifiedName,GrammarTypeModelSimple.createFrom(firstGrammar))
+                    scopeContext.createScopeFrom(firstGrammar.qualifiedName, GrammarTypeModelSimple.createFrom(firstGrammar))
                     try {
                         logger.logDebug(" Grammar parse success")
                         if (doUpdate) {
@@ -569,6 +608,7 @@ class Demo(
                                 is DataType -> type.property.isNotEmpty()
                                 else -> false
                             }
+
                             else -> false
                         }
                     }
@@ -590,6 +630,7 @@ class Demo(
                                 is DataType -> type.property.values.toTypedArray()
                                 else -> emptyArray<Any>()
                             }
+
                             else -> emptyArray<Any>()
                         }
                     }

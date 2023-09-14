@@ -9,14 +9,13 @@ dependencies {
     jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-ace:$version_agl_editor")
     jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-monaco:$version_agl_editor")
     jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-codemirror:$version_agl_editor")
+    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-agl:$version_agl_editor")
 
     jsMainImplementation("net.akehurst.kotlin.html5:html-builder:$version_html_builder")
 
     jsMainImplementation(npm("ace-builds", version_ace))
     jsMainImplementation(npm("net.akehurst.language.editor-kotlin-ace-loader", "1.5.1"))
-
-    //result of this will be copied into resources
-    //jsMainImplementation(project(":technology-agl-editor-worker"))
+    jsMainImplementation(npm("monaco-editor", "0.20.0"))
 
     // for webpack
     jsMainImplementation(npm("monaco-editor-webpack-plugin", "1.8.2"))
