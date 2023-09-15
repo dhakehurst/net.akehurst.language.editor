@@ -33,7 +33,7 @@ import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.syntaxAnalyser.GrammarTypeModelSimple
+import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
 import net.akehurst.language.api.analyser.ScopeModel
 import net.akehurst.language.api.asm.AsmElementProperty
 import net.akehurst.language.api.asm.AsmElementReference
@@ -505,7 +505,7 @@ class Demo(
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
                     val firstGrammar = grammars.first()
                     styleContext.createScopeFrom(grammars)
-                    scopeContext.createScopeFrom(firstGrammar.qualifiedName, GrammarTypeModelSimple.createFrom(firstGrammar))
+                    scopeContext.createScopeFrom(firstGrammar.qualifiedName, TypeModelFromGrammar.create(firstGrammar))
                     try {
                         logger.logDebug(" Grammar parse success")
                         if (doUpdate) {
@@ -577,14 +577,15 @@ class Demo(
                 when (it) {
                     is String -> it
                     is List<*> -> "List"
-                    is GrammarTypeNamespace -> "model ${it.name}"
+                    is TypeModel -> "model ${it.name}"
+                    is GrammarTypeNamespace -> "namespace ${it.qualifiedName}"
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.type
                         val ruleName = it.first
                         when (type) {
                             is DataType -> when {
                                 type.supertypes.isEmpty() -> "$ruleName : ${type.signature(type.namespace)}"
-                                else -> "$ruleName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace) }}"
+                                else -> "$ruleName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace,0) }}"
                             }
 
                             else -> "$ruleName : ${type.signature(root as TypeNamespace?)}"
@@ -599,6 +600,7 @@ class Demo(
                 when (it) {
                     is String -> false
                     is List<*> -> true
+                    is TypeModel -> it.namespace.isNotEmpty()
                     is GrammarTypeNamespace -> it.allTypesByRuleName.isNotEmpty()
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.type
@@ -621,6 +623,7 @@ class Demo(
                 when (it) {
                     is String -> emptyArray<Any>()
                     is List<*> -> it.toArray()
+                    is TypeModel -> it.allNamespace.toTypedArray()
                     is GrammarTypeNamespace -> it.allTypesByRuleName.toTypedArray()
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.type
@@ -646,7 +649,7 @@ class Demo(
                 EventStatus.FAILURE -> trees["typemodel"]!!.loading = false
                 EventStatus.SUCCESS -> {
                     val typemodels = (event.asm as List<Grammar>).map {
-                        GrammarTypeModelSimple.createFrom(it)
+                        TypeModelFromGrammar.create(it)
                     }
                     trees["typemodel"]!!.loading = false
                     trees["typemodel"]!!.setRoots(typemodels)

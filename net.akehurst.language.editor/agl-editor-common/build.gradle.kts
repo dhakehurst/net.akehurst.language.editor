@@ -36,6 +36,7 @@ kotlinxReflect {
         "net.akehurst.language.api.style",
 
         "net.akehurst.language.typemodel.simple",
+        "net.akehurst.language.agl.grammarTypeModel",
         "net.akehurst.language.agl.grammar.grammar",
         "net.akehurst.language.agl.grammar.grammar.asm",
         "net.akehurst.language.agl.syntaxAnalyser",
