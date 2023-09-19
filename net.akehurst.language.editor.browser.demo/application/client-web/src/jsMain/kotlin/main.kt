@@ -33,7 +33,7 @@ import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
+import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.api.analyser.ScopeModel
 import net.akehurst.language.api.asm.AsmElementProperty
 import net.akehurst.language.api.asm.AsmElementReference
@@ -234,6 +234,7 @@ fun createBaseDom(appDivSelector: String) {
                                     }
                                 }
                                 article {
+                                    class_.add("typemodel")
                                     /*  TODO:
                                            header {
                                             button {
@@ -244,7 +245,6 @@ fun createBaseDom(appDivSelector: String) {
                                         }
                                         */
                                     section {
-                                        class_.add("typemodel")
                                         h3 { content = "Type Model" }
                                         htmlElement("treeview") { attribute.id = "typemodel" }
                                     }
@@ -364,23 +364,25 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
 }
 
 fun createAce(editorElement: Element): AglEditor<Any, Any> {
+
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
     val ed: ace.Editor = ace.Editor(
         ace.VirtualRenderer(editorElement, null),
         ace.Ace.createEditSession(""),
-        objectJS { } //options are set later in init_
+        objectJS {}
     )
     val aceOptions = objectJS {
         editor = objectJS {
             enableBasicAutocompletion = true
             enableSnippets = true
-            enableLiveAutocompletion = false
+//            enableLiveAutocompletion = false
         }
         renderer = {
 
         }
     }
+    //ed.commands.addCommand(ace.ext.Autocomplete.startCommand)
     ed.setOptions(aceOptions.editor)
     ed.renderer.setOptions(aceOptions.renderer)
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
@@ -579,6 +581,7 @@ class Demo(
                     is List<*> -> "List"
                     is TypeModel -> "model ${it.name}"
                     is GrammarTypeNamespace -> "namespace ${it.qualifiedName}"
+                    is TypeNamespace -> "namespace ${it.qualifiedName}"
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.type
                         val ruleName = it.first
@@ -588,11 +591,22 @@ class Demo(
                                 else -> "$ruleName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace,0) }}"
                             }
 
-                            else -> "$ruleName : ${type.signature(root as TypeNamespace?)}"
+                            else -> "$ruleName : ${type.signature(it.second.namespace)}"
                         }
                     }
+                    is Map.Entry<String, TypeDefinition> -> {
+                        val type = it.value
+                        val typeName = it.key
+                        when (type) {
+                            is DataType -> when {
+                                type.supertypes.isEmpty() -> "$typeName : ${type.signature(type.namespace)}"
+                                else -> "$typeName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace,0) }}"
+                            }
 
-                    is PropertyDeclaration -> "${it.name} : ${it.typeUse.signature(root as TypeModel, 0)}"
+                            else -> "$typeName : ${type.signature(type.namespace)}"
+                        }
+                    }
+                    is PropertyDeclaration -> "${it.name} : ${it.typeInstance.signature(it.owner.namespace, 0)}"
                     else -> error("Internal Error: type ${it::class.simpleName} not handled")
                 }
             },
@@ -602,19 +616,19 @@ class Demo(
                     is List<*> -> true
                     is TypeModel -> it.namespace.isNotEmpty()
                     is GrammarTypeNamespace -> it.allTypesByRuleName.isNotEmpty()
+                    is TypeNamespace -> it.allTypesByName.isNotEmpty()
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.type
                         when (type) {
-                            is StructuredType -> when (type) {
-                                is TupleType -> type.property.isNotEmpty()
-                                is DataType -> type.property.isNotEmpty()
-                                else -> false
-                            }
-
+                            is TupleType -> type.property.isNotEmpty()
+                            is DataType -> type.property.isNotEmpty()
                             else -> false
                         }
                     }
-
+                    is Map.Entry<String, TypeDefinition> -> when (it.value) {
+                        is StructuredType -> (it.value as StructuredType).property.isNotEmpty()
+                        else -> false
+                    }
                     is PropertyDeclaration -> false
                     else -> error("Internal Error: type ${it::class.simpleName} not handled")
                 }
@@ -625,19 +639,18 @@ class Demo(
                     is List<*> -> it.toArray()
                     is TypeModel -> it.allNamespace.toTypedArray()
                     is GrammarTypeNamespace -> it.allTypesByRuleName.toTypedArray()
+                    is TypeNamespace -> it.allTypesByName.entries.toTypedArray()
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.type
                         when (type) {
-                            is StructuredType -> when (type) {
-                                is TupleType -> type.property.values.toTypedArray()
-                                is DataType -> type.property.values.toTypedArray()
-                                else -> emptyArray<Any>()
-                            }
-
+                            is StructuredType -> type.property.values.toTypedArray()
                             else -> emptyArray<Any>()
                         }
                     }
-
+                    is Map.Entry<String, TypeDefinition> -> when (it.value) {
+                        is StructuredType -> (it.value as StructuredType).property.values.toTypedArray()
+                        else -> emptyArray<Any>()
+                    }
                     is PropertyDeclaration -> emptyArray<Any>()
                     else -> error("Internal Error: type ${it::class.simpleName} not handled")
                 }

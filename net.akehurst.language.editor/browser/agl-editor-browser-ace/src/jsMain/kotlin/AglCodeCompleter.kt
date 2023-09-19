@@ -18,6 +18,7 @@ package net.akehurst.language.editor.browser.ace
 
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglWorkerClient
 import net.akehurst.language.editor.common.objectJS
@@ -37,7 +38,7 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
             objectJS {
                 caption = ci.text
                 value = ci.text
-                meta = "(${ci.ruleName})"
+                meta = "(${ci.name})"
             }
         }.toTypedArray()
         callback(null, aceCi)
@@ -48,15 +49,15 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
         val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val goalRule = this.agl.goalRule
+            val context = this.agl.context
+            if (null==context) {
+                this.agl.logger.log(LogLevel.Debug,"context is null for code completion.",null)
+            }
             val result = proc.expectedItemsAt(
-                editor.getValue(),
-                pos,
-                1,
+                editor.getValue(), pos, 1,
                 Agl.options {
-                    parse {
-                        goalRuleName(goalRule)
-                        //reportErrors(false) // errors used to get expectedAt !
-                    }
+                    parse {                        goalRuleName(goalRule) }
+                    completionProvider { context(context) }
                 })
             result.items
         } else {

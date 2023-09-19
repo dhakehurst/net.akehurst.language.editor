@@ -18,8 +18,6 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
-import net.akehurst.language.agl.grammar.scopes.ReferenceDefinition
-import net.akehurst.language.typemodel.api.PropertyCharacteristic
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
 
@@ -88,7 +86,7 @@ object AglWorkerSerialisation {
     private fun initialiseTypeModel() {
         serialiser.confgureFromKompositeModel(typeModel("TypeModel", false) {
             namespace(
-                "net.akehurst.language.agl.syntaxAnalyser",
+                "net.akehurst.language.agl.default",
                 imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.grammarTypeModel")
             )
             {
@@ -284,6 +282,9 @@ object AglWorkerSerialisation {
                 dataType("AglStyleModelDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "rules", "List", listOf("net.akehurst.language.api.style.AglStyleRule"))
                 }
+                dataType("AglStyleGrammar") {
+                    supertypes("GrammarAbstract")
+                }
             }
             namespace("net.akehurst.language.api.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglStyleRule") {
@@ -308,6 +309,9 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("ScopesAsm", false) {
             namespace("net.akehurst.language.agl.grammar.scopes", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                dataType("AglScopesGrammar") {
+                    supertypes("GrammarAbstract")
+                }
                 dataType("ScopeModelAgl") {
                     propertyOf(setOf(MEMBER, COMPOSITE), "scopes", "Map", listOf("String", "ScopeDefinition"))
                     propertyOf(setOf(MEMBER, COMPOSITE), "references", "List", listOf("ReferenceDefinition"))
@@ -339,20 +343,6 @@ object AglWorkerSerialisation {
                 )
             ) {
                 enumType("ParseAction", emptyList())
-            }
-            namespace("net.akehurst.language.agl.grammar.grammar", imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.syntaxAnalyser")) {
-                dataType("ContextFromGrammar") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
-                }
-            }
-            namespace("net.akehurst.language.agl.syntaxAnalyser", imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.syntaxAnalyser")) {
-                dataType("ContextSimple") {
-                    typeParameters("E")
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("E"))
-                }
-                dataType("ContextFromTypeModel") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
-                }
             }
             namespace("net.akehurst.language.editor.common.messages", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 enumType("MessageStatus", emptyList())
@@ -487,6 +477,12 @@ object AglWorkerSerialisation {
                         }
                     }
                 }
+                dataType("ContextSimple") {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("E"))
+                }
+                dataType("ContextFromTypeModel") {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
+                }
             }
             namespace("net.akehurst.language.api.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AsmElementPath") {
@@ -519,23 +515,20 @@ object AglWorkerSerialisation {
     private fun initialiseGrammarAsm() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("GrammarAsm", false) {
-            namespace("net.akehurst.language.api.grammar", imports = mutableListOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.api.grammar",
+                imports = mutableListOf("kotlin", "kotlin.collections")
+            ) {
                 dataType("Grammar") {}
                 dataType("RuleItem") {}
             }
-            namespace("net.akehurst.language.agl.grammar.grammar", imports = mutableListOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.grammar",
+                imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.agl.syntaxAnalyser")
+            ) {
                 dataType("AglGrammarGrammar") {
                     supertypes("GrammarAbstract")
                 }
-            }
-            namespace("net.akehurst.language.agl.grammar.scopes", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("AglScopesGrammar") {
-                    supertypes("GrammarAbstract")
-                }
-            }
-            namespace("net.akehurst.language.agl.grammar.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("AglStyleGrammar") {
-                    supertypes("GrammarAbstract")
+                dataType("ContextFromGrammar") {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
                 }
             }
             namespace("net.akehurst.language.agl.grammar.format", imports = mutableListOf("kotlin", "kotlin.collections")) {

@@ -16,13 +16,13 @@
 package net.akehurst.language.editor.common.serialisation
 
 import net.akehurst.kotlin.json.json
+import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.grammarTypeModel.grammarTypeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.sppt.TreeDataComplete
 import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.syntaxAnalyser.TypeModelFromGrammar
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.grammar.Grammar
@@ -929,13 +929,32 @@ class test_AglWorkerSerialisation {
                 property("name", "test")
                 property("namespace") {
                     mapObject {
+                        entry({string("std")}) {
+                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeNamespaceSimple") {
+                                property("qualifiedName", "test")
+                                property("imports") {
+                                    listObject {  }
+                                }
+                                property("allTypesByName") {
+                                    mapObject {
+                                        entry({ string("Primitive") }) {
+                                            objectReferenceable("net.akehurst.language.typemodel.simple.PrimitiveTypeSimple") {
+                                                property("typeParameters") { listObject {  } }
+                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("name", "String")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         entry({ string("test") }) {
                             objectReferenceable("net.akehurst.language.agl.grammarTypeModel.GrammarTypeNamespaceSimple") {
                                 property("allRuleNameToType") {
                                     mapObject {
                                         entry({string("A")}) {
                                             objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("namespace") { reference("/namespace/\$entries/1/\$value") }
                                                 property("qualifiedOrImportedTypeName", "String")
                                                 property("typeArguments") { listObject {  } }
                                                 property("isNullable", false)
@@ -943,7 +962,7 @@ class test_AglWorkerSerialisation {
                                         }
                                         entry({string("S")}) {
                                             objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
+                                                property("namespace") { reference("/namespace/\$entries/1/\$value") }
                                                 property("qualifiedOrImportedTypeName", "S")
                                                 property("typeArguments") { listObject {  } }
                                                 property("isNullable", false)
