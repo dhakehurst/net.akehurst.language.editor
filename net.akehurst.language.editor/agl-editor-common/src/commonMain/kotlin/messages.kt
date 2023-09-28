@@ -32,12 +32,12 @@ abstract class AglWorkerMessage(
 
 data class MessageProcessorCreate(
     override val languageId: String, override val editorId: String, override val sessionId: String,
-    val grammarStr: String?,
+    val grammarStr: String,
     val scopeModelStr: String?
 ) : AglWorkerMessage("MessageProcessorCreate") {
     override fun toString(): String {
         val gs = when {
-            null == grammarStr -> "null"
+            //null == grammarStr -> "null"
             grammarStr.isBlank() -> "''"
             else -> "'...'"
         }

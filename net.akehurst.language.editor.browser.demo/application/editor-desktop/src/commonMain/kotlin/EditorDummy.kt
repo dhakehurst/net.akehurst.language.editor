@@ -1,10 +1,12 @@
 package demo
+import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.AglEditorAbstract
 
 class EditorDummy<AsmType : Any, ContextType : Any>(
     languageId: String,
     editorId: String,
-) : AglEditorAbstract<AsmType, ContextType>(languageId, editorId) {
+    logFunction: LogFunction
+) : AglEditorAbstract<AsmType, ContextType>(languageId, editorId, logFunction) {
 
     override val baseEditor: Any = this
 

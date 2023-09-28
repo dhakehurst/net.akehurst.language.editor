@@ -76,6 +76,8 @@ subprojects {
         buildConfigField("String", "buildStamp", "\"${fBbuildStamp()}\"")
         buildConfigField("String", "buildDate", "\"${fBuildDate()}\"")
         buildConfigField("String", "buildTime", "\"${fBuildTime()}\"")
+
+
     }
 
     configure<KotlinMultiplatformExtension> {

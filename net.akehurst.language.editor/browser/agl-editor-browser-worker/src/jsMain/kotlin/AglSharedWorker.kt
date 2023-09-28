@@ -18,7 +18,7 @@ package net.akehurst.language.editor.worker
 
 import org.w3c.dom.MessageEvent
 
-class AglSharedWorker<AsmType : Any, ContextType : Any> : AglWorkerJsAbstract<AsmType, ContextType>() {
+open class AglSharedWorker<AsmType : Any, ContextType : Any> : AglWorkerJsAbstract<AsmType, ContextType>() {
 
     private var _selfShared: dynamic? = null
 

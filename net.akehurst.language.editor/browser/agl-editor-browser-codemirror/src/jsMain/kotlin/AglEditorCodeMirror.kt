@@ -21,6 +21,7 @@ import kotlinx.dom.removeClass
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
 import org.w3c.dom.AbstractWorker
@@ -41,6 +42,7 @@ fun <AsmType:Any, ContextType:Any> Agl.attachToCodeMirror(
     cmEditor: codemirror.view.EditorView,
     languageId: String,
     editorId: String,
+    logFunction: LogFunction?,
     worker: AbstractWorker
 ) : AglEditor<AsmType, ContextType> {
     return AglEditorCodeMirror<AsmType, ContextType>(
@@ -48,6 +50,7 @@ fun <AsmType:Any, ContextType:Any> Agl.attachToCodeMirror(
         cmEditor = cmEditor,
         languageId = languageId,
         editorId = editorId,
+        logFunction=logFunction,
         worker = worker
     )
 }
@@ -57,8 +60,9 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     val cmEditor: codemirror.view.EditorView,
     languageId: String,
     editorId: String,
+    logFunction: LogFunction?,
     worker:AbstractWorker
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, worker) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()

@@ -1,6 +1,7 @@
 val version_agl_editor: String by project
 val version_html_builder: String by project
 val version_ace: String by project
+val version_monaco:String by project
 
 dependencies {
 
@@ -15,7 +16,7 @@ dependencies {
 
     jsMainImplementation(npm("ace-builds", version_ace))
     jsMainImplementation(npm("net.akehurst.language.editor-kotlin-ace-loader", "1.5.1"))
-    jsMainImplementation(npm("monaco-editor", "0.20.0"))
+    jsMainImplementation(npm("monaco-editor", version_monaco))
 
     // for webpack
     jsMainImplementation(npm("monaco-editor-webpack-plugin", "1.8.2"))
@@ -24,6 +25,7 @@ dependencies {
     jsMainImplementation(npm("ts-loader", "6.2.1"))
     jsMainImplementation(npm("file-loader", "5.0.2"))
 
+    jsMainImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.7.3")
 }
 
 kotlin {
@@ -35,6 +37,11 @@ kotlin {
             resources.srcDir("$buildDir/dist/js/developmentExecutable")
         }
     }
+}
+
+buildConfig {
+    buildConfigField("String", "versionEditorMonaco", "\"${version_monaco}\"")
+    buildConfigField("String", "versionEditorAce", "\"${version_ace}\"")
 }
 
 val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {

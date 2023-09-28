@@ -506,7 +506,7 @@ class test_AglWorkerSerialisation {
                 property("name", "Test")
                 property("grammarRule") {
                     listObject {
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "S")
                             property("isOverride", false)
@@ -551,7 +551,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "as")
                             property("isOverride", false)
@@ -574,7 +574,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "bs")
                             property("isOverride", false)
@@ -597,7 +597,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "cs")
                             property("isOverride", false)
@@ -620,7 +620,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "a")
                             property("isOverride", false)
@@ -643,7 +643,7 @@ class test_AglWorkerSerialisation {
                                 }
                             }
                         }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "b")
                             property("isOverride", false)
@@ -686,7 +686,7 @@ class test_AglWorkerSerialisation {
                 property("name", "Test")
                 property("grammarRule") {
                     listObject {
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarRuleDefault") {
+                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "rule1")
                             property("isOverride", false)
@@ -1004,7 +1004,7 @@ class test_AglWorkerSerialisation {
     // --- MessageProcessorCreate ---
     @Test
     fun MessageProcessorCreate_com_null() {
-        val expected = MessageProcessorCreate(languageId, editorId, sessionId, null, null)
+        val expected = MessageProcessorCreate(languageId, editorId, sessionId, "", null)
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreate>(jsonStr)

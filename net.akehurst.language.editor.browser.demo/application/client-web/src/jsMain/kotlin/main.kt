@@ -18,7 +18,10 @@ package net.akehurst.language.editor.application.client.web
 
 import ace.IRange
 import codemirror.view.EditorViewConfig
+import korlibs.io.async.asyncImmediately
+import korlibs.io.async.launch
 import kotlinx.browser.document
+import kotlinx.coroutines.*
 import monaco.IDisposable
 import monaco.editor.IMarkerData
 import monaco.editor.IStandaloneEditorConstructionOptions
@@ -44,8 +47,9 @@ import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
+import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.api.LogLevel
-import net.akehurst.language.editor.browser.ace.Ace
+import net.akehurst.language.editor.browser.ace.IAce
 import net.akehurst.language.editor.browser.ace.attachToAce
 import net.akehurst.language.editor.browser.agl.attachToAglEditor
 import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
@@ -85,23 +89,42 @@ object Constants {
     val formatLanguageId = Agl.registry.agl.formatLanguageIdentity
 }
 
-interface DemoActions {
-    fun changeLoggingLevel()
+interface DemoInterface {
+
+    val logLevel: LogLevel
+
+    fun changeLoggingLevel(level: LogLevel)
     fun changeEditor()
     fun analyseGrammar()
 }
 
 fun main() {
     try {
-        createBaseDom("div#agl-demo")
         val logger = DemoLogger(LogLevel.Information)
 
-        val loggingLevel = document.querySelector("#agl-demo-logging-level")!! as HTMLSelectElement
-        loggingLevel.addEventListener("change", {
-            val optionStr = loggingLevel.value
-            val ll = LogLevel.valueOf(optionStr)
-            logger.level = ll
-        })
+        val demoIf = object : DemoInterface {
+            override val logLevel: LogLevel get() = logger.level
+            override fun changeLoggingLevel(level: LogLevel) {
+                logger.level = level
+            }
+
+            override fun changeEditor() {
+                TODO("not implemented")
+            }
+
+            override fun analyseGrammar() {
+                TODO("not implemented")
+            }
+
+        }
+        createBaseDom("div#agl-demo", demoIf)
+
+//        val loggingLevel = document.querySelector("#agl-demo-logging-level")!! as HTMLSelectElement
+//        loggingLevel.addEventListener("change", {
+//            val optionStr = loggingLevel.value
+//            val ll = LogLevel.valueOf(optionStr)
+//            logger.level = ll
+//        })
 
         val editorChoice = document.querySelector("#agl-options-editor")!! as HTMLSelectElement
         editorChoice.addEventListener("change", {
@@ -119,7 +142,7 @@ fun main() {
     }
 }
 
-fun createBaseDom(appDivSelector: String) {
+fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
     val appDiv = document.querySelector(appDivSelector)!!
     while (null != appDiv.firstChild) {
         appDiv.removeChild(appDiv.firstChild!!)
@@ -147,8 +170,8 @@ fun createBaseDom(appDivSelector: String) {
                         article {
                             header { h2 { content = "About" } }
                             section {
-                                p { content = "Ace version ${net.akehurst.language.editor.agl.editor.browser.ace.BuildConfig.versionEditorAce}, Licence BSD" }
-                                p { content = "Monaco version ${net.akehurst.language.editor.agl.editor.browser.monaco.BuildConfig.versionEditorMonaco}, Licence MIT" }
+                                p { content = "Ace version ${BuildConfig.versionEditorAce}, Licence BSD" }
+                                p { content = "Monaco version ${BuildConfig.versionEditorMonaco}, Licence MIT" }
                                 p { content = "AGL version ${Agl.version}, Licence Apache 2.0" }
                                 p { content = "Kotlin version ${kotlin.KotlinVersion.CURRENT}, Licence Apache 2.0" }
                                 h2 { content = "Description" }
@@ -273,33 +296,72 @@ fun createBaseDom(appDivSelector: String) {
                 }
                 htmlElement("tab") {
                     attribute.id = "Configuration"
-                    section {
-                        class_.add("configuration")
-                        div {
-                            //class_.add("agl-options-editor")
-                            label { content = "Select Logging Level: " }
-                            select {
-                                attribute.id = "agl-demo-logging-level"
-                                option(value = LogLevel.None.name, selected = false) { content = LogLevel.None.name }
-                                option(value = LogLevel.Fatal.name, selected = false) { content = LogLevel.Fatal.name }
-                                option(value = LogLevel.Error.name, selected = false) { content = LogLevel.Error.name }
-                                option(value = LogLevel.Warning.name, selected = false) { content = LogLevel.Warning.name }
-                                option(value = LogLevel.Information.name, selected = true) { content = LogLevel.Information.name }
-                                option(value = LogLevel.Debug.name, selected = false) { content = LogLevel.Debug.name }
-                                option(value = LogLevel.Trace.name, selected = false) { content = LogLevel.Trace.name }
-                                option(value = LogLevel.All.name, selected = false) { content = LogLevel.All.name }
+                    div {
+                        article {
+                            header { h3 { content = "Demo" } }
+                            section {
+                                class_.add("configuration")
+                                div {
+                                    //class_.add("agl-options-editor")
+                                    label { content = "Select Logging Level: " }
+                                    select {
+                                        attribute.id = "agl-demo-logging-level"
+                                        option(value = LogLevel.None.name, selected = demo.logLevel == LogLevel.None) { content = LogLevel.None.name }
+                                        option(value = LogLevel.Fatal.name, selected = demo.logLevel == LogLevel.Fatal) { content = LogLevel.Fatal.name }
+                                        option(value = LogLevel.Error.name, selected = demo.logLevel == LogLevel.Error) { content = LogLevel.Error.name }
+                                        option(value = LogLevel.Warning.name, selected = demo.logLevel == LogLevel.Warning) { content = LogLevel.Warning.name }
+                                        option(value = LogLevel.Information.name, selected = demo.logLevel == LogLevel.Information) { content = LogLevel.Information.name }
+                                        option(value = LogLevel.Debug.name, selected = demo.logLevel == LogLevel.Debug) { content = LogLevel.Debug.name }
+                                        option(value = LogLevel.Trace.name, selected = demo.logLevel == LogLevel.Trace) { content = LogLevel.Trace.name }
+                                        option(value = LogLevel.All.name, selected = demo.logLevel == LogLevel.All) { content = LogLevel.All.name }
+                                    }.also { select ->
+                                        (select as HTMLSelectElement).addEventListener("change", {
+                                            val optionStr = select.value
+                                            val ll = LogLevel.valueOf(optionStr)
+                                            demo.changeLoggingLevel(ll)
+                                        })
+                                    }
+                                }
+                                div {
+                                    //class_.add("agl-options-editor")
+                                    label { content = "Select underlying Editor Type: " }
+                                    select {
+                                        attribute.id = "agl-options-editor"
+                                        //attribute.name = "editor-choice"
+                                        option(value = AlternativeEditors.ACE.name, selected = true) { content = "Ace" }
+                                        option(value = AlternativeEditors.MONACO.name) { content = "Monaco" }
+                                        //option(value = AlternativeEditors.CODEMIRROR.name) { content = "CodeMirror" }
+                                        option(value = AlternativeEditors.AGL.name, selected = true) { content = "Minimal (Agl)" }
+                                    }
+                                }
                             }
                         }
-                        div {
-                            //class_.add("agl-options-editor")
-                            label { content = "Select underlying Editor Type: " }
-                            select {
-                                attribute.id = "agl-options-editor"
-                                //attribute.name = "editor-choice"
-                                option(value = AlternativeEditors.ACE.name, selected = true) { content = "Ace" }
-                                option(value = AlternativeEditors.MONACO.name) { content = "Monaco" }
-                                //option(value = AlternativeEditors.CODEMIRROR.name) { content = "CodeMirror" }
-                                option(value = AlternativeEditors.AGL.name, selected = true) { content = "Minimal (Agl)" }
+                        article {
+                            header { h3 { content = "Parse Options" } }
+                            section {
+                                div {
+                                    label { content = "Goal rule name: " }
+                                    this.input()
+                                }
+                            }
+                        }
+                        article {
+                            header { h3 { content = "Syntax Analysis Options" } }
+                            section {
+
+                            }
+                        }
+                        article {
+                            header { h3 { content = "Semantic Analysis Options" } }
+                            section {
+                                div {
+                                    label { content = "Check references: " }
+                                    this.checkbox()
+                                }
+                                div {
+                                    label { content = "Resolve references: " }
+                                    this.checkbox()
+                                }
                             }
                         }
                     }
@@ -310,27 +372,28 @@ fun createBaseDom(appDivSelector: String) {
 }
 
 fun initialiseExamples() {
-    val exampleSelect = document.querySelector("select#example") as HTMLElement
-    Examples.add(Datatypes.example)
-    Examples.add(SQL.example)
-    Examples.add(GraphvizDot.example)
-    Examples.add(SText.example)
-    Examples.add(Java8.example)
-    //Examples.add(English.example)
-    Examples.add(TraceabilityQuery.example)
-    Examples.add(MScript.example)
-    Examples.add(Xml.example)
-    Examples.add(AglStyle.example)
-    Examples.add(AglGrammar.example)
-    Examples.add(SSS.example)
-    Examples.add(BSc.example)
-    Examples.add(Embedded.example)
+    CoroutineScope(SupervisorJob()).asyncImmediately {
+        Examples.add(Datatypes.example)
+        Examples.add(SQL.example)
+        Examples.add(GraphvizDot.example)
+        Examples.add(SText.example)
+        Examples.add(Java8.example)
+        //Examples.add(English.example)
+        Examples.add(TraceabilityQuery.example)
+        Examples.add(MScript.example)
+        Examples.add(Xml.example)
+        Examples.add(AglStyle.example)
+        Examples.add(AglGrammar.example)
 
-    Examples.map.forEach { eg ->
-        val option = document.createElement("option")
-        exampleSelect.appendChild(option);
-        option.setAttribute("value", eg.value.id);
-        option.textContent = eg.value.label;
+        Examples.add(KerML.example())
+    }.invokeOnCompletion {
+        val exampleSelect = document.querySelector("select#example") as HTMLElement
+        Examples.map.forEach { eg ->
+            val option = document.createElement("option")
+            exampleSelect.appendChild(option);
+            option.setAttribute("value", eg.value.id);
+            option.textContent = eg.value.label;
+        }
     }
 }
 
@@ -349,13 +412,13 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
         while (element.childElementCount != 0) {
             element.removeChild(element.firstChild!!)
         }
+        val logFunction: LogFunction = { lvl, msg, t -> logger.log(lvl, msg, t) }
         val ed = when (editorChoice) {
-            AlternativeEditors.ACE -> createAce(element)
-            AlternativeEditors.MONACO -> createMonaco(element)
-            AlternativeEditors.CODEMIRROR -> createCodeMirror(element)
-            AlternativeEditors.AGL -> createAgl(element)
+            AlternativeEditors.ACE -> createAce(element, logFunction)
+            AlternativeEditors.MONACO -> createMonaco(element, logFunction)
+            AlternativeEditors.CODEMIRROR -> createCodeMirror(element, logFunction)
+            AlternativeEditors.AGL -> createAgl(element, logFunction)
         }
-        ed.logger.bind = { lvl, msg, t -> logger.log(lvl, msg, t) }
         Pair(element.id, ed)// (editorId)
     }
 
@@ -363,7 +426,7 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
     demo!!.configure()
 }
 
-fun createAce(editorElement: Element): AglEditor<Any, Any> {
+fun createAce(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
 
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
@@ -387,15 +450,15 @@ fun createAce(editorElement: Element): AglEditor<Any, Any> {
     ed.renderer.setOptions(aceOptions.renderer)
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
 
-    val ace = object:Ace {
+    val ace = object : IAce {
         override fun createRange(startRow: Int, startColumn: Int, endRow: Int, endColumn: Int): IRange {
             return ace.Range(startRow, startColumn, endRow, endColumn)
         }
     }
-    return Agl.attachToAce(editorElement, ed, languageId, editorId, worker, ace)
+    return Agl.attachToAce(editorElement, ed, languageId, editorId, logFunction, worker, ace)
 }
 
-fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
+fun createMonaco(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
     val editorOptions = objectJSTyped<IStandaloneEditorConstructionOptions> {
@@ -407,18 +470,18 @@ fun createMonaco(editorElement: Element): AglEditor<Any, Any> {
 
     val monaco = object : Monaco {
         override fun defineTheme(themeName: String, themeData: IStandaloneThemeData) = monaco.editor.defineTheme(themeName, themeData)
-        override  fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>) = monaco.editor.setModelMarkers(model,owner,markers)
+        override fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>) = monaco.editor.setModelMarkers(model, owner, markers)
         override fun setModelLanguage(model: ITextModel, languageId: String) = monaco.editor.setModelLanguage(model, languageId)
-        override  fun setTheme(themeName: String) = monaco.editor.setTheme(themeName)
+        override fun setTheme(themeName: String) = monaco.editor.setTheme(themeName)
 
-        override  fun register(language: ILanguageExtensionPoint) = monaco.languages.register(language)
-        override  fun setTokensProvider(languageId: String, provider: TokensProvider): IDisposable = monaco.languages.setTokensProvider(languageId,provider)
-        override  fun registerCompletionItemProvider(languageId: String, provider: CompletionItemProvider): IDisposable = monaco.languages.registerCompletionItemProvider(languageId,provider)
+        override fun register(language: ILanguageExtensionPoint) = monaco.languages.register(language)
+        override fun setTokensProvider(languageId: String, provider: TokensProvider): IDisposable = monaco.languages.setTokensProvider(languageId, provider)
+        override fun registerCompletionItemProvider(languageId: String, provider: CompletionItemProvider): IDisposable = monaco.languages.registerCompletionItemProvider(languageId, provider)
     }
-    return Agl.attachToMonaco(editorElement, ed, languageId, editorId, worker, monaco)
+    return Agl.attachToMonaco(editorElement, ed, languageId, editorId, logFunction, worker, monaco)
 }
 
-fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
+fun createCodeMirror(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
     val editorOptions = objectJSTyped<EditorViewConfig> {
@@ -428,15 +491,15 @@ fun createCodeMirror(editorElement: Element): AglEditor<Any, Any> {
     }
     val ed = codemirror.view.EditorView(editorOptions)
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, worker)
+    return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, logFunction, worker)
 }
 
-fun createAgl(editorElement: Element): AglEditor<Any, Any> {
+fun createAgl(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
 
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    return Agl.attachToAglEditor(editorElement, languageId, editorId, worker)
+    return Agl.attachToAglEditor(editorElement, languageId, editorId, logFunction, worker)
 }
 
 
@@ -466,22 +529,23 @@ class Demo(
     }
 
     private fun connectEditors() {
+        //ids should already be set when dom and editors are created
         grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
         referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
-        Agl.registry.unregister(Constants.sentenceLanguageId)
-        sentenceEditor.languageIdentity = Agl.registry.register(
-            identity = Constants.sentenceLanguageId,
-            grammarStr = "",
-            buildForDefaultGoal = false,
-            aglOptions = Agl.options {
-                semanticAnalysis {
-                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
-                }
-            },
-            configuration = Agl.configurationDefault()
-        ).identity
-
+        //Agl.registry.unregister(Constants.sentenceLanguageId)
+//        sentenceEditor.languageIdentity = Agl.registry.register(
+//            identity = Constants.sentenceLanguageId,
+//            grammarStr = "",
+//            buildForDefaultGoal = false,
+//            aglOptions = Agl.options {
+//                semanticAnalysis {
+//                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+//                }
+//            },
+//            configuration = Agl.configurationDefault()
+//        ).identity
+        sentenceEditor.languageIdentity = Constants.sentenceLanguageId
         grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleStr
         styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
         referencesEditor.editorSpecificStyleStr = Agl.registry.agl.scopes.styleStr
@@ -588,24 +652,26 @@ class Demo(
                         when (type) {
                             is DataType -> when {
                                 type.supertypes.isEmpty() -> "$ruleName : ${type.signature(type.namespace)}"
-                                else -> "$ruleName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace,0) }}"
+                                else -> "$ruleName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace, 0) }}"
                             }
 
                             else -> "$ruleName : ${type.signature(it.second.namespace)}"
                         }
                     }
+
                     is Map.Entry<String, TypeDefinition> -> {
                         val type = it.value
                         val typeName = it.key
                         when (type) {
                             is DataType -> when {
                                 type.supertypes.isEmpty() -> "$typeName : ${type.signature(type.namespace)}"
-                                else -> "$typeName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace,0) }}"
+                                else -> "$typeName : ${type.signature(type.namespace)} -> ${type.supertypes.joinToString { it.signature(type.namespace, 0) }}"
                             }
 
                             else -> "$typeName : ${type.signature(type.namespace)}"
                         }
                     }
+
                     is PropertyDeclaration -> "${it.name} : ${it.typeInstance.signature(it.owner.namespace, 0)}"
                     else -> error("Internal Error: type ${it::class.simpleName} not handled")
                 }
@@ -625,10 +691,12 @@ class Demo(
                             else -> false
                         }
                     }
+
                     is Map.Entry<String, TypeDefinition> -> when (it.value) {
                         is StructuredType -> (it.value as StructuredType).property.isNotEmpty()
                         else -> false
                     }
+
                     is PropertyDeclaration -> false
                     else -> error("Internal Error: type ${it::class.simpleName} not handled")
                 }
@@ -647,10 +715,12 @@ class Demo(
                             else -> emptyArray<Any>()
                         }
                     }
+
                     is Map.Entry<String, TypeDefinition> -> when (it.value) {
                         is StructuredType -> (it.value as StructuredType).property.values.toTypedArray()
                         else -> emptyArray<Any>()
                     }
+
                     is PropertyDeclaration -> emptyArray<Any>()
                     else -> error("Internal Error: type ${it::class.simpleName} not handled")
                 }

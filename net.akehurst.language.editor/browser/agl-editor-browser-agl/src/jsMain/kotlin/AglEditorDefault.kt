@@ -27,6 +27,7 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
 import org.w3c.dom.*
@@ -39,12 +40,14 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     containerElement: Element,
     languageId: String,
     editorId: String,
+    logFunction: LogFunction?,
     worker: AbstractWorker
 ): AglEditor<AsmType, ContextType> {
     return AglEditorDefault<AsmType, ContextType>(
         containerElement = containerElement,
         languageId = languageId,
         editorId = editorId,
+        logFunction = logFunction,
         worker = worker
     )
 }
@@ -54,8 +57,9 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     languageId: String,
     editorId: String,
-    worker:AbstractWorker
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
+    logFunction: LogFunction?,
+    worker: AbstractWorker
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, worker) {
 
     override val baseEditor: Any get() = this
     override var text: String
@@ -107,8 +111,8 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     }
 
     // --- implementation ---
-    lateinit var editing:HTMLTextAreaElement
-    lateinit var highlightedContent:HTMLElement
+    lateinit var editing: HTMLTextAreaElement
+    lateinit var highlightedContent: HTMLElement
 
     private var parseTimeout: dynamic = null
 
@@ -175,9 +179,9 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         }
         editing = containerElement.querySelector(".editing") as HTMLTextAreaElement
         highlightedContent = containerElement.querySelector(".highlighted-content") as HTMLElement
-        editing.oninput=this::oninput
-        editing.onscroll=this::onscroll
-        editing.onkeydown=this::onkeydown
+        editing.oninput = this::oninput
+        editing.onscroll = this::onscroll
+        editing.onkeydown = this::onkeydown
 
         this.connectWorker(AglTokenizerByWorkerDefault(this.agl))
 
@@ -186,24 +190,27 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         this.updateStyle()
     }
 
-    private fun oninput(ev:InputEvent) {
+    private fun oninput(ev: InputEvent) {
         var newText = editing.value
         when {
             newText.isBlank() -> {
                 highlightedContent.innerHTML = ""
             }
+
             else -> {
-                if(newText.last() == '\n') {
+                if (newText.last() == '\n') {
                     newText += " ";
                 }
             }
         }
         textUpdated()
     }
-    private fun onscroll(ev:Event) {
+
+    private fun onscroll(ev: Event) {
 
     }
-    private fun onkeydown(ev:KeyboardEvent) {
+
+    private fun onkeydown(ev: KeyboardEvent) {
 
     }
 
@@ -218,7 +225,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         }
     }
 
-    private fun highlight(inputText:String) {
+    private fun highlight(inputText: String) {
         //TODO: update only edited line onward
         val tokenised = this.workerTokenizer.tokensByLine.values.flatten().joinToString(separator = "") {
             val class_ = it.styles.joinToString(separator = " ")

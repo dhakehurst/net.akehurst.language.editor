@@ -21,12 +21,13 @@ import net.akehurst.language.editor.api.*
 
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     languageId: String,
-    override val editorId: String
+    final override val editorId: String,
+    logFunction: LogFunction?
 ) : AglEditor<AsmType, ContextType> {
 
     abstract val sessionId:String
 
-    override val logger = AglEditorLogger()
+    final override val logger = AglEditorLogger(logFunction)
 
     protected val agl = AglComponents<AsmType, ContextType> (languageId, editorId, logger)
 

@@ -8,10 +8,8 @@ import kotlin.test.assertEquals
 
 class test_AglComponents {
 
-    val logger = AglEditorLogger().also {
-        it.bind = { logLevel: LogLevel, msg: String, throwable: Throwable? ->
-            println("$logLevel: $msg")
-        }
+    val logger = AglEditorLogger { logLevel: LogLevel, msg: String, throwable: Throwable? ->
+        println("$logLevel: $msg")
     }
 
     @Test

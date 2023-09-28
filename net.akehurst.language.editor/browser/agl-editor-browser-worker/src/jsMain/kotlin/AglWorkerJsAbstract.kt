@@ -16,19 +16,14 @@
 
 package net.akehurst.language.editor.worker
 
-import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
-import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.asm.AsmElementSimple
-import net.akehurst.language.api.asm.AsmSimple
-import net.akehurst.language.api.parser.InputLocation
-import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.LanguageProcessor
-import net.akehurst.language.api.sppt.*
-import net.akehurst.language.api.style.AglStyleRule
+import net.akehurst.language.api.sppt.SharedPackedParseTree
+import net.akehurst.language.api.sppt.SpptDataNode
+import net.akehurst.language.api.sppt.SpptDataNodeInfo
+import net.akehurst.language.api.sppt.SpptWalker
 import net.akehurst.language.collections.mutableStackOf
-import net.akehurst.language.editor.common.*
-import net.akehurst.language.editor.common.messages.*
-import net.akehurst.language.editor.worker.external.createStringifyStream
+import net.akehurst.language.editor.common.AglWorkerSerialisation
+import net.akehurst.language.editor.common.messages.AglWorkerMessage
+import net.akehurst.language.editor.common.objectJS
 import org.w3c.dom.MessageEvent
 
 abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract<AsmType, ContextType>() {
@@ -62,10 +57,8 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
         }
     }
 
-
     override fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String? =
         serialiseParseTreeToStringJson1(sentence, sppt)
-
 
     private fun serialiseParseTreeToStringJson1(sentence: String, sppt: SharedPackedParseTree?): String? {
         try {

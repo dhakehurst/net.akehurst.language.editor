@@ -520,6 +520,7 @@ object AglWorkerSerialisation {
             ) {
                 dataType("Grammar") {}
                 dataType("RuleItem") {}
+                enumType("OverrideKind", listOf())
             }
             namespace("net.akehurst.language.agl.grammar.grammar",
                 imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.agl.syntaxAnalyser")
@@ -536,7 +537,9 @@ object AglWorkerSerialisation {
                     supertypes("GrammarAbstract")
                 }
             }
-            namespace("net.akehurst.language.agl.grammar.grammar.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.grammar.grammar.asm",
+                imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.api.grammar")
+            ) {
                 dataType("NamespaceDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
                 }
@@ -550,6 +553,11 @@ object AglWorkerSerialisation {
                     supertypes("GrammarAbstract")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "NamespaceDefault")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "options", "List") { typeArgument("GrammarOptionDefault") }
+                }
+                dataType("GrammarOptionDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
                 }
                 dataType("GrammarAbstract") {
                     supertypes("net.akehurst.language.api.grammar.Grammar")
@@ -558,16 +566,28 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "extends", "List", listOf("GrammarReferenceDefault"))
-                    propertyOf(setOf(MEMBER, COMPOSITE), "grammarRule", "List", listOf("GrammarRuleDefault"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "grammarRule", "List", listOf("GrammarRuleAbstract"))
                 }
-                dataType("GrammarRuleDefault") {
+                dataType("GrammarRuleAbstract")
+                dataType("NormalRuleDefault") {
+                    supertypes("GrammarRuleAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "grammar", "GrammarDefault")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isOverride", "Boolean")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isSkip", "Boolean")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isLeaf", "Boolean")
 
-                    propertyOf(setOf(MEMBER, REFERENCE), "grammar", "GrammarDefault")
                     propertyOf(setOf(MEMBER, COMPOSITE), "rhs", "RuleItemAbstract")
+                }
+
+                dataType("OverrideRuleDefault") {
+                    supertypes("GrammarRuleAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "grammar", "GrammarDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isSkip", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isLeaf", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "overrideKind", "OverrideKind")
+
+                    propertyOf(setOf(MEMBER, COMPOSITE), "overridenRhs", "RuleItemAbstract")
                 }
                 dataType("RuleItemAbstract") {
                     supertypes("net.akehurst.language.api.grammar.RuleItem")

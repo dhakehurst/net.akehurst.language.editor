@@ -28,10 +28,10 @@ import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
+import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.examples.*
-
 
 
 //external var aglScriptBasePath: dynamic = definedExternally
@@ -82,7 +82,6 @@ object Constants {
     val styleLanguageId = Agl.registry.agl.styleLanguageIdentity
     val formatLanguageId = Agl.registry.agl.formatLanguageIdentity
 }
-
 
 
 /*
@@ -303,7 +302,8 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
 }
 
 fun createDummyEditor(editorId: String, languageId: String): AglEditor<Any, Any> {
-    return EditorDummy<Any, Any>(languageId, editorId)
+    val logFunction: LogFunction = { _,_,_ -> }
+    return EditorDummy<Any, Any>(languageId, editorId, logFunction)
 }
 
 
@@ -427,274 +427,274 @@ class Demo(
     }
 
     private fun loading(parse: Boolean, ast: Boolean) {
-   //     trees["parse"]!!.loading = parse
-    //    trees["ast"]!!.loading = ast
+        //     trees["parse"]!!.loading = parse
+        //    trees["ast"]!!.loading = ast
     }
-/*
-    private fun connectTrees() {
-        trees["typemodel"]!!.treeFunctions = TreeViewFunctions<dynamic>(
-            label = { root, it ->
-                when (it) {
-                    is String -> it
-                    is List<*> -> "List"
-                    is TypeModel -> "model ${it.name}"
-                    is Map.Entry<String, TypeUsage> -> {
-                        val ruleName = it.key
-                        val type = it.value.type
-                        when (type) {
-                            is ElementType -> when {
-                                type.supertypes.isEmpty() -> "$ruleName : ${type.signature(type.typeModel)}"
-                                else -> "$ruleName : ${type.signature(type.typeModel)} -> ${type.supertypes.joinToString { it.signature(type.typeModel) }}"
+    /*
+        private fun connectTrees() {
+            trees["typemodel"]!!.treeFunctions = TreeViewFunctions<dynamic>(
+                label = { root, it ->
+                    when (it) {
+                        is String -> it
+                        is List<*> -> "List"
+                        is TypeModel -> "model ${it.name}"
+                        is Map.Entry<String, TypeUsage> -> {
+                            val ruleName = it.key
+                            val type = it.value.type
+                            when (type) {
+                                is ElementType -> when {
+                                    type.supertypes.isEmpty() -> "$ruleName : ${type.signature(type.typeModel)}"
+                                    else -> "$ruleName : ${type.signature(type.typeModel)} -> ${type.supertypes.joinToString { it.signature(type.typeModel) }}"
+                                }
+
+                                else -> "$ruleName : ${type.signature(root as TypeModel?)}"
                             }
 
-                            else -> "$ruleName : ${type.signature(root as TypeModel?)}"
                         }
 
+                        is PropertyDeclaration -> "${it.name} : ${it.typeUse.signature(root as TypeModel, 0)}"
+                        else -> error("Internal Error: type ${it::class.simpleName} not handled")
                     }
+                },
+                hasChildren = {
+                    when (it) {
+                        is String -> false
+                        is List<*> -> true
+                        is TypeModel -> it.allRuleNameToType.isNotEmpty()
+                        is Map.Entry<String, TypeUsage> -> {
+                            val type = it.value.type
+                            when (type) {
+                                is AnyType -> false
+                                is ListSimpleType -> false
+                                is ListSeparatedType -> false
+                                is NothingType -> false
+                                is PrimitiveType -> false
+                                is UnnamedSuperTypeType -> false
+                                is StructuredRuleType -> when (type) {
+                                    is TupleType -> type.property.isNotEmpty()
+                                    is ElementType -> type.property.isNotEmpty()
+                                }
+                            }
+                        }
 
-                    is PropertyDeclaration -> "${it.name} : ${it.typeUse.signature(root as TypeModel, 0)}"
-                    else -> error("Internal Error: type ${it::class.simpleName} not handled")
+                        is PropertyDeclaration -> false
+                        else -> error("Internal Error: type ${it::class.simpleName} not handled")
+                    }
+                },
+                children = {
+                    when (it) {
+                        is String -> emptyArray<Any>()
+                        is List<*> -> it.toArray()
+                        is TypeModel -> it.allRuleNameToType.entries.toTypedArray()
+                        is Map.Entry<String, TypeUsage> -> {
+                            val type = it.value.type
+                            when (type) {
+                                is AnyType -> emptyArray<Any>()
+                                is ListSimpleType -> emptyArray<Any>()
+                                is ListSeparatedType -> emptyArray<Any>()
+                                is NothingType -> emptyArray<Any>()
+                                is PrimitiveType -> emptyArray<Any>()
+                                is UnnamedSuperTypeType -> emptyArray<Any>()
+                                is StructuredRuleType -> when (type) {
+                                    is TupleType -> type.property.values.toTypedArray()
+                                    is ElementType -> type.property.values.toTypedArray()
+                                }
+                            }
+                        }
+
+                        is PropertyDeclaration -> emptyArray<Any>()
+                        else -> error("Internal Error: type ${it::class.simpleName} not handled")
+                    }
                 }
-            },
-            hasChildren = {
-                when (it) {
-                    is String -> false
-                    is List<*> -> true
-                    is TypeModel -> it.allRuleNameToType.isNotEmpty()
-                    is Map.Entry<String, TypeUsage> -> {
-                        val type = it.value.type
-                        when (type) {
-                            is AnyType -> false
-                            is ListSimpleType -> false
-                            is ListSeparatedType -> false
-                            is NothingType -> false
-                            is PrimitiveType -> false
-                            is UnnamedSuperTypeType -> false
-                            is StructuredRuleType -> when (type) {
-                                is TupleType -> type.property.isNotEmpty()
-                                is ElementType -> type.property.isNotEmpty()
-                            }
+            )
+            grammarEditor.onSemanticAnalysis { event ->
+                when (event.status) {
+                    EventStatus.START -> trees["typemodel"]!!.loading = true
+                    EventStatus.FAILURE -> trees["typemodel"]!!.loading = false
+                    EventStatus.SUCCESS -> {
+                        val typemodels = (event.asm as List<Grammar>).map {
+                            TypeModelFromGrammar.createFrom(it)
                         }
+                        trees["typemodel"]!!.loading = false
+                        trees["typemodel"]!!.setRoots(typemodels)
                     }
-
-                    is PropertyDeclaration -> false
-                    else -> error("Internal Error: type ${it::class.simpleName} not handled")
-                }
-            },
-            children = {
-                when (it) {
-                    is String -> emptyArray<Any>()
-                    is List<*> -> it.toArray()
-                    is TypeModel -> it.allRuleNameToType.entries.toTypedArray()
-                    is Map.Entry<String, TypeUsage> -> {
-                        val type = it.value.type
-                        when (type) {
-                            is AnyType -> emptyArray<Any>()
-                            is ListSimpleType -> emptyArray<Any>()
-                            is ListSeparatedType -> emptyArray<Any>()
-                            is NothingType -> emptyArray<Any>()
-                            is PrimitiveType -> emptyArray<Any>()
-                            is UnnamedSuperTypeType -> emptyArray<Any>()
-                            is StructuredRuleType -> when (type) {
-                                is TupleType -> type.property.values.toTypedArray()
-                                is ElementType -> type.property.values.toTypedArray()
-                            }
-                        }
-                    }
-
-                    is PropertyDeclaration -> emptyArray<Any>()
-                    else -> error("Internal Error: type ${it::class.simpleName} not handled")
                 }
             }
-        )
-        grammarEditor.onSemanticAnalysis { event ->
-            when (event.status) {
-                EventStatus.START -> trees["typemodel"]!!.loading = true
-                EventStatus.FAILURE -> trees["typemodel"]!!.loading = false
-                EventStatus.SUCCESS -> {
-                    val typemodels = (event.asm as List<Grammar>).map {
-                        TypeModelFromGrammar.createFrom(it)
+
+            trees["parse"]!!.treeFunctions = TreeViewFunctions<dynamic>(
+                label = { root, it ->
+                    when (it.isBranch) {
+                        false -> "${it.name} = ${it.nonSkipMatchedText}"
+                        true -> it.name
+                        else -> error("error")
                     }
-                    trees["typemodel"]!!.loading = false
-                    trees["typemodel"]!!.setRoots(typemodels)
+                },
+                hasChildren = { it.isBranch },
+                children = { it.children }
+            )
+
+            sentenceEditor.onParse { event ->
+                when (event.status) {
+                    EventStatus.START -> loading(true, true)
+                    EventStatus.FAILURE -> loading(false, false)
+                    EventStatus.SUCCESS -> {
+                        trees["parse"]!!.loading = false
+                        trees["parse"]!!.setRoots(event.tree?.let { listOf(it) } ?: emptyList())
+                    }
+                }
+            }
+
+            trees["ast"]!!.treeFunctions = TreeViewFunctions<dynamic>(
+                label = { root, it ->
+                    when {
+                        it is Array<*> -> ": Array"
+                        it is List<*> -> ": List"
+                        it is Set<*> -> ": Set"
+                        it is AsmElementSimple -> ": " + it.typeName
+                        it is AsmElementProperty -> {
+                            val v = it.value
+                            when {
+                                null == v -> "${it.name} = null"
+                                v is Array<*> -> "${it.name} : Array"
+                                v is List<*> -> "${it.name} : List"
+                                v is Set<*> -> "${it.name} : Set"
+                                v is AsmElementSimple -> "${it.name} : ${v.typeName}"
+                                v is AsmElementReference -> when (v.value) {
+                                    null -> "&'${v.reference}' = <unresolved reference>"
+                                    else -> "&'${v.reference}' = ${v.value?.asmPath?.value} : ${v.value?.typeName}"
+                                }
+
+                                it.name == "'${v}'" -> "${it.name}"
+                                v is String -> "${it.name} = '${v}'"
+                                else -> "${it.name} = ${v}"
+                            }
+                        }
+
+                        else -> it.toString()
+                    }
+                },
+                hasChildren = {
+                    when {
+                        it is Array<*> -> true
+                        it is Collection<*> -> true
+                        it is AsmElementSimple -> it.properties.size != 0
+                        it is AsmElementProperty -> {
+                            val v = it.value
+                            when {
+                                null == v -> false
+                                v is Array<*> -> true
+                                v is Collection<*> -> true
+                                v is AsmElementSimple -> true
+                                else -> false
+                            }
+                        }
+
+                        else -> false
+                    }
+                },
+                children = {
+                    when {
+                        it is Array<*> -> it
+                        it is Collection<*> -> it.toTypedArray()
+                        it is AsmElementSimple -> it.properties.values.toTypedArray()
+                        it is AsmElementProperty -> {
+                            val v = it.value
+                            when {
+                                v is Array<*> -> v
+                                v is Collection<*> -> v.toTypedArray()
+                                v is AsmElementSimple -> v.properties.values.toTypedArray()
+                                else -> emptyArray<dynamic>()
+                            }
+                        }
+
+                        else -> emptyArray<dynamic>()
+                    }
+                }
+            )
+
+            sentenceEditor.onSyntaxAnalysis { event ->
+                when (event.status) {
+                    EventStatus.START -> {
+                        //trees["ast"]!!.loading = true
+                    }
+
+                    EventStatus.FAILURE -> {//Failure
+                        console.error(event.message)
+                        trees["ast"]!!.loading = false
+                        when (event.asm) {
+                            is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                            else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
+                        }
+                    }
+
+                    EventStatus.SUCCESS -> {
+                        trees["ast"]!!.loading = false
+                        when (event.asm) {
+                            is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                            else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
+                        }
+                    }
+                }
+            }
+
+            sentenceEditor.onSemanticAnalysis { event ->
+                when (event.status) {
+                    EventStatus.START -> {
+                        //trees["ast"]!!.loading = true
+                    }
+
+                    EventStatus.FAILURE -> {//Failure
+                        console.error(event.message)
+                        trees["ast"]!!.loading = false
+                        //when(event.asm) {
+                        //    is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                        //    else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
+                        //}
+                    }
+
+                    EventStatus.SUCCESS -> {
+                        trees["ast"]!!.loading = false
+                        when (event.asm) {
+                            is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                            else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
+                        }
+                    }
                 }
             }
         }
 
-        trees["parse"]!!.treeFunctions = TreeViewFunctions<dynamic>(
-            label = { root, it ->
-                when (it.isBranch) {
-                    false -> "${it.name} = ${it.nonSkipMatchedText}"
-                    true -> it.name
-                    else -> error("error")
-                }
-            },
-            hasChildren = { it.isBranch },
-            children = { it.children }
-        )
+        private fun configExampleSelector() {
+            exampleSelect.addEventListener("change", { _ ->
+                loading(true, true)
+                val egName = js("event.target.value") as String
+                val eg = Examples[egName]
+                grammarEditor.text = eg.grammar
+                styleEditor.text = eg.style
+                referencesEditor.text = eg.references
+                //formatEditor.text = eg.format
+                sentenceEditor.text = ""
+                sentenceEditor.sentenceContext = ContextSimple()
+                sentenceEditor.languageDefinition.styleStr = styleEditor.text
+                sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
+                sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
+                sentenceEditor.text = eg.sentence
+            })
 
-        sentenceEditor.onParse { event ->
-            when (event.status) {
-                EventStatus.START -> loading(true, true)
-                EventStatus.FAILURE -> loading(false, false)
-                EventStatus.SUCCESS -> {
-                    trees["parse"]!!.loading = false
-                    trees["parse"]!!.setRoots(event.tree?.let { listOf(it) } ?: emptyList())
-                }
-            }
-        }
-
-        trees["ast"]!!.treeFunctions = TreeViewFunctions<dynamic>(
-            label = { root, it ->
-                when {
-                    it is Array<*> -> ": Array"
-                    it is List<*> -> ": List"
-                    it is Set<*> -> ": Set"
-                    it is AsmElementSimple -> ": " + it.typeName
-                    it is AsmElementProperty -> {
-                        val v = it.value
-                        when {
-                            null == v -> "${it.name} = null"
-                            v is Array<*> -> "${it.name} : Array"
-                            v is List<*> -> "${it.name} : List"
-                            v is Set<*> -> "${it.name} : Set"
-                            v is AsmElementSimple -> "${it.name} : ${v.typeName}"
-                            v is AsmElementReference -> when (v.value) {
-                                null -> "&'${v.reference}' = <unresolved reference>"
-                                else -> "&'${v.reference}' = ${v.value?.asmPath?.value} : ${v.value?.typeName}"
-                            }
-
-                            it.name == "'${v}'" -> "${it.name}"
-                            v is String -> "${it.name} = '${v}'"
-                            else -> "${it.name} = ${v}"
-                        }
-                    }
-
-                    else -> it.toString()
-                }
-            },
-            hasChildren = {
-                when {
-                    it is Array<*> -> true
-                    it is Collection<*> -> true
-                    it is AsmElementSimple -> it.properties.size != 0
-                    it is AsmElementProperty -> {
-                        val v = it.value
-                        when {
-                            null == v -> false
-                            v is Array<*> -> true
-                            v is Collection<*> -> true
-                            v is AsmElementSimple -> true
-                            else -> false
-                        }
-                    }
-
-                    else -> false
-                }
-            },
-            children = {
-                when {
-                    it is Array<*> -> it
-                    it is Collection<*> -> it.toTypedArray()
-                    it is AsmElementSimple -> it.properties.values.toTypedArray()
-                    it is AsmElementProperty -> {
-                        val v = it.value
-                        when {
-                            v is Array<*> -> v
-                            v is Collection<*> -> v.toTypedArray()
-                            v is AsmElementSimple -> v.properties.values.toTypedArray()
-                            else -> emptyArray<dynamic>()
-                        }
-                    }
-
-                    else -> emptyArray<dynamic>()
-                }
-            }
-        )
-
-        sentenceEditor.onSyntaxAnalysis { event ->
-            when (event.status) {
-                EventStatus.START -> {
-                    //trees["ast"]!!.loading = true
-                }
-
-                EventStatus.FAILURE -> {//Failure
-                    console.error(event.message)
-                    trees["ast"]!!.loading = false
-                    when (event.asm) {
-                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
-                        else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
-                    }
-                }
-
-                EventStatus.SUCCESS -> {
-                    trees["ast"]!!.loading = false
-                    when (event.asm) {
-                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
-                        else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
-                    }
-                }
-            }
-        }
-
-        sentenceEditor.onSemanticAnalysis { event ->
-            when (event.status) {
-                EventStatus.START -> {
-                    //trees["ast"]!!.loading = true
-                }
-
-                EventStatus.FAILURE -> {//Failure
-                    console.error(event.message)
-                    trees["ast"]!!.loading = false
-                    //when(event.asm) {
-                    //    is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
-                    //    else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
-                    //}
-                }
-
-                EventStatus.SUCCESS -> {
-                    trees["ast"]!!.loading = false
-                    when (event.asm) {
-                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
-                        else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
-                    }
-                }
-            }
-        }
-    }
-
-    private fun configExampleSelector() {
-        exampleSelect.addEventListener("change", { _ ->
+            // select initial example
             loading(true, true)
-            val egName = js("event.target.value") as String
-            val eg = Examples[egName]
+            val eg = Datatypes.example
+            (exampleSelect as HTMLSelectElement).value = eg.id
             grammarEditor.text = eg.grammar
             styleEditor.text = eg.style
             referencesEditor.text = eg.references
             //formatEditor.text = eg.format
-            sentenceEditor.text = ""
             sentenceEditor.sentenceContext = ContextSimple()
             sentenceEditor.languageDefinition.styleStr = styleEditor.text
             sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
             sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
             sentenceEditor.text = eg.sentence
-        })
-
-        // select initial example
-        loading(true, true)
-        val eg = Datatypes.example
-        (exampleSelect as HTMLSelectElement).value = eg.id
-        grammarEditor.text = eg.grammar
-        styleEditor.text = eg.style
-        referencesEditor.text = eg.references
-        //formatEditor.text = eg.format
-        sentenceEditor.sentenceContext = ContextSimple()
-        sentenceEditor.languageDefinition.styleStr = styleEditor.text
-        sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
-        sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
-        sentenceEditor.text = eg.sentence
-    }
-*/
+        }
+    */
 }
 
 

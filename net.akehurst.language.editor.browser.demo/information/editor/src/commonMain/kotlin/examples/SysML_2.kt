@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.information.examples
 
+import korlibs.io.file.std.resourcesVfs
 import net.akehurst.language.editor.information.Example
 
 object SysML_2 {
@@ -23,48 +24,18 @@ object SysML_2 {
     val label = "SysML v2"
     val sentence = """
     """.trimIndent()
-    val grammar = """
-namespace net.akehurst.language.example
-
-grammar SysML_2 {
-    DEFINED_BY  = ':'   | 'defined' 'by' ;
-    SPECIALIZES = ':>'  | 'specializes' ;
-    SUBSETS     = ':>'  | 'subsets' ;
-    REFERENCES  = '::>' | 'references' ;
-    REDEFINES   = ':>>' | 'redefines';
-    
-    NAME = "" ;
-    
-    Identification = ( '<' declaredShortName '>' )? declaredName? ;
-    declaredShortName = NAME ;
-    declaredName = NAME ;
-    RelationshipBody = ';' | '{' OwnedAnnotation* '}' ;
-  
-    Dependency = PrefixMetadataAnnotation* 'dependency' DependencyDeclaration RelationshipBody ;
-    
-    DependencyDeclaration = ( Identification 'from' )? [QualifiedName / ',' ]+ 'to' [QualifiedName / ',' ]+ ;
-
-    Annotation = QualifiedName ;
-    OwnedAnnotation = AnnotatingElement ;
-    AnnotatingMember = AnnotatingElement ;
-    AnnotatingElement = Comment | Documentation | TextualRepresentation | MetadataFeature ;
-    
-    Comment = 'comment' Identification ( 'about' [Annotation / ',']+ )? REGULAR_COMMENT ;
-    Documentation = 'doc' Identification REGULAR_COMMENT ;
-    
-    TextualRepresentation = ( 'rep' Identification )? 'language' STRING_VALUE REGULAR_COMMENT ;
-}
-    """.trimIndent()
 
     val references = """
     """.trimIndent()
 
-    val style = """
-    """.trimIndent()
+
     val format = """
         
     """.trimIndent()
 
-    val example = Example(id, label, "S", sentence, grammar, references, style, format)
-
+    suspend fun example(): Example {
+        val grammarStr = resourcesVfs["examples/SysML_2/grammar.agl"].readString()
+        val styleStr = resourcesVfs["examples/SysML_2/style.agl"].readString()
+        return Example(id, label, "S", sentence, grammarStr, references, styleStr, format)
+    }
 }

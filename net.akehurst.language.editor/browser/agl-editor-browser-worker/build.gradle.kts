@@ -6,7 +6,7 @@ plugins {
 }
 
 kotlin {
-    (project.ext["configureJs"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
+    (project.ext["configureCommon"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
 
     js("js") {
         browser {

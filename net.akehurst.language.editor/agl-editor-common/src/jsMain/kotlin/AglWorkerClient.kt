@@ -117,7 +117,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         }
     }
 
-    fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String?, scopeModelStr:String?) {
+    fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String, scopeModelStr:String?) {
         this.sendToWorker(MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, scopeModelStr))
     }
 

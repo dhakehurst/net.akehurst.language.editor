@@ -46,6 +46,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
     monacoEditor: IStandaloneCodeEditor,
     languageId: String,
     editorId: String,
+    logFunction: LogFunction?,
     worker: AbstractWorker,
     monaco: Monaco
 ): AglEditor<AsmType, ContextType> {
@@ -54,6 +55,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
         monacoEditor = monacoEditor,
         languageId = languageId,
         editorId = editorId,
+        logFunction = logFunction,
         worker = worker,
         monaco = monaco
     )
@@ -75,9 +77,10 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     val monacoEditor: IStandaloneCodeEditor,
     languageId: String,
     editorId: String,
+    logFunction: LogFunction?,
     worker: AbstractWorker,
     val monaco: Monaco
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, worker) {
 
     companion object {
         private val init = js(

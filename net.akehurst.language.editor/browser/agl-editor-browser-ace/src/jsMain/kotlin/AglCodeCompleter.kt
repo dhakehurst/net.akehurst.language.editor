@@ -29,6 +29,8 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
     val aglWorker: AglWorkerClient<AsmType, ContextType>
 ) {
 
+    //val identifierRegexps = arrayOf( js("/$^/") )
+
     // called by Ace
     @JsName("getCompletions")
     fun getCompletions(editor: ace.IEditor, session: ace.EditSession, pos: dynamic, prefix: dynamic, callback: dynamic) {

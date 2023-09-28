@@ -29,6 +29,7 @@ import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.api.style.*
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
@@ -47,7 +48,7 @@ class AglErrorAnnotation(
     val row = line - 1
 }
 
-interface Ace {
+interface IAce {
     fun createRange(startRow:Int, startColumn:Int, endRow:Int, endColumn:Int): IRange
 }
 
@@ -60,14 +61,16 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     aceEditor: ace.IEditor,
     languageId: String,
     editorId: String,
+    logFunction: LogFunction?,
     worker: AbstractWorker,
-    ace:Ace
+    ace:IAce
 ): AglEditor<AsmType, ContextType> {
     return AglEditorAce<AsmType, ContextType>(
         containerElement = containerElement,
         aceEditor = aceEditor,
         languageId = languageId,
         editorId = editorId,
+        logFunction = logFunction,
         worker = worker,
         ace=ace
     )
@@ -78,9 +81,10 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     val aceEditor: ace.IEditor,
     languageId: String,
     editorId: String,
+    logFunction: LogFunction?,
     worker: AbstractWorker,
-    val ace:Ace
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, worker) {
+    val ace:IAce
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, worker) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()

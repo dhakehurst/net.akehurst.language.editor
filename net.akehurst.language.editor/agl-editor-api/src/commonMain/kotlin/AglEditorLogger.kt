@@ -16,9 +16,11 @@
 
 package net.akehurst.language.editor.api
 
-class AglEditorLogger {
+typealias LogFunction = (level: LogLevel, message: String,t:Throwable?) -> Unit
 
-    var bind: ((level: LogLevel, message: String,t:Throwable?) -> Unit)? = null
+class AglEditorLogger(
+    var bind: LogFunction?
+) {
 
     fun log(level: LogLevel, message: String, t:Throwable?) = this.bind?.also {
         it.invoke(level, message,t)

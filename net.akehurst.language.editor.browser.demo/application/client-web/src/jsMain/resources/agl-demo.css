@@ -336,7 +336,7 @@ div#agl-demo tab#Grammar section.grammar {
     grid-area: grammar;
 }
 
-div#agl-demo tab#Grammar section.typemodel {
+div#agl-demo tab#Grammar article.typemodel {
     grid-area: typemodel;
     background-color: blanchedalmond;
     display: flex;
@@ -350,6 +350,11 @@ div#agl-demo tab#Grammar article > header {
 
 div#agl-demo tab#Grammar article > header > p {
     margin: 0.5em;
+}
+
+div#agl-demo tab#Configuration > div {
+    display: flex;
+    flex-direction: column;
 }
 
 div#agl-demo section.configuration {

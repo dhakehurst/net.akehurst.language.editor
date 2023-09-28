@@ -19,7 +19,7 @@ package net.akehurst.language.editor.worker
 import org.w3c.dom.DedicatedWorkerGlobalScope
 import org.w3c.dom.MessageEvent
 
-class AglDedicatedWorker<AsmType : Any, ContextType : Any> : AglWorkerJsAbstract<AsmType, ContextType>() {
+open class AglDedicatedWorker<AsmType : Any, ContextType : Any> : AglWorkerJsAbstract<AsmType, ContextType>() {
 
     private var _selfDedicated: dynamic? = null
 
@@ -40,6 +40,5 @@ class AglDedicatedWorker<AsmType : Any, ContextType : Any> : AglWorkerJsAbstract
             }
         }
     }
-
 
 }
