@@ -32,7 +32,11 @@ class AglComponents<AsmType : Any, ContextType : Any>(
     private var _styleHandler = AglStyleHandler(languageId)
     private var _languageIdentity = languageId
 
-    val languageDefinition get() = Agl.registry.findOrPlaceholder<AsmType, ContextType>(_languageIdentity)
+    val languageDefinition get() = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
+        _languageIdentity,
+        aglOptions = null,
+        configuration = Agl.configurationEmpty()
+    )
     var goalRule: String? = languageDefinition.defaultGoalRule
 
     val styleHandler get() = _styleHandler

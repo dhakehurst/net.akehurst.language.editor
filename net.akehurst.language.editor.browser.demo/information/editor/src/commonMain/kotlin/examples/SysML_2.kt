@@ -20,22 +20,21 @@ import korlibs.io.file.std.resourcesVfs
 import net.akehurst.language.editor.information.Example
 
 object SysML_2 {
-    val id = "SysML_2"
-    val label = "SysML v2"
-    val sentence = """
+    private val id = "SysML_2"
+    private val label = "SysML v2"
+    private val dir = "examples/SysML_2"
+
+    private val references = """
     """.trimIndent()
 
-    val references = """
-    """.trimIndent()
-
-
-    val format = """
+    private val format = """
         
     """.trimIndent()
 
     suspend fun example(): Example {
-        val grammarStr = resourcesVfs["examples/SysML_2/grammar.agl"].readString()
-        val styleStr = resourcesVfs["examples/SysML_2/style.agl"].readString()
-        return Example(id, label, "S", sentence, grammarStr, references, styleStr, format)
+        val grammarStr = resourcesVfs["$dir/grammar.agl"].readString()
+        val styleStr = resourcesVfs["$dir/style.agl"].readString()
+        val sentence = resourcesVfs["$dir/sentence.txt"].readString()
+        return Example(id, label, sentence, grammarStr, references, styleStr, format)
     }
 }

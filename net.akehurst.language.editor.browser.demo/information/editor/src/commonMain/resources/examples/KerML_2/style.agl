@@ -1,4 +1,14 @@
 $keyword {
-    foreground: purple;
+    foreground: blue;
     font-style: bold;
 }
+TYPED_BY, SPECIALIZES, SUBSETS, REFERENCES, REDEFINES, CONJUGATES {
+    foreground: blue;
+    font-style: bold;
+}
+
+SINGLE_LINE_NOTE, MULTILINE_NOTE {
+  foreground: gray;
+  font-style: italic;
+}
+

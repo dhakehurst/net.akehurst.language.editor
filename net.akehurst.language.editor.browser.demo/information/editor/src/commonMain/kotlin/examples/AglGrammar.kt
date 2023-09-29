@@ -59,6 +59,6 @@ grammar Test extends Common {
         
     """.trimIndent()
 
-    val example = Example(id, label, "S", sentence, grammar, references, style, format)
+    val example = Example(id, label, sentence, grammar, references, style, format)
 
 }

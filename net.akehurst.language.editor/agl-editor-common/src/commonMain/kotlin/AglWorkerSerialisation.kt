@@ -493,7 +493,6 @@ object AglWorkerSerialisation {
                 }
                 dataType("AsmElementSimple") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asmPath", "AsmElementPath")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "asm", "AsmSimple")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeName", "String")
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "properties", "Map", listOf("String", "AsmElementProperty"))

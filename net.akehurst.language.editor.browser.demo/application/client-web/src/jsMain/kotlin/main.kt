@@ -19,7 +19,7 @@ package net.akehurst.language.editor.application.client.web
 import ace.IRange
 import codemirror.view.EditorViewConfig
 import korlibs.io.async.asyncImmediately
-import korlibs.io.async.launch
+import korlibs.io.file.std.localVfs
 import kotlinx.browser.document
 import kotlinx.coroutines.*
 import monaco.IDisposable
@@ -67,7 +67,8 @@ import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
 import net.akehurst.language.typemodel.api.*
 import org.w3c.dom.*
 
-external var aglScriptBasePath: dynamic = definedExternally
+external var aglScriptBasePath: String = definedExternally
+external var resourcesPath: String = definedExternally
 val workerScriptName = "${aglScriptBasePath}/application-agl-editor-worker.js"
 var demo: Demo? = null
 
@@ -101,6 +102,21 @@ interface DemoInterface {
 fun main() {
     try {
         val logger = DemoLogger(LogLevel.Information)
+        //val logger = DemoLogger(LogLevel.All)
+
+        //define this before editors are created
+        // need to register this so that we can set the configuration and get the default completion-provider
+        Agl.registry.register(
+            identity = Constants.sentenceLanguageId,
+            grammarStr = "",
+            buildForDefaultGoal = false,
+            aglOptions = Agl.options {
+                semanticAnalysis {
+                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+                }
+            },
+            configuration = Agl.configurationDefault()
+        )
 
         val demoIf = object : DemoInterface {
             override val logLevel: LogLevel get() = logger.level
@@ -258,6 +274,9 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
                                 }
                                 article {
                                     class_.add("typemodel")
+                                    header {
+                                        h3 { content = "Type Model" }
+                                    }
                                     /*  TODO:
                                            header {
                                             button {
@@ -268,7 +287,6 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
                                         }
                                         */
                                     section {
-                                        h3 { content = "Type Model" }
                                         htmlElement("treeview") { attribute.id = "typemodel" }
                                     }
                                 }
@@ -329,13 +347,14 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
                                         attribute.id = "agl-options-editor"
                                         //attribute.name = "editor-choice"
                                         option(value = AlternativeEditors.ACE.name, selected = true) { content = "Ace" }
-                                        option(value = AlternativeEditors.MONACO.name) { content = "Monaco" }
+                                        //                                option(value = AlternativeEditors.MONACO.name) { content = "Monaco" }
                                         //option(value = AlternativeEditors.CODEMIRROR.name) { content = "CodeMirror" }
-                                        option(value = AlternativeEditors.AGL.name, selected = true) { content = "Minimal (Agl)" }
+                                        //                                option(value = AlternativeEditors.AGL.name, selected = true) { content = "Minimal (Agl)" }
                                     }
                                 }
                             }
                         }
+                        /*
                         article {
                             header { h3 { content = "Parse Options" } }
                             section {
@@ -364,6 +383,7 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
                                 }
                             }
                         }
+                         */
                     }
                 }
             }
@@ -373,19 +393,19 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
 
 fun initialiseExamples() {
     CoroutineScope(SupervisorJob()).asyncImmediately {
+        val resources = localVfs(resourcesPath).jail()
         Examples.add(Datatypes.example)
+        Examples.add(KerML_Std.example(resources))
         Examples.add(SQL.example)
-        Examples.add(GraphvizDot.example)
+        Examples.add(GraphvizDot.example(resources))
         Examples.add(SText.example)
         Examples.add(Java8.example)
         //Examples.add(English.example)
         Examples.add(TraceabilityQuery.example)
-        Examples.add(MScript.example)
+        Examples.add(MScript.example(resources))
         Examples.add(Xml.example)
         Examples.add(AglStyle.example)
         Examples.add(AglGrammar.example)
-
-        Examples.add(KerML.example())
     }.invokeOnCompletion {
         val exampleSelect = document.querySelector("select#example") as HTMLElement
         Examples.map.forEach { eg ->
@@ -534,17 +554,6 @@ class Demo(
         styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
         referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
         //Agl.registry.unregister(Constants.sentenceLanguageId)
-//        sentenceEditor.languageIdentity = Agl.registry.register(
-//            identity = Constants.sentenceLanguageId,
-//            grammarStr = "",
-//            buildForDefaultGoal = false,
-//            aglOptions = Agl.options {
-//                semanticAnalysis {
-//                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
-//                }
-//            },
-//            configuration = Agl.configurationDefault()
-//        ).identity
         sentenceEditor.languageIdentity = Constants.sentenceLanguageId
         grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleStr
         styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr

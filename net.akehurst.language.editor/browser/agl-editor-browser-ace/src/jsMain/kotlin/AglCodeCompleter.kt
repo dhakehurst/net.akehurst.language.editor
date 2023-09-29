@@ -52,13 +52,13 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
         return if (null != proc) {
             val goalRule = this.agl.goalRule
             val context = this.agl.context
-            if (null==context) {
-                this.agl.logger.log(LogLevel.Debug,"context is null for code completion.",null)
+            if (null == context) {
+                this.agl.logger.log(LogLevel.Debug, "context is null for code completion.", null)
             }
             val result = proc.expectedItemsAt(
                 editor.getValue(), pos, 1,
                 Agl.options {
-                    parse {                        goalRuleName(goalRule) }
+                    parse { goalRuleName(goalRule) }
                     completionProvider { context(context) }
                 })
             result.items
@@ -69,7 +69,7 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
 
     private fun getCompletionItemsFromWorker(editor: ace.IEditor, pos: Int): List<CompletionItem> {
         this.aglWorker.getCompletionItems()
-TODO()
+        TODO()
     }
 
 }

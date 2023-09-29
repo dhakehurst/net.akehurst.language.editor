@@ -107,6 +107,6 @@ object Datatypes {
         
     """.trimIndent()
 
-    val example = Example(id, label, "unit", sentence, grammar, references, style, format)
+    val example = Example(id, label, sentence, grammar, references, style, format)
 
 }

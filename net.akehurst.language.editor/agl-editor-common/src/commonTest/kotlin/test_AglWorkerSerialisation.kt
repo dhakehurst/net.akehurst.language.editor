@@ -684,6 +684,9 @@ class test_AglWorkerSerialisation {
                     }
                 }
                 property("name", "Test")
+                property("options") {
+                    listObject {  }
+                }
                 property("grammarRule") {
                     listObject {
                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {

@@ -16,44 +16,26 @@
 
 package net.akehurst.language.editor.information.examples
 
+import korlibs.io.file.std.resourcesVfs
 import net.akehurst.language.editor.information.Example
 
-object Embedded {
-    val id = "Embedded"
-    val label = "Embedded"
-    val sentence = """
-babbabbab
-    """.trimIndent()
-    val grammar = """
-namespace net.akehurst.language.example
-
-grammar Inner {
-    S = A | SA ;
-    SA = S A ;
-    A = a ;
-    leaf a = 'a' ;
-}
-
-grammar Outer {
-   S = B | SBC ;
-   SBC = S BC ;
-   BC = B | C ;
-   B = b Inner::S b ;
-   C = c Inner::S c ;
-   leaf b = 'b' ;
-   leaf c = 'c' ;
-}
-    """.trimIndent()
+object KerML_Agl {
+    val id = "KerML_2-agl"
+    val label = "KerML v2 (Agl grammar)"
+    private val dir = "examples/KerML_2_Agl"
 
     val references = """
     """.trimIndent()
 
-    val style = """
-    """.trimIndent()
+
     val format = """
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, references, style, format)
-
+    suspend fun example(): Example {
+        val grammarStr = resourcesVfs["$dir/grammar.agl"].readString()
+        val styleStr = resourcesVfs["$dir/style.agl"].readString()
+        val sentence = resourcesVfs["$dir/sentence.txt"].readString()
+        return Example(id, label, sentence, grammarStr, references, styleStr, format)
+    }
 }

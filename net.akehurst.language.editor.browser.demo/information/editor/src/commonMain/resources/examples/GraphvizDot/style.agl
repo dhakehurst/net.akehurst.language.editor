@@ -1,0 +1,24 @@
+C_PREPROCESSOR {
+  foreground: gray;
+  font-style: italic;
+}
+SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT {
+  foreground: DarkSlateGrey;
+  font-style: italic;
+}
+
+STRICT, GRAPH, DIGRAPH, SUBGRAPH, NODE, EDGE {
+  foreground: purple;
+  font-style: bold;
+}
+ALPHABETIC_ID {
+  foreground: red;
+  font-style: italic;
+}
+
+HTML {
+  background: LemonChiffon;
+}
+NAME {
+    foreground: green;
+}

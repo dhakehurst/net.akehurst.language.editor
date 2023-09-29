@@ -37,6 +37,7 @@ open class AglSharedWorker<AsmType : Any, ContextType : Any> : AglWorkerJsAbstra
                     port.postMessage("Error: Worker error: ${e.message!!}")
                 }
             }
+            port.postMessage("Info: Worker started")
             true //onconnect insists on having a return value!
         }
     }

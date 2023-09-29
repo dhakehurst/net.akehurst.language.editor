@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+
 val version_agl_editor: String by project
 val version_html_builder: String by project
 val version_ace: String by project
@@ -33,6 +35,12 @@ kotlin {
         binaries.executable()
     }
     sourceSets {
+        val jsMain by getting {
+            // add the example files to resources of the web-client
+            val kotlinExtension = project(":information-editor").extensions.getByName("kotlin") as KotlinMultiplatformExtension
+            val res = kotlinExtension.sourceSets.getByName("commonMain").resources
+            resources.srcDir(res)
+        }
         val jvm8Main by getting {
             resources.srcDir("$buildDir/dist/js/developmentExecutable")
         }

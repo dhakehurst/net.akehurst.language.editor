@@ -533,6 +533,6 @@ grammar Packages extends Interfaces {
         
     """.trimIndent()
 
-    val example = Example(id, label, "CompilationUnit", sentence, grammar, references, style, format)
+    val example = Example(id, label, sentence, grammar, references, style, format)
 
 }

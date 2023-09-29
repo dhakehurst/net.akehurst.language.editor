@@ -406,6 +406,6 @@ TransitionSpecification {
         
     """.trimIndent()
 
-    val example = Example(id, label, "statechart", sentence, grammar, references, style, format)
+    val example = Example(id, label, sentence, grammar, references, style, format)
 
 }

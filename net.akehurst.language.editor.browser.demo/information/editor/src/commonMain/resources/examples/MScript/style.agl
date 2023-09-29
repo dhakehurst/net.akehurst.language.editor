@@ -1,0 +1,13 @@
+NAME {
+  foreground: red;
+  font-style: bold;
+}
+SINGLE_LINE_COMMENT {
+  foreground: green;
+}
+MULTI_LINE_COMMENT {
+  foreground: grey;
+}
+matrix {
+    foreground: blue;
+}

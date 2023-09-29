@@ -270,6 +270,6 @@ grammar English {
         
     """.trimIndent()
 
-    val example = Example(id, label, "text", sentence, grammar, references, style, format)
+    val example = Example(id, label, sentence, grammar, references, style, format)
 
 }
