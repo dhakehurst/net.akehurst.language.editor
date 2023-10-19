@@ -1,0 +1,16 @@
+<idea-plugin>
+
+    <id>net.akehurst.language.editor.ide.intellij.agl</id>
+    <name>Agl</name>
+    <description>Editor for AGL grammar and custom languages.</description>
+    <vendor>Dr. D. H. Akehurst</vendor>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType
+                name="Agl Grammar File"
+                implementationClass="agl.grammar.AglGrammarIntelliJFileType"
+                fieldName="INSTANCE"
+                language="AglGrammar"
+                extensions="agl"/>
+    </extensions>
+</idea-plugin>

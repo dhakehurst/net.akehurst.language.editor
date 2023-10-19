@@ -26,7 +26,7 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.processor.SentenceContext
+import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.api.style.*
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogFunction

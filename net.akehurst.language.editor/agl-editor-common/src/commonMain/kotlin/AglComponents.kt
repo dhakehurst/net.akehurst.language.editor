@@ -16,12 +16,8 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.SentenceContext
-import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
-import net.akehurst.language.editor.api.LogLevel
 
 class AglComponents<AsmType : Any, ContextType : Any>(
     languageId: String,

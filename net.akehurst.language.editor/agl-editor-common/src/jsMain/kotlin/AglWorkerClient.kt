@@ -16,7 +16,7 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.api.processor.SentenceContext
+import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.*
@@ -60,15 +60,18 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
                 val data = (ev as MessageEvent).data
                 if (data is String) {
                     val str = (ev as MessageEvent).data as String
-                    if (str.startsWith("Error:")) {
-                        this.agl.logger.log(LogLevel.Error, str.substringAfter("Error:"), null)
-                    } else {
-                        //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
-                        val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
-                        if (null == msg) {
-                            this.agl.logger.log(LogLevel.Error, "Message from Worker not handled: $str", null)
-                        } else {
-                            this.receiveMessageFromWorker(msg)
+                    when {
+                        str.startsWith("Error:") ->  this.agl.logger.log(LogLevel.Error, str.substringAfter("Error:"), null)
+                        str.startsWith("Info:") ->  this.agl.logger.log(LogLevel.Information, str.substringAfter("Info:"), null)
+
+                        else -> {
+                            //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
+                            val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
+                            if (null == msg) {
+                                this.agl.logger.log(LogLevel.Error, "Message from Worker not handled: $str", null)
+                            } else {
+                                this.receiveMessageFromWorker(msg)
+                            }
                         }
                     }
                 } else {

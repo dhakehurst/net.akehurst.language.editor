@@ -16,7 +16,6 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.SentenceContext
 import net.akehurst.language.editor.api.*
 
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(

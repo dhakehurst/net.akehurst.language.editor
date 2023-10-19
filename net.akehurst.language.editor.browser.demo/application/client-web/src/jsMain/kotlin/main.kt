@@ -21,7 +21,8 @@ import codemirror.view.EditorViewConfig
 import korlibs.io.async.asyncImmediately
 import korlibs.io.file.std.localVfs
 import kotlinx.browser.document
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import monaco.IDisposable
 import monaco.editor.IMarkerData
 import monaco.editor.IStandaloneEditorConstructionOptions
@@ -31,19 +32,19 @@ import monaco.languages.CompletionItemProvider
 import monaco.languages.ILanguageExtensionPoint
 import monaco.languages.TokensProvider
 import net.akehurst.kotlin.html5.create
+import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.agl.default.TypeModelFromGrammar
-import net.akehurst.language.api.analyser.ScopeModel
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
+import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.api.asm.AsmElementProperty
 import net.akehurst.language.api.asm.AsmElementReference
 import net.akehurst.language.api.asm.AsmElementSimple
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
+import net.akehurst.language.api.semanticAnalyser.ScopeModel
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
@@ -60,6 +61,7 @@ import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.information.Example
 import net.akehurst.language.editor.information.Examples
+import net.akehurst.language.editor.information.example
 import net.akehurst.language.editor.information.examples.*
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
@@ -394,12 +396,13 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
 fun initialiseExamples() {
     CoroutineScope(SupervisorJob()).asyncImmediately {
         val resources = localVfs(resourcesPath).jail()
-        Examples.add(Datatypes.example)
+        Examples.add(example(resources, "Datatypes", "Datatype", "examples/Datatypes"))
+        Examples.add(example(resources, "KerML_2-agl", "KerML v2 (Agl grammar)", "examples/KerML_2_Agl"))
         Examples.add(KerML_Std.example(resources))
-        Examples.add(SQL.example)
+        Examples.add(example(resources, "simple-sql", "Simple SQL Queries", "examples/SQL"))
         Examples.add(GraphvizDot.example(resources))
         Examples.add(SText.example)
-        Examples.add(Java8.example)
+        Examples.add(Java8.example(resources))
         //Examples.add(English.example)
         Examples.add(TraceabilityQuery.example)
         Examples.add(MScript.example(resources))
@@ -560,7 +563,6 @@ class Demo(
         referencesEditor.editorSpecificStyleStr = Agl.registry.agl.scopes.styleStr
 
         val styleContext = ContextFromGrammar()
-        val scopeContext = ContextFromTypeModel()
 
         grammarEditor.onSemanticAnalysis { event ->
             when (event.status) {
@@ -568,19 +570,18 @@ class Demo(
 
                 EventStatus.FAILURE -> {
                     styleContext.clear()
-                    scopeContext.clear()
-
+                    referencesEditor.sentenceContext?.clear()
                     logger.logError(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
 
                 EventStatus.SUCCESS -> {
                     styleContext.clear()
-                    scopeContext.clear()
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
                     val firstGrammar = grammars.first()
                     styleContext.createScopeFrom(grammars)
-                    scopeContext.createScopeFrom(firstGrammar.qualifiedName, TypeModelFromGrammar.create(firstGrammar))
+                    val scopeContext = ContextFromTypeModel(firstGrammar.qualifiedName, TypeModelFromGrammar.create(firstGrammar))
+                    referencesEditor.sentenceContext = scopeContext
                     try {
                         logger.logDebug(" Grammar parse success")
                         if (doUpdate) {
@@ -593,7 +594,7 @@ class Demo(
                     }
                 }
             }
-            referencesEditor.sentenceContext = scopeContext
+
             styleEditor.sentenceContext = styleContext
         }
         styleEditor.onSemanticAnalysis { event ->
@@ -903,7 +904,7 @@ class Demo(
 
         // select initial example
         loading(true, true)
-        val eg = Datatypes.example
+        val eg = Xml.example// Examples.map["Datatypes"]!!
         (exampleSelect as HTMLSelectElement).value = eg.id
         setExample(eg)
     }

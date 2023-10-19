@@ -1,0 +1,5 @@
+class Person {
+    private String name;
+    private Date dob;
+    private List<Person> friends;
+}

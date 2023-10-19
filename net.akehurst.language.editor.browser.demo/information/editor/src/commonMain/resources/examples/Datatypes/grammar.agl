@@ -1,0 +1,21 @@
+namespace test
+
+grammar Test {
+    skip leaf WS = "\s+" ;
+    skip leaf COMMENT = "//[^\n]*(\n)" ;
+
+    unit = declaration* ;
+    declaration = datatype | primitive | collection ;
+    primitive = 'primitive' ID ;
+    collection = 'collection' ID typeParameters? ;
+    typeParameters = '<' typeParameterList '>' ;
+    typeParameterList = [ID / ',']+ ;
+    datatype = 'class' ID '{' property* '}' ;
+    property = ID ':' typeReference ;
+    typeReference = type typeArguments? ;
+    typeArguments = '<' typeArgumentList '>' ;
+    typeArgumentList = [typeReference / ',']+ ;
+
+    leaf ID = "[A-Za-z_][A-Za-z0-9_]*" ;
+    leaf type = ID;
+}

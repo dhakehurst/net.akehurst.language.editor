@@ -19,22 +19,22 @@ package net.akehurst.language.editor.browser.agl
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.dom.addClass
-import kotlinx.dom.createElement
 import kotlinx.dom.removeClass
-import net.akehurst.kotlin.html5.create
 import net.akehurst.kotlin.html5.update
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.processor.SentenceContext
+import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
-import org.w3c.dom.*
+import org.w3c.dom.AbstractWorker
+import org.w3c.dom.Element
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent
-import kotlin.js.RegExp
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     containerElement: Element,
@@ -51,7 +51,6 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
         worker = worker
     )
 }
-
 
 class AglEditorDefault<AsmType : Any, ContextType : Any>(
     val containerElement: Element,

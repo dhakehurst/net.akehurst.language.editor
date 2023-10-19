@@ -23,7 +23,7 @@ import net.akehurst.language.editor.information.Example
 object KerML_Std {
     val id = "KerML_2-std"
     val label = "KerML v2 (Standard grammar)"
-    private val dir = "examples/KerML_2"
+    private val dir = "examples/KerML_2_Std"
 
     val references = """
     """.trimIndent()

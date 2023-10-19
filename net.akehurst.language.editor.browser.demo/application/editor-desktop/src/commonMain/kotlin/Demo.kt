@@ -16,6 +16,10 @@
 
 package demo
 
+import korlibs.io.async.asyncImmediately
+import korlibs.io.file.std.resourcesVfs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
@@ -248,24 +252,25 @@ fun createBaseDom(appDivSelector: String) {
 }
 */
 fun initialiseExamples() {
-//    val exampleSelect = document.querySelector("select#example") as HTMLElement
-    Examples.add(Datatypes.example)
-    Examples.add(SQL.example)
-    Examples.add(GraphvizDot.example)
-    Examples.add(SText.example)
-    Examples.add(Java8.example)
-    Examples.add(English.example)
-    Examples.add(TraceabilityQuery.example)
-    Examples.add(MScript.example)
-    Examples.add(Xml.example)
-    /*
-        Examples.map.forEach { eg ->
-            val option = document.createElement("option")
-            exampleSelect.appendChild(option);
-            option.setAttribute("value", eg.value.id);
-            option.textContent = eg.value.label;
-        }
-     */
+    CoroutineScope(SupervisorJob()).asyncImmediately {
+        Examples.add(Datatypes.example)
+        Examples.add(SQL.example)
+        Examples.add(GraphvizDot.example(resourcesVfs))
+        Examples.add(SText.example)
+        Examples.add(Java8.example(resourcesVfs))
+        Examples.add(English.example)
+        Examples.add(TraceabilityQuery.example)
+        Examples.add(MScript.example(resourcesVfs))
+        Examples.add(Xml.example)
+    }.invokeOnCompletion {
+//        val exampleSelect = document.querySelector("select#example") as HTMLElement
+//        Examples.map.forEach { eg ->
+//            val option = document.createElement("option")
+//            exampleSelect.appendChild(option);
+//            option.setAttribute("value", eg.value.id);
+//            option.textContent = eg.value.label;
+//        }
+    }
 }
 
 fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {

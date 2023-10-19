@@ -19,6 +19,7 @@ package net.akehurst.language.editor.browser.ace
 
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.objectJS
@@ -34,10 +35,15 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
         val posn = session.getDocument().positionToIndex(pos, 0)
         val wordList = this.getCompletionItems(editor, posn)
         val aceCi = wordList.map { ci ->
+            val m = when (ci.kind) {
+                CompletionItemKind.LITERAL -> ""
+                CompletionItemKind.PATTERN -> "(${ci.name})"
+                CompletionItemKind.SEGMENT -> "(${ci.name})"
+            }
             objectJS {
                 caption = ci.text
                 value = ci.text
-                meta = "(${ci.name})"
+                meta = m
             }
         }.toTypedArray()
         callback(null, aceCi)
@@ -58,7 +64,16 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
                     completionProvider { context(context) }
                 }
             )
-            result.items
+            val sep = mapOf(
+                CompletionItemKind.LITERAL to mutableListOf<CompletionItem>(),
+                CompletionItemKind.PATTERN to mutableListOf<CompletionItem>(),
+                CompletionItemKind.SEGMENT to mutableListOf<CompletionItem>()
+            )
+            result.items.forEach { sep[it.kind]!!.add(it) }
+            val lits = sep[CompletionItemKind.LITERAL]!!.sortedBy { it.text } ?: emptyList<CompletionItem>()
+            val pats = sep[CompletionItemKind.PATTERN]!!.sortedBy { it.text } ?: emptyList<CompletionItem>()
+            val segs = sep[CompletionItemKind.SEGMENT]!!.sortedBy { it.text } ?: emptyList<CompletionItem>()
+            segs + pats + lits
         } else {
             emptyList()
         }

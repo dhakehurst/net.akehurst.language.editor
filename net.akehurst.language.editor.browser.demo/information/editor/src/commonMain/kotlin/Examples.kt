@@ -16,6 +16,17 @@
 
 package net.akehurst.language.editor.information
 
+import korlibs.io.file.VfsFile
+
+suspend fun example(resources: VfsFile, id:String, label:String,dir:String): Example {
+    val grammarStr = resources["${dir}/grammar.agl"].readString()
+    val styleStr = resources["${dir}/style.agl"].readString()
+    val scopes = resources["${dir}/scopes.agl"].readString()
+    val format = resources["${dir}/format.agl"].readString()
+    val sentence = resources["${dir}/sentence.txt"].readString()
+    return Example(id, label, sentence, grammarStr, scopes, styleStr, format)
+}
+
 object Examples {
 
     val map = mutableMapOf<String, Example>()

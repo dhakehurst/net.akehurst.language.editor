@@ -18,9 +18,15 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
+import net.akehurst.language.api.grammar.GrammarReference
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
 
+//
+// This will only work if all classes are *public* (exported for JS) and *forReflection*
+// make sure the relevant packages are marked in the 'exportPublic' and 'kotlinxReflect' configurations
+//
+//
 
 object AglWorkerSerialisation {
 
@@ -92,6 +98,8 @@ object AglWorkerSerialisation {
             {
                 dataType("GrammarTypeNamespaceFromGrammar") {
                     supertypes("GrammarTypeNamespaceAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
                 }
             }
             namespace(
@@ -106,6 +114,7 @@ object AglWorkerSerialisation {
                 }
                 dataType("GrammarTypeNamespaceAbstract") {
                     supertypes("TypeNamespaceAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "allRuleNameToType", "Map") {
                         typeArgument("String")
@@ -290,7 +299,10 @@ object AglWorkerSerialisation {
                 dataType("AglStyleRule") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "selector", "AglStyleSelector")
 
-                    propertyOf(setOf(MEMBER, COMPOSITE), "styles", "Map", listOf("String", "AglStyle"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "styles", "Map") {
+                        typeArgument("String")
+                        typeArgument("AglStyle")
+                    }
                 }
                 dataType("AglStyleSelector") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
@@ -313,7 +325,10 @@ object AglWorkerSerialisation {
                     supertypes("GrammarAbstract")
                 }
                 dataType("ScopeModelAgl") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "scopes", "Map", listOf("String", "ScopeDefinition"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "scopes", "Map") {
+                        typeArgument("String")
+                        typeArgument("ScopeDefinition")
+                    }
                     propertyOf(setOf(MEMBER, COMPOSITE), "references", "List", listOf("ReferenceDefinition"))
                 }
                 dataType("ScopeDefinition") {
@@ -327,8 +342,24 @@ object AglWorkerSerialisation {
                 }
                 dataType("ReferenceDefinition") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "inTypeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referringPropertyName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referenceExpressionList","List") { typeArgument("ReferenceExpression") }
+                }
+                dataType("ReferenceExpression") {
+
+                }
+                dataType("PropertyReferenceExpression") {
+                    supertypes("ReferenceExpression")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referringPropertyNavigation", "Navigation")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "refersToTypeName", "List", listOf("String"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "fromNavigation", "Navigation", emptyList(), true)
+                }
+                dataType("CollectionReferenceExpression") {
+                    supertypes("ReferenceExpression")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "navigation", "Navigation")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referenceExpressionList","List") { typeArgument("ReferenceExpression") }
+                }
+                dataType("Navigation") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "List", listOf("String"))
                 }
             }
         })
@@ -365,7 +396,10 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "configuration", "Map", listOf("String", "Any"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "configuration", "Map") {
+                        typeArgument("String")
+                        typeArgument("Any")
+                    }
                 }
                 dataType("MessageSyntaxAnalyserConfigureResponse") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -461,14 +495,24 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("AsmSimple", false) {
             namespace("net.akehurst.language.agl.syntaxAnalyser", imports = mutableListOf("kotlin", "kotlin.collections")) {
+            }
+            namespace(
+                "net.akehurst.language.agl.semanticAnalyser",
+                imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("ScopeSimple") {
                     typeParameters("AsmElementIdType")
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "parent", "ScopeSimple", listOf("AsmElementIdType"))
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forReferenceInParent", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forTypeName", "String")
 
-                    propertyOf(setOf(MEMBER, COMPOSITE), "scopeMap", "Map", listOf("String", "ScopeSimple"))
-                    propertyOf(setOf(MEMBER, COMPOSITE), "childScopes", "Map", listOf("AsmElementIdType", "ScopeSimple"))
+                    propertyOf(setOf(MEMBER, REFERENCE), "scopeMap", "Map") {
+                        typeArgument("AsmElementIdType") //TODO: should really mark if key is composite or reference!
+                        typeArgument("ScopeSimple")
+                    }
+                    propertyOf(setOf(MEMBER, COMPOSITE), "childScopes", "Map"){
+                        typeArgument("String")
+                        typeArgument("ScopeSimple")
+                    }
                     propertyOf(setOf(MEMBER, COMPOSITE), "items", "Map") {
                         typeArgument("String")
                         typeArgument("Map") {
@@ -481,7 +525,8 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("E"))
                 }
                 dataType("ContextFromTypeModel") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "targetNamespaceQualifiedName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeModel", "net.akehurst.language.api.typemodel.TypeModel")
                 }
             }
             namespace("net.akehurst.language.api.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
@@ -495,13 +540,15 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asmPath", "AsmElementPath")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeName", "String")
 
-                    propertyOf(setOf(MEMBER, COMPOSITE), "properties", "Map", listOf("String", "AsmElementProperty"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "properties", "Map") {
+                        typeArgument("String")
+                        typeArgument("AsmElementProperty")
+                    }
                 }
                 dataType("AsmElementProperty") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "childIndex", "Int")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "Any")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isReference", "Boolean")
                 }
                 dataType("AsmElementReference") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reference", "String")
@@ -522,7 +569,7 @@ object AglWorkerSerialisation {
                 enumType("OverrideKind", listOf())
             }
             namespace("net.akehurst.language.agl.grammar.grammar",
-                imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.agl.syntaxAnalyser")
+                imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.agl.semanticAnalyser")
             ) {
                 dataType("AglGrammarGrammar") {
                     supertypes("GrammarAbstract")
@@ -625,8 +672,8 @@ object AglWorkerSerialisation {
                 }
                 dataType("NonTerminalDefault") {
                     supertypes("RuleItemAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "targetGrammar", "GrammarReference", emptyList(), true)
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-//                        reference("owningRule", "Rule")
                 }
                 dataType("TerminalDefault") {
                     supertypes("RuleItemAbstract")
@@ -665,7 +712,7 @@ object AglWorkerSerialisation {
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "root", "CN", emptyList(), true)
                     propertyOf(setOf(MEMBER, COMPOSITE), "initialSkip", "TreeDataComplete", listOf("CN"), true)
-                    propertyOf(setOf(MEMBER, COMPOSITE), "completeChildren", "Map", emptyList(), false) {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "completeChildren", "Map") {
                         typeArgument("CN")
                         typeArgument("Map") {
                             typeArgument("Int")

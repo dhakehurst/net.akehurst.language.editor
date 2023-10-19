@@ -70,6 +70,9 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                 }
             } else {
                 this.log(LogLevel.Error, "Failed to create processor ${message.message}", null)
+                message.issues.forEach {
+                    this.log(LogLevel.Error, " Issue - ${it}", null)
+                }
             }
         } else {
             //ignore because message no longer relevant

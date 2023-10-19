@@ -18,7 +18,6 @@ package net.akehurst.language.editor.api
 
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.processor.SentenceContext
 
 
 enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, All }

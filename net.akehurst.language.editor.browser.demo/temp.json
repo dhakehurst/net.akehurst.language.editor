@@ -1,1 +1,11 @@
-{"$type":"$OBJECT","$class":"net.akehurst.language.editor.common.messages.MessageProcessorCreate","languageId":"language-user","editorId":"editor-sentence","sessionId":"session1","grammarStr":null,"scopeModelStr":null}
+KompositeException: Unable to construct GrammarTypeNamespaceFromGrammar from [net.akehurst.language.xml.Xml, [std]] due to collection.isEmpty_y1axqb_k$ is not a function
+at captureStack (webpack-internal:///./kotlin/kotlin-kotlin-stdlib.mjs:12758:11)
+at KompositeException.new_net_akehurst_kotlin_komposite_api_KompositeException_g8vfdh_k$ (webpack-internal:///./kotlin/net.akehurst.kotlin.komposite-komposite-api.mjs:48:66)
+at KompositeException.new_net_akehurst_kotlin_komposite_api_KompositeException_1pc7qp_k$ (webpack-internal:///./kotlin/net.akehurst.kotlin.komposite-komposite-api.mjs:56:22)
+at construct (webpack-internal:///./kotlin/net.akehurst.kotlin.komposite-komposite-common.mjs:799:93)
+at convertObject2Object (webpack-internal:///./kotlin/net.akehurst.kotlin.kserialisation-kserialisation-json.mjs:753:99)
+at convertObject (webpack-internal:///./kotlin/net.akehurst.kotlin.kserialisation-kserialisation-json.mjs:600:17)
+at convertValue (webpack-internal:///./kotlin/net.akehurst.kotlin.kserialisation-kserialisation-json.mjs:344:21)
+at convertMap (webpack-internal:///./kotlin/net.akehurst.kotlin.kserialisation-kserialisation-json.mjs:852:17)
+at convertObject (webpack-internal:///./kotlin/net.akehurst.kotlin.kserialisation-kserialisation-json.mjs:597:17)
+at convertValue (webpack-internal:///./kotlin/net.akehurst.kotlin.kserialisation-kserialisation-json.mjs:344:21)

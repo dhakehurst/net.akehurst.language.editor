@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 
 plugins {
     kotlin("multiplatform") version ("1.9.10") apply false
-    id("org.jetbrains.dokka") version ("1.8.20") apply false
+    id("org.jetbrains.dokka") version ("1.9.0") apply false
     id("com.github.gmazzo.buildconfig") version ("4.1.2") apply false
     id("nu.studer.credentials") version ("3.0")
     id("net.akehurst.kotlin.gradle.plugin.exportPublic") version ("1.9.10") apply false

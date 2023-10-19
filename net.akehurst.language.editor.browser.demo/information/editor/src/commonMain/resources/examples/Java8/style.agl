@@ -1,0 +1,23 @@
+$keyword {
+  foreground: purple;
+  font-style: bold;
+}
+'class' {
+  foreground: purple;
+  font-style: bold;
+}
+CLASS_MODIFIER, FIELD_MODIFIER, METHOD_MODIFIER, CONSTRUCTOR_MODIFIER, INTERFACE_MODIFIER {
+  foreground: darkred;
+  font-style: bold;
+}
+IDENTIFIER {
+  foreground: blue;
+  font-style: italic;
+}
+'{', '}' {
+  foreground: darkgreen;
+}
+Literal {
+  foreground: darkblue;
+  font-style: bold;
+}

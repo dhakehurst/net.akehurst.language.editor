@@ -16,13 +16,17 @@
 package net.akehurst.language.editor.common.serialisation
 
 import net.akehurst.kotlin.json.json
+import net.akehurst.language.agl.default.GrammarTypeNamespaceFromGrammar
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
+import net.akehurst.language.agl.grammar.scopes.ScopeModelAgl
 import net.akehurst.language.agl.grammarTypeModel.grammarTypeModel
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
+import net.akehurst.language.agl.semanticAnalyser.ContextSimple
+import net.akehurst.language.agl.semanticAnalyser.ScopeSimple
 import net.akehurst.language.agl.sppt.TreeDataComplete
-import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
+import net.akehurst.language.api.asm.AsmElementPath
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.grammar.Grammar
@@ -37,6 +41,7 @@ import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class test_AglWorkerSerialisation {
 
@@ -55,10 +60,11 @@ class test_AglWorkerSerialisation {
                     identify Elem2 by id
                 }
                 references {
-                    in Elem2 property ref refers-to Elem2
+                    in Elem2 { property ref refers-to Elem2 }
                 }
             """.trimIndent()
         )
+        assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
         val context = ContextSimple()
         val asm = asmSimple(result.asm!!, context) {
             element("Root") {
@@ -447,10 +453,11 @@ class test_AglWorkerSerialisation {
                     identify Elem2 by id
                 }
                 references {
-                    in Elem2 property ref refers-to Elem2
+                    in Elem2 { property ref refers-to Elem2 }
                 }
             """.trimIndent()
         )
+        assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
         val context = ContextSimple()
         val expected = asmSimple(result.asm!!, context) {
             element("Root") {
@@ -692,7 +699,6 @@ class test_AglWorkerSerialisation {
                         objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
                             property("grammar") { reference("/") }
                             property("name", "rule1")
-                            property("isOverride", false)
                             property("isSkip", false)
                             property("isLeaf", false)
                             property("rhs") {
@@ -1002,6 +1008,20 @@ class test_AglWorkerSerialisation {
         }
 
         assertEquals(expected.asString(), actual.asString())
+    }
+
+    @Test
+    fun ScopeSimple_serialise_deserialise() {
+        val scope = ScopeSimple<AsmElementPath>(null, "", ScopeModelAgl.ROOT_SCOPE_TYPE_NAME)
+        scope.addToScope("a1", "A", AsmElementPath("/a1"))
+        scope.addToScope("a2", "A", AsmElementPath("/a2"))
+        val cs = scope.createOrGetChildScope("b", "B", AsmElementPath("/a1/b"))
+        cs.addToScope("c1", "C", AsmElementPath("/a1/b/c1"))
+
+        val jsonStr = AglWorkerSerialisation.serialise(scope)
+        val scopeResult = AglWorkerSerialisation.deserialise<ScopeSimple<*>>(jsonStr)
+
+        assertEquals(scope, scopeResult)
     }
 
     // --- MessageProcessorCreate ---
@@ -1472,6 +1492,8 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun MessageProcessRequest_com_ContextFromTypeModel() {
+        val zzz = GrammarTypeNamespaceFromGrammar("qname", listOf("lib1", "lib2"))
+
         val result = Agl.registry.agl.scopes.processor!!.process(
             sentence = """
                 identify Elem by id
@@ -1492,8 +1514,8 @@ class test_AglWorkerSerialisation {
                 }
             """
         ).asm!!.first()
-        val context = ContextFromTypeModel()
-        context.createScopeFrom(grammar.qualifiedName, TypeModelFromGrammar.create(grammar))
+        val context = ContextFromTypeModel(grammar.qualifiedName, TypeModelFromGrammar.create(grammar))
+        //context.createScopeFrom(grammar.qualifiedName, TypeModelFromGrammar.create(grammar))
         val expected = MessageProcessRequest(
             "testLang", "tesEditor", "testSession",
             "rule1",

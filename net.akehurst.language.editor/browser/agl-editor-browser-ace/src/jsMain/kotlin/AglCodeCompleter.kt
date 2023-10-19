@@ -18,6 +18,7 @@ package net.akehurst.language.editor.browser.ace
 
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglWorkerClient
@@ -37,10 +38,21 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
         val posn = session.getDocument().positionToIndex(pos, 0)
         val wordList = this.getCompletionItems(editor, posn)
         val aceCi = wordList.map { ci ->
+            val m = when (ci.kind) {
+                CompletionItemKind.LITERAL -> ""
+                CompletionItemKind.PATTERN -> "(${ci.name})"
+                CompletionItemKind.SEGMENT -> "(${ci.name})"
+            }
+            val s = when (ci.kind) {
+                CompletionItemKind.LITERAL -> 3
+                CompletionItemKind.PATTERN -> 2
+                CompletionItemKind.SEGMENT -> 1
+            }
             objectJS {
                 caption = ci.text
                 value = ci.text
-                meta = "(${ci.name})"
+                meta = m
+                score = s
             }
         }.toTypedArray()
         callback(null, aceCi)
