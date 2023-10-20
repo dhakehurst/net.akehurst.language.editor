@@ -562,26 +562,22 @@ class Demo(
         styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
         referencesEditor.editorSpecificStyleStr = Agl.registry.agl.scopes.styleStr
 
-        val styleContext = ContextFromGrammar()
-
         grammarEditor.onSemanticAnalysis { event ->
             when (event.status) {
                 EventStatus.START -> Unit
 
                 EventStatus.FAILURE -> {
-                    styleContext.clear()
+                    styleEditor.sentenceContext?.clear()
                     referencesEditor.sentenceContext?.clear()
                     logger.logError(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
 
                 EventStatus.SUCCESS -> {
-                    styleContext.clear()
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
                     val firstGrammar = grammars.first()
-                    styleContext.createScopeFrom(grammars)
-                    val scopeContext = ContextFromTypeModel(firstGrammar.qualifiedName, TypeModelFromGrammar.create(firstGrammar))
-                    referencesEditor.sentenceContext = scopeContext
+                    styleEditor.sentenceContext = ContextFromGrammar.createContextFrom(grammars)
+                    referencesEditor.sentenceContext = ContextFromTypeModel(firstGrammar.qualifiedName, TypeModelFromGrammar.create(firstGrammar))
                     try {
                         logger.logDebug(" Grammar parse success")
                         if (doUpdate) {
@@ -595,7 +591,6 @@ class Demo(
                 }
             }
 
-            styleEditor.sentenceContext = styleContext
         }
         styleEditor.onSemanticAnalysis { event ->
             when (event.status) {

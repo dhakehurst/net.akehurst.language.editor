@@ -20,6 +20,7 @@ import net.akehurst.language.agl.default.GrammarTypeNamespaceFromGrammar
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
 import net.akehurst.language.agl.grammar.scopes.ScopeModelAgl
+import net.akehurst.language.agl.grammarTypeModel.GrammarTypeNamespaceSimple
 import net.akehurst.language.agl.grammarTypeModel.grammarTypeModel
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
@@ -1183,7 +1184,7 @@ class test_AglWorkerSerialisation {
             }
         """
         val grammar = Agl.registry.agl.grammar.processor!!.process(grammarStr).asm!!.first()
-        val context = ContextFromGrammar(grammar)
+        val context = ContextFromGrammar.createContextFrom(listOf(grammar))
         val expected = MessageProcessRequest(
             languageId, editorId, sessionId,
             "rule1",
@@ -1492,8 +1493,6 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun MessageProcessRequest_com_ContextFromTypeModel() {
-        val zzz = GrammarTypeNamespaceFromGrammar("qname", listOf("lib1", "lib2"))
-
         val result = Agl.registry.agl.scopes.processor!!.process(
             sentence = """
                 identify Elem by id

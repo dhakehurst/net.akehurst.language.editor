@@ -1,11 +1,11 @@
-        primitive String
-        //primitive Date
-        collection List<E>
-        class Person {
-            name: String
-            dob: Date
-            friends: List<Person>
-        }
-        class class {
-            prop: String
-        }
+primitive String
+//primitive Date
+collection List<E>
+class Person {
+    name: String
+    dob: Date
+    friends: List<Person>
+}
+class class {
+    prop: String
+}
