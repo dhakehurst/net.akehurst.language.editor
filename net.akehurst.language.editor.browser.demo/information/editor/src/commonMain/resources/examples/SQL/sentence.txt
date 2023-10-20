@@ -1,6 +1,6 @@
 CREATE TABLE table (
     col1 int,
-    col2 int,
+//    col2 int,            // ** uncomment this line to fix errors
     col3 varchar(255)
 );
 

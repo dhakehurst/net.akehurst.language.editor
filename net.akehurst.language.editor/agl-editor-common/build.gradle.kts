@@ -28,7 +28,7 @@ kotlinxReflect {
         "net.akehurst.language.editor.common",
         "net.akehurst.language.editor.common.messages",
 
-        "net.akehurst.language.api.typemodel",
+        "net.akehurst.language.typemodel.api",
         "net.akehurst.language.api.automaton",
         "net.akehurst.language.api.asm",
         "net.akehurst.language.api.parser",

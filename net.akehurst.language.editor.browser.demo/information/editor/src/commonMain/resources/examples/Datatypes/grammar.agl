@@ -2,7 +2,8 @@ namespace test
 
 grammar Test {
     skip leaf WS = "\s+" ;
-    skip leaf COMMENT = "//[^\n]*(\n)" ;
+    skip leaf COMMENT_SINGLE_LINE = "//[^\r\n]*" ;
+    skip leaf COMMENT_MULTI_LINE = "/\*[^*]*\*+([^*/][^*]*\*+)*/" ;
 
     unit = declaration* ;
     declaration = datatype | primitive | collection ;

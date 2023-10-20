@@ -1,5 +1,5 @@
 primitive String
-//primitive Date
+//primitive Date    // ** uncomment this line to fix errors
 collection List<E>
 class Person {
     name: String

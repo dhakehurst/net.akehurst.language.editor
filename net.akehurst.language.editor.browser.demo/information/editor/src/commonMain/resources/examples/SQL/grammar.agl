@@ -2,6 +2,8 @@ namespace net.akehurst.language
 
 grammar SQL {
     skip WS = "\s+" ;
+    skip leaf COMMENT_SINGLE_LINE = "//[^\r\n]*" ;
+    skip leaf COMMENT_MULTI_LINE = "/\*[^*]*\*+([^*/][^*]*\*+)*/" ;
 
     statementList = terminatedStatement+ ;
 

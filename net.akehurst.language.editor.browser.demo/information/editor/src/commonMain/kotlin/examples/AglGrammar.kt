@@ -52,7 +52,14 @@ grammar Test extends Common {
     val grammar = Agl.registry.agl.grammar.grammarStr!!
 
     val references = """
-    """.trimIndent()
+identify GrammarRule by identifier
+
+references {
+    in NonTerminal {
+       property qualifiedName refers-to GrammarRule
+    }
+}
+""".trimIndent()
 
     val style = Agl.registry.agl.grammar.styleStr!!
     val format = """

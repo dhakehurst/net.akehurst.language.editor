@@ -124,7 +124,7 @@ object AglWorkerSerialisation {
             }
             namespace(
                 "net.akehurst.language.typemodel.simple",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.api.typemodel")
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typemodel.api")
             )
             {
                 dataType("SimpleTypeModelStdLib") {
@@ -249,9 +249,8 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "characteristics", "Set") { typeArgument("PropertyCharacteristic") }
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "index", "Int")
                 }
-                enumType("PropertyCharacteristic", listOf())
             }
-            namespace("net.akehurst.language.api.typemodel", imports = mutableListOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.typemodel.api", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("TypeModel") { }
                 dataType("TypeNamespace") {}
                 dataType("TypeInstance") {}
@@ -527,7 +526,7 @@ object AglWorkerSerialisation {
                 }
                 dataType("ContextFromTypeModel") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "targetNamespaceQualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeModel", "net.akehurst.language.api.typemodel.TypeModel")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeModel", "net.akehurst.language.typemodel.api.TypeModel")
                 }
             }
             namespace("net.akehurst.language.api.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
