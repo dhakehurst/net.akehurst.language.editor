@@ -93,8 +93,8 @@ tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserDistribution")
 
 val pythonServerDev = tasks.register<Exec>("pythonServerDev") {
     group ="kotlin browser"
-    dependsOn("jsBrowserDevelopmentWebpack")
-    workingDir("$buildDir/developmentExecutable")
+    dependsOn("jsBrowserDevelopmentExecutableDistribution")
+    workingDir("$buildDir/dist/js/developmentExecutable")
     commandLine("python3", "-m", "http.server")
 }
 val pythonServerProd = tasks.register<Exec>("pythonServerProd") {

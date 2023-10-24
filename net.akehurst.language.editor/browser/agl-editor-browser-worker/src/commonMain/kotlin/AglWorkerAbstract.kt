@@ -44,20 +44,20 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     }
 
     protected open fun createLanguageDefinition(languageId: String, grammarStr: String?, scopeModelStr: String?): LanguageDefinition<AsmType, ContextType> {
-        val ld = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
-            identity = languageId,
-            aglOptions = Agl.options {
-                semanticAnalysis {
-                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
-                }
-            },
-            //TODO: how to use configurationDefault ? - needed once completion-provider moved to worker
-            configuration = Agl.configurationEmpty() //use if placeholder created, not found
-        )
-        if (ld.isModifiable) {
-            configureLanguageDefinition(ld, grammarStr, scopeModelStr)
-        }
-        return ld
+            val ld = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
+                identity = languageId,
+                aglOptions = Agl.options {
+                    semanticAnalysis {
+                        option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+                    }
+                },
+                //TODO: how to use configurationDefault ? - needed once completion-provider moved to worker
+                configuration = Agl.configurationEmpty() //use if placeholder created, not found
+            )
+            if (ld.isModifiable) {
+                configureLanguageDefinition(ld, grammarStr, scopeModelStr)
+            }
+            return ld
     }
 
     protected fun receiveAglWorkerMessage(port: Any, msg: AglWorkerMessage) {
@@ -73,7 +73,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     }
 
     protected fun createProcessor(port: Any, message: MessageProcessorCreate) {
-        if (message.grammarStr.isNullOrBlank()) {
+        if (message.grammarStr.isBlank()) {
             MessageProcessorCreateResponse(message.languageId, message.editorId, message.sessionId, MessageStatus.FAILURE, "Cannot createProcessor if there is no grammar", emptyList())
         } else {
             try {

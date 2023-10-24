@@ -1,9 +1,11 @@
-identify Primitive by id
-identify Datatype by id
-identify Collection by id
+namespace test.Test {
+    identify Primitive by id
+    identify Datatype by id
+    identify Collection by id
 
-references {
-    in TypeReference {
-        property type refers-to Primitive|Datatype|Collection
+    references {
+        in TypeReference {
+            property type refers-to Primitive|Datatype|Collection
+        }
     }
 }

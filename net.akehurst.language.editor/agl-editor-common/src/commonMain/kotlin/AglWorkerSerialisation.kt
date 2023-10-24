@@ -224,7 +224,7 @@ object AglWorkerSerialisation {
                 dataType("TupleTypeSimple") {
                     supertypes("StructuredTypeSimpleAbstract", "TupleType")
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "id", "Int")
                 }
                 dataType("DataTypeSimple") {
                     supertypes("StructuredTypeSimpleAbstract", "DataType")
@@ -324,40 +324,48 @@ object AglWorkerSerialisation {
                     supertypes("GrammarAbstract")
                 }
                 dataType("ScopeModelAgl") {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "declarationsForNamespace", "Map") {
+                        typeArgument("String")
+                        typeArgument("DeclarationsForNamespaceDefault")
+                    }
+                }
+                dataType("DeclarationsForNamespaceDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
+
                     propertyOf(setOf(MEMBER, COMPOSITE), "scopes", "Map") {
                         typeArgument("String")
-                        typeArgument("ScopeDefinition")
+                        typeArgument("ScopeDefinitionDefault")
                     }
-                    propertyOf(setOf(MEMBER, COMPOSITE), "references", "List", listOf("ReferenceDefinition"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "references", "List", listOf("ReferenceDefinitionDefault"))
                 }
-                dataType("ScopeDefinition") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scopeFor", "String")
+                dataType("ScopeDefinitionDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scopeForTypeName", "String")
 
-                    propertyOf(setOf(MEMBER, COMPOSITE), "identifiables", "List", listOf("Identifiable"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "identifiables", "List", listOf("IdentifiableDefault"))
                 }
-                dataType("Identifiable") {
+                dataType("IdentifiableDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "propertyName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "identifiedBy", "String")
                 }
-                dataType("ReferenceDefinition") {
+                dataType("ReferenceDefinitionDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "inTypeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referenceExpressionList", "List") { typeArgument("ReferenceExpression") }
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referenceExpressionList", "List") { typeArgument("ReferenceExpressionAbstract") }
                 }
-                dataType("ReferenceExpression") {
+                dataType("ReferenceExpressionAbstract") {
 
                 }
-                dataType("PropertyReferenceExpression") {
-                    supertypes("ReferenceExpression")
+                dataType("PropertyReferenceExpressionDefault") {
+                    supertypes("ReferenceExpressionAbstract")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referringPropertyNavigation", "Navigation")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "refersToTypeName", "List", listOf("String"))
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "fromNavigation", "Navigation", emptyList(), true)
                 }
-                dataType("CollectionReferenceExpression") {
-                    supertypes("ReferenceExpression")
+                dataType("CollectionReferenceExpressionDefault") {
+                    supertypes("ReferenceExpressionAbstract")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "navigation", "Navigation")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referenceExpressionList", "List") { typeArgument("ReferenceExpression") }
                 }
-                dataType("Navigation") {
+                dataType("NavigationDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "List", listOf("String"))
                 }
             }

@@ -40,6 +40,7 @@ import net.akehurst.language.editor.common.AglWorkerSerialisation
 import net.akehurst.language.editor.common.messages.*
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
+import net.akehurst.language.typemodel.simple.SimpleTypeModelStdLib
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -56,12 +57,14 @@ class test_AglWorkerSerialisation {
     fun AsmSimple_toJsonDocument() {
         val result = Agl.registry.agl.scopes.processor!!.process(
             sentence = """
-                identify Root by §nothing
-                scope Root {
-                    identify Elem2 by id
-                }
-                references {
-                    in Elem2 { property ref refers-to Elem2 }
+                namespace test {
+                    identify Root by §nothing
+                    scope Root {
+                        identify Elem2 by id
+                    }
+                    references {
+                        in Elem2 { property ref refers-to Elem2 }
+                    }
                 }
             """.trimIndent()
         )
@@ -449,12 +452,14 @@ class test_AglWorkerSerialisation {
 
         val result = Agl.registry.agl.scopes.processor!!.process(
             sentence = """
-                identify Root by §nothing
-                scope Root {
-                    identify Elem2 by id
-                }
-                references {
-                    in Elem2 { property ref refers-to Elem2 }
+                namespace test {
+                    identify Root by §nothing
+                    scope Root {
+                        identify Elem2 by id
+                    }
+                    references {
+                        in Elem2 { property ref refers-to Elem2 }
+                    }
                 }
             """.trimIndent()
         )
@@ -739,6 +744,27 @@ class test_AglWorkerSerialisation {
             assertEquals(e.name, a.name)
             //TODO
         }
+    }
+
+    @Test
+    fun tupleType_com() {
+        val tm = typeModel("test", true, listOf(SimpleTypeModelStdLib)) {
+            namespace("test", listOf("std")) {
+                dataType("DT") {
+                    propertyTupleType("tt",false, 0) {
+                        propertyPrimitiveType("a","String",false,0)
+                    }
+                }
+            }
+        }
+
+        val actual = AglWorkerSerialisation.toJsonDocument(tm)
+        val jsonStr = actual.toStringJson()
+        val result:TypeModel = AglWorkerSerialisation.deserialise(jsonStr)
+        result.resolveImports()
+
+        assertEquals(tm.asString(), result.asString())
+
     }
 
     @Test

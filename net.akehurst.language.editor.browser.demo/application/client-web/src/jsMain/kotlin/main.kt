@@ -396,6 +396,7 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
 fun initialiseExamples() {
     CoroutineScope(SupervisorJob()).asyncImmediately {
         val resources = localVfs(resourcesPath).jail()
+        Examples.add(BasicTutorial.example)
         Examples.add(example(resources, "Datatypes", "Datatype", "examples/Datatypes"))
         Examples.add(example(resources, "KerML_2-agl", "KerML v2 (Agl grammar)", "examples/KerML_2_Agl"))
         Examples.add(KerML_Std.example(resources))
@@ -575,9 +576,9 @@ class Demo(
 
                 EventStatus.SUCCESS -> {
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
-                    val firstGrammar = grammars.first()
+                    val lastGrammar = grammars.last()
                     styleEditor.sentenceContext = ContextFromGrammar.createContextFrom(grammars)
-                    referencesEditor.sentenceContext = ContextFromTypeModel(firstGrammar.qualifiedName, TypeModelFromGrammar.create(firstGrammar))
+                    referencesEditor.sentenceContext = ContextFromTypeModel(lastGrammar.qualifiedName, TypeModelFromGrammar.create(lastGrammar))
                     try {
                         logger.logDebug(" Grammar parse success")
                         if (doUpdate) {
@@ -899,7 +900,7 @@ class Demo(
 
         // select initial example
         loading(true, true)
-        val eg = Xml.example// Examples.map["Datatypes"]!!
+        val eg = BasicTutorial.example// Examples.map["BasicTutorial"]!!
         (exampleSelect as HTMLSelectElement).value = eg.id
         setExample(eg)
     }

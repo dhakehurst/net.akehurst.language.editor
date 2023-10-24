@@ -450,7 +450,7 @@ grammar Meta extends Containers, Classifiers, Features {
 
 grammar KerML extends Meta, Behaviors, Connectors {
 
-    @defaultRule: RootNamespace
+    @defaultGoalRule: RootNamespace
 
     RootNamespace = NamespaceBodyElement* ;
 
