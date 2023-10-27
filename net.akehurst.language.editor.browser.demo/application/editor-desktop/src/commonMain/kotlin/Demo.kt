@@ -17,25 +17,22 @@
 package demo
 
 import korlibs.io.async.asyncImmediately
-import korlibs.io.file.std.resourcesVfs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import net.akehurst.language.agl.default.TypeModelFromGrammar
-import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
-import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
+import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
+import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
-import net.akehurst.language.api.analyser.ScopeModel
-import net.akehurst.language.api.asm.*
-import net.akehurst.language.api.grammar.Grammar
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
+import net.akehurst.language.agl.semanticAnalyser.ContextSimple
+import net.akehurst.language.api.asm.AsmSimple
+import net.akehurst.language.api.language.grammar.Grammar
+import net.akehurst.language.api.semanticAnalyser.ScopeModel
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.api.LogLevel
-import net.akehurst.language.editor.information.Examples
-import net.akehurst.language.editor.information.examples.*
 
 
 //external var aglScriptBasePath: dynamic = definedExternally
@@ -253,7 +250,7 @@ fun createBaseDom(appDivSelector: String) {
 */
 fun initialiseExamples() {
     CoroutineScope(SupervisorJob()).asyncImmediately {
-        Examples.add(Datatypes.example)
+/*        Examples.add(Datatypes.example)
         Examples.add(SQL.example)
         Examples.add(GraphvizDot.example(resourcesVfs))
         Examples.add(SText.example)
@@ -262,6 +259,7 @@ fun initialiseExamples() {
         Examples.add(TraceabilityQuery.example)
         Examples.add(MScript.example(resourcesVfs))
         Examples.add(Xml.example)
+ */
     }.invokeOnCompletion {
 //        val exampleSelect = document.querySelector("select#example") as HTMLElement
 //        Examples.map.forEach { eg ->
@@ -357,8 +355,7 @@ class Demo(
         styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
         referencesEditor.editorSpecificStyleStr = Agl.registry.agl.scopes.styleStr
 
-        val styleContext = ContextFromGrammar()
-        val scopeContext = ContextFromTypeModel()
+
         //var sentenceScopeModel: ScopeModel? = null
 
         grammarEditor.onSemanticAnalysis { event ->
@@ -366,19 +363,19 @@ class Demo(
                 EventStatus.START -> Unit
 
                 EventStatus.FAILURE -> {
-                    styleContext.clear()
-                    scopeContext.clear()
+                    referencesEditor.sentenceContext = null
+                    styleEditor.sentenceContext = null
                     logger.logError(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
 
                 EventStatus.SUCCESS -> {
-                    styleContext.clear()
-                    scopeContext.clear()
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
                     val firstGrammar = grammars.first()
-                    styleContext.createScopeFrom(grammars)
-                    scopeContext.createScopeFrom(firstGrammar.qualifiedName, TypeModelFromGrammar.create(firstGrammar))
+                    val styleContext = ContextFromGrammar()
+                    val scopeContext = ContextFromTypeModel(TypeModelFromGrammar.create(firstGrammar))
+                    referencesEditor.sentenceContext = scopeContext
+                    styleEditor.sentenceContext = styleContext
                     try {
                         logger.logDebug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
@@ -388,8 +385,7 @@ class Demo(
                     }
                 }
             }
-            referencesEditor.sentenceContext = scopeContext
-            styleEditor.sentenceContext = styleContext
+
         }
 
         styleEditor.onSemanticAnalysis { event ->

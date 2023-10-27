@@ -52,11 +52,21 @@ grammar Test extends Common {
     val grammar = Agl.registry.agl.grammar.grammarStr!!
 
     val references = """
-identify GrammarRule by identifier
-
-references {
-    in NonTerminal {
-       property qualifiedName refers-to GrammarRule
+namespace net.akehurst.language.agl.AglGrammar {
+    identify Namespace by qualifiedName
+    identify Grammar by qualifiedName
+    scope Namespace {
+        identify Grammar by name
+    }
+    scope Grammar {
+        identify GrammarRule by identifier
+    }
+    
+    references {
+        in NonTerminal {
+            property qualifiedName.front.join refers-to Grammar
+            property qualifiedName.last refers-to GrammarRule from qualifiedName.front
+        }
     }
 }
 """.trimIndent()

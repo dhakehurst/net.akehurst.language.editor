@@ -33,8 +33,8 @@ import monaco.languages.ILanguageExtensionPoint
 import monaco.languages.TokensProvider
 import net.akehurst.kotlin.html5.create
 import net.akehurst.language.agl.default.TypeModelFromGrammar
-import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
-import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
+import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
+import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
@@ -42,8 +42,8 @@ import net.akehurst.language.api.asm.AsmElementProperty
 import net.akehurst.language.api.asm.AsmElementReference
 import net.akehurst.language.api.asm.AsmElementSimple
 import net.akehurst.language.api.asm.AsmSimple
-import net.akehurst.language.api.grammar.Grammar
 import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
+import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.semanticAnalyser.ScopeModel
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
@@ -576,9 +576,8 @@ class Demo(
 
                 EventStatus.SUCCESS -> {
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
-                    val lastGrammar = grammars.last()
                     styleEditor.sentenceContext = ContextFromGrammar.createContextFrom(grammars)
-                    referencesEditor.sentenceContext = ContextFromTypeModel(lastGrammar.qualifiedName, TypeModelFromGrammar.create(lastGrammar))
+                    referencesEditor.sentenceContext = ContextFromTypeModel(TypeModelFromGrammar.createFromGrammarList(grammars))
                     try {
                         logger.logDebug(" Grammar parse success")
                         if (doUpdate) {
@@ -665,7 +664,7 @@ class Demo(
                         }
                     }
 
-                    is Map.Entry<String, TypeDefinition> -> {
+                    is Map.Entry<String, TypeDeclaration> -> {
                         val type = it.value
                         val typeName = it.key
                         when (type) {
@@ -698,7 +697,7 @@ class Demo(
                         }
                     }
 
-                    is Map.Entry<String, TypeDefinition> -> when (it.value) {
+                    is Map.Entry<String, TypeDeclaration> -> when (it.value) {
                         is StructuredType -> (it.value as StructuredType).property.isNotEmpty()
                         else -> false
                     }
@@ -722,7 +721,7 @@ class Demo(
                         }
                     }
 
-                    is Map.Entry<String, TypeDefinition> -> when (it.value) {
+                    is Map.Entry<String, TypeDeclaration> -> when (it.value) {
                         is StructuredType -> (it.value as StructuredType).property.values.toTypedArray()
                         else -> emptyArray<Any>()
                     }

@@ -17,13 +17,12 @@
 package net.akehurst.language.editor.worker
 
 import net.akehurst.kotlin.json.JsonString
-import net.akehurst.language.agl.grammar.grammar.AglGrammarSemanticAnalyser
+import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageProcessor
 import net.akehurst.language.api.processor.LanguageProcessorConfiguration
-import net.akehurst.language.api.sppt.SPPTNode
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.messages.*

@@ -18,7 +18,6 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
-import net.akehurst.language.api.grammar.GrammarReference
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
 
@@ -131,10 +130,10 @@ object AglWorkerSerialisation {
                     supertypes("TypeNamespaceAbstract")
                 }
                 dataType("TypeModelSimple") {
-                    supertypes("TypeModelAbstract")
+                    supertypes("TypeModelSimpleAbstract")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
                 }
-                dataType("TypeModelAbstract") {
+                dataType("TypeModelSimpleAbstract") {
                     supertypes("TypeModel")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
 
@@ -176,7 +175,7 @@ object AglWorkerSerialisation {
 
                     propertyOf(setOf(MEMBER, COMPOSITE), "allTypesByName", "Map") {
                         typeArgument("String")
-                        typeArgument("TypeDefinition")
+                        typeArgument("TypeDeclaration")
                     }
                 }
                 dataType("TypeNamespaceSimple") {
@@ -185,7 +184,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
                 }
                 dataType("TypeDefinitionSimpleAbstract") {
-                    supertypes("TypeDefinition")
+                    supertypes("TypeDeclaration")
                     propertyOf(setOf(MEMBER, COMPOSITE), "typeParameters", "List") { typeArgument("String") }
                 }
                 dataType("SpecialTypeSimple") {
@@ -254,15 +253,15 @@ object AglWorkerSerialisation {
                 dataType("TypeModel") { }
                 dataType("TypeNamespace") {}
                 dataType("TypeInstance") {}
-                dataType("TypeDefinition") {}
+                dataType("TypeDeclaration") {}
                 dataType("PrimitiveType") {
-                    supertypes("TypeDefinition")
+                    supertypes("TypeDeclaration")
                 }
                 dataType("EnumType") {
-                    supertypes("TypeDefinition")
+                    supertypes("TypeDeclaration")
                 }
                 dataType("StructuredType") {
-                    supertypes("TypeDefinition")
+                    supertypes("TypeDeclaration")
                 }
                 dataType("TupleType") {
                     supertypes("StructuredType")
@@ -274,10 +273,10 @@ object AglWorkerSerialisation {
                 }
                 enumType("PropertyCharacteristic", listOf())
                 dataType("UnnamedSuperTypeType") {
-                    supertypes("TypeDefinition")
+                    supertypes("TypeDeclaration")
                 }
                 dataType("CollectionType") {
-                    supertypes("TypeDefinition")
+                    supertypes("TypeDeclaration")
                 }
             }
         })
@@ -286,12 +285,14 @@ object AglWorkerSerialisation {
     private fun initialiseStyleAsm() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("StyleAsm", false) {
-            namespace("net.akehurst.language.agl.grammar.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("AglStyleModelDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "rules", "List", listOf("net.akehurst.language.api.style.AglStyleRule"))
-                }
+            namespace("net.akehurst.language.agl.language.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglStyleGrammar") {
                     supertypes("GrammarAbstract")
+                }
+            }
+            namespace("net.akehurst.language.agl.language.style.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                dataType("AglStyleModelDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "rules", "List", listOf("net.akehurst.language.api.style.AglStyleRule"))
                 }
             }
             namespace("net.akehurst.language.api.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
@@ -319,7 +320,7 @@ object AglWorkerSerialisation {
     private fun initialiseScopesAsm() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("ScopesAsm", false) {
-            namespace("net.akehurst.language.agl.grammar.scopes", imports = mutableListOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.language.scopes", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglScopesGrammar") {
                     supertypes("GrammarAbstract")
                 }
@@ -533,7 +534,6 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("E"))
                 }
                 dataType("ContextFromTypeModel") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "targetNamespaceQualifiedName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeModel", "net.akehurst.language.typemodel.api.TypeModel")
                 }
             }
@@ -570,7 +570,7 @@ object AglWorkerSerialisation {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.confgureFromKompositeModel(typeModel("GrammarAsm", false) {
             namespace(
-                "net.akehurst.language.api.grammar",
+                "net.akehurst.language.api.language.grammar",
                 imports = mutableListOf("kotlin", "kotlin.collections")
             ) {
                 dataType("Grammar") {}
@@ -578,7 +578,7 @@ object AglWorkerSerialisation {
                 enumType("OverrideKind", listOf())
             }
             namespace(
-                "net.akehurst.language.agl.grammar.grammar",
+                "net.akehurst.language.agl.language.grammar",
                 imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.semanticAnalyser")
             ) {
                 dataType("AglGrammarGrammar") {
@@ -588,14 +588,14 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
                 }
             }
-            namespace("net.akehurst.language.agl.grammar.format", imports = mutableListOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.agl.language.format", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglFormatGrammar") {
                     supertypes("GrammarAbstract")
                 }
             }
             namespace(
-                "net.akehurst.language.agl.grammar.grammar.asm",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.api.grammar")
+                "net.akehurst.language.agl.language.grammar.asm",
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.api.language.grammar")
             ) {
                 dataType("NamespaceDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
@@ -617,7 +617,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
                 }
                 dataType("GrammarAbstract") {
-                    supertypes("net.akehurst.language.api.grammar.Grammar")
+                    supertypes("Grammar")
 
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "NamespaceDefault")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
@@ -647,7 +647,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(MEMBER, COMPOSITE), "overridenRhs", "RuleItemAbstract")
                 }
                 dataType("RuleItemAbstract") {
-                    supertypes("net.akehurst.language.api.grammar.RuleItem")
+                    supertypes("RuleItem")
                 }
                 dataType("EmptyRuleDefault") {
                     supertypes("RuleItemAbstract")
@@ -657,19 +657,19 @@ object AglWorkerSerialisation {
                 }
                 dataType("ChoiceLongestDefault") {
                     supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("net.akehurst.language.api.grammar.RuleItem"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("RuleItem"))
                 }
                 dataType("ChoicePriorityDefault") {
                     supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("net.akehurst.language.api.grammar.RuleItem"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("RuleItem"))
                 }
                 dataType("ChoiceAmbiguousDefault") {
                     supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("net.akehurst.language.api.grammar.RuleItem"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("RuleItem"))
                 }
                 dataType("ConcatenationDefault") {
                     supertypes("RuleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "items", "List", listOf("net.akehurst.language.api.grammar.RuleItem"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "items", "List", listOf("RuleItem"))
                 }
                 dataType("ConcatenationItemAbstract") {
                     supertypes("RuleItemAbstract")
@@ -679,7 +679,7 @@ object AglWorkerSerialisation {
                 }
                 dataType("GroupDefault") {
                     supertypes("ConcatenationItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "groupedContent", "net.akehurst.language.api.grammar.RuleItem")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "groupedContent", "RuleItem")
                 }
                 dataType("NonTerminalDefault") {
                     supertypes("RuleItemAbstract")
@@ -709,7 +709,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "item", "SimpleItemAbstract")
                 }
                 dataType("OptionalItemDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "item", "net.akehurst.language.api.grammar.RuleItem")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "item", "RuleItem")
                 }
             }
         })
@@ -735,6 +735,11 @@ object AglWorkerSerialisation {
                 }
             }
         })
+    }
+
+    fun check() {
+        val issues = serialiser.registry.checkPublicAndReflectable()
+        check(issues.isEmpty()) { issues.joinToString(separator = "\n") }
     }
 
     fun confgureFromKompositeString(datatypeModel: String) {

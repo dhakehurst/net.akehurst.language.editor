@@ -16,12 +16,10 @@
 package net.akehurst.language.editor.common.serialisation
 
 import net.akehurst.kotlin.json.json
-import net.akehurst.language.agl.default.GrammarTypeNamespaceFromGrammar
 import net.akehurst.language.agl.default.TypeModelFromGrammar
-import net.akehurst.language.agl.grammar.grammar.ContextFromGrammar
-import net.akehurst.language.agl.grammar.scopes.ScopeModelAgl
-import net.akehurst.language.agl.grammarTypeModel.GrammarTypeNamespaceSimple
 import net.akehurst.language.agl.grammarTypeModel.grammarTypeModel
+import net.akehurst.language.agl.language.grammar.ContextFromGrammar
+import net.akehurst.language.agl.language.scopes.ScopeModelAgl
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
@@ -30,7 +28,7 @@ import net.akehurst.language.agl.sppt.TreeDataComplete
 import net.akehurst.language.api.asm.AsmElementPath
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.asm.asmSimple
-import net.akehurst.language.api.grammar.Grammar
+import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
@@ -41,6 +39,7 @@ import net.akehurst.language.editor.common.messages.*
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
 import net.akehurst.language.typemodel.simple.SimpleTypeModelStdLib
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -51,6 +50,11 @@ class test_AglWorkerSerialisation {
         val languageId = "test-languageId"
         val editorId = "test-editorId"
         val sessionId = "test-sessionId"
+    }
+
+    @BeforeTest
+    fun before() {
+        AglWorkerSerialisation.check()
     }
 
     @Test
@@ -1238,7 +1242,7 @@ class test_AglWorkerSerialisation {
             }
         """
         val proc = Agl.processorFromStringDefault(grammarStr).processor!!
-        val context = ContextFromTypeModel(proc.grammar!!.qualifiedName, proc.typeModel)
+        val context = ContextFromTypeModel(proc.typeModel)
         val expected = MessageProcessRequest(
             languageId, editorId, sessionId,
             "rule1",
@@ -1539,7 +1543,7 @@ class test_AglWorkerSerialisation {
                 }
             """
         ).asm!!.first()
-        val context = ContextFromTypeModel(grammar.qualifiedName, TypeModelFromGrammar.create(grammar))
+        val context = ContextFromTypeModel(TypeModelFromGrammar.create(grammar))
         //context.createScopeFrom(grammar.qualifiedName, TypeModelFromGrammar.create(grammar))
         val expected = MessageProcessRequest(
             "testLang", "tesEditor", "testSession",

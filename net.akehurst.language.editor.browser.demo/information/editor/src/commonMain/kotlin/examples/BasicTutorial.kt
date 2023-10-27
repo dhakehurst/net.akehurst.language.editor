@@ -48,22 +48,22 @@ grammar BasicTutorial {
 
     // the default goal/start rule can be defined explicitly,
     // if not defined, the first non skip rule in the last grammar definition is used.  
-    @defaultGoalRule document
+    @defaultGoalRule: document
 
     // skip rules define text that can appear at any point, such as whitespace and comments
     skip leaf WS = "\s+";
     skip leaf COMMENT = "//[^\r\n]*" ;
     
-    // the default goal is a (possibly empty) list of target definitions,
+    // a document is a (possibly empty) list of target definitions,
     // followed by a list of (at least one) greeting(s).
-    document = targetDefList* greeting+ 
+    document = targetDefList* greeting+ ;
 	greeting = hello greetingTargetList '!' ;
 
     // a greeting target is a list of one or more target references separated by commas (',').
     greetingTargetList = [targetRefOrWorld / ',']+ ;
     
     targetDefList = targetDef ;
-    targetDef = 'target' name ;
+    targetDef = 'target' NAME ;
     leaf hello = 'Hello' ;
     targetRefOrWorld = targetRef | 'World' ;
     targetRef = NAME ;

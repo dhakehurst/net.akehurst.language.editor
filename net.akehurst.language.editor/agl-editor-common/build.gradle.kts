@@ -34,20 +34,22 @@ kotlinxReflect {
         "net.akehurst.language.api.parser",
         "net.akehurst.language.api.processor",
         "net.akehurst.language.api.style",
-        "net.akehurst.language.api.grammar",
+        "net.akehurst.language.api.language.grammar",
         "net.akehurst.language.agl.grammarTypeModel",
         "net.akehurst.language.api.syntaxAnalyser",
         "net.akehurst.language.api.semanticAnalyser",
 
         "net.akehurst.language.typemodel.simple",
         "net.akehurst.language.agl.grammarTypeModel",
-        "net.akehurst.language.agl.grammar.grammar",
-        "net.akehurst.language.agl.grammar.grammar.asm",
         "net.akehurst.language.agl.syntaxAnalyser",
         "net.akehurst.language.agl.semanticAnalyser",
         "net.akehurst.language.agl.sppt",
-        "net.akehurst.language.agl.grammar.scopes",
-        "net.akehurst.language.agl.grammar.style",
+        "net.akehurst.language.agl.language.grammar",
+        "net.akehurst.language.agl.language.grammar.asm",
+        "net.akehurst.language.agl.language.scopes",
+        "net.akehurst.language.agl.language.style",
+        "net.akehurst.language.agl.language.style.asm",
+        "net.akehurst.language.agl.language.format",
         "net.akehurst.language.agl.default"
     ))
 }
