@@ -18,18 +18,27 @@ package net.akehurst.language.editor.information
 
 import korlibs.io.file.VfsFile
 
-suspend fun example(resources: VfsFile, id:String, label:String,dir:String): Example {
-    val grammarStr = resources["${dir}/grammar.agl"].readString()
-    val styleStr = resources["${dir}/style.agl"].readString()
-    val scopes = resources["${dir}/scopes.agl"].readString()
-    val format = resources["${dir}/format.agl"].readString()
-    val sentence = resources["${dir}/sentence.txt"].readString()
-    return Example(id, label, sentence, grammarStr, scopes, styleStr, format)
-}
-
 object Examples {
 
     val map = mutableMapOf<String, Example>()
+
+    suspend fun read(resources: VfsFile, id:String) {
+        suspend fun VfsFile.readStringIfExists() : String? = if(this.exists()) this.readString() else null
+        suspend fun VfsFile.readLinesIfExists() : List<String>? = if(this.exists()) this.readLines().toList() else null
+        val dir = resources["examples"][id]
+        val label = dir["info.txt"].readLinesIfExists()?.get(0)
+        return if (label.isNullOrBlank()) {
+            // do nothing
+        } else {
+            val grammarStr = dir["grammar.agl"].readStringIfExists() ?: ""
+            val styleStr = dir["style.agl"].readStringIfExists() ?: ""
+            val scopes = dir["references.agl"].readStringIfExists() ?: ""
+            val format = dir["format.agl"].readStringIfExists() ?: ""
+            val sentence = dir["sentence.txt"].readStringIfExists() ?: ""
+            val eg = Example(id, label, sentence, grammarStr, scopes, styleStr, format)
+            Examples.add(eg)
+        }
+    }
 
     operator fun get(key: String): Example {
         return this.map[key]!!

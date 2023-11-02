@@ -1,0 +1,15 @@
+${'$'}keyword {
+    foreground: purple;
+    font-style: bold;
+}
+StatechartSpecification {
+    background: #f5f5f1;
+}
+
+StateSpecification {
+    background: #f5f1f5;
+}
+
+TransitionSpecification {
+    background: #f1f5f5;
+}

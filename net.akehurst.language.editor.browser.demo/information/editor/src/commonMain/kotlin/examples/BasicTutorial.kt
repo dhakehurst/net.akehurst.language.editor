@@ -32,8 +32,9 @@ target George
 Hello World !
 Hello Julian !
 Hello Ann !
-Hello George
+Hello George !
     """.trimIndent()
+
     val grammar = """
 // use this editor to enter the grammar for your language
 
@@ -90,7 +91,7 @@ namespace net.akehurst.language.example.BasicTutorial {
         // in every greeting, each target, that is a reference, refers to a target definition
         in Greeting {
             forall greetingTargetList of-type TargetRef {
-                property targetRefOrWorld refers-to TargetDef
+                property name refers-to TargetDef
             }
         }
     }
@@ -112,7 +113,7 @@ ${"$"}keyword {
   foreground: blue;
   font-style: bold;
 }
-'hello' {
+hello {
   foreground: green;
   font-style: bold;
 }

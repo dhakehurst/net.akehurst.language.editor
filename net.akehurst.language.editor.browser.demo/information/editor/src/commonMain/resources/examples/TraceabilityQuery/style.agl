@@ -1,0 +1,26 @@
+${'$'}keyword {
+    foreground: green;
+    font-style: bold;
+}
+compositionOperator {
+    foreground: green;
+    font-style: bold;
+}
+logicalOperator {
+    foreground: green;
+    font-style: bold;
+}
+NAME {
+  foreground: blue;
+  font-style: italic;
+}
+SINGLE_QUOTE_STRING {
+    foreground: purple;
+}
+range {
+    foreground: orange;
+}
+timestamp {
+  foreground: red;
+  font-style: italic;
+}

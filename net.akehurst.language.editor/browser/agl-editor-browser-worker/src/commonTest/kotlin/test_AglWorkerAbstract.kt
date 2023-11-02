@@ -18,11 +18,11 @@ package net.akehurst.language.editor.worker
 
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.agl.syntaxAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.syntaxAnalyser.ContextSimple
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
+import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.asm.asmSimple
-import net.akehurst.language.api.grammar.Grammar
+import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
@@ -406,7 +406,7 @@ class test_AglWorkerAbstract {
         val grammar = Agl.registry.agl.grammar.processor!!.process(userGrammar).asm!!.first()
         val scopeModel = Agl.registry.agl.scopes.processor!!.process(
             scopeStr,
-            Agl.options { semanticAnalysis { context(ContextFromTypeModel(grammar.qualifiedName, TypeModelFromGrammar.create(grammar))) } }
+            Agl.options { semanticAnalysis { context(ContextFromTypeModel(TypeModelFromGrammar.create(grammar))) } }
         ).asm!!
         val sentence = """
             primitive String

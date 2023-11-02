@@ -19,7 +19,7 @@ import net.akehurst.kotlin.json.json
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.grammarTypeModel.grammarTypeModel
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
-import net.akehurst.language.agl.language.scopes.ScopeModelAgl
+import net.akehurst.language.agl.language.reference.CrossReferenceModelDefault
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
@@ -1043,7 +1043,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun ScopeSimple_serialise_deserialise() {
-        val scope = ScopeSimple<AsmElementPath>(null, "", ScopeModelAgl.ROOT_SCOPE_TYPE_NAME)
+        val scope = ScopeSimple<AsmElementPath>(null, "", CrossReferenceModelDefault.ROOT_SCOPE_TYPE_NAME)
         scope.addToScope("a1", "A", AsmElementPath("/a1"))
         scope.addToScope("a2", "A", AsmElementPath("/a2"))
         val cs = scope.createOrGetChildScope("b", "B", AsmElementPath("/a1/b"))
@@ -1259,6 +1259,7 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.goalRuleName, actual.goalRuleName)
         assertEquals(expected.text, actual.text)
         assertEquals(expected.context as ContextFromTypeModel, actual.context as ContextFromTypeModel)
+        //TODO: check typemodels match ?
     }
 
     @Test
@@ -1544,7 +1545,7 @@ class test_AglWorkerSerialisation {
             """
         ).asm!!.first()
         val context = ContextFromTypeModel(TypeModelFromGrammar.create(grammar))
-        //context.createScopeFrom(grammar.qualifiedName, TypeModelFromGrammar.create(grammar))
+
         val expected = MessageProcessRequest(
             "testLang", "tesEditor", "testSession",
             "rule1",

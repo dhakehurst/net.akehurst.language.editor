@@ -44,7 +44,7 @@ import net.akehurst.language.api.asm.AsmElementSimple
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
 import net.akehurst.language.api.language.grammar.Grammar
-import net.akehurst.language.api.semanticAnalyser.ScopeModel
+import net.akehurst.language.api.language.reference.CrossReferenceModel
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
@@ -61,8 +61,9 @@ import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.information.Example
 import net.akehurst.language.editor.information.Examples
-import net.akehurst.language.editor.information.example
-import net.akehurst.language.editor.information.examples.*
+import net.akehurst.language.editor.information.examples.AglGrammar
+import net.akehurst.language.editor.information.examples.AglStyle
+import net.akehurst.language.editor.information.examples.BasicTutorial
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
@@ -396,28 +397,21 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
 fun initialiseExamples() {
     CoroutineScope(SupervisorJob()).asyncImmediately {
         val resources = localVfs(resourcesPath).jail()
-        Examples.add(BasicTutorial.example)
-        Examples.add(example(resources, "Datatypes", "Datatype", "examples/Datatypes"))
-        Examples.add(example(resources, "KerML_2-agl", "KerML v2 (Agl grammar)", "examples/KerML_2_Agl"))
-        Examples.add(KerML_Std.example(resources))
-        Examples.add(example(resources, "simple-sql", "Simple SQL Queries", "examples/SQL"))
-        Examples.add(GraphvizDot.example(resources))
-        Examples.add(SText.example)
-        Examples.add(Java8.example(resources))
-        //Examples.add(English.example)
-        Examples.add(TraceabilityQuery.example)
-        Examples.add(MScript.example(resources))
-        Examples.add(Xml.example)
-        Examples.add(AglStyle.example)
-        Examples.add(AglGrammar.example)
+        resources["examples"].listNames().forEach {
+            Examples.read(resources, it)
+        }
+        Examples.add(BasicTutorial.example)  // first example
     }.invokeOnCompletion {
         val exampleSelect = document.querySelector("select#example") as HTMLElement
+        Examples.add(AglStyle.example)
+        Examples.add(AglGrammar.example)
         Examples.map.forEach { eg ->
             val option = document.createElement("option")
             exampleSelect.appendChild(option);
             option.setAttribute("value", eg.value.id);
             option.textContent = eg.value.label;
         }
+
     }
 }
 
@@ -543,7 +537,7 @@ class Demo(
     val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<AsmSimple, ContextSimple>
     val grammarEditor = editors[Constants.grammarEditorId]!!
     val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
-    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<ScopeModel, ContextFromTypeModel>
+    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModel>
     //val formatEditor = editors["language-format"]!!
 
     fun configure() {
@@ -716,13 +710,13 @@ class Demo(
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.type
                         when (type) {
-                            is StructuredType -> type.property.values.toTypedArray()
+                            is StructuredType -> type.property.toTypedArray()
                             else -> emptyArray<Any>()
                         }
                     }
 
                     is Map.Entry<String, TypeDeclaration> -> when (it.value) {
-                        is StructuredType -> (it.value as StructuredType).property.values.toTypedArray()
+                        is StructuredType -> (it.value as StructuredType).property.toTypedArray()
                         else -> emptyArray<Any>()
                     }
 

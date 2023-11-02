@@ -1,0 +1,34 @@
+statechart 'AlwaysOncycle' {
+  specification {
+    @CycleBased(200)
+    @SuperSteps(no)
+    interface:
+        var value:integer
+        var v2 : boolean
+        in event e
+        var x : integer
+        var y : integer
+  }
+  region 'main region' {
+    state '§entry' { specification {  } }
+    state 'StateA' {
+      specification {
+        entry /value = 0
+        always /value +=1
+        exit/ value=0
+      }
+    }
+    state 'StateB' {
+      specification {
+        oncycle /value+=1
+        e, always / x += 1
+        always, always / y+=1
+      }
+    }
+  }
+  transitions {
+    '§entry' -- { } --> 'StateA'
+    'StateA' -- { [value == 5] } --> 'StateB'
+    'StateB' -- { [value==5] } --> 'StateA'
+  }
+}
