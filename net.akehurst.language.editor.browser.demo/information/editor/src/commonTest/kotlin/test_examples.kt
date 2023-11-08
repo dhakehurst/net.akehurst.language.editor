@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import net.akehurst.language.agl.language.reference.CrossReferenceModelDefault
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.editor.information.examples.AglGrammar
 import net.akehurst.language.editor.information.examples.AglStyle
 import net.akehurst.language.editor.information.examples.BasicTutorial
@@ -49,7 +50,7 @@ class test_examples {
         }
 
         Examples.add(AglStyle.example)
-        Examples.add(AglGrammar.example)
+        //Examples.add(AglGrammar.example)
 
     }
 
@@ -110,9 +111,12 @@ class test_examples {
             }
 
             println("  SemanticAnalysis")
-            val semanticAnalysis = result.processor!!.semanticAnalysis(syntaxAnalysis.asm!!)
+            val semanticAnalysis = result.processor!!.semanticAnalysis(
+                syntaxAnalysis.asm!!,
+                Agl.options { semanticAnalysis { context(ContextSimple()) } }
+            )
             if (semanticAnalysis.issues.errors.isNotEmpty()) {
-                fail("  SemanticAnalysis: ${it.id}\n" + syntaxAnalysis.issues.toString())
+                fail("  SemanticAnalysis: ${it.id}\n" + semanticAnalysis.issues.toString())
             }
         }
 

@@ -127,9 +127,7 @@ object AglWorkerSerialisation {
                 imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typemodel.api")
             )
             {
-                dataType("SimpleTypeModelStdLib") {
-                    supertypes("TypeNamespaceAbstract")
-                }
+                singleton("SimpleTypeModelStdLib")
                 dataType("TypeModelSimple") {
                     supertypes("TypeModelSimpleAbstract")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
@@ -150,7 +148,8 @@ object AglWorkerSerialisation {
                 }
                 dataType("TypeInstanceSimple") {
                     supertypes("TypeInstanceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "context", "TypeDeclaration")
+                    //propertyOf(setOf(CONSTRUCTOR, REFERENCE), "context", "TypeDeclaration")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "contextQualifiedTypeName","String", emptyList(), true)
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedOrImportedTypeName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
@@ -159,14 +158,14 @@ object AglWorkerSerialisation {
                 dataType("TupleTypeInstance") {
                     supertypes("TypeInstanceAbstract")
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "type", "TupleType")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "declaration", "TupleType")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isNullable", "Boolean")
                 }
                 dataType("UnnamedSupertypeTypeInstance") {
                     supertypes("TypeInstanceAbstract")
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "type", "UnnamedSupertypeType")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "declaration", "UnnamedSupertypeType")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isNullable", "Boolean")
                 }
@@ -174,8 +173,13 @@ object AglWorkerSerialisation {
                     supertypes("TypeNamespace")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "allTypesByName", "Map") {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "ownedUnnamedSupertypeType", "List") {
+                        typeArgument("UnnamedSupertypeTypeSimple")
+                    }
+                    propertyOf(setOf(MEMBER, COMPOSITE), "ownedTupleTypes", "List") {
+                        typeArgument("TupleTypeSimple")
+                    }
+                    propertyOf(setOf(MEMBER, COMPOSITE), "ownedTypesByName", "Map") {
                         typeArgument("String")
                         typeArgument("TypeDeclaration")
                     }
@@ -562,30 +566,50 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeModel", "net.akehurst.language.typemodel.api.TypeModel")
                 }
             }
-            namespace("net.akehurst.language.api.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("AsmElementPath") {
+            namespace("net.akehurst.language.agl.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                dataType("AsmPathSimple") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
                 }
                 dataType("AsmSimple") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootElements", "List", listOf("AsmElementSimple"))
+                    propertyOf(setOf(MEMBER, COMPOSITE), "root", "List", listOf("AsmValueAbstract"))
                 }
-                dataType("AsmElementSimple") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asmPath", "AsmElementPath")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeName", "String")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "properties", "Map") {
-                        typeArgument("String")
-                        typeArgument("AsmElementProperty")
-                    }
+                dataType("AsmValueAbstract")
+                dataType("AsmNothingSimple") {
+                    supertypes("AsmValueAbstract")
                 }
-                dataType("AsmElementProperty") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "childIndex", "Int")
+                dataType("AsmPrimitiveSimple") {
+                    supertypes("AsmValueAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedTypeName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "Any")
                 }
-                dataType("AsmElementReference") {
+                dataType("AsmReferenceSimple") {
+                    supertypes("AsmValueAbstract")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reference", "String")
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "value", "AsmElementSimple")
+                }
+                dataType("AsmStructureSimple") {
+                    supertypes("AsmValueAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "path", "AsmPathSimple")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedTypeName", "String")
+
+                    propertyOf(setOf(MEMBER, COMPOSITE), "property", "Map") {
+                        typeArgument("String")
+                        typeArgument("AsmStructurePropertySimple")
+                    }
+                }
+                dataType("AsmStructurePropertySimple") {
+                    supertypes("AsmValueAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "index", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "Any")
+                }
+                dataType("AsmListSimple") {
+                    supertypes("AsmValueAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "elements", "AsmValueAbstract")
+                }
+                dataType("AsmListSeparatedSimple") {
+                    supertypes("AsmValueAbstract")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "elements", "AsmValueAbstract")
                 }
             }
         })

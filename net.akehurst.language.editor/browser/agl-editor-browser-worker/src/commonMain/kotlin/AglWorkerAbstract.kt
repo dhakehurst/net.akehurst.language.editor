@@ -18,6 +18,7 @@ package net.akehurst.language.editor.worker
 
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
+import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageDefinition
@@ -35,11 +36,11 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
     protected abstract fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String?
 
-    protected open fun configureLanguageDefinition(ld: LanguageDefinition<AsmType, ContextType>, grammarStr: String?, scopeModelStr: String?) {
+    protected open fun configureLanguageDefinition(ld: LanguageDefinition<AsmType, ContextType>, grammarStr: String?, crossReferenceModelStr: String?) {
         // TODO: could be an argument
         ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<AsmType, ContextType>
         ld.grammarStr = grammarStr
-        ld.scopeModelStr = scopeModelStr
+        ld.crossReferenceModelStr = crossReferenceModelStr
     }
 
     protected open fun createLanguageDefinition(languageId: String, grammarStr: String?, scopeModelStr: String?): LanguageDefinition<AsmType, ContextType> {
@@ -47,6 +48,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                 identity = languageId,
                 aglOptions = Agl.options {
                     semanticAnalysis {
+                        context(ContextFromGrammarRegistry(Agl.registry))
                         option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                     }
                 },
@@ -295,6 +297,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(listOf(proc.grammar!!), Agl.options {
                 semanticAnalysis {
+                    context(ContextFromGrammarRegistry(Agl.registry))
                     locationMap(proc.syntaxAnalyser!!.locationMap)
                     //context(message.context)
                 }

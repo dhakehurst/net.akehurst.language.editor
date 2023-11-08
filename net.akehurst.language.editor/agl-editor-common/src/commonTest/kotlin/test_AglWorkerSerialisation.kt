@@ -16,6 +16,7 @@
 package net.akehurst.language.editor.common.serialisation
 
 import net.akehurst.kotlin.json.json
+import net.akehurst.language.agl.asm.AsmPathSimple
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.grammarTypeModel.grammarTypeModel
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
@@ -24,11 +25,13 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.agl.semanticAnalyser.ScopeSimple
+import net.akehurst.language.agl.semanticAnalyser.contextSimple
 import net.akehurst.language.agl.sppt.TreeDataComplete
-import net.akehurst.language.api.asm.AsmElementPath
-import net.akehurst.language.api.asm.AsmSimple
+import net.akehurst.language.api.asm.Asm
+import net.akehurst.language.api.asm.AsmPath
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.language.grammar.Grammar
+import net.akehurst.language.api.language.reference.Scope
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
@@ -50,6 +53,15 @@ class test_AglWorkerSerialisation {
         val languageId = "test-languageId"
         val editorId = "test-editorId"
         val sessionId = "test-sessionId"
+
+        fun <T : Any> test(input: T, checkMatch: (expected: T, actual: T) -> Unit = { expected, actual -> assertEquals(expected, actual) }) {
+            val json = AglWorkerSerialisation.toJsonDocument(input)
+            val jsonStr = json.toStringJson()
+            assertTrue(jsonStr.length > 10)
+            val output: T = AglWorkerSerialisation.deserialise(jsonStr)
+
+            checkMatch(input, output)
+        }
     }
 
     @BeforeTest
@@ -58,446 +70,8 @@ class test_AglWorkerSerialisation {
     }
 
     @Test
-    fun AsmSimple_toJsonDocument() {
-        val result = Agl.registry.agl.scopes.processor!!.process(
-            sentence = """
-                namespace test {
-                    identify Root by §nothing
-                    scope Root {
-                        identify Elem2 by id
-                    }
-                    references {
-                        in Elem2 { property ref refers-to Elem2 }
-                    }
-                }
-            """.trimIndent()
-        )
-        assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
-        val context = ContextSimple()
-        val asm = asmSimple(result.asm!!, context) {
-            element("Root") {
-                propertyElementExplicitType("content", "Elem1") {
-                    propertyString("propString", "stringValue")
-                    propertyListOfString("propListString", listOf("Hello", "World"))
-                    propertyListOfElement("propListElem") {
-                        element("Elem2") {
-                            propertyString("id", "e1")
-                            reference("ref", "e2")
-                        }
-                        element("Elem2") {
-                            propertyString("id", "e2")
-                            reference("ref", "e3")
-                        }
-                        element("Elem2") {
-                            propertyString("id", "e3")
-                            reference("ref", "e1")
-                        }
-                    }
-                }
-            }
-        }
-
-        val actual = AglWorkerSerialisation.toJsonDocument(asm)
-        val expected = json("serialised") {
-            objectReferenceable("net.akehurst.language.api.asm.AsmSimple") {
-                property("rootElements") {
-                    listObject {
-                        objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                            property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0") } }
-                            property("asm") { reference("/") }
-                            property("typeName", "Root")
-                            property("properties") {
-                                mapObject {
-                                    entry({ string("content") }) {
-                                        objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                            property("name", "content")
-                                            property("value") {
-                                                objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                    property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content") } }
-                                                    property("asm") { reference("/") }
-                                                    property("typeName", "Elem1")
-                                                    property("properties") {
-                                                        mapObject {
-                                                            entry({ string("propString") }) {
-                                                                objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                    property("name", "propString")
-                                                                    property("value", "stringValue")
-                                                                    property("isReference", false)
-                                                                }
-                                                            }
-                                                            entry({ string("propListString") }) {
-                                                                objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                    property("name", "propListString")
-                                                                    property("value") {
-                                                                        listObject {
-                                                                            string("Hello")
-                                                                            string("World")
-                                                                        }
-                                                                    }
-                                                                    property("isReference", false)
-                                                                }
-                                                            }
-                                                            entry({ string("propListElem") }) {
-                                                                objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                    property("name", "propListElem")
-                                                                    property("value") {
-                                                                        listObject {
-                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") {
-                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
-                                                                                        property(
-                                                                                            "value",
-                                                                                            "/0/content/propListElem/0"
-                                                                                        )
-                                                                                    }
-                                                                                }
-                                                                                property("asm") { reference("/") }
-                                                                                property("typeName", "Elem2")
-                                                                                property("properties") {
-                                                                                    mapObject {
-                                                                                        entry({ string("id") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "id")
-                                                                                                property("value", "e1")
-                                                                                                property("isReference", false)
-                                                                                            }
-                                                                                        }
-                                                                                        entry({ string("ref") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "ref")
-                                                                                                property("value") {
-                                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
-                                                                                                        property("reference", "e2")
-                                                                                                        property("value") { reference("/rootElements/\$elements/0/properties/\$entries/0/\$value/value/properties/\$entries/2/\$value/value/\$elements/1") }
-                                                                                                    }
-                                                                                                }
-                                                                                                property("isReference", true)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") {
-                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
-                                                                                        property(
-                                                                                            "value",
-                                                                                            "/0/content/propListElem/1"
-                                                                                        )
-                                                                                    }
-                                                                                }
-                                                                                property("asm") { reference("/") }
-                                                                                property("typeName", "Elem2")
-                                                                                property("properties") {
-                                                                                    mapObject {
-                                                                                        entry({ string("id") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "id")
-                                                                                                property("value", "e2")
-                                                                                                property("isReference", false)
-                                                                                            }
-                                                                                        }
-                                                                                        entry({ string("ref") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "ref")
-                                                                                                property("value") {
-                                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
-                                                                                                        property("reference", "e3")
-                                                                                                        property("value") { reference("/rootElements/\$elements/0/properties/\$entries/0/\$value/value/properties/\$entries/2/\$value/value/\$elements/2") }
-                                                                                                    }
-                                                                                                }
-                                                                                                property("isReference", true)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") {
-                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
-                                                                                        property(
-                                                                                            "value",
-                                                                                            "/0/content/propListElem/2"
-                                                                                        )
-                                                                                    }
-                                                                                }
-                                                                                property("asm") { reference("/") }
-                                                                                property("typeName", "Elem2")
-                                                                                property("properties") {
-                                                                                    mapObject {
-                                                                                        entry({ string("id") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "id")
-                                                                                                property("value", "e3")
-                                                                                                property("isReference", false)
-                                                                                            }
-                                                                                        }
-                                                                                        entry({ string("ref") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "ref")
-                                                                                                property("value") {
-                                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
-                                                                                                        property("reference", "e1")
-                                                                                                        property("value") { reference("/rootElements/\$elements/0/properties/\$entries/0/\$value/value/properties/\$entries/2/\$value/value/\$elements/0") }
-                                                                                                    }
-                                                                                                }
-                                                                                                property("isReference", true)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                    property("isReference", false)
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            property("isReference", false)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        assertEquals(expected.toFormattedJsonString("  ", "  "), actual.toFormattedJsonString("  ", "  "))
-
-    }
-
-    @Test
-    fun AsmSimple_deserialise() {
-        val json = json("serialised") {
-            objectReferenceable("net.akehurst.language.api.asm.AsmSimple") {
-                property("rootElements") {
-                    listObject {
-                        objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                            property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0") } }
-                            property("asm") { reference("/") }
-                            property("typeName", "Root")
-                            property("properties") {
-                                mapObject {
-                                    entry({ string("content") }) {
-                                        objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                            property("name", "content")
-                                            property("childIndex", 0)
-                                            property("value") {
-                                                objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                    property("asmPath") { objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") { property("value", "/0/content") } }
-                                                    property("asm") { reference("/") }
-                                                    property("typeName", "Elem1")
-                                                    property("properties") {
-                                                        mapObject {
-                                                            entry({ string("propString") }) {
-                                                                objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                    property("name", "propString")
-                                                                    property("childIndex", 0)
-                                                                    property("value", "stringValue")
-                                                                    property("isReference", false)
-                                                                }
-                                                            }
-                                                            entry({ string("propListString") }) {
-                                                                objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                    property("name", "propListString")
-                                                                    property("childIndex", 1)
-                                                                    property("value") {
-                                                                        listObject {
-                                                                            string("Hello")
-                                                                            string("World")
-                                                                        }
-                                                                    }
-                                                                    property("isReference", false)
-                                                                }
-                                                            }
-                                                            entry({ string("propListElem") }) {
-                                                                objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                    property("name", "propListElem")
-                                                                    property("childIndex", 2)
-                                                                    property("value") {
-                                                                        listObject {
-                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") {
-                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
-                                                                                        property(
-                                                                                            "value",
-                                                                                            "/0/content/propListElem/0"
-                                                                                        )
-                                                                                    }
-                                                                                }
-                                                                                property("asm") { reference("/") }
-                                                                                property("typeName", "Elem2")
-                                                                                property("properties") {
-                                                                                    mapObject {
-                                                                                        entry({ string("id") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "id")
-                                                                                                property("childIndex", 0)
-                                                                                                property("value", "e1")
-                                                                                                property("isReference", false)
-                                                                                            }
-                                                                                        }
-                                                                                        entry({ string("ref") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "ref")
-                                                                                                property("childIndex", 1)
-                                                                                                property("value") {
-                                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
-                                                                                                        property("reference", "e2")
-                                                                                                        property("value") { reference("/rootElements/\$elements/0/properties/\$entries/0/\$value/value/properties/\$entries/2/\$value/value/\$elements/1") }
-                                                                                                    }
-                                                                                                }
-                                                                                                property("isReference", true)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") {
-                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
-                                                                                        property(
-                                                                                            "value",
-                                                                                            "/0/content/propListElem/1"
-                                                                                        )
-                                                                                    }
-                                                                                }
-                                                                                property("asm") { reference("/") }
-                                                                                property("typeName", "Elem2")
-                                                                                property("properties") {
-                                                                                    mapObject {
-                                                                                        entry({ string("id") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "id")
-                                                                                                property("childIndex", 0)
-                                                                                                property("value", "e2")
-                                                                                                property("isReference", false)
-                                                                                            }
-                                                                                        }
-                                                                                        entry({ string("ref") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "ref")
-                                                                                                property("childIndex", 1)
-                                                                                                property("value") {
-                                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
-                                                                                                        property("reference", "e3")
-                                                                                                        property("value") { reference("/rootElements/\$elements/0/properties/\$entries/0/\$value/value/properties/\$entries/2/\$value/value/\$elements/2") }
-                                                                                                    }
-                                                                                                }
-                                                                                                property("isReference", true)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementSimple") {
-                                                                                property("asmPath") {
-                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementPath") {
-                                                                                        property(
-                                                                                            "value",
-                                                                                            "/0/content/propListElem/2"
-                                                                                        )
-                                                                                    }
-                                                                                }
-                                                                                property("asm") { reference("/") }
-                                                                                property("typeName", "Elem2")
-                                                                                property("properties") {
-                                                                                    mapObject {
-                                                                                        entry({ string("id") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "id")
-                                                                                                property("childIndex", 0)
-                                                                                                property("value", "e3")
-                                                                                                property("isReference", false)
-                                                                                            }
-                                                                                        }
-                                                                                        entry({ string("ref") }) {
-                                                                                            objectReferenceable("net.akehurst.language.api.asm.AsmElementProperty") {
-                                                                                                property("name", "ref")
-                                                                                                property("childIndex", 1)
-                                                                                                property("value") {
-                                                                                                    objectReferenceable("net.akehurst.language.api.asm.AsmElementReference") {
-                                                                                                        property("reference", "e1")
-                                                                                                        property("value") { reference("/rootElements/\$elements/0/properties/\$entries/0/\$value/value/properties/\$entries/2/\$value/value/\$elements/0") }
-                                                                                                    }
-                                                                                                }
-                                                                                                property("isReference", true)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                    property("isReference", false)
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            property("isReference", false)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        val actual = AglWorkerSerialisation.deserialise<AsmSimple>(json.toStringJson())
-
-        val result = Agl.registry.agl.scopes.processor!!.process(
-            sentence = """
-                namespace test {
-                    identify Root by §nothing
-                    scope Root {
-                        identify Elem2 by id
-                    }
-                    references {
-                        in Elem2 { property ref refers-to Elem2 }
-                    }
-                }
-            """.trimIndent()
-        )
-        assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
-        val context = ContextSimple()
-        val expected = asmSimple(result.asm!!, context) {
-            element("Root") {
-                propertyElementExplicitType("content", "Elem1") {
-                    propertyString("propString", "stringValue")
-                    propertyListOfString("propListString", listOf("Hello", "World"))
-                    propertyListOfElement("propListElem") {
-                        element("Elem2") {
-                            propertyString("id", "e1")
-                            reference("ref", "e2")
-                        }
-                        element("Elem2") {
-                            propertyString("id", "e2")
-                            reference("ref", "e3")
-                        }
-                        element("Elem2") {
-                            propertyString("id", "e3")
-                            reference("ref", "e1")
-                        }
-                    }
-                }
-            }
-        }
-
-        assertEquals(expected.asString("  ", ""), actual.asString("  ", ""))
-    }
-
-    @Test
-    fun Grammar_toJsonDocument() {
-        val result = Agl.registry.agl.grammar.processor!!.process(
+    fun Grammar_serialise_deserialise() {
+        val input: Grammar = Agl.registry.agl.grammar.processor!!.process(
             sentence = """
                 namespace test.test
                 grammar Test {
@@ -509,605 +83,176 @@ class test_AglWorkerSerialisation {
                     leaf b = 'b' 'b' ;
                 }
             """.trimIndent()
-        )
+        ).asm!![0]
 
-        val actual = AglWorkerSerialisation.toJsonDocument(result.asm!![0])
-
-        val expected = json("serialised") {
-            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarDefault") {
-                property("namespace") {
-                    objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NamespaceDefault") {
-                        property("qualifiedName", "test.test")
-                    }
-                }
-                property("name", "Test")
-                property("grammarRule") {
-                    listObject {
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
-                            property("grammar") { reference("/") }
-                            property("name", "S")
-                            property("isOverride", false)
-                            property("isSkip", false)
-                            property("isLeaf", false)
-                            property("rhs") {
-                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ChoiceLongestDefault") {
-                                    property("alternative") {
-                                        listObject {
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
-                                                property("items") {
-                                                    listObject {
-                                                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
-                                                            property("name", "as")
-                                                            property("owningRule") { reference("/grammarRule/\$elements/0") }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
-                                                property("items") {
-                                                    listObject {
-                                                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
-                                                            property("name", "bs")
-                                                            property("owningRule") { reference("/grammarRule/\$elements/0") }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
-                                                property("items") {
-                                                    listObject {
-                                                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NonTerminalDefault") {
-                                                            property("name", "cs")
-                                                            property("owningRule") { reference("/grammarRule/\$elements/0") }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
-                            property("grammar") { reference("/") }
-                            property("name", "as")
-                            property("isOverride", false)
-                            property("isSkip", false)
-                            property("isLeaf", false)
-                            property("rhs") {
-                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ListSimple") {
-                                    property("items") {
-                                        listObject {
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "b")
-                                                property("isPattern", false)
-                                            }
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "b")
-                                                property("isPattern", false)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
-                            property("grammar") { reference("/") }
-                            property("name", "bs")
-                            property("isOverride", false)
-                            property("isSkip", false)
-                            property("isLeaf", true)
-                            property("rhs") {
-                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.SeparatedList") {
-                                    property("items") {
-                                        listObject {
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "b")
-                                                property("isPattern", false)
-                                            }
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "b")
-                                                property("isPattern", false)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
-                            property("grammar") { reference("/") }
-                            property("name", "cs")
-                            property("isOverride", false)
-                            property("isSkip", false)
-                            property("isLeaf", false)
-                            property("rhs") {
-                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ChoiceDefault") {
-                                    property("items") {
-                                        listObject {
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "b")
-                                                property("isPattern", false)
-                                            }
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "b")
-                                                property("isPattern", false)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
-                            property("grammar") { reference("/") }
-                            property("name", "a")
-                            property("isOverride", false)
-                            property("isSkip", false)
-                            property("isLeaf", true)
-                            property("rhs") {
-                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
-                                    property("items") {
-                                        listObject {
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "a")
-                                                property("isPattern", false)
-                                            }
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "a")
-                                                property("isPattern", false)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
-                            property("grammar") { reference("/") }
-                            property("name", "b")
-                            property("isOverride", false)
-                            property("isSkip", false)
-                            property("isLeaf", true)
-                            property("rhs") {
-                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
-                                    property("items") {
-                                        listObject {
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "b")
-                                                property("isPattern", false)
-                                            }
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "b")
-                                                property("isPattern", false)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-//TODO: complete json
-        assertEquals(expected.toFormattedJsonString("  ", "  "), actual.toFormattedJsonString("  ", "  "))
+        test(input)
     }
 
     @Test
-    fun Grammar_deserialise() {
-        val json = json("serialised") {
-            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.GrammarDefault") {
-                property("namespace") {
-                    objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NamespaceDefault") {
-                        property("qualifiedName", "test.test")
+    fun TypeModel_serialise_deserialise() {
+        val input: TypeModel = typeModel("test", true, listOf(SimpleTypeModelStdLib)) {
+            namespace("test", listOf("std")) {
+                primitiveType("APrimType")
+                enumType("AnEnumType", listOf("A", "B", "C"))
+                collectionType("ACollType", listOf("E"))
+                dataType("ADatType")
+                dataType("BDatType") {
+                    supertypes("ADatType")
+                    propertyPrimitiveType("propPrim", "String", false, 0)
+                    propertyListTypeOf("propList", "String", false, 1)
+                    propertyUnnamedSuperType("propUnnamedType", false, 2) {
+                        primitiveRef("String")
+                        elementRef("ADatType")
                     }
-                }
-                property("name", "Test")
-                property("options") {
-                    listObject {  }
-                }
-                property("grammarRule") {
-                    listObject {
-                        objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.NormalRuleDefault") {
-                            property("grammar") { reference("/") }
-                            property("name", "rule1")
-                            property("isSkip", false)
-                            property("isLeaf", false)
-                            property("rhs") {
-                                objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.ConcatenationDefault") {
-                                    property("items") {
-                                        listObject {
-                                            objectReferenceable("net.akehurst.language.agl.grammar.grammar.asm.TerminalDefault") {
-                                                property("value", "a")
-                                                property("isPattern", false)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    propertyTupleType("tt", false, 3) {
+                        propertyPrimitiveType("a", "String", false, 0)
                     }
                 }
             }
         }
 
-        val actual = AglWorkerSerialisation.deserialise<Grammar>(json.toStringJson())
-        val expResult = Agl.registry.agl.grammar.processor!!.process(
+        test(input) { expected, actual ->
+            actual.resolveImports()
+            assertEquals(expected.asString(), actual.asString())
+        }
+    }
+
+    @Test
+    fun Asm_serialise_deserialise() {
+        val result = Agl.registry.agl.crossReference.processor!!.process(
             sentence = """
-                namespace test.test
-                grammar Test {
-                    rule1 = 'a' ;
+                namespace test {
+                    identify Root by §nothing
+                    scope Root {
+                        identify Elem2 by id
+                    }
+                    references {
+                        in Elem2 { property ref refers-to Elem2 }
+                    }
                 }
             """.trimIndent()
         )
-        val expected = expResult.asm!![0]
-
-        assertEquals(expected.namespace, actual.namespace)
-        assertEquals(expected.name, actual.name)
-        assertEquals(expected.grammarRule.size, actual.grammarRule.size)
-        expected.grammarRule.forEachIndexed { i, e ->
-            val a = actual.grammarRule[i]
-            assertEquals(e.name, a.name)
-            //TODO
-        }
-    }
-
-    @Test
-    fun tupleType_com() {
-        val tm = typeModel("test", true, listOf(SimpleTypeModelStdLib)) {
-            namespace("test", listOf("std")) {
-                dataType("DT") {
-                    propertyTupleType("tt",false, 0) {
-                        propertyPrimitiveType("a","String",false,0)
-                    }
+        assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
+        val tm = typeModel("Test", true) {
+            namespace("ns") {
+                dataType("Root")
+                dataType("Elem2") {
+                    propertyPrimitiveType("id", "String", false, 0)
+                    propertyPrimitiveType("ref", "String", false, 1)
                 }
             }
         }
-
-        val actual = AglWorkerSerialisation.toJsonDocument(tm)
-        val jsonStr = actual.toStringJson()
-        val result:TypeModel = AglWorkerSerialisation.deserialise(jsonStr)
-        result.resolveImports()
-
-        assertEquals(tm.asString(), result.asString())
-
-    }
-
-    @Test
-    fun TypeModel_serialise() {
-        val tm = typeModel("test", true, emptyList()) {
-            namespace("test", emptyList()) {
-                primitiveType("Primitive")
-                enumType("Enum", listOf("A", "B", "C"))
-            }
-        }
-
-        val actual = AglWorkerSerialisation.toJsonDocument(tm)
-
-        val expected = json("serialised") {
-            objectReferenceable("net.akehurst.language.typemodel.simple.TypeModelSimple") {
-                property("name", "test")
-                property("namespace") {
-                    mapObject {
-                        entry({ string("test") }) {
-                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeNamespaceSimple") {
-                                property("qualifiedName", "test")
-                                property("imports") {
-                                    listObject {  }
-                                }
-                                property("allTypesByName") {
-                                    mapObject {
-                                        entry({ string("Primitive") }) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.PrimitiveTypeSimple") {
-                                                property("typeParameters") { listObject {  } }
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("name", "Primitive")
-                                            }
-                                        }
-                                        entry({ string("Enum") }) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.EnumTypeSimple") {
-                                                property("typeParameters") { listObject {  } }
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("name", "Enum")
-                                                property("literals") {
-                                                    listObject { string("A"); string("B"); string("C") }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+        val context = ContextSimple()
+        val input: Asm = asmSimple(typeModel = tm, crossReferenceModel = result.asm!!, context = context) {
+            element("Root") {
+                propertyElementExplicitType("content", "Elem1") {
+                    propertyString("propString", "stringValue")
+                    propertyListOfString("propListString", listOf("Hello", "World"))
+                    propertyListOfElement("propListElem") {
+                        element("Elem2") {
+                            propertyString("id", "e1")
+                            reference("ref", "e2")
+                        }
+                        element("Elem2") {
+                            propertyString("id", "e2")
+                            reference("ref", "e3")
+                        }
+                        element("Elem2") {
+                            propertyString("id", "e3")
+                            reference("ref", "e1")
                         }
                     }
                 }
-                property("allNamespace") {
-                    listObject {
-                        reference("/namespace/\$entries/0/\$value")
-                    }
-                }
             }
         }
 
-        assertEquals(expected.toFormattedJsonString("  ", "  "), actual.toFormattedJsonString("  ", "  "))
+        test(input) { expected, actual ->
+            assertEquals(expected.asString(), actual.asString())
+        }
     }
 
     @Test
-    fun TypeModel_deserialise() {
-        val json = json("serialised") {
-            objectReferenceable("net.akehurst.language.typemodel.simple.TypeModelSimple") {
-                property("name", "test")
-                property("namespace") {
-                    mapObject {
-                        entry({ string("test") }) {
-                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeNamespaceSimple") {
-                                property("qualifiedName", "test")
-                                property("imports") {
-                                    listObject {  }
-                                }
-                                property("allTypesByName") {
-                                    mapObject {
-                                        entry({ string("Primitive") }) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.PrimitiveTypeSimple") {
-                                                property("typeParameters") { listObject {  } }
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("name", "Primitive")
-                                            }
-                                        }
-                                        entry({ string("Enum") }) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.EnumTypeSimple") {
-                                                property("typeParameters") { listObject {  } }
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("name", "Enum")
-                                                property("literals") {
-                                                    listObject { string("A"); string("B"); string("C") }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+    fun GrammarTypeModel_serialise_deserialise() {
+        val grammar = Agl.registry.agl.grammar.processor!!.process(
+            sentence = """
+                namespace test.test
+                grammar Test {
+                    S = as | bs | cs ;
+                    as = a* ;
+                    bs = [b/',']+ ;
+                    cs = 'c' | cs 'c' ;
+                    leaf a = 'a' 'a' ;
+                    leaf b = 'b' 'b' ;
                 }
-                property("allNamespace") {
-                    listObject {
-                        reference("/namespace/\$entries/0/\$value")
-                    }
-                }
-            }
-        }
+            """.trimIndent()
+        ).asm!![0]
+        val input: TypeModel = TypeModelFromGrammar.create(grammar)
 
-        val actual = AglWorkerSerialisation.deserialise<TypeModel>(json.toStringJson())
-        val expected = typeModel("test", true, emptyList()) {
-            namespace("test", emptyList()) {
-                primitiveType("Primitive")
-                enumType("Enum", listOf("A", "B", "C"))
-            }
+        test(input) { expected, actual ->
+            assertEquals(expected.asString(), actual.asString())
         }
-
-        assertEquals(expected.asString(), actual.asString())
     }
 
     @Test
-    fun GrammarTypeModel_serialise() {
-        val tm = grammarTypeModel("test", "test", "", imports = emptyList()) {
-            stringTypeFor("A")
-            dataType("S", "S") {
-                propertyPrimitiveType("a","String",true, 0)
-                propertyListTypeOf("l", "String", false,1)
+    fun ContextSimple_serialise_deserialise() {
+        val input = contextSimple {
+            scope("a1", "A", "/a1")
+            item("b1", "B", "/a1/b1")
+            scopedItem("c1", "C", "/c1") {
+                scope("a1", "A", "/c1/a1")
+                item("b1", "B", "/c1/a1/b1")
+                scopedItem("c1", "C", "/c1/c1") {}
             }
         }
 
-        val actual = AglWorkerSerialisation.toJsonDocument(tm)
-
-        val expected = json("serialised") {
-            objectReferenceable("net.akehurst.language.typemodel.simple.TypeModelSimple") {
-                property("name", "test")
-                property("namespace") {
-                    mapObject {
-                        entry({ string("test") }) {
-                            objectReferenceable("net.akehurst.language.agl.grammarTypeModel.GrammarTypeNamespaceSimple") {
-                                property("allRuleNameToType") {
-                                    mapObject {
-                                        entry({string("A")}) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("typeName", "String")
-                                                property("typeArguments") { listObject {  } }
-                                                property("isNullable", false)
-                                            }
-                                        }
-                                        entry({string("S")}) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("typeName", "S")
-                                                property("typeArguments") { listObject {  } }
-                                                property("isNullable", false)
-                                            }
-                                        }
-                                    }
-                                }
-
-                                property("qualifiedName", "test")
-                                property("imports") { listObject {  } }
-                                property("allTypesByName") {
-                                    mapObject {
-                                        entry({ string("A") }) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.PrimitiveTypeSimple") {
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("name", "Primitive")
-                                            }
-                                        }
-                                        entry({ string("S") }) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.EnumTypeSimple") {
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("name", "Enum")
-                                                property("literals") {
-                                                    listObject { string("A"); string("B"); string("C") }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                property("allNamespace") {
-                    listObject {
-                        reference("/namespace/\$entries/0/\$value")
-                    }
-                }
-            }
+        test(input) { expected, actual ->
+            assertEquals(expected.asString(), actual.asString())
         }
-
-        assertEquals(expected.toFormattedJsonString("  ", "  "), actual.toFormattedJsonString("  ", "  "))
-    }
-
-    @Test
-    fun GrammarTypeModel_deserialise() {
-        val json = json("serialised") {
-            objectReferenceable("net.akehurst.language.typemodel.simple.TypeModelSimple") {
-                property("name", "test")
-                property("namespace") {
-                    mapObject {
-                        entry({string("std")}) {
-                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeNamespaceSimple") {
-                                property("qualifiedName", "test")
-                                property("imports") {
-                                    listObject {  }
-                                }
-                                property("allTypesByName") {
-                                    mapObject {
-                                        entry({ string("Primitive") }) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.PrimitiveTypeSimple") {
-                                                property("typeParameters") { listObject {  } }
-                                                property("namespace") { reference("/namespace/\$entries/0/\$value") }
-                                                property("name", "String")
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        entry({ string("test") }) {
-                            objectReferenceable("net.akehurst.language.agl.grammarTypeModel.GrammarTypeNamespaceSimple") {
-                                property("allRuleNameToType") {
-                                    mapObject {
-                                        entry({string("A")}) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
-                                                property("namespace") { reference("/namespace/\$entries/1/\$value") }
-                                                property("qualifiedOrImportedTypeName", "String")
-                                                property("typeArguments") { listObject {  } }
-                                                property("isNullable", false)
-                                            }
-                                        }
-                                        entry({string("S")}) {
-                                            objectReferenceable("net.akehurst.language.typemodel.simple.TypeInstanceSimple") {
-                                                property("namespace") { reference("/namespace/\$entries/1/\$value") }
-                                                property("qualifiedOrImportedTypeName", "S")
-                                                property("typeArguments") { listObject {  } }
-                                                property("isNullable", false)
-                                            }
-                                        }
-                                    }
-                                }
-
-                                property("qualifiedName", "test")
-                                property("imports") { listObject {  } }
-                                property("allTypesByName") {
-                                    mapObject {
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                property("allNamespace") {
-                    listObject {
-                        reference("/namespace/\$entries/0/\$value")
-                    }
-                }
-            }
-        }
-
-        val actual = AglWorkerSerialisation.deserialise<TypeModel>(json.toStringJson())
-        val expected = typeModel("test", true) {
-            namespace("test") {
-                primitiveType("Primitive")
-                enumType("Enum", listOf("A", "B", "C"))
-            }
-        }
-
-        assertEquals(expected.asString(), actual.asString())
-    }
-
-    @Test
-    fun ScopeSimple_serialise_deserialise() {
-        val scope = ScopeSimple<AsmElementPath>(null, "", CrossReferenceModelDefault.ROOT_SCOPE_TYPE_NAME)
-        scope.addToScope("a1", "A", AsmElementPath("/a1"))
-        scope.addToScope("a2", "A", AsmElementPath("/a2"))
-        val cs = scope.createOrGetChildScope("b", "B", AsmElementPath("/a1/b"))
-        cs.addToScope("c1", "C", AsmElementPath("/a1/b/c1"))
-
-        val jsonStr = AglWorkerSerialisation.serialise(scope)
-        val scopeResult = AglWorkerSerialisation.deserialise<ScopeSimple<*>>(jsonStr)
-
-        assertEquals(scope, scopeResult)
     }
 
     // --- MessageProcessorCreate ---
     @Test
     fun MessageProcessorCreate_com_null() {
-        val expected = MessageProcessorCreate(languageId, editorId, sessionId, "", null)
+        val input = MessageProcessorCreate(languageId, editorId, sessionId, "", null)
 
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreate>(jsonStr)
-
-        assertEquals(expected, actual)
+        test(input)
     }
 
     @Test
     fun MessageProcessorCreate_com_blank() {
-        val expected = MessageProcessorCreate(languageId, editorId, sessionId, "", null)
+        val input = MessageProcessorCreate(languageId, editorId, sessionId, "", null)
 
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreate>(jsonStr)
-
-        assertEquals(expected, actual)
+        test(input)
     }
 
     @Test
     fun MessageProcessorCreate_com_grammar() {
-        val expected = MessageProcessorCreate(languageId, editorId, sessionId, "namespace test grammar Test { rule1 = 'a' ; }", null)
+        val input = MessageProcessorCreate(languageId, editorId, sessionId, "namespace test grammar Test { rule1 = 'a' ; }", null)
 
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreate>(jsonStr)
-
-        assertEquals(expected, actual)
+        test(input)
     }
 
     // --- MessageProcessorCreateResponse ---
     @Test
     fun MessageProcessorCreateResponse_com_Start() {
-        val expected = MessageProcessorCreateResponse(
+        val input = MessageProcessorCreateResponse(
             languageId, editorId, sessionId,
             MessageStatus.START, "Start", emptyList()
         )
 
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreateResponse>(jsonStr)
-
-        assertEquals(expected.languageId, actual.languageId)
-        assertEquals(expected.editorId, actual.editorId)
-        assertEquals(expected.sessionId, actual.sessionId)
-        assertEquals(expected.status, actual.status)
-        assertEquals(expected.message, actual.message)
-        assertEquals(expected.issues, actual.issues)
+        test(input) { expected, actual ->
+            assertEquals(expected.languageId, actual.languageId)
+            assertEquals(expected.editorId, actual.editorId)
+            assertEquals(expected.sessionId, actual.sessionId)
+            assertEquals(expected.status, actual.status)
+            assertEquals(expected.message, actual.message)
+            assertEquals(expected.issues, actual.issues)
+        }
     }
 
     @Test
     fun MessageProcessorCreateResponse_com_Error() {
-        val expected = MessageProcessorCreateResponse(
+        val input = MessageProcessorCreateResponse(
             languageId, editorId, sessionId,
             MessageStatus.FAILURE, "Error", listOf(
                 LanguageIssue(
@@ -1120,15 +265,14 @@ class test_AglWorkerSerialisation {
             )
         )
 
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessorCreateResponse>(jsonStr)
-
-        assertEquals(expected.languageId, actual.languageId)
-        assertEquals(expected.editorId, actual.editorId)
-        assertEquals(expected.sessionId, actual.sessionId)
-        assertEquals(expected.status, actual.status)
-        assertEquals(expected.message, actual.message)
-        assertEquals(expected.issues, actual.issues)
+        test(input) { expected, actual ->
+            assertEquals(expected.languageId, actual.languageId)
+            assertEquals(expected.editorId, actual.editorId)
+            assertEquals(expected.sessionId, actual.sessionId)
+            assertEquals(expected.status, actual.status)
+            assertEquals(expected.message, actual.message)
+            assertEquals(expected.issues, actual.issues)
+        }
     }
 
     @Test
@@ -1524,7 +668,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun MessageProcessRequest_com_ContextFromTypeModel() {
-        val result = Agl.registry.agl.scopes.processor!!.process(
+        val result = Agl.registry.agl.crossReference.processor!!.process(
             sentence = """
                 identify Elem by id
                 identify ScopedElem by id

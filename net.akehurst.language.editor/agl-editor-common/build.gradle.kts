@@ -30,7 +30,6 @@ kotlinxReflect {
 
         "net.akehurst.language.typemodel.api",
         "net.akehurst.language.api.automaton",
-        "net.akehurst.language.api.asm",
         "net.akehurst.language.api.parser",
         "net.akehurst.language.api.processor",
         "net.akehurst.language.api.style",
@@ -43,6 +42,7 @@ kotlinxReflect {
         "net.akehurst.language.agl.grammarTypeModel",
         "net.akehurst.language.agl.syntaxAnalyser",
         "net.akehurst.language.agl.semanticAnalyser",
+        "net.akehurst.language.agl.asm",
         "net.akehurst.language.agl.sppt",
         "net.akehurst.language.agl.language.expressions",
         "net.akehurst.language.agl.language.grammar",

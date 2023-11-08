@@ -182,7 +182,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                 this.editorId,
                 this.sessionId,
                 grammarStr,
-                this.agl.languageDefinition.scopeModelStr
+                this.agl.languageDefinition.crossReferenceModelStr
             ) //TODO: sessionId
             this.workerTokenizer.reset()
             this.resetTokenization() //new processor so find new tokens, first by scan

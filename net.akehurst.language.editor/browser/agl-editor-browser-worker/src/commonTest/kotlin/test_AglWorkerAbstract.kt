@@ -20,7 +20,7 @@ import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
-import net.akehurst.language.api.asm.AsmSimple
+import net.akehurst.language.api.asm.Asm
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.parser.InputLocation
@@ -75,7 +75,7 @@ class test_AglWorkerAbstract {
                     assertEquals(exp.sessionId, act.sessionId)
                     assertEquals(exp.status, act.status)
                     assertEquals(exp.issues, act.issues)
-                    assertEquals((exp.asm as AsmSimple?)?.asString("  "), (act.asm as AsmSimple?)?.asString("  "),"MessageSyntaxAnalysisResult")
+                    assertEquals((exp.asm as Asm?)?.asString("  "), (act.asm as Asm?)?.asString("  "),"MessageSyntaxAnalysisResult")
                 }
 
                 exp is MessageSemanticAnalysisResult && act is MessageSemanticAnalysisResult -> {
@@ -84,7 +84,7 @@ class test_AglWorkerAbstract {
                     assertEquals(exp.sessionId, act.sessionId)
                     assertEquals(exp.status, act.status)
                     assertEquals(exp.issues, act.issues)
-                    assertEquals((exp.asm as AsmSimple?)?.asString("  "), (act.asm as AsmSimple?)?.asString("  "),"MessageSemanticAnalysisResult")
+                    assertEquals((exp.asm as Asm?)?.asString("  "), (act.asm as Asm?)?.asString("  "),"MessageSemanticAnalysisResult")
                 }
 
                 else -> assertEquals(exp, act)
@@ -392,21 +392,19 @@ class test_AglWorkerAbstract {
                 leaf type = ID;
             }
         """
-        val scopeStr = """
-                identify Unit by §nothing
-                scope Unit {
-                    identify Primitive by id
-                    identify Datatype by id
-                    identify Collection by id
-                }
+        val crossReferenceStr = """
+                identify Primitive by id
+                identify Datatype by id
+                identify Collection by id
                 references {
                     in TypeReference property type refers-to Primitive|Datatype|Collection
                 }
             """
         val grammar = Agl.registry.agl.grammar.processor!!.process(userGrammar).asm!!.first()
-        val scopeModel = Agl.registry.agl.scopes.processor!!.process(
-            scopeStr,
-            Agl.options { semanticAnalysis { context(ContextFromTypeModel(TypeModelFromGrammar.create(grammar))) } }
+        val typeModel = TypeModelFromGrammar.create(grammar)
+        val scopeModel = Agl.registry.agl.crossReference.processor!!.process(
+            crossReferenceStr,
+            Agl.options { semanticAnalysis { context(ContextFromTypeModel(typeModel)) } }
         ).asm!!
         val sentence = """
             primitive String
@@ -416,7 +414,7 @@ class test_AglWorkerAbstract {
         """.trimIndent()
 
         // create userGrammar
-        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, userGrammar, scopeStr))
+        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, userGrammar, crossReferenceStr))
         // set style for agl grammar (is this needed?)
         sut.receive(port, MessageSetStyle(languageId, editorId, sessionId, ""))
         // process the userGrammar sentence
@@ -446,7 +444,7 @@ class test_AglWorkerAbstract {
                 }
             }
         }
-        val expectedAsmSem = asmSimple(scopeModel, ContextSimple(), true) {
+        val expectedAsmSem = asmSimple(typeModel = typeModel, crossReferenceModel = scopeModel, context = ContextSimple(), true) {
             element("Unit") {
                 propertyListOfElement("declaration") {
                     element("Primitive") {

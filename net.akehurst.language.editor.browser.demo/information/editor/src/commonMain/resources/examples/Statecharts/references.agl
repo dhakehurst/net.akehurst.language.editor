@@ -1,8 +1,5 @@
-namespace com.itemis.create.Expressions {
-    references {
-
-    }
-}
+//namespace com.itemis.create.Expressions {
+//}
 
 namespace com.itemis.create.Global {
     identify Interface by id

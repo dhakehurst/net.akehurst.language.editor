@@ -38,10 +38,7 @@ import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
-import net.akehurst.language.api.asm.AsmElementProperty
-import net.akehurst.language.api.asm.AsmElementReference
-import net.akehurst.language.api.asm.AsmElementSimple
-import net.akehurst.language.api.asm.AsmSimple
+import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
 import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.language.reference.CrossReferenceModel
@@ -395,12 +392,15 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
 }
 
 fun initialiseExamples() {
+    Examples.add(BasicTutorial.example)  // first example
     CoroutineScope(SupervisorJob()).asyncImmediately {
         val resources = localVfs(resourcesPath).jail()
-        resources["examples"].listNames().forEach {
+        console.log("Reading examples from ${resources["examples"].path}")
+        val names = resources["examples"].listNames()
+        console.log("Found examples: $names")
+        names.forEach {
             Examples.read(resources, it)
         }
-        Examples.add(BasicTutorial.example)  // first example
     }.invokeOnCompletion {
         val exampleSelect = document.querySelector("select#example") as HTMLElement
         Examples.add(AglStyle.example)
@@ -534,7 +534,7 @@ class Demo(
     val trees = TreeView.initialise(document)
 
     val exampleSelect = document.querySelector("select#example") as HTMLElement
-    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<AsmSimple, ContextSimple>
+    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Asm, ContextSimple>
     val grammarEditor = editors[Constants.grammarEditorId]!!
     val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
     val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModel>
@@ -555,7 +555,7 @@ class Demo(
         sentenceEditor.languageIdentity = Constants.sentenceLanguageId
         grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleStr
         styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
-        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.scopes.styleStr
+        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.crossReference.styleStr
 
         grammarEditor.onSemanticAnalysis { event ->
             when (event.status) {
@@ -621,7 +621,7 @@ class Demo(
                         logger.logDebug("CrossReferences SyntaxAnalysis success")
                         if (doUpdate) {
                             logger.logDebug("resetting scopes and references")
-                            sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
+                            sentenceEditor.languageDefinition.crossReferenceModelStr = referencesEditor.text
                         }
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, referencesEditor.editorId + ": " + t.message, t)
@@ -646,7 +646,7 @@ class Demo(
                     is GrammarTypeNamespace -> "namespace ${it.qualifiedName}"
                     is TypeNamespace -> "namespace ${it.qualifiedName}"
                     is Pair<String, TypeInstance> -> {
-                        val type = it.second.type
+                        val type = it.second.declaration
                         val ruleName = it.first
                         when (type) {
                             is DataType -> when {
@@ -683,7 +683,7 @@ class Demo(
                     is GrammarTypeNamespace -> it.allTypesByRuleName.isNotEmpty()
                     is TypeNamespace -> it.allTypesByName.isNotEmpty()
                     is Pair<String, TypeInstance> -> {
-                        val type = it.second.type
+                        val type = it.second.declaration
                         when (type) {
                             is TupleType -> type.property.isNotEmpty()
                             is DataType -> type.property.isNotEmpty()
@@ -708,7 +708,7 @@ class Demo(
                     is GrammarTypeNamespace -> it.allTypesByRuleName.toTypedArray()
                     is TypeNamespace -> it.allTypesByName.entries.toTypedArray()
                     is Pair<String, TypeInstance> -> {
-                        val type = it.second.type
+                        val type = it.second.declaration
                         when (type) {
                             is StructuredType -> type.property.toTypedArray()
                             else -> emptyArray<Any>()
@@ -764,26 +764,28 @@ class Demo(
 
         trees["ast"]!!.treeFunctions = TreeViewFunctions<dynamic>(
             label = { root, it ->
-                when {
-                    it is Array<*> -> ": Array"
-                    it is List<*> -> ": List"
-                    it is Set<*> -> ": Set"
-                    it is AsmElementSimple -> ": " + it.typeName
-                    it is AsmElementProperty -> {
+                when (it) {
+                    is Array<*> -> ": Array"
+                    is List<*> -> ": List"
+                    is Set<*> -> ": Set"
+                    is AsmNothing -> "Nothing"
+                    is AsmPrimitive -> "${it.value}"
+                    is AsmList -> ": List"
+                    is AsmListSeparated -> ": ListSeparated"
+                    is AsmStructure -> ": " + it.typeName
+                    is AsmStructureProperty -> {
                         val v = it.value
-                        when {
-                            null == v -> "${it.name} = null"
-                            v is Array<*> -> "${it.name} : Array"
-                            v is List<*> -> "${it.name} : List"
-                            v is Set<*> -> "${it.name} : Set"
-                            v is AsmElementSimple -> "${it.name} : ${v.typeName}"
-                            v is AsmElementReference -> when (v.value) {
+                        when (v) {
+                            is AsmNothing -> "${it.name} = Nothing"
+                            is AsmPrimitive -> "${it.name} = '${v}'"
+                            is AsmList -> "${it.name} : List"
+                            is AsmListSeparated -> "${it.name} : ListSeparated"
+                            is AsmStructure -> "${it.name} : ${v.typeName}"
+                            is AsmReference -> when (v.value) {
                                 null -> "&'${v.reference}' = <unresolved reference>"
-                                else -> "&'${v.reference}' = ${v.value?.asmPath?.value} : ${v.value?.typeName}"
+                                else -> "&'${v.reference}' = ${v.value?.path?.value} : ${v.value?.typeName}"
                             }
-
-                            it.name == "'${v}'" -> "${it.name}"
-                            v is String -> "${it.name} = '${v}'"
+                            //it.name == "'${v}'" -> "${it.name}"
                             else -> "${it.name} = ${v}"
                         }
                     }
@@ -792,17 +794,17 @@ class Demo(
                 }
             },
             hasChildren = {
-                when {
-                    it is Array<*> -> true
-                    it is Collection<*> -> true
-                    it is AsmElementSimple -> it.properties.size != 0
-                    it is AsmElementProperty -> {
-                        val v = it.value
-                        when {
-                            null == v -> false
-                            v is Array<*> -> true
-                            v is Collection<*> -> true
-                            v is AsmElementSimple -> true
+                when (it) {
+                    is Array<*> -> true
+                    is Collection<*> -> true
+                    is AsmList -> true
+                    is AsmListSeparated -> true
+                    is AsmStructure -> it.property.isNotEmpty()
+                    is AsmStructureProperty -> {
+                        when (it.value) {
+                            is AsmList -> true
+                            is AsmListSeparated -> true
+                            is AsmStructure -> true
                             else -> false
                         }
                     }
@@ -811,16 +813,17 @@ class Demo(
                 }
             },
             children = {
-                when {
-                    it is Array<*> -> it
-                    it is Collection<*> -> it.toTypedArray()
-                    it is AsmElementSimple -> it.properties.values.toTypedArray()
-                    it is AsmElementProperty -> {
-                        val v = it.value
-                        when {
-                            v is Array<*> -> v
-                            v is Collection<*> -> v.toTypedArray()
-                            v is AsmElementSimple -> v.properties.values.toTypedArray()
+                when (it) {
+                    is AsmList -> it.elements.toTypedArray()
+                    is AsmListSeparated -> it.elements.toTypedArray()
+                    is AsmStructure -> it.property.values.toTypedArray()
+                    is AsmStructureProperty -> {
+                        when (val v = it.value) {
+                            is Array<*> -> v
+                            is Collection<*> -> v.toTypedArray()
+                            is AsmList -> v.elements.toTypedArray()
+                            is AsmListSeparated -> v.elements.toTypedArray()
+                            is AsmStructure -> v.property.values.toTypedArray()
                             else -> emptyArray<dynamic>()
                         }
                     }
@@ -840,7 +843,7 @@ class Demo(
                     logger.logError(event.message)
                     loading(null, false)
                     when (event.asm) {
-                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                        is Asm -> trees["ast"]!!.setRoots((event.asm as Asm).root)
                         else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
                     }
                 }
@@ -848,7 +851,7 @@ class Demo(
                 EventStatus.SUCCESS -> {
                     loading(null, false)
                     when (event.asm) {
-                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                        is Asm -> trees["ast"]!!.setRoots((event.asm as Asm).root)
                         else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
                     }
                 }
@@ -873,7 +876,7 @@ class Demo(
                 EventStatus.SUCCESS -> {
                     loading(null, false)
                     when (event.asm) {
-                        is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
+                        is Asm -> trees["ast"]!!.setRoots((event.asm as Asm).root)
                         else -> trees["ast"]!!.setRoots(listOf("<Unknown>"))
                     }
                 }

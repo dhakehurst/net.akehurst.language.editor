@@ -27,7 +27,7 @@ import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.api.asm.AsmSimple
 import net.akehurst.language.api.language.grammar.Grammar
-import net.akehurst.language.api.semanticAnalyser.ScopeModel
+import net.akehurst.language.api.language.reference.CrossReferenceModel
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
@@ -325,7 +325,7 @@ class Demo(
     val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<AsmSimple, ContextSimple>
     val grammarEditor = editors[Constants.grammarEditorId]!!
     val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
-    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<ScopeModel, ContextFromTypeModel>
+    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModel>
     //val formatEditor = editors["language-format"]!!
 
     fun configure() {
