@@ -335,21 +335,22 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             var errMsg: String? = null
             when (issue.phase) {
                 LanguageProcessorPhase.GRAMMAR -> Unit
+                LanguageProcessorPhase.SCAN -> errMsg = "Scan Error ${issue.message}"
                 LanguageProcessorPhase.PARSE -> {
                     val expected = issue.data as Set<String>?
                     errMsg = when {
-                        null == expected -> "Syntax Error"
-                        expected.isEmpty() -> "Syntax Error"
-                        1 == expected.size -> "Syntax Error, expected: $expected"
-                        else -> "Syntax Error, expected one of: $expected"
+                        null == expected -> "Parse Error"
+                        expected.isEmpty() -> "Parse Error"
+                        1 == expected.size -> "Parse Error, expected: $expected"
+                        else -> "Parse Error, expected one of: $expected"
                     }
                 }
 
-                LanguageProcessorPhase.SYNTAX_ANALYSIS -> errMsg = "Error ${issue.message}"
-                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> errMsg = "Error ${issue.message}"
-                LanguageProcessorPhase.FORMATTER -> errMsg = "Error ${issue.message}"
-                LanguageProcessorPhase.INTERPRETER -> errMsg = "Error ${issue.message}"
-                LanguageProcessorPhase.GENERATOR -> errMsg = "Error ${issue.message}"
+                LanguageProcessorPhase.SYNTAX_ANALYSIS -> errMsg = "Syntax Analysis Error ${issue.message}"
+                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> errMsg = "Semantic Analysis Error ${issue.message}"
+                LanguageProcessorPhase.FORMAT -> errMsg = "Format Error ${issue.message}"
+                LanguageProcessorPhase.INTERPRET -> errMsg = "Interpret Error ${issue.message}"
+                LanguageProcessorPhase.GENERATE -> errMsg = "Generate Error ${issue.message}"
                 LanguageProcessorPhase.ALL -> errMsg = "Error ${issue.message}"
             }
             if (null != errMsg) {

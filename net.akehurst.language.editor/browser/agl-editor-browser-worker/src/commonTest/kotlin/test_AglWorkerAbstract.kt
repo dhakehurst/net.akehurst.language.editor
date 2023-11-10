@@ -19,6 +19,7 @@ package net.akehurst.language.editor.worker
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.api.asm.Asm
 import net.akehurst.language.api.asm.asmSimple
@@ -36,12 +37,22 @@ import kotlin.test.assertEquals
 class test_AglWorkerAbstract {
 
     class TestAglWorker<AsmType : Any, ContextType : Any>() : AglWorkerAbstract<AsmType, ContextType>() {
-        val sent = mutableListOf<Any>()
+        val sent = mutableListOf<AglWorkerMessage>()
+
+        val sentTrace:List<String> get() {
+            return sent.map {
+                val status = when(it) {
+                    is AglWorkerMessageResponse -> it.status.toString()
+                    else -> "SEND"
+                }
+                "${it.action} $status ${it.endPoint.languageId}"
+            }
+        }
 
         override fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any>) {
             //replace stuff to make testing easier
             val rmsg = when (msg) {
-                is MessageLineTokens -> MessageLineTokens(msg.languageId, msg.editorId, msg.sessionId, msg.status, msg.message, emptyList())
+                is MessageLineTokens -> MessageLineTokens(msg.endPoint, msg.status, msg.message, emptyList())
                 else -> msg
             }
             sent.add(rmsg)
@@ -70,21 +81,17 @@ class test_AglWorkerAbstract {
         fun checkEquals(exp: AglWorkerMessage, act: AglWorkerMessage) {
             when {
                 exp is MessageSyntaxAnalysisResult && act is MessageSyntaxAnalysisResult -> {
-                    assertEquals(exp.languageId, act.languageId)
-                    assertEquals(exp.editorId, act.editorId)
-                    assertEquals(exp.sessionId, act.sessionId)
+                    assertEquals(exp.endPoint, act.endPoint)
                     assertEquals(exp.status, act.status)
                     assertEquals(exp.issues, act.issues)
-                    assertEquals((exp.asm as Asm?)?.asString("  "), (act.asm as Asm?)?.asString("  "),"MessageSyntaxAnalysisResult")
+                    assertEquals((exp.asm as Asm?)?.asString("  "), (act.asm as Asm?)?.asString("  "), "MessageSyntaxAnalysisResult")
                 }
 
                 exp is MessageSemanticAnalysisResult && act is MessageSemanticAnalysisResult -> {
-                    assertEquals(exp.languageId, act.languageId)
-                    assertEquals(exp.editorId, act.editorId)
-                    assertEquals(exp.sessionId, act.sessionId)
+                    assertEquals(exp.endPoint, act.endPoint)
                     assertEquals(exp.status, act.status)
                     assertEquals(exp.issues, act.issues)
-                    assertEquals((exp.asm as Asm?)?.asString("  "), (act.asm as Asm?)?.asString("  "),"MessageSemanticAnalysisResult")
+                    assertEquals((exp.asm as Asm?)?.asString("  "), (act.asm as Asm?)?.asString("  "), "MessageSemanticAnalysisResult")
                 }
 
                 else -> assertEquals(exp, act)
@@ -113,11 +120,11 @@ class test_AglWorkerAbstract {
                 S = 'a' ;
             }
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, null))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), grammarStr, null))
 
         assertEquals(
             sut.sent, listOf<Any>(
-                MessageProcessorCreateResponse(languageId, editorId, sessionId, MessageStatus.SUCCESS, "OK", emptyList())
+                MessageProcessorCreateResponse(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.SUCCESS, "OK", emptyList(), emptyList())
             )
         )
     }
@@ -128,12 +135,13 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, null))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), grammarStr, null))
 
         assertEquals(
             listOf<Any>(
                 MessageProcessorCreateResponse(
-                    languageId, editorId, sessionId, MessageStatus.FAILURE, "Error", listOf(
+                    EndPointIdentity(languageId, editorId, sessionId),
+                    MessageStatus.FAILURE, "Error", emptyList(), listOf(
                         LanguageIssue(
                             LanguageIssueKind.ERROR,
                             LanguageProcessorPhase.PARSE,
@@ -157,22 +165,22 @@ class test_AglWorkerAbstract {
                 }
             """.trimIndent()
         // -- MessageProcessorCreate -->
-        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, null))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), grammarStr, null))
         sut.sent.clear()
 
         // -- MessageProcessRequest -->
         sut.receive(
             port, MessageProcessRequest(
-                languageId, editorId, sessionId,
+                EndPointIdentity(languageId, editorId, sessionId),
                 "S", "", ContextSimple()
             )
         )
 
         assertEquals(
             listOf<Any>(
-                MessageParseResult(languageId, editorId, sessionId, MessageStatus.START, "Start", emptyList(), null),
+                MessageParseResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.START, "Start", emptyList(), null),
                 MessageParseResult(
-                    languageId, editorId, sessionId, MessageStatus.FAILURE, "Parse Failed", listOf(
+                    EndPointIdentity(languageId, editorId, sessionId), MessageStatus.FAILURE, "Parse Failed", listOf(
                         LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.PARSE, InputLocation(0, 1, 1, 1), "^", setOf("'a'"))
                     ), null
                 )
@@ -186,11 +194,11 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr, null))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), grammarStr, null))
 
         assertEquals(
             listOf<Any>(
-                MessageProcessorCreateResponse(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "OK", emptyList())
+                MessageProcessorCreateResponse(EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "OK", emptyList(), emptyList())
             ), sut.sent
         )
     }
@@ -201,7 +209,7 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr, null))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), grammarStr, null))
         sut.sent.clear()
 
         val userGrammar = """
@@ -214,7 +222,7 @@ class test_AglWorkerAbstract {
         // -- MessageSetStyle grammarLanguage -->
         sut.receive(
             port, MessageSetStyle(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId,
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId),
                 ""
             )
         )
@@ -223,7 +231,7 @@ class test_AglWorkerAbstract {
         // -- MessageProcessRequest grammarLanguage -->
         sut.receive(
             port, MessageProcessRequest(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId,
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId),
                 null, userGrammar, null
             )
         )
@@ -243,31 +251,31 @@ class test_AglWorkerAbstract {
         }
         val expected = listOf<Any>(
             MessageParseResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.START, "Start",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.START, "Start",
                 emptyList(), null
             ),
             MessageParseResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "Success",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "Success",
                 emptyList(), "serialised sppt"
             ),
             MessageLineTokens(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "Success",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "Success",
                 emptyList()
             ),
             MessageSyntaxAnalysisResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.START, "Start",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.START, "Start",
                 emptyList(), null
             ),
             MessageSyntaxAnalysisResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "Success",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "Success",
                 emptyList(), grammars
             ),
             MessageSemanticAnalysisResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.START, "Start",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.START, "Start",
                 emptyList(), null
             ),
             MessageSemanticAnalysisResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "Success",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "Success",
                 emptyList(), grammars
             )
         )
@@ -285,7 +293,7 @@ class test_AglWorkerAbstract {
         val grammarStr = """
             garbage
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, grammarStr, null))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), grammarStr, null))
         sut.sent.clear()
 
         val userGrammar = """
@@ -301,7 +309,7 @@ class test_AglWorkerAbstract {
         // -- MessageSetStyle grammarLanguage -->
         sut.receive(
             port, MessageSetStyle(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId,
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId),
                 ""
             )
         )
@@ -310,7 +318,7 @@ class test_AglWorkerAbstract {
         // -- MessageProcessRequest grammarLanguage -->
         sut.receive(
             port, MessageProcessRequest(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId,
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId),
                 null, userGrammar, null
             )
         )
@@ -330,31 +338,31 @@ class test_AglWorkerAbstract {
         }
         val expected = listOf<Any>(
             MessageParseResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.START, "Start",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.START, "Start",
                 emptyList(), null
             ),
             MessageParseResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "Success",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "Success",
                 emptyList(), "serialised sppt"
             ),
             MessageLineTokens(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "Success",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "Success",
                 emptyList()
             ),
             MessageSyntaxAnalysisResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.START, "Start",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.START, "Start",
                 emptyList(), null
             ),
             MessageSyntaxAnalysisResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "Success",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "Success",
                 emptyList(), grammars
             ),
             MessageSemanticAnalysisResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.START, "Start",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.START, "Start",
                 emptyList(), null
             ),
             MessageSemanticAnalysisResult(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "Success",
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), MessageStatus.SUCCESS, "Success",
                 emptyList(), grammars
             )
         )
@@ -393,12 +401,14 @@ class test_AglWorkerAbstract {
             }
         """
         val crossReferenceStr = """
+            namespace test.Test {
                 identify Primitive by id
                 identify Datatype by id
                 identify Collection by id
                 references {
-                    in TypeReference property type refers-to Primitive|Datatype|Collection
+                    in TypeReference { property type refers-to Primitive|Datatype|Collection }
                 }
+            }
             """
         val grammar = Agl.registry.agl.grammar.processor!!.process(userGrammar).asm!!.first()
         val typeModel = TypeModelFromGrammar.create(grammar)
@@ -414,11 +424,11 @@ class test_AglWorkerAbstract {
         """.trimIndent()
 
         // create userGrammar
-        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, userGrammar, crossReferenceStr))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), userGrammar, crossReferenceStr))
         // set style for agl grammar (is this needed?)
-        sut.receive(port, MessageSetStyle(languageId, editorId, sessionId, ""))
+        sut.receive(port, MessageSetStyle(EndPointIdentity(languageId, editorId, sessionId), ""))
         // process the userGrammar sentence
-        sut.receive(port, MessageProcessRequest(languageId, editorId, sessionId, "unit", sentence, ContextSimple()))
+        sut.receive(port, MessageProcessRequest(EndPointIdentity(languageId, editorId, sessionId), "unit", sentence, ContextSimple()))
 
         sut.sent.forEach {
             println(it)
@@ -466,15 +476,15 @@ class test_AglWorkerAbstract {
             }
         }
         val expected = listOf<Any>(
-            MessageProcessorCreateResponse(languageId, editorId, sessionId, MessageStatus.SUCCESS, "OK", emptyList()),
-            MessageSetStyleResult(languageId, editorId, sessionId, MessageStatus.SUCCESS, "OK"),
-            MessageParseResult(languageId, editorId, sessionId, MessageStatus.START, "Start", emptyList(), null),
-            MessageParseResult(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", emptyList(), "serialised sppt"),
-            MessageLineTokens(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", emptyList()),
-            MessageSyntaxAnalysisResult(languageId, editorId, sessionId, MessageStatus.START, "Start", emptyList(), null),
-            MessageSyntaxAnalysisResult(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", emptyList(), expectedAsmSyn),
-            MessageSemanticAnalysisResult(languageId, editorId, sessionId, MessageStatus.START, "Start", emptyList(), null),
-            MessageSemanticAnalysisResult(languageId, editorId, sessionId, MessageStatus.SUCCESS, "Success", emptyList(), expectedAsmSem)
+            MessageProcessorCreateResponse(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.SUCCESS, "OK", emptyList(), emptyList()),
+            MessageSetStyleResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.SUCCESS, "OK"),
+            MessageParseResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.START, "Start", emptyList(), null),
+            MessageParseResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.SUCCESS, "Success", emptyList(), "serialised sppt"),
+            MessageLineTokens(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.SUCCESS, "Success", emptyList()),
+            MessageSyntaxAnalysisResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.START, "Start", emptyList(), null),
+            MessageSyntaxAnalysisResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.SUCCESS, "Success", emptyList(), expectedAsmSyn),
+            MessageSemanticAnalysisResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.START, "Start", emptyList(), null),
+            MessageSemanticAnalysisResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.SUCCESS, "Success", emptyList(), expectedAsmSem)
         )
 
         for (i in expected.indices) {
@@ -488,13 +498,17 @@ class test_AglWorkerAbstract {
     fun style_MessageProcessorCreate_agl_style_language() {
         val sut = TestAglWorker<Any, Any>()
         val grammarStr = """
-            garbage
+            anything because not used for style language, it is 'built-in'
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(Agl.registry.agl.styleLanguageIdentity, editorId, sessionId, grammarStr, null))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(Agl.registry.agl.styleLanguageIdentity, editorId, sessionId), grammarStr, null))
 
         assertEquals(
             listOf<Any>(
-                MessageProcessorCreateResponse(Agl.registry.agl.styleLanguageIdentity, editorId, sessionId, MessageStatus.SUCCESS, "OK", emptyList())
+                MessageProcessorCreateResponse(
+                    EndPointIdentity(Agl.registry.agl.styleLanguageIdentity, editorId, sessionId),
+                    MessageStatus.SUCCESS, "OK",
+                    Agl.registry.agl.style.processor!!.scannerMatchables, emptyList()
+                )
             ), sut.sent
         )
     }
@@ -509,15 +523,17 @@ class test_AglWorkerAbstract {
                 }
             """.trimIndent()
 
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId), "garbage", null))
+
         // -- MessageProcessRequest user-grammar -->
         sut.receive(
             port, MessageProcessRequest(
-                Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId,
+                EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId),
                 null, userGrammar, null
             )
         )
 
-        sut.receive(port, MessageProcessorCreate(languageId, editorId, sessionId, userGrammar, null))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), userGrammar, null))
 
         sut.sent.clear()
         // expect
@@ -531,16 +547,16 @@ class test_AglWorkerAbstract {
         // -- MessageProcessRequest -->
         sut.receive(
             port, MessageProcessRequest(
-                languageId, editorId, sessionId,
+                EndPointIdentity(languageId, editorId, sessionId),
                 "S", "", null//ContextFromGrammar(grammar)
             )
         )
 
         assertEquals(
             listOf<Any>(
-                MessageParseResult(languageId, editorId, sessionId, MessageStatus.START, "Start", emptyList(), null),
+                MessageParseResult(EndPointIdentity(languageId, editorId, sessionId), MessageStatus.START, "Start", emptyList(), null),
                 MessageParseResult(
-                    languageId, editorId, sessionId, MessageStatus.FAILURE, "Parse Failed", listOf(
+                    EndPointIdentity(languageId, editorId, sessionId), MessageStatus.FAILURE, "Parse Failed", listOf(
                         LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.PARSE, InputLocation(0, 1, 1, 1), "^", setOf("'a'"))
                     ), null
                 )
@@ -548,5 +564,49 @@ class test_AglWorkerAbstract {
         )
     }
 
+    @Test
+    fun references_MessageProcessRequest_success() {
+        val sut = TestAglWorker<Any, Any>()
+        val grammarStr = """
+            namespace test
+            grammar Test {
+                S = A ;
+                leaf A = 'a' ;
+            }
+        """.trimIndent()
+        val referencesStr = """
+            namespace test.Test {
+                identify S by a
+            }
+        """.trimIndent()
+
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), grammarStr, referencesStr))
+
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(Agl.registry.agl.crossReferenceLanguageIdentity, editorId, sessionId), grammarStr, referencesStr))
+        sut.receive(port, MessageSetStyle(EndPointIdentity(Agl.registry.agl.crossReferenceLanguageIdentity, editorId, sessionId), ""))
+
+        sut.receive(
+            port, MessageProcessRequest(
+                EndPointIdentity(Agl.registry.agl.crossReferenceLanguageIdentity, editorId, sessionId),
+                null, referencesStr, ContextFromTypeModelReference(languageId)
+            )
+        )
+
+        val expected = listOf(
+            "MessageProcessorCreateResponse SUCCESS $languageId",
+            "MessageProcessorCreateResponse SUCCESS ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+            "MessageSetStyleResult SUCCESS ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+            "MessageParseResult START ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+            "MessageLineTokens SUCCESS ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+            "MessageParseResult SUCCESS ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+            "MessageSyntaxAnalysisResult START ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+            "MessageSyntaxAnalysisResult SUCCESS ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+            "MessageSemanticAnalysisResult START ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+            "MessageSemanticAnalysisResult SUCCESS ${Agl.registry.agl.crossReferenceLanguageIdentity}",
+        )
+
+        assertEquals(expected.joinToString(separator = "\n"), sut.sentTrace.joinToString(separator = "\n"))
+
+    }
 
 }

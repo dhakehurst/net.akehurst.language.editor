@@ -15,9 +15,12 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.scanner.AglScanner
 import net.akehurst.language.api.sppt.LeafData
 import net.akehurst.language.api.sppt.SPPTLeaf
 import net.akehurst.language.editor.api.LogLevel
+import kotlin.time.DurationUnit
+import kotlin.time.measureTimedValue
 
 interface AglTokenizerByWorker {
 
@@ -95,21 +98,21 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
 
     fun getLineTokensByScan(lineText: String, state: AglLineState, row: Int): AglLineState {
         return try {
-            val proc = this.agl.languageDefinition.processor //TODO: move this to worker so don't have to process the grammar in main thread
-            if (null != proc) {
-                val text = state.leftOverText + lineText
-                val leafs = proc.scan(text);
-                val tokens = transformToTokens(leafs)
-                if (leafs.isEmpty()) {
-                    AglLineState(row, "", emptyList())
-                } else {
-                    val lastLeaf = leafs.last()
-                    val endOfLastLeaf = lastLeaf.location.column + lastLeaf.location.length
-                    val leftOverText = lineText.substring(endOfLastLeaf, lineText.length)
-                    AglLineState(row, leftOverText, tokens)
-                }
+            val scanner = AglScanner()
+            val text = state.leftOverText + lineText
+            val tv = measureTimedValue {
+                scanner.scan(text, agl.scannerMatchables)
+            }
+            this.agl.logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
+            val leafs = tv.value.tokens
+            val tokens = transformToTokens(leafs)
+            if (leafs.isEmpty()) {
+                AglLineState(row, "", emptyList())
             } else {
-                AglLineState(row, "", listOf(AglToken(arrayOf("nostyle"), lineText, row, 0)))
+                val lastLeaf = leafs.last()
+                val endOfLastLeaf = lastLeaf.location.column + lastLeaf.location.length
+                val leftOverText = lineText.substring(endOfLastLeaf, lineText.length)
+                AglLineState(row, leftOverText, tokens)
             }
         } catch (t: Throwable) {
             agl.logger.log(LogLevel.Error, "Unable to create LanguageProcessor", t)
@@ -120,12 +123,8 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
     fun getLineTokensByParse(lineText: String, state: AglLineState, row: Int): AglLineState {
         val sppt = this.agl.sppt!!
         val leafs = sppt.tokensByLine(row) //TODO: find more efficient way to do this, i.e. using lineText and state
-        //return if (null != leafs) {
         val tokens = transformToTokens(leafs)
         val endState = AglLineState(row, "", tokens)
         return endState
-        //} else {
-        //    AglLineState(row, "", emptyList())
-        //}
     }
 }

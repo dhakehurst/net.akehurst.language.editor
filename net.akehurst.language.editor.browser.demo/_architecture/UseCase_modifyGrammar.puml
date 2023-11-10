@@ -1,0 +1,43 @@
+@startuml
+!pragma layout smetana
+
+actor user
+participant demo
+participant grammarEditor
+participant styleEditor
+participant refsEditor
+participant sencEditor
+participant worker
+
+user --> grammarEditor: change grammar
+grammarEditor --> worker: [500] interrupt()
+grammarEditor --> worker: [4] process(modified grammarStr)
+worker --> grammarEditor: [3] START parse()
+worker --> grammarEditor: [1312] lineTokens()
+worker --> grammarEditor: [220] SUCCESS parse( grammarSppt )
+worker --> grammarEditor: [14] START syntaxAnalysis()
+worker --> grammarEditor: [419] SUCCESS syntaxAnalysis(grammarAsm)
+worker --> grammarEditor: [1] START semanticAnalysis()
+worker --> grammarEditor: [68] SUCCESS semanticAnalysis(grammarIssues)
+grammarEditor --> demo: onSemanticAnalysis(SUCCESS, grammarAsm)
+demo --> styleEditor: set sentenceContext
+demo --> refsEditor: set sentenceContext
+demo --> sencEditor: set grammarStr
+styleEditor --> worker: [9] interrupt()
+styleEditor --> worker: [0] process(style)
+refsEditor --> worker: [34] interrupt()
+refsEditor --> worker: [0] process(references)
+
+sencEditor --> worker: [12401] create(grammarStr, refsStr)
+sencEditor --> worker: [2] setStyle( stylStr)
+worker --> styleEditor: [49] START parse()
+worker --> refsEditor: [2] START parse()
+worker --> styleEditor: [3] START lineTokens()
+worker --> styleEditor: [1] SUCCESS parse()
+worker --> styleEditor: [0] START syntaxAnalysis()
+worker --> styleEditor: [0] SUCCESS syntaxAnalysis()
+worker --> styleEditor: [0] START semanticAnalysis()
+worker --> styleEditor: [0] SUCCESS semanticAnalysis()
+styleEditor --> sencEditor: set styleStr
+
+@enduml

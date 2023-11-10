@@ -50,12 +50,13 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
     }
 
     private fun processorCreateResult(message: MessageProcessorCreateResponse) {
-        if (message.editorId == this.editorId && message.languageId == this.languageIdentity) {
+        if (message.endPoint.editorId == this.editorId && message.endPoint.languageId == this.languageIdentity) {
             if (message.status == MessageStatus.SUCCESS) {
                 when (message.message) {
                     "OK" -> {
                         this.log(LogLevel.Debug, "New Processor created for ${editorId}", null)
                         this.workerTokenizer.acceptingTokens = true
+                        this.agl.scannerMatchables = message.scannerMatchables
                         this.processSentence()
                         this.resetTokenization()
                     }

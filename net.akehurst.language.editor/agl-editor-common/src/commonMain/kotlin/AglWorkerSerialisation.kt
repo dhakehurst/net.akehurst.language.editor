@@ -338,6 +338,9 @@ object AglWorkerSerialisation {
     private fun initialiseExpressionsAsm() {
         serialiser.configureFromTypeModel(typeModel("ExpressionsAsm", false) {
             namespace("net.akehurst.language.agl.language.expressions", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                dataType("RootExpressionDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
+                }
                 dataType("NavigationDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "List", listOf("String"))
                 }
@@ -405,6 +408,15 @@ object AglWorkerSerialisation {
     private fun initialiseMessages() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.configureFromTypeModel(typeModel("Messages", false) {
+            namespace("net.akehurst.language.agl.scanner") {
+                enumType("MatchableKind", emptyList())
+                dataType("Matchable") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "tag", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "expression", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "MatchableKind")
+
+                }
+            }
             namespace(
                 "net.akehurst.language.api.automaton", imports = mutableListOf(
                     "kotlin", "kotlin.collections"
@@ -412,114 +424,93 @@ object AglWorkerSerialisation {
             ) {
                 enumType("ParseAction", emptyList())
             }
-            namespace("net.akehurst.language.editor.common.messages", imports = mutableListOf("kotlin", "kotlin.collections")) {
+            namespace("net.akehurst.language.editor.common.messages",
+                imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.agl.scanner")) {
                 enumType("MessageStatus", emptyList())
-                dataType("MessageProcessorCreate") {
+                dataType("EndPointIdentity") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                }
+                dataType("MessageProcessorCreate") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "grammarStr", "String", emptyList(), true)
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scopeModelStr", "String", emptyList(), true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "crossReferenceModelStr", "String", emptyList(), true)
                 }
                 dataType("MessageProcessorCreateResponse") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scannerMatchables", "List"){ typeArgument("Matchable") }
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
                 }
                 dataType("MessageSyntaxAnalyserConfigure") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "configuration", "Map") {
                         typeArgument("String")
                         typeArgument("Any")
                     }
                 }
                 dataType("MessageSyntaxAnalyserConfigureResponse") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
                 }
                 dataType("MessageProcessRequest") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String", emptyList(), true)
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "Any", emptyList(), true)
                 }
                 dataType("MessageParseResult") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "treeSerialised", "String", emptyList(), true)
                 }
                 dataType("MessageSyntaxAnalysisResult") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asm", "Any", emptyList(), true)
                 }
                 dataType("MessageSemanticAnalysisResult") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "asm", "Any", emptyList(), true)
                 }
                 dataType("MessageParserInterruptRequest") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reason", "String")
                 }
                 dataType("MessageLineTokens") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "lineTokens", "Array", listOf("Array", "AglToken"))
                 }
                 dataType("MessageSetStyle") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "css", "String")
                 }
                 dataType("MessageSetStyleResult") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                 }
                 dataType("MessageCodeCompleteRequest") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "position", "Int")
                 }
                 dataType("MessageCodeCompleteResult") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "sessionId", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "completionItems", "Array", listOf("CompletionItem"))
@@ -561,6 +552,9 @@ object AglWorkerSerialisation {
                 }
                 dataType("ContextSimple") {
                     propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("E"))
+                }
+                dataType("ContextFromTypeModelReference") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageDefinitionId", "String")
                 }
                 dataType("ContextFromTypeModel") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeModel", "net.akehurst.language.typemodel.api.TypeModel")

@@ -22,12 +22,16 @@ object BasicTutorial {
     val id = "BasicTutorial"
     val label = "Basic Tutorial"
     val sentence = """
-// Use this editor to enter a sentence in the defined language
+// Use this editor to enter a sentence in the defined language.
+// You can use the 'Language' tab to define your own Language (or modify an example).
 
 // The result of parsing the sentence, according to the given grammar, forms the Parse-Tree.
+// The result of syntax analysis over the parse-tree forms the ASM (Abstract Syntax Model).
+// A default Syntax-Analyser is used (in this demo) that is based on abstractions from the grammar. 
 
 target Julian
 target George
+//target Ann    // uncomment this to fix the Error below regarding not being able to find 'Ann'
 
 Hello World !
 Hello Julian !

@@ -16,6 +16,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
 
@@ -39,7 +40,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
 
     var context: ContextType? = null
     var sppt: SharedPackedParseTree? = null
-    //var asm: Any? = null
+    var scannerMatchables = listOf<Matchable>()
 
     var languageIdentity: String
         get() = languageDefinition.identity

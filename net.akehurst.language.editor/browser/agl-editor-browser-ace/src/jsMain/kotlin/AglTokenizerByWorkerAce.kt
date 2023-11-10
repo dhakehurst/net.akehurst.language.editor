@@ -18,6 +18,7 @@ package net.akehurst.language.editor.browser.ace
 
 
 import net.akehurst.language.editor.common.*
+import kotlin.time.measureTimedValue
 
 class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
     agl:AglComponents<AsmType, ContextType>
@@ -49,23 +50,23 @@ class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
     override fun getLineTokens(line: String, pState: ace.LineState?, row: Int): ace.LineTokens {
         val tokens = this.tokensByLine[row]
         return if (null == tokens) {
-            // no tokens received from worker, try local scan
-            val aceState = if (null==pState) AglLineStateAce(row,"") else pState as AglLineStateAce
-            val stateAgl = AglLineState(aceState.lineNumber, aceState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
-            val ltokens = this.aglTokenizer.getLineTokensByScan(line, stateAgl, row)
-            val lineTokens: List<AglTokenAce> = ltokens.tokens.map {
-                AglTokenAce(
+                // no tokens received from worker, try local scan
+                val aceState = if (null == pState) AglLineStateAce(row, "") else pState as AglLineStateAce
+                val stateAgl = AglLineState(aceState.lineNumber, aceState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
+                val ltokens = this.aglTokenizer.getLineTokensByScan(line, stateAgl, row)
+                val lineTokens: List<AglTokenAce> = ltokens.tokens.map {
+                    AglTokenAce(
                         it.styles,
                         it.value,
                         it.line,
                         it.column
-                )
-            }
-            val lt: Array<ace.Token> = lineTokens.toTypedArray()
-            AglLineTokensAce(
+                    )
+                }
+                val lt: Array<ace.Token> = lineTokens.toTypedArray()
+                AglLineTokensAce(
                     AglLineStateAce(row, ""),
                     lt
-            )
+                )
         } else {
             val lineTokens: List<AglTokenAce> = tokens.map {
                 AglTokenAce(

@@ -86,7 +86,7 @@ class AglTokenProvider<AsmType : Any, ContextType : Any>(
         val nextLineNumber = state.lineNumber + 1
         if (null != proc) {
             val text = state.leftOverText + line
-            val leafs = proc.scan(text);
+            val leafs = proc.scan(text).tokens
             val tokens = leafs.map { leaf ->
                 object : monaco.languages.IToken {
                     override val scopes = tokenPrefix + leaf.name //:FIXME: monaco doesn't support multiple classes on a token //mapToCssClasses(leaf).joinToString(separator = ".") { tokenPrefix+it }

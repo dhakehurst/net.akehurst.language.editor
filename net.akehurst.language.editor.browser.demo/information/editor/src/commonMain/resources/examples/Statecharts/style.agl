@@ -1,4 +1,4 @@
-${'$'}keyword {
+$keyword {
     foreground: purple;
     font-style: bold;
 }

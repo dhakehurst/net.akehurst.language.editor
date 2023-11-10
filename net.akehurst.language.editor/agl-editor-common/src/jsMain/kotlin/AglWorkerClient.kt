@@ -21,6 +21,8 @@ import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.*
 import org.w3c.dom.events.EventTarget
+import kotlin.time.DurationUnit
+import kotlin.time.measureTimedValue
 
 class AglWorkerClient<AsmType : Any, ContextType : Any>(
     val agl: AglComponents<AsmType, ContextType>,
@@ -65,13 +67,12 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
                         str.startsWith("Info:") ->  this.agl.logger.log(LogLevel.Information, str.substringAfter("Info:"), null)
 
                         else -> {
-                            //val msg: AglWorkerMessage? = AglWorkerMessage.deserialise(str)
-                            val msg: AglWorkerMessage? = AglWorkerSerialisation.deserialise(str)
-                            if (null == msg) {
-                                this.agl.logger.log(LogLevel.Error, "Message from Worker not handled: $str", null)
-                            } else {
-                                this.receiveMessageFromWorker(msg)
+                            val tv = measureTimedValue {
+                                AglWorkerSerialisation.deserialise<AglWorkerMessage>(str)
                             }
+                            this.agl.logger.log(LogLevel.Debug, "Deserialisation of worker message (length=${str.length}) took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
+                            val msg: AglWorkerMessage = tv.value
+                            this.receiveMessageFromWorker(msg)
                         }
                     }
                 } else {
@@ -91,7 +92,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
 
     private fun receiveMessageFromWorker(msg: AglWorkerMessage) {
         this.agl.logger.log(LogLevel.Trace, "Received message: $msg",null)
-        if (this.agl.languageIdentity==msg.languageId && this.agl.editorId == msg.editorId) { //TODO: should  test for sessionId also
+        if (this.agl.languageIdentity==msg.endPoint.languageId && this.agl.editorId == msg.endPoint.editorId) { //TODO: should  test for sessionId also
             when (msg) {
                 is MessageSetStyleResult -> this.setStyleResult(msg)
                 is MessageProcessorCreateResponse -> this.processorCreateResult(msg)
@@ -112,7 +113,9 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         //val jsObj = msg.toJsObject()
         //val str = AglWorkerMessage.serialise(msg)
         this.agl.logger.log(LogLevel.Trace, "Sending message: $msg",null)
-        val str = AglWorkerSerialisation.serialise(msg)
+        val tv = measureTimedValue { AglWorkerSerialisation.serialise(msg) }
+        this.agl.logger.log(LogLevel.Trace, "Serialisation took ${tv.duration.toString(DurationUnit.MILLISECONDS)}",null)
+        val str = tv.value
         if (this.sharedWorker) {
             (this.worker as SharedWorker).port.postMessage(str, transferables)
         } else {
@@ -121,23 +124,23 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
     }
 
     fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String, scopeModelStr:String?) {
-        this.sendToWorker(MessageProcessorCreate(languageId, editorId, sessionId, grammarStr, scopeModelStr))
+        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), grammarStr, scopeModelStr))
     }
 
     fun configureSyntaxAnalyser(languageId: String, editorId: String, sessionId: String, configuration: Map<String,Any>) {
-        this.sendToWorker(MessageSyntaxAnalyserConfigure(languageId, editorId, sessionId, configuration))
+        this.sendToWorker(MessageSyntaxAnalyserConfigure(EndPointIdentity(languageId, editorId, sessionId), configuration))
     }
 
     fun interrupt(languageId: String, editorId: String, sessionId: String) {
-        this.sendToWorker(MessageParserInterruptRequest(languageId, editorId, sessionId, "New parse request"))
+        this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(languageId, editorId, sessionId), "New parse request"))
     }
 
     fun processSentence(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context: SentenceContext<Any>?) {
-        this.sendToWorker(MessageProcessRequest(languageId, editorId, sessionId, goalRuleName, sentence, context))
+        this.sendToWorker(MessageProcessRequest(EndPointIdentity(languageId, editorId, sessionId), goalRuleName, sentence, context))
     }
 
     fun setStyle(languageId: String, editorId: String, sessionId: String, css: String) {
-        this.sendToWorker(MessageSetStyle(languageId, editorId, sessionId, css))
+        this.sendToWorker(MessageSetStyle(EndPointIdentity(languageId, editorId, sessionId), css))
     }
 
     fun getCompletionItems() {

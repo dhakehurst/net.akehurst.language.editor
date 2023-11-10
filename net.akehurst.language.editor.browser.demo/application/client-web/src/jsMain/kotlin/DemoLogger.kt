@@ -16,15 +16,21 @@
 
 package net.akehurst.language.editor.application.client.web
 
+import korlibs.time.DateTime
 import net.akehurst.language.editor.api.LogLevel
+import kotlin.js.Date
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 class DemoLogger(
     var level: LogLevel
 ) {
 
-    fun logFatal(msg: String?)= log(LogLevel.Fatal, msg, null)
+    fun logFatal(msg: String?) = log(LogLevel.Fatal, msg, null)
     fun logError(msg: String?) = log(LogLevel.Error, msg, null)
-    fun logWarn(msg: String?)= log(LogLevel.Warning, msg, null)
+    fun logWarn(msg: String?) = log(LogLevel.Warning, msg, null)
     fun logInfo(msg: String?) = log(LogLevel.Information, msg, null)
     fun logDebug(msg: String?) = log(LogLevel.Debug, msg, null)
     fun logTrace(msg: String?) = log(LogLevel.Trace, msg, null)
@@ -39,7 +45,7 @@ class DemoLogger(
     private fun logAll(lvl: LogLevel, msg: String?, t: Throwable?) {
         val func = when (lvl) {
             LogLevel.Fatal -> this::consoleFatal
-            LogLevel.Error ->this::consoleError
+            LogLevel.Error -> this::consoleError
             LogLevel.Warning -> this::consoleWarn
             LogLevel.Information -> this::consoleInfo
             LogLevel.Debug -> this::consoleDebug
@@ -54,10 +60,26 @@ class DemoLogger(
         }
     }
 
-    private fun consoleFatal(msg: String?) = console.error("Fatal: $msg")
-    private fun consoleError(msg: String?) = console.error("Error: $msg")
-    private fun consoleWarn(msg: String?) = console.warn("Warn: $msg")
-    private fun consoleInfo(msg: String?) = console.info("Info: $msg")
-    private fun consoleDebug(msg: String?) = console.asDynamic().debug("Debug: $msg")
-    private fun consoleTrace(msg: String?) = console.asDynamic().debug("Trace: $msg")
+    private fun consoleFatal(msg: String?) = console.error(duration("Fatal","$msg"))
+    private fun consoleError(msg: String?) = console.error(duration("Error","$msg"))
+    private fun consoleWarn(msg: String?) = console.warn(duration("Warn","$msg"))
+    private fun consoleInfo(msg: String?) = console.info(duration("Info","$msg"))
+    private fun consoleDebug(msg: String?) = console.asDynamic().debug(duration("Debug","$msg"))
+    private fun consoleTrace(msg: String?) = console.asDynamic().debug(duration("Trace","$msg"))
+
+    private var lastTimeMark: TimeSource.Monotonic.ValueTimeMark? = null
+    private fun duration(lev: String, msg: String): String {
+        return if (msg.startsWith("Send") || msg.startsWith("Receiv")) {
+            val prev = lastTimeMark
+            val now = TimeSource.Monotonic.markNow()
+            lastTimeMark = now
+            val durStr = prev?.let {
+                val dur = now - it
+                dur.toString(DurationUnit.MILLISECONDS)
+            } ?: "0"
+             "$lev ($durStr): $msg"
+        } else {
+            "$lev: $msg"
+        }
+    }
 }

@@ -1,0 +1,21 @@
+@startuml
+!pragma layout smetana
+
+artifact "ake.hjson" as hjson
+artifact "ake.json" as json
+artifact "ake.agl-processor" as agl
+artifact "ake.agl-editor" as agl_editor
+
+artifact "ake.kserialisation" as kserialisation
+artifact "ake.komposite" as komposite
+artifact "ake.kotlinx" as kotlinx
+
+agl_editor -[dashed]-> kserialisation
+kserialisation -[dashed]-> komposite
+kserialisation -[dashed]-> hjson
+kserialisation -[dashed]-> json
+komposite -[dashed]-> kotlinx
+komposite -[dashed]-> agl
+hjson -[dashed]-> agl
+
+@enduml

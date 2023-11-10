@@ -37,6 +37,7 @@ import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
@@ -77,6 +78,8 @@ enum class AlternativeEditors {
 }
 
 object Constants {
+    val initialLogLevel = LogLevel.All
+
     const val sentenceEditorId = "editor-sentence"
     const val grammarEditorId = "editor-grammar"
     const val referencesEditorId = "editor-references"
@@ -85,7 +88,7 @@ object Constants {
 
     const val sentenceLanguageId = "language-user"
     val grammarLanguageId = Agl.registry.agl.grammarLanguageIdentity
-    val referencesLanguageId = Agl.registry.agl.scopesLanguageIdentity
+    val referencesLanguageId = Agl.registry.agl.crossReferenceLanguageIdentity
     val styleLanguageId = Agl.registry.agl.styleLanguageIdentity
     val formatLanguageId = Agl.registry.agl.formatLanguageIdentity
 }
@@ -101,8 +104,7 @@ interface DemoInterface {
 
 fun main() {
     try {
-        val logger = DemoLogger(LogLevel.Information)
-        //val logger = DemoLogger(LogLevel.All)
+        val logger = DemoLogger(Constants.initialLogLevel)
 
         //define this before editors are created
         // need to register this so that we can set the configuration and get the default completion-provider
@@ -537,7 +539,7 @@ class Demo(
     val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Asm, ContextSimple>
     val grammarEditor = editors[Constants.grammarEditorId]!!
     val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
-    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModel>
+    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModelReference>
     //val formatEditor = editors["language-format"]!!
 
     fun configure() {
@@ -548,9 +550,10 @@ class Demo(
 
     private fun connectEditors() {
         //ids should already be set when dom and editors are created
-        grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
-        styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
-        referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
+        grammarEditor.languageIdentity = Constants.grammarLanguageId
+        grammarEditor.sentenceContext = null // ensure this is null, so that Worker uses default of ContextFromGrammarRegistry
+        styleEditor.languageIdentity = Constants.styleLanguageId
+        referencesEditor.languageIdentity = Constants.referencesLanguageId
         //Agl.registry.unregister(Constants.sentenceLanguageId)
         sentenceEditor.languageIdentity = Constants.sentenceLanguageId
         grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleStr
@@ -563,19 +566,19 @@ class Demo(
 
                 EventStatus.FAILURE -> {
                     styleEditor.sentenceContext?.clear()
-                    referencesEditor.sentenceContext?.clear()
+                    //referencesEditor.sentenceContext?.clear()
                     logger.logError(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
 
                 EventStatus.SUCCESS -> {
+                    logger.logDebug("Send grammarStr Semantic Analysis success")
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
                     styleEditor.sentenceContext = ContextFromGrammar.createContextFrom(grammars)
-                    referencesEditor.sentenceContext = ContextFromTypeModel(TypeModelFromGrammar.createFromGrammarList(grammars))
+                    referencesEditor.sentenceContext = ContextFromTypeModelReference(sentenceEditor.languageIdentity)
                     try {
-                        logger.logDebug(" Grammar parse success")
                         if (doUpdate) {
-                            logger.logDebug("resetting sentence processor")
+                            logger.logDebug("Send set sentenceEditor grammarStr")
                             sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
                         }
                     } catch (t: Throwable) {
@@ -620,7 +623,7 @@ class Demo(
                         //sentenceScopeModel = event.asm as ScopeModel?
                         logger.logDebug("CrossReferences SyntaxAnalysis success")
                         if (doUpdate) {
-                            logger.logDebug("resetting scopes and references")
+                            logger.logDebug("Setting cross-reference model for sentenceEditor")
                             sentenceEditor.languageDefinition.crossReferenceModelStr = referencesEditor.text
                         }
                     } catch (t: Throwable) {
@@ -681,7 +684,7 @@ class Demo(
                     is List<*> -> true
                     is TypeModel -> it.namespace.isNotEmpty()
                     is GrammarTypeNamespace -> it.allTypesByRuleName.isNotEmpty()
-                    is TypeNamespace -> it.allTypesByName.isNotEmpty()
+                    is TypeNamespace -> it.ownedTypesByName.isNotEmpty()
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.declaration
                         when (type) {
@@ -706,7 +709,7 @@ class Demo(
                     is List<*> -> it.toArray()
                     is TypeModel -> it.allNamespace.toTypedArray()
                     is GrammarTypeNamespace -> it.allTypesByRuleName.toTypedArray()
-                    is TypeNamespace -> it.allTypesByName.entries.toTypedArray()
+                    is TypeNamespace -> it.ownedTypesByName.entries.toTypedArray()
                     is Pair<String, TypeInstance> -> {
                         val type = it.second.declaration
                         when (type) {
@@ -777,7 +780,7 @@ class Demo(
                         val v = it.value
                         when (v) {
                             is AsmNothing -> "${it.name} = Nothing"
-                            is AsmPrimitive -> "${it.name} = '${v}'"
+                            is AsmPrimitive -> "${it.name} = '${v.value}'"
                             is AsmList -> "${it.name} : List"
                             is AsmListSeparated -> "${it.name} : ListSeparated"
                             is AsmStructure -> "${it.name} : ${v.typeName}"
@@ -909,10 +912,12 @@ class Demo(
         //formatEditor.text = eg.format
         sentenceEditor.doUpdate = false
         sentenceEditor.sentenceContext = ContextSimple()
+        logger.log(LogLevel.Trace, "Update sentenceEditor with grammar, refs, style", null)
         sentenceEditor.languageDefinition.update(grammarEditor.text, referencesEditor.text, styleEditor.text)
         sentenceEditor.text = eg.sentence
         sentenceEditor.doUpdate = true
         this.doUpdate = true
+        logger.log(LogLevel.Information, "Finished setting example", null)
     }
 
     fun finalize() {
