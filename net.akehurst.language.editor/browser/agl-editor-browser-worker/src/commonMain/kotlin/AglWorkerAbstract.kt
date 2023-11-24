@@ -197,7 +197,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             // to save time serialisating/deserialising contexts that are based on information already in the worker
             // when (language) {
             //  is Agl Grammar -> create ContextFromGrammarRegistry
-            //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefintion, get its typemodel and create ContextFromTypeModel
+            //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefinition, get its typemodel and create ContextFromTypeModel
             // }
             val ctx = when (endPoint.languageId) {
                 Agl.registry.agl.grammar.identity -> context ?: ContextFromGrammarRegistry(Agl.registry)

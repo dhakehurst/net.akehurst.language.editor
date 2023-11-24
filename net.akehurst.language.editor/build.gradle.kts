@@ -20,12 +20,12 @@ import org.gradle.internal.jvm.Jvm
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 
 plugins {
-    kotlin("multiplatform") version ("1.9.20") apply false
+    kotlin("multiplatform") version ("1.9.21") apply false
     id("org.jetbrains.dokka") version ("1.9.10") apply false
     id("com.github.gmazzo.buildconfig") version ("4.1.2") apply false
     id("nu.studer.credentials") version ("3.0")
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version ("1.9.20") apply false
-    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version ("1.9.20") apply false
+    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version ("1.9.21") apply false
+    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version ("1.9.21") apply false
 }
 
 println("===============================================")

@@ -42,8 +42,10 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
                 CompletionItemKind.LITERAL -> ""
                 CompletionItemKind.PATTERN -> "(${ci.name})"
                 CompletionItemKind.SEGMENT -> "(${ci.name})"
+                CompletionItemKind.REFERRED -> "(${ci.name})"
             }
             val s = when (ci.kind) {
+                CompletionItemKind.REFERRED -> 4
                 CompletionItemKind.LITERAL -> 3
                 CompletionItemKind.PATTERN -> 2
                 CompletionItemKind.SEGMENT -> 1

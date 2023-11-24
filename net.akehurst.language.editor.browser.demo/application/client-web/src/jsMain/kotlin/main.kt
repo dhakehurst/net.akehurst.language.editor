@@ -785,8 +785,8 @@ class Demo(
                             is AsmListSeparated -> "${it.name} : ListSeparated"
                             is AsmStructure -> "${it.name} : ${v.typeName}"
                             is AsmReference -> when (v.value) {
-                                null -> "&'${v.reference}' = <unresolved reference>"
-                                else -> "&'${v.reference}' = ${v.value?.path?.value} : ${v.value?.typeName}"
+                                null -> "${it.name} = &'${v.reference}' - <unresolved reference>"
+                                else -> "${it.name} = &'${v.reference}' : ${v.value?.typeName} - ${v.value?.path?.value}"
                             }
                             //it.name == "'${v}'" -> "${it.name}"
                             else -> "${it.name} = ${v}"

@@ -1,7 +1,7 @@
 FOR TIMESPAN '01-Jan-2017' UNTIL '31-Dec-2017' EVERY month
  MATCH Milestone AS ms
    WHERE ms.dueDate <= now
-   RETURN TABLE COLUMN Due CONTAINING COUNT(ms)
+   RETURN TABLE COLUMN Due CONTAINING COUNT(ms);
  JOIN
    MATCH Milestone AS ms
     ( LINKED * TIMES WITH Bug AS bug
@@ -23,6 +23,34 @@ FOR TIMESPAN '01-Jan-2017' UNTIL '31-Dec-2017' EVERY month
      AND bResult.value == 'pass' AND build.buildDate < ms.dueDate
      AND build.version == ms.version AND binary.version == ms.version
      AND binary.publishedDate < ms.dueDate
-   RETURN TABLE COLUMN Met CONTAINING COUNT(ms)
+   RETURN TABLE COLUMN Met CONTAINING COUNT(ms);
  JOIN
-   RETURN TABLE COLUMN Percent CONTAINING (Met / Due)* 100
+   RETURN TABLE COLUMN Percent CONTAINING (Met / Due)* 100;
+
+typed-graph-model {
+
+    node-type Milestone {}
+    node-type Feature {}
+    node-type Bug {}
+    node-type SubTask {}
+    node-type Requirement {}
+    node-type IntegrationTest {}
+    node-type CodeFile {}
+    node-type UnitTest {}
+    node-type TestResult {}
+    node-type Build {}
+    node-type Binary {}
+
+    link-type MF: Milestone --- [*] Feature
+    link-type MB: Milestone ---[*] Bug
+    link-type FS: Feature ---[*] SubTask
+    link-type FR: Feature [*]---[1..*] Requirement
+    link-type RI: Requirement [1..*]---[*] IntegrationTest
+    link-type RC: Requirement [*]---[*] CodeFile
+    link-type CU: CodeFile ---[*] UnitTest
+    link-type BU: Bug ---[*] UnitTest
+    link-type UT: UnitTest --- TestResult
+    link-type TB: TestResult [*]--- Build
+    link-type BB: Build ---[?] Binary
+
+}

@@ -1,24 +1,21 @@
-//namespace com.itemis.create.Expressions {
-//}
+namespace com.itemis.create.Expressions {
+    references {
+
+    }
+}
 
 namespace com.itemis.create.Global {
     identify Interface by id
-    identify InternalDeclarations by §nothing
-    identify ImportDeclarations by §nothing
+    identify ImportedName by string
+    identify VariableDeclaration by id
+    identify EventDeclaration by id
+    identify AliasDeclaration by id
+    identify OperationDeclaration by id
     scope Interface {
         identify VariableDeclaration by id
         identify EventDeclaration by id
         identify AliasDeclaration by id
         identify OperationDeclaration by id
-    }
-    scope InternalDeclarations {
-        identify VariableDeclaration by id
-        identify EventDeclaration by id
-        identify AliasDeclaration by id
-        identify OperationDeclaration by id
-    }
-    scope ImportDeclarations {
-        identify ImportedName by string
     }
     scope OperationDeclaration {
         identify Parameter by id
@@ -42,6 +39,9 @@ namespace com.itemis.create.Global {
             forall argumentList.arguments {
                 property argumentId.id refers-to Parameter from id  // id should be a reference to an OperationDeclaration at this point
             }
+        }
+        in TypeSpecifier {
+            property fqn refers-to Type
         }
     }
 }

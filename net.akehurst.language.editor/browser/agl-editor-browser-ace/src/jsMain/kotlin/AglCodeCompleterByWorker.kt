@@ -39,11 +39,19 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
                 CompletionItemKind.LITERAL -> ""
                 CompletionItemKind.PATTERN -> "(${ci.name})"
                 CompletionItemKind.SEGMENT -> "(${ci.name})"
+                CompletionItemKind.REFERRED  -> "(${ci.name})"
+            }
+            val s = when (ci.kind) {
+                CompletionItemKind.REFERRED -> 4
+                CompletionItemKind.LITERAL -> 3
+                CompletionItemKind.PATTERN -> 2
+                CompletionItemKind.SEGMENT -> 1
             }
             objectJS {
                 caption = ci.text
                 value = ci.text
                 meta = m
+                score = s
             }
         }.toTypedArray()
         callback(null, aceCi)

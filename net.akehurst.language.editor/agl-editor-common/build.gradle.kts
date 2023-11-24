@@ -49,6 +49,7 @@ kotlinxReflect {
         "net.akehurst.language.agl.language.grammar",
         "net.akehurst.language.agl.language.grammar.asm",
         "net.akehurst.language.agl.language.reference",
+        "net.akehurst.language.agl.language.reference.asm",
         "net.akehurst.language.agl.language.style",
         "net.akehurst.language.agl.language.style.asm",
         "net.akehurst.language.agl.language.format",

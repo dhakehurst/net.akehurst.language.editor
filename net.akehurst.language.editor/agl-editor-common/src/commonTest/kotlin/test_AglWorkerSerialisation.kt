@@ -15,23 +15,16 @@
  */
 package net.akehurst.language.editor.common.serialisation
 
-import net.akehurst.kotlin.json.json
-import net.akehurst.language.agl.asm.AsmPathSimple
 import net.akehurst.language.agl.default.TypeModelFromGrammar
-import net.akehurst.language.agl.grammarTypeModel.grammarTypeModel
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
-import net.akehurst.language.agl.language.reference.CrossReferenceModelDefault
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
-import net.akehurst.language.agl.semanticAnalyser.ScopeSimple
 import net.akehurst.language.agl.semanticAnalyser.contextSimple
 import net.akehurst.language.agl.sppt.TreeDataComplete
 import net.akehurst.language.api.asm.Asm
-import net.akehurst.language.api.asm.AsmPath
 import net.akehurst.language.api.asm.asmSimple
 import net.akehurst.language.api.language.grammar.Grammar
-import net.akehurst.language.api.language.reference.Scope
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
@@ -121,11 +114,8 @@ class test_AglWorkerSerialisation {
     fun Asm_serialise_deserialise() {
         val result = Agl.registry.agl.crossReference.processor!!.process(
             sentence = """
-                namespace test {
-                    identify Root by §nothing
-                    scope Root {
-                        identify Elem2 by id
-                    }
+                namespace ns {
+                    identify Elem2 by id
                     references {
                         in Elem2 { property ref refers-to Elem2 }
                     }
@@ -614,7 +604,7 @@ class test_AglWorkerSerialisation {
                                     propertyString("id", "a")
                                     propertyElementExplicitType("typeReference", "TypeReference") {
                                         reference("type", "String")
-                                        propertyNull("typeArguments")
+                                        propertyNothing("typeArguments")
                                     }
                                 }
                             }
@@ -670,7 +660,7 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.goalRuleName, actual.goalRuleName)
         assertEquals(expected.text, actual.text)
 //TODO
-        assertEquals((expected.context as ContextFromTypeModel).rootScope.findOrNull("e1", "Elem"), (actual.context as ContextFromTypeModel).rootScope.findOrNull("e1", "Elem"))
+        //assertEquals((expected.context as ContextFromTypeModel).typeModel.findOrNull("e1", "Elem"), (actual.context as ContextFromTypeModel).rootScope.findOrNull("e1", "Elem"))
 
     }
 

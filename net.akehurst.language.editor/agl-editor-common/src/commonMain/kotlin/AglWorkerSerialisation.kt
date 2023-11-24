@@ -18,6 +18,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
+import net.akehurst.language.agl.semanticAnalyser.ScopeSimple
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
 
@@ -149,7 +150,7 @@ object AglWorkerSerialisation {
                 dataType("TypeInstanceSimple") {
                     supertypes("TypeInstanceAbstract")
                     //propertyOf(setOf(CONSTRUCTOR, REFERENCE), "context", "TypeDeclaration")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "contextQualifiedTypeName","String", emptyList(), true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "contextQualifiedTypeName", "String", emptyList(), true)
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedOrImportedTypeName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
@@ -351,13 +352,15 @@ object AglWorkerSerialisation {
     private fun initialiseCrossReferencesAsm() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.configureFromTypeModel(typeModel("CrossReferencesAsm", false) {
-            namespace(
-                "net.akehurst.language.agl.language.reference",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.language.expressions")
-            ) {
+            namespace("net.akehurst.language.agl.language.reference", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("ReferencesGrammar") {
                     supertypes("GrammarAbstract")
                 }
+            }
+            namespace(
+                "net.akehurst.language.agl.language.reference.asm",
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.language.expressions")
+            ) {
                 dataType("CrossReferenceModelDefault") {
                     propertyOf(setOf(MEMBER, COMPOSITE), "declarationsForNamespace", "Map") {
                         typeArgument("String")
@@ -367,7 +370,7 @@ object AglWorkerSerialisation {
                 dataType("DeclarationsForNamespaceDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
 
-                    propertyOf(setOf(MEMBER, COMPOSITE), "scopes", "Map") {
+                    propertyOf(setOf(MEMBER, COMPOSITE), "scopeDefinition", "Map") {
                         typeArgument("String")
                         typeArgument("ScopeDefinitionDefault")
                     }
@@ -424,8 +427,10 @@ object AglWorkerSerialisation {
             ) {
                 enumType("ParseAction", emptyList())
             }
-            namespace("net.akehurst.language.editor.common.messages",
-                imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.agl.scanner")) {
+            namespace(
+                "net.akehurst.language.editor.common.messages",
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.scanner")
+            ) {
                 enumType("MessageStatus", emptyList())
                 dataType("EndPointIdentity") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
@@ -441,7 +446,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scannerMatchables", "List"){ typeArgument("Matchable") }
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scannerMatchables", "List") { typeArgument("Matchable") }
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
                 }
                 dataType("MessageSyntaxAnalyserConfigure") {
@@ -531,7 +536,7 @@ object AglWorkerSerialisation {
                 dataType("ScopeSimple") {
                     typeParameters("AsmElementIdType")
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "parent", "ScopeSimple", listOf("AsmElementIdType"))
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forReferenceInParent", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scopeIdentityInParent", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forTypeName", "String")
 
                     propertyOf(setOf(MEMBER, REFERENCE), "scopeMap", "Map") {
@@ -579,7 +584,7 @@ object AglWorkerSerialisation {
                 dataType("AsmReferenceSimple") {
                     supertypes("AsmValueAbstract")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reference", "String")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "value", "AsmElementSimple")
+                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "value", "AsmElementSimple", emptyList(), true)
                 }
                 dataType("AsmStructureSimple") {
                     supertypes("AsmValueAbstract")

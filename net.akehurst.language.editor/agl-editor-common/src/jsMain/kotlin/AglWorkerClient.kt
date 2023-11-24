@@ -61,7 +61,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
             try {
                 val data = (ev as MessageEvent).data
                 if (data is String) {
-                    val str = (ev as MessageEvent).data as String
+                    val str = ev.data as String
                     when {
                         str.startsWith("Error:") ->  this.agl.logger.log(LogLevel.Error, str.substringAfter("Error:"), null)
                         str.startsWith("Info:") ->  this.agl.logger.log(LogLevel.Information, str.substringAfter("Info:"), null)
