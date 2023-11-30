@@ -76,6 +76,6 @@ namespace net.akehurst.language.agl.AglGrammar {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, references, style, format)
+    val example = Example(id, label, sentence, grammar, references, style, format,"")
 
 }

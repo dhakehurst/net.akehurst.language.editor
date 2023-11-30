@@ -35,6 +35,7 @@ import net.akehurst.kotlin.html5.create
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
+import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
@@ -59,6 +60,7 @@ import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.information.Example
 import net.akehurst.language.editor.information.Examples
+import net.akehurst.language.editor.information.ExternalContextLanguage
 import net.akehurst.language.editor.information.examples.AglGrammar
 import net.akehurst.language.editor.information.examples.AglStyle
 import net.akehurst.language.editor.information.examples.BasicTutorial
@@ -114,6 +116,7 @@ fun main() {
             buildForDefaultGoal = false,
             aglOptions = Agl.options {
                 semanticAnalysis {
+                    context(ContextFromGrammarRegistry(Agl.registry))
                     option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             },
@@ -911,7 +914,7 @@ class Demo(
         referencesEditor.text = eg.references
         //formatEditor.text = eg.format
         sentenceEditor.doUpdate = false
-        sentenceEditor.sentenceContext = ContextSimple()
+        sentenceEditor.sentenceContext = ExternalContextLanguage.processor.process(eg.context).asm
         logger.log(LogLevel.Trace, "Update sentenceEditor with grammar, refs, style", null)
         sentenceEditor.languageDefinition.update(grammarEditor.text, referencesEditor.text, styleEditor.text)
         sentenceEditor.text = eg.sentence

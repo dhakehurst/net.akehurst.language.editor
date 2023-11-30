@@ -25,7 +25,7 @@ import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
-import net.akehurst.language.api.asm.AsmSimple
+import net.akehurst.language.api.asm.Asm
 import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.language.reference.CrossReferenceModel
 import net.akehurst.language.api.style.AglStyleModel
@@ -79,7 +79,7 @@ object Constants {
 
     const val sentenceLanguageId = "language-user"
     val grammarLanguageId = Agl.registry.agl.grammarLanguageIdentity
-    val referencesLanguageId = Agl.registry.agl.scopesLanguageIdentity
+    val referencesLanguageId = Agl.registry.agl.crossReferenceLanguageIdentity
     val styleLanguageId = Agl.registry.agl.styleLanguageIdentity
     val formatLanguageId = Agl.registry.agl.formatLanguageIdentity
 }
@@ -322,7 +322,7 @@ class Demo(
     //val trees = TreeView.initialise(document)
 
     //val exampleSelect = document.querySelector("select#example") as HTMLElement
-    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<AsmSimple, ContextSimple>
+    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Asm, ContextSimple>
     val grammarEditor = editors[Constants.grammarEditorId]!!
     val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
     val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModel>
@@ -335,9 +335,9 @@ class Demo(
     }
 
     private fun connectEditors() {
-        grammarEditor.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
-        styleEditor.languageIdentity = Agl.registry.agl.styleLanguageIdentity
-        referencesEditor.languageIdentity = Agl.registry.agl.scopesLanguageIdentity
+        grammarEditor.languageIdentity = Constants.grammarLanguageId
+        styleEditor.languageIdentity = Constants.styleLanguageId
+        referencesEditor.languageIdentity = Constants.referencesLanguageId
         Agl.registry.unregister(Constants.sentenceLanguageId)
         sentenceEditor.languageIdentity = Agl.registry.register(
             identity = Constants.sentenceLanguageId,
@@ -353,7 +353,7 @@ class Demo(
 
         grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleStr
         styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
-        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.scopes.styleStr
+        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.crossReference.styleStr
 
 
         //var sentenceScopeModel: ScopeModel? = null
@@ -418,7 +418,7 @@ class Demo(
                     try {
                         //sentenceScopeModel = event.asm as ScopeModel?
                         logger.logDebug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
-                        sentenceEditor.languageDefinition.scopeModelStr = referencesEditor.text
+                        sentenceEditor.languageDefinition.crossReferenceModelStr = referencesEditor.text
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, referencesEditor.editorId + ": " + t.message, t)
                     }

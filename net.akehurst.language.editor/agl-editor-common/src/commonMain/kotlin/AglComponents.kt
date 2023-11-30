@@ -15,6 +15,8 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
+import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.api.sppt.SharedPackedParseTree
@@ -31,7 +33,12 @@ class AglComponents<AsmType : Any, ContextType : Any>(
 
     val languageDefinition get() = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
         _languageIdentity,
-        aglOptions = null,
+        aglOptions = Agl.options {
+            semanticAnalysis {
+                context(ContextFromGrammarRegistry(Agl.registry))
+                option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+            }
+        },
         configuration = Agl.configurationEmpty()
     )
     var goalRule: String? = languageDefinition.defaultGoalRule

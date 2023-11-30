@@ -54,6 +54,6 @@ grammar Outer {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, references, style, format)
+    val example = Example(id, label, sentence, grammar, references, style, format,"")
 
 }

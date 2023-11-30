@@ -22,6 +22,7 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.editor.information.examples.AglStyle
 import net.akehurst.language.editor.information.examples.BasicTutorial
+import net.akehurst.language.typemodel.api.typeModel
 import kotlin.test.Test
 import kotlin.test.fail
 
@@ -68,6 +69,14 @@ class test_examples {
                 if (proc.issues.errors.isNotEmpty()) {
                     fail("TypeModel: ${it.id}\n" + proc.issues.toString())
                 }
+//                val additionalTm = typeModel("x",true) {
+//                    namespace("external") {
+//                        dataType("AnnotationType")
+//                        dataType("RegularState")
+//                        dataType("BuiltInType")
+//                    }
+//                }
+//                proc.typeModel.addAllNamespace(additionalTm.allNamespace)
                 proc.crossReferenceModel
                 if (proc.issues.errors.isNotEmpty()) {
                     fail("CrossReferencesModel: ${it.id}\n" + proc.issues.toString())
@@ -104,9 +113,11 @@ class test_examples {
             }
 
             println("  SemanticAnalysis")
+            val ctx = ExternalContextLanguage.processor.process(it.context).asm
+
             val semanticAnalysis = result.processor!!.semanticAnalysis(
                 syntaxAnalysis.asm!!,
-                Agl.options { semanticAnalysis { context(ContextSimple()) } }
+                Agl.options { semanticAnalysis { context(ctx) } }
             )
             if (semanticAnalysis.issues.errors.isNotEmpty()) {
                 // allow error here as some examples have them intentionally

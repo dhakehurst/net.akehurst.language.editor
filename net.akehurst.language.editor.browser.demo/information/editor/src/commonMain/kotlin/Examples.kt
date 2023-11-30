@@ -35,7 +35,8 @@ object Examples {
             val scopes = dir["references.agl"].readStringIfExists() ?: ""
             val format = dir["format.agl"].readStringIfExists() ?: ""
             val sentence = dir["sentence.txt"].readStringIfExists() ?: ""
-            val eg = Example(id, label, sentence, grammarStr, scopes, styleStr, format)
+            val context = dir["context.agl"].readStringIfExists() ?: ""
+            val eg = Example(id, label, sentence, grammarStr, scopes, styleStr, format, context)
             Examples.add(eg)
         }
     }
@@ -55,9 +56,10 @@ object Examples {
             grammar: String,
             references:String,
             style: String,
-            format: String
+            format: String,
+            context:String
     ) {
-        this.map[id] = Example(id, label, sentence, grammar,  references, style, format)
+        this.map[id] = Example(id, label, sentence, grammar,  references, style, format, context)
     }
 }
 
@@ -68,5 +70,6 @@ class Example(
         val grammar: String,
         val references:String,
         val style: String,
-        val format: String
+        val format: String,
+        val context: String
 )
