@@ -25,6 +25,7 @@ dependencies {
 kotlinxReflect {
 
     forReflectionMain.set(listOf(
+        "net.akehurst.language.editor.api",
         "net.akehurst.language.editor.common",
         "net.akehurst.language.editor.common.messages",
 
@@ -53,7 +54,9 @@ kotlinxReflect {
         "net.akehurst.language.agl.language.style",
         "net.akehurst.language.agl.language.style.asm",
         "net.akehurst.language.agl.language.format",
-        "net.akehurst.language.agl.default"
+        "net.akehurst.language.agl.default",
+
+        "net.akehurst.language.agl.runtime.structure"
     ))
 }
 

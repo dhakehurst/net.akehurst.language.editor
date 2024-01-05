@@ -363,8 +363,8 @@ class Demo(
                 EventStatus.START -> Unit
 
                 EventStatus.FAILURE -> {
-                    referencesEditor.sentenceContext = null
-                    styleEditor.sentenceContext = null
+                    referencesEditor.options.semanticAnalysis.context = null
+                    styleEditor.options.semanticAnalysis.context = null
                     logger.logError(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
@@ -374,8 +374,8 @@ class Demo(
                     val firstGrammar = grammars.first()
                     val styleContext = ContextFromGrammar()
                     val scopeContext = ContextFromTypeModel(TypeModelFromGrammar.create(firstGrammar))
-                    referencesEditor.sentenceContext = scopeContext
-                    styleEditor.sentenceContext = styleContext
+                    referencesEditor.options.semanticAnalysis.context = scopeContext
+                    styleEditor.options.semanticAnalysis.context = styleContext
                     try {
                         logger.logDebug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text

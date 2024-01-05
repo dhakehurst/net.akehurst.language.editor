@@ -52,8 +52,10 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
             } else {
                 port.postMessage("Error: Worker error in receiveMessage: data content should be a String, got - '${ev.data}'")
             }
-        } catch (e: Throwable) {
-            port.postMessage("Error: Worker error in receiveMessage: ${e.message!!}")
+        } catch (t: Throwable) {
+            val st = t.stackTraceToString().substring(0, 100)
+            val msg = "Error: Worker error in receiveMessage: ${t::class.simpleName} - ${t.message!!}\n$st"
+            port.postMessage(msg)
         }
     }
 

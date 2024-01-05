@@ -17,11 +17,12 @@
 package net.akehurst.language.editor.browser.ace
 
 
+import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.editor.common.*
-import kotlin.time.measureTimedValue
 
 class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
-    agl:AglComponents<AsmType, ContextType>
+    sentence: Sentence,
+    agl: AglComponents<AsmType, ContextType>
 ) : ace.Tokenizer, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
@@ -49,37 +50,41 @@ class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
     // --- ace.Ace.Tokenizer ---
     override fun getLineTokens(line: String, pState: ace.LineState?, row: Int): ace.LineTokens {
         val tokens = this.tokensByLine[row]
+        val aceState = if (null == pState) AglLineStateAce(row, 0, "") else pState as AglLineStateAce
         return if (null == tokens) {
-                // no tokens received from worker, try local scan
-                val aceState = if (null == pState) AglLineStateAce(row, "") else pState as AglLineStateAce
-                val stateAgl = AglLineState(aceState.lineNumber, aceState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
-                val ltokens = this.aglTokenizer.getLineTokensByScan(line, stateAgl, row)
-                val lineTokens: List<AglTokenAce> = ltokens.tokens.map {
-                    AglTokenAce(
-                        it.styles,
-                        it.value,
-                        it.line,
-                        it.column
-                    )
-                }
-                val lt: Array<ace.Token> = lineTokens.toTypedArray()
-                AglLineTokensAce(
-                    AglLineStateAce(row, ""),
-                    lt
-                )
-        } else {
-            val lineTokens: List<AglTokenAce> = tokens.map {
+            // no tokens received from worker, try local scan
+            val stateAgl = AglLineState(aceState.lineNumber, aceState.nextLineStartPosition, aceState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
+            val nextState = this.aglTokenizer.getLineTokensByScan(line, stateAgl, row)
+            val lineTokens: List<AglTokenAce> = nextState.tokens.map {
+                val col = it.position - aceState.nextLineStartPosition
+                val value = line.substring(col, col + it.length)
                 AglTokenAce(
-                        it.styles,
-                        it.value,
-                        it.line,
-                        it.column
+                    it.styles.toTypedArray(),
+                    value,
+                    row,
+                    col
                 )
             }
             val lt: Array<ace.Token> = lineTokens.toTypedArray()
             AglLineTokensAce(
-                    AglLineStateAce(row, ""),
-                    lt
+                AglLineStateAce(row, nextState.nextLineStartPosition, ""),
+                lt
+            )
+        } else {
+            val lineTokens: List<AglTokenAce> = tokens.map {
+                val col = it.position - aceState.nextLineStartPosition
+                val value = line.substring(col, col + it.length)
+                AglTokenAce(
+                    it.styles.toTypedArray(),
+                    value,
+                    row,
+                    col
+                )
+            }
+            val lt: Array<ace.Token> = lineTokens.toTypedArray()
+            AglLineTokensAce(
+                AglLineStateAce(row, aceState.nextLineStartPosition + line.length+1, ""),
+                lt
             )
         }
     }

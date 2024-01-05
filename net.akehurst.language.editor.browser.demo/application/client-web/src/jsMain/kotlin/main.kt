@@ -554,7 +554,7 @@ class Demo(
     private fun connectEditors() {
         //ids should already be set when dom and editors are created
         grammarEditor.languageIdentity = Constants.grammarLanguageId
-        grammarEditor.sentenceContext = null // ensure this is null, so that Worker uses default of ContextFromGrammarRegistry
+        grammarEditor.options.semanticAnalysis.context = null // ensure this is null, so that Worker uses default of ContextFromGrammarRegistry
         styleEditor.languageIdentity = Constants.styleLanguageId
         referencesEditor.languageIdentity = Constants.referencesLanguageId
         //Agl.registry.unregister(Constants.sentenceLanguageId)
@@ -568,7 +568,7 @@ class Demo(
                 EventStatus.START -> Unit
 
                 EventStatus.FAILURE -> {
-                    styleEditor.sentenceContext?.clear()
+                    styleEditor.options.semanticAnalysis.context?.clear()
                     //referencesEditor.sentenceContext?.clear()
                     logger.logError(grammarEditor.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
@@ -577,8 +577,8 @@ class Demo(
                 EventStatus.SUCCESS -> {
                     logger.logDebug("Send grammarStr Semantic Analysis success")
                     val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
-                    styleEditor.sentenceContext = ContextFromGrammar.createContextFrom(grammars)
-                    referencesEditor.sentenceContext = ContextFromTypeModelReference(sentenceEditor.languageIdentity)
+                    styleEditor.options.semanticAnalysis.context = ContextFromGrammar.createContextFrom(grammars)
+                    referencesEditor.options.semanticAnalysis.context = ContextFromTypeModelReference(sentenceEditor.languageIdentity)
                     try {
                         if (doUpdate) {
                             logger.logDebug("Send set sentenceEditor grammarStr")
@@ -914,7 +914,7 @@ class Demo(
         referencesEditor.text = eg.references
         //formatEditor.text = eg.format
         sentenceEditor.doUpdate = false
-        sentenceEditor.sentenceContext = ExternalContextLanguage.processor.process(eg.context).asm
+        sentenceEditor.options.semanticAnalysis.context = ExternalContextLanguage.processor.process(eg.context).asm
         logger.log(LogLevel.Trace, "Update sentenceEditor with grammar, refs, style", null)
         sentenceEditor.languageDefinition.update(grammarEditor.text, referencesEditor.text, styleEditor.text)
         sentenceEditor.text = eg.sentence

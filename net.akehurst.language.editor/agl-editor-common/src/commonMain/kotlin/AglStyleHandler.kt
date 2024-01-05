@@ -17,6 +17,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.sppt.LeafData
 import net.akehurst.language.api.sppt.SPPTLeaf
+import net.akehurst.language.api.sppt.Sentence
 
 class AglStyleHandler(
     languageId: String,
@@ -57,19 +58,13 @@ class AglStyleHandler(
         }
     }
 
-    fun transformToTokens(leafs: List<LeafData>): List<AglToken> {
+    fun transformToTokens(sentence: Sentence, leafs: List<LeafData>): List<AglToken> {
         return leafs.map { leaf ->
             val cssClasses = this.mapToCssClasses(leaf)
-            var beforeEOL = leaf.matchedText
-            val eolIndex = leaf.matchedText.indexOf('\n');
-            if (-1 != eolIndex) {
-                beforeEOL = leaf.matchedText.substring(0, eolIndex);
-            }
             AglToken(
-                cssClasses.toSet().toTypedArray(),
-                beforeEOL,
-                leaf.location.line, //ace first line is 0
-                leaf.location.column
+                cssClasses.toSet().toList(),
+                leaf.position,
+                leaf.length
             )
         }
     }

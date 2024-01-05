@@ -26,7 +26,6 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.api.style.*
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LogFunction
@@ -117,7 +116,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     }
 
     fun init_() {
-        this.connectWorker(AglTokenizerByWorkerAce(this.agl))
+        this.connectWorker(AglTokenizerByWorkerAce(this.sentence, this.agl))
 
         //TODO: set session and mouseHandler options
 
@@ -127,7 +126,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         //this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
         this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl, this.aglWorker))
 
-        this.aceEditor.on("change") { _ -> this.update() }
+        this.aceEditor.on("change") { _ -> this.onEditorTextChange() }
 
         val resizeObserver = ResizeObserver { entries -> onResize(entries) }
         resizeObserver.observe(this.containerElement)
@@ -222,7 +221,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                         this.aglWorker.setStyle(this.languageIdentity, editorId, session.id, str)
 
                         // need to update because token style types may have changed, not just their attributes
-                        this.update()
+                        this.onEditorTextChange()
                         this.resetTokenization()
                     } else {
                         //TODO: cannot parse style rules
@@ -232,8 +231,9 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         }
     }
 
-    private fun update() {
+    override fun onEditorTextChange() {
         if (doUpdate) {
+            super.onEditorTextChange()
             this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
@@ -283,7 +283,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             this.clearErrorMarkers()
             this.aceEditor.getSession()?.also { session ->
                 this.aglWorker.interrupt(this.languageIdentity, editorId, session.id)
-                this.aglWorker.processSentence(this.languageIdentity, editorId, session.id, this.agl.goalRule, this.text, this.agl.context as SentenceContext<Any>?)
+                this.aglWorker.processSentence(this.languageIdentity, editorId, session.id, this.text, this.agl.options)
             }
         }
     }

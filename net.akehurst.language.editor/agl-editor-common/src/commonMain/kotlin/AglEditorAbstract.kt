@@ -15,8 +15,26 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.agl.parser.SentenceAbstract
+import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.scanner.ScannerOnDemand
+import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageDefinition
+import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.sppt.Sentence
+import net.akehurst.language.api.sppt.SpptDataNode
 import net.akehurst.language.editor.api.*
+
+class SentenceFromEditor<AsmType : Any, ContextType : Any>(
+    val editor: AglEditor<AsmType, ContextType>
+) : SentenceAbstract() {
+    override val text: String get() = editor.text
+    override var eolPositions: List<Int> = emptyList()//ScannerOnDemand.eolPositions(text)
+
+    fun textChanged() {
+        eolPositions = ScannerOnDemand.eolPositions(text)
+    }
+}
 
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     languageId: String,
@@ -24,15 +42,15 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     logFunction: LogFunction?
 ) : AglEditor<AsmType, ContextType> {
 
-    abstract val sessionId:String
+    abstract val sessionId: String
 
     final override val logger = AglEditorLogger(logFunction)
 
-    protected val agl = AglComponents<AsmType, ContextType> (languageId, editorId, logger)
+    protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger)
 
     init {
         //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
-        this.agl.languageDefinition.grammarStrObservers.add{ _, _ -> this.updateProcessor(); this.updateStyle() }
+        this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
         this.agl.languageDefinition.scopeStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
         this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.updateStyle() }
         //this.agl.languageDefinition.formatterStrObservers.add { _, _ -> }
@@ -43,11 +61,13 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     private val _onSemanticAnalysisHandler = mutableListOf<(SemanticAnalysisEvent) -> Unit>()
     private var _editorSpecificStyleStr: String? = null
 
+    override var sentence = SentenceFromEditor(this)
+
     override var languageIdentity: String
         get() = this.agl.languageIdentity
         set(value) {
             val oldId = this.agl.languageIdentity
-            if (oldId==value ) {
+            if (oldId == value) {
                 //same, no need to update
             } else {
                 this.agl.languageIdentity = value
@@ -60,11 +80,11 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     override val languageDefinition: LanguageDefinition<AsmType, ContextType>
         get() = agl.languageDefinition
 
-    override var goalRuleName: String?
-        get() = this.agl.goalRule
-        set(value) {
-            this.agl.goalRule = value
-        }
+//    override var goalRuleName: String?
+//        get() = this.agl.goalRule
+//        set(value) {
+//            this.agl.goalRule = value
+//        }
 
     override var editorSpecificStyleStr: String?
         get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.styleStr
@@ -73,14 +93,26 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             this.updateStyle()
         }
 
-    override var sentenceContext: ContextType?
-        get() = this.agl.context
+//    override var sentenceContext: ContextType?
+//        get() = this.agl.context
+//        set(value) {
+//            this.agl.context = value
+//            this.processSentence()
+//        }
+
+    override var processOptions: ProcessOptions<AsmType, ContextType>
+        get() = this.agl.options
         set(value) {
-            this.agl.context = value
-            this.processSentence()
+            this.agl.options = value
         }
 
-    override var doUpdate:Boolean = true
+    override var editorOptions: EditorOptions = EditorOptionsDefault()
+
+    override var doUpdate: Boolean = true
+
+    protected open fun onEditorTextChange() {
+        this.sentence.textChanged()
+    }
 
     override fun onParse(handler: (ParseEvent) -> Unit) {
         this._onParseHandler.add(handler)
@@ -94,8 +126,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         this._onSemanticAnalysisHandler.add(handler)
     }
 
-    protected fun log(level: LogLevel, message: String,t:Throwable?) = this.logger.log(level, message,t)
-
+    protected fun log(level: LogLevel, message: String, t: Throwable?) = this.logger.log(level, message, t)
 
     protected fun notifyParse(event: ParseEvent) {
         this._onParseHandler.forEach {

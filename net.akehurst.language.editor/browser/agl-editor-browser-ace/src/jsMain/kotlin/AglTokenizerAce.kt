@@ -17,10 +17,6 @@
 package net.akehurst.language.editor.browser.ace
 
 
-import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.AglStyleHandler
-import net.akehurst.language.editor.common.AglTokenizer
-
 //class AglBackgroundTokenizer(
 //        tok: ace.Tokenizer,
 //        ed: ace.Editor
@@ -28,26 +24,27 @@ import net.akehurst.language.editor.common.AglTokenizer
 //}
 
 class AglLineStateAce(
-        val lineNumber: Int,
-        val leftOverText: String
+    val lineNumber: Int,
+    val nextLineStartPosition: Int,
+    val leftOverText: String
 ) : ace.LineState {
 }
 
 class AglTokenAce(
-        styles: Array<String>,
-        override val value: String,
-        override val line: Int,
-        column: Int
+    styles: Array<String>,
+    override val value: String,
+    override val line: Int,
+    column: Int
 ) : ace.Token {
     override val type = styles.joinToString(".")
     override var start = column
 }
 
 class AglLineTokensAce(
-        override val state: ace.LineState,
-        override val tokens: Array<ace.Token>
+    override val state: ace.LineState,
+    override val tokens: Array<ace.Token>
 ) : ace.LineTokens {}
-
+/*
 class AglTokenizerAce<AsmType : Any, ContextType : Any>(
         val agl: AglComponents<AsmType, ContextType>,
         val aglStyleHandler: AglStyleHandler
@@ -76,3 +73,4 @@ class AglTokenizerAce<AsmType : Any, ContextType : Any>(
 
 
 }
+ */

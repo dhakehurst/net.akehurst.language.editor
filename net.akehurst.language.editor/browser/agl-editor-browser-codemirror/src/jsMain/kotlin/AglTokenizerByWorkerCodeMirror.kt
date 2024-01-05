@@ -15,9 +15,11 @@
  */
 package net.akehurst.language.editor.browser.codemirror
 
+import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.editor.common.*
 
 class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
+    sentence: Sentence,
     agl:AglComponents<AsmType, ContextType>
 ) : AglTokenizerByWorker {
 

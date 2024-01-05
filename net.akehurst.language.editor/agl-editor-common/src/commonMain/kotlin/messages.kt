@@ -17,7 +17,11 @@
 package net.akehurst.language.editor.common.messages
 
 import net.akehurst.language.agl.scanner.Matchable
-import net.akehurst.language.api.processor.*
+import net.akehurst.language.agl.sppt.TreeData
+import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.common.AglToken
 import kotlin.math.min
 
@@ -44,7 +48,8 @@ data class EndPointIdentity(
 data class MessageProcessorCreate(
     override val endPoint: EndPointIdentity,
     val grammarStr: String,
-    val crossReferenceModelStr: String?
+    val crossReferenceModelStr: String?,
+    val editorOptions: EditorOptions
 ) : AglWorkerMessage("MessageProcessorCreate") {
     override fun toString(): String {
         val gs = when {
@@ -92,14 +97,12 @@ data class MessageSyntaxAnalyserConfigureResponse(
     val issues: List<LanguageIssue>
 ) : AglWorkerMessageResponse("MessageSyntaxAnalyserConfigureResponse")
 
-
-data class MessageProcessRequest<ContextType : Any>(
+data class MessageProcessRequest<AsmType : Any, ContextType : Any>(
     override val endPoint: EndPointIdentity,
-    val goalRuleName: String?,
     val text: String,
-    val context: ContextType?
+    val options: ProcessOptions<AsmType,ContextType>
 ) : AglWorkerMessage("MessageProcessRequest") {
-    override fun toString(): String = "${super.action}(endPoint=$endPoint, goalRuleName=$goalRuleName, context=$context, text='${
+    override fun toString(): String = "${super.action}(endPoint=$endPoint, text='${
         text.substring(
             0,
             min(10, text.length)
@@ -127,6 +130,17 @@ data class MessageParseResult(
 ) : AglWorkerMessageResponse("MessageParseResult") {
     override fun toString(): String =
         "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, treeSerialised='...')"
+}
+
+data class MessageParseResult2(
+    override val endPoint: EndPointIdentity,
+    override val status: MessageStatus,
+    val message: String,
+    val issues: List<LanguageIssue>,
+    val treeData: TreeData
+) : AglWorkerMessageResponse("MessageParseResult") {
+    override fun toString(): String =
+        "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, treeData='...')"
 }
 
 data class MessageSyntaxAnalysisResult(
@@ -160,6 +174,7 @@ data class MessageLineTokens(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
+    val startLine:Int,
     val lineTokens: List<List<AglToken>>,
 ) : AglWorkerMessageResponse("MessageLineTokens") {
     override fun toString(): String = "${super.action}(endPoint=$endPoint, status=$status, message=$message, lineTokens='...'))"

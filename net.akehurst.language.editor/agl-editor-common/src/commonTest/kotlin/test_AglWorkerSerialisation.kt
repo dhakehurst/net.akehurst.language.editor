@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.akehurst.language.editor.common.serialisation
+package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
@@ -29,8 +29,7 @@ import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.sppt.SpptDataNode
-import net.akehurst.language.editor.common.AglWorkerSerialisation
+import net.akehurst.language.editor.api.EditorOptionsDefault
 import net.akehurst.language.editor.common.messages.*
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
@@ -203,21 +202,21 @@ class test_AglWorkerSerialisation {
     // --- MessageProcessorCreate ---
     @Test
     fun MessageProcessorCreate_com_null() {
-        val input = MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), "", null)
+        val input = MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), "", null, EditorOptionsDefault())
 
         test(input)
     }
 
     @Test
     fun MessageProcessorCreate_com_blank() {
-        val input = MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), "", null)
+        val input = MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), "", null, EditorOptionsDefault())
 
         test(input)
     }
 
     @Test
     fun MessageProcessorCreate_com_grammar() {
-        val input = MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), "namespace test grammar Test { rule1 = 'a' ; }", null)
+        val input = MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), "namespace test grammar Test { rule1 = 'a' ; }", null, EditorOptionsDefault())
 
         test(input)
     }
@@ -227,7 +226,7 @@ class test_AglWorkerSerialisation {
     fun MessageProcessorCreateResponse_com_Start() {
         val input = MessageProcessorCreateResponse(
             EndPointIdentity(languageId, editorId, sessionId),
-            MessageStatus.START, "Start", emptyList(),emptyList()
+            MessageStatus.START, "Start", emptyList(), emptyList()
         )
 
         test(input) { expected, actual ->
@@ -265,7 +264,7 @@ class test_AglWorkerSerialisation {
     fun MessageProcessorCreateResponse_com_OK() {
         val expected = MessageProcessorCreateResponse(
             EndPointIdentity(languageId, editorId, sessionId),
-            MessageStatus.SUCCESS, "OK", emptyList(),emptyList()
+            MessageStatus.SUCCESS, "OK", emptyList(), emptyList()
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
@@ -315,18 +314,22 @@ class test_AglWorkerSerialisation {
         val context = ContextSimple()
         val expected = MessageProcessRequest(
             EndPointIdentity(languageId, editorId, sessionId),
-            "rule1",
             "",
-            context
+            Agl.options {
+                parse { goalRuleName("rule1") }
+                semanticAnalysis {
+                    context(context)
+                }
+            },
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<ContextSimple>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextSimple>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.goalRuleName, actual.goalRuleName)
+        assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.context, actual.context)
+        assertEquals(expected.options.semanticAnalysis.context, actual.options.semanticAnalysis.context)
     }
 
     @Test
@@ -341,18 +344,22 @@ class test_AglWorkerSerialisation {
         val context = ContextFromGrammar.createContextFrom(listOf(grammar))
         val expected = MessageProcessRequest(
             EndPointIdentity(languageId, editorId, sessionId),
-            "rule1",
             "",
-            context
+            Agl.options {
+                parse { goalRuleName("rule1") }
+                semanticAnalysis {
+                    context(context)
+                }
+            },
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<ContextFromGrammar>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextFromGrammar>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.goalRuleName, actual.goalRuleName)
+        assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.context as ContextFromGrammar, actual.context as ContextFromGrammar)
+        assertEquals(expected.options.semanticAnalysis.context as ContextFromGrammar, actual.options.semanticAnalysis.context as ContextFromGrammar)
     }
 
     @Test
@@ -367,18 +374,22 @@ class test_AglWorkerSerialisation {
         val context = ContextFromTypeModel(proc.typeModel)
         val expected = MessageProcessRequest(
             EndPointIdentity(languageId, editorId, sessionId),
-            "rule1",
             "",
-            context
+            Agl.options {
+                parse { goalRuleName("rule1") }
+                semanticAnalysis {
+                    context(context)
+                }
+            },
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<ContextFromTypeModel>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextFromTypeModel>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.goalRuleName, actual.goalRuleName)
+        assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.context as ContextFromTypeModel, actual.context as ContextFromTypeModel)
+        assertEquals(expected.options.semanticAnalysis.context as ContextFromTypeModel, actual.options.semanticAnalysis.context as ContextFromTypeModel)
         //TODO: check typemodels match ?
     }
 
@@ -395,28 +406,115 @@ class test_AglWorkerSerialisation {
             """.trimIndent()
         val expected = MessageProcessRequest(
             EndPointIdentity(Agl.registry.agl.grammarLanguageIdentity, editorId, sessionId),
-            null,
             userGrammar,
-            null
+            Agl.options { }
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<ContextSimple>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextSimple>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.goalRuleName, actual.goalRuleName)
+        assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.context, actual.context)
+        assertEquals(expected.options.semanticAnalysis.context, actual.options.semanticAnalysis.context)
     }
 
+    // --- MessageLineTokens ---
+
+    @Test
+    fun MessageLineTokens_empty() {
+        val expected = MessageLineTokens(
+            EndPointIdentity(languageId, editorId, sessionId),
+            MessageStatus.SUCCESS,
+            "",
+            0,
+            emptyList()
+        )
+        val jsonStr = AglWorkerSerialisation.serialise(expected)
+        val actual = AglWorkerSerialisation.deserialise<MessageLineTokens>(jsonStr)
+
+        assertEquals(expected.endPoint, actual.endPoint)
+        assertEquals(expected.status, actual.status)
+        assertEquals(expected.message, actual.message)
+        assertEquals(expected.lineTokens, actual.lineTokens)
+    }
+
+    @Test
+    fun MessageLineTokens_lines() {
+        val expected = MessageLineTokens(
+            EndPointIdentity(languageId, editorId, sessionId),
+            MessageStatus.SUCCESS,
+            "",
+            0,
+            listOf(
+                listOf(
+                    AglToken(listOf("xxx"),0,3),
+                    AglToken(listOf("eol"),3,1)
+                ),
+                listOf(
+                    AglToken(listOf("xx"),4,2)
+                )
+            )
+        )
+        val jsonStr = AglWorkerSerialisation.serialise(expected)
+        val actual = AglWorkerSerialisation.deserialise<MessageLineTokens>(jsonStr)
+
+        assertEquals(expected.endPoint, actual.endPoint)
+        assertEquals(expected.status, actual.status)
+        assertEquals(expected.message, actual.message)
+        assertEquals(expected.lineTokens, actual.lineTokens)
+    }
 
     // --- MessageParseResult ---
 
     @Test
-    fun test_TreeDataComplete() {
-        val sut = TreeDataComplete<SpptDataNode>(0)
+    fun test_TreeDataComplete_empty() {
+        val treeData = TreeDataComplete(0)
 
-        TODO()
+        val expected = MessageParseResult2(
+            EndPointIdentity(languageId, editorId, sessionId),
+            MessageStatus.START,
+            "Start",
+            emptyList(),
+            treeData
+        )
+
+        val jsonStr = AglWorkerSerialisation.serialise(expected)
+        val actual = AglWorkerSerialisation.deserialise<MessageParseResult2>(jsonStr)
+
+        assertEquals(expected.endPoint, actual.endPoint)
+        assertEquals(expected.message, actual.message)
+        assertEquals(expected.issues, actual.issues)
+        assertEquals(expected.treeData, actual.treeData)
+    }
+
+    @Test
+    fun test_TreeDataComplete_a() {
+        val p = Agl.processorFromStringDefault(
+            """
+            namespace test
+            grammar Test {
+                S = 'a' ;
+            }
+        """.trimIndent()
+        ).processor!!
+        val treeData = p.parse("a").sppt?.treeData!!
+
+        val expected = MessageParseResult2(
+            EndPointIdentity(languageId, editorId, sessionId),
+            MessageStatus.START,
+            "Start",
+            emptyList(),
+            treeData
+        )
+
+        val jsonStr = AglWorkerSerialisation.serialise(expected)
+        val actual = AglWorkerSerialisation.deserialise<MessageParseResult2>(jsonStr)
+
+        assertEquals(expected.endPoint, actual.endPoint)
+        assertEquals(expected.message, actual.message)
+        assertEquals(expected.issues, actual.issues)
+        assertEquals(expected.treeData, actual.treeData)
     }
 
     @Test
@@ -648,16 +746,20 @@ class test_AglWorkerSerialisation {
 
         val expected = MessageProcessRequest(
             EndPointIdentity(languageId, editorId, sessionId),
-            "rule1",
             "Start",
-            context
+            Agl.options {
+                parse { goalRuleName("rule1") }
+                semanticAnalysis {
+                    context(context)
+                }
+            }
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<ContextSimple>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextSimple>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.goalRuleName, actual.goalRuleName)
+        assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
 //TODO
         //assertEquals((expected.context as ContextFromTypeModel).typeModel.findOrNull("e1", "Elem"), (actual.context as ContextFromTypeModel).rootScope.findOrNull("e1", "Elem"))

@@ -16,7 +16,8 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.api.semanticAnalyser.SentenceContext
+import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.*
@@ -123,8 +124,8 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         }
     }
 
-    fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String, scopeModelStr:String?) {
-        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), grammarStr, scopeModelStr))
+    fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String, scopeModelStr:String?, editorOptions: EditorOptions) {
+        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), grammarStr, scopeModelStr, editorOptions))
     }
 
     fun configureSyntaxAnalyser(languageId: String, editorId: String, sessionId: String, configuration: Map<String,Any>) {
@@ -135,8 +136,8 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(languageId, editorId, sessionId), "New parse request"))
     }
 
-    fun processSentence(languageId: String, editorId: String, sessionId: String, goalRuleName: String?, sentence: String, context: SentenceContext<Any>?) {
-        this.sendToWorker(MessageProcessRequest(EndPointIdentity(languageId, editorId, sessionId), goalRuleName, sentence, context))
+    fun processSentence(languageId: String, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
+        this.sendToWorker(MessageProcessRequest(EndPointIdentity(languageId, editorId, sessionId), sentence, processOptions))
     }
 
     fun setStyle(languageId: String, editorId: String, sessionId: String, css: String) {

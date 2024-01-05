@@ -18,7 +18,8 @@ package net.akehurst.language.editor.api
 
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIssue
-
+import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.sppt.Sentence
 
 enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, All }
 
@@ -45,11 +46,11 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
      */
     val languageDefinition: LanguageDefinition<AsmType, ContextType>
 
-    /**
-     * The name of a rule in the grammar from which to start the parse.
-     * If null, the first non-skip rule will be used
-     */
-    var goalRuleName: String?
+//    /**
+//     * The name of a rule in the grammar from which to start the parse.
+//     * If null, the first non-skip rule will be used
+//     */
+//    var goalRuleName: String?
 
     /**
      * Set style specific to this editor (rather than using the one from LanguageDefinition associated with the languageId).
@@ -57,15 +58,24 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
      */
     var editorSpecificStyleStr: String?
 
-    /**
-     * The context for syntax and semantic analysis of the sentence (text) in the editor
-     */
-    var sentenceContext: ContextType?
+//    /**
+//     * The context for syntax and semantic analysis of the sentence (text) in the editor
+//     */
+//    var sentenceContext: ContextType?
 
     /**
      * the content of the editor
      */
     var text: String
+
+    val sentence: Sentence
+
+    /**
+     * options passed to the processor when processing the editor text
+     */
+    var processOptions: ProcessOptions<AsmType, ContextType>
+
+    var editorOptions: EditorOptions
 
     /**
      * update the editor and process the text if true
@@ -89,6 +99,21 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     fun clearErrorMarkers()
 
     fun destroy()
+
+    companion object {
+        fun options(base:EditorOptions = EditorOptionsDefault(),init:EditorOptionsBuilder.()->Unit) : EditorOptions = AglEditorOptions(base, init)
+    }
+}
+
+interface EditorOptions {
+    var parse: Boolean
+    var parseLineTokens: Boolean
+    var lineTokensChunkSize:Int
+    var parseTree: Boolean
+    var syntaxAnalysis: Boolean
+    var syntaxAnalysisAsm: Boolean
+    var semanticAnalysis: Boolean
+    var semanticAnalysisAsm: Boolean
 }
 
 enum class EventStatus { START, FAILURE, SUCCESS }

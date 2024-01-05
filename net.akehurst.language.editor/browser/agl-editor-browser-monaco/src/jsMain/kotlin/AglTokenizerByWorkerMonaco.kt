@@ -20,6 +20,7 @@ import monaco.IRange
 import monaco.editor.IModelDecorationOptions
 import monaco.editor.IModelDeltaDecoration
 import monaco.editor.IStandaloneCodeEditor
+import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.editor.common.*
 
 class ModelDecorationOptions(
@@ -42,7 +43,8 @@ class ModelDecorationOptions(
 
 internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
     val monacoEditor: IStandaloneCodeEditor,
-    val agl: AglComponents<AsmType, ContextType>
+    sentence: Sentence,
+    agl: AglComponents<AsmType, ContextType>
 ) : monaco.languages.TokensProvider, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
@@ -55,18 +57,18 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
         this.tokensByLine.clear()
     }
 
-    override fun receiveTokens(tokens: List<List<AglToken>>) {
+    override fun receiveTokens(lineTokens: List<List<AglToken>>) {
         if (this.acceptingTokens) {
-            tokens.forEachIndexed { index, tokens ->
+            lineTokens.forEachIndexed { index, tokens ->
                 this.tokensByLine[index] = tokens.toList()
             }
         }
     }
 
-    // --- monaco.langugaes.Tokenizer ---
+    // --- monaco.languaes.Tokenizer ---
 
     override fun getInitialState(): monaco.languages.IState {
-        return AglLineStateMonaco(0, "")
+        return AglLineStateMonaco(0, 0,"")
     }
 
     override fun tokenize(line: String, pState: monaco.languages.IState): monaco.languages.ILineTokens {
@@ -75,44 +77,48 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
         val tokens = this.tokensByLine[row - 1]
         return if (null == tokens) {
             // no tokens received from worker, try local scan
-            val stateAgl = AglLineState(mcState.lineNumber, mcState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
+            val stateAgl = AglLineState(mcState.lineNumber, mcState.lineStartPosition, mcState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
             val ltokens = this.aglTokenizer.getLineTokensByScan(line, stateAgl, row)
-            this.decorateLine(row, ltokens.tokens)
+            this.decorateLine(row, ltokens.tokens) //TODO: move inside the loop
             val lineTokens: List<AglTokenMonaco> = ltokens.tokens.map {
+                val col = it.position-mcState.lineStartPosition
                 AglTokenMonaco(
                     it.styles.firstOrNull() ?: "",
-                    it.column
+                    col
                 )
             }
             val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
             AglLineTokensMonaco(
-                AglLineStateMonaco(row, ""),
+                AglLineStateMonaco(row, mcState.lineStartPosition+line.length,""),
                 lt
             )
         } else {
-            this.decorateLine(row, tokens)
+            this.decorateLine(row, tokens) //TODO: move inside the loop
             val lineTokens: List<AglTokenMonaco> = tokens.map {
+                val col = it.position-mcState.lineStartPosition
                 AglTokenMonaco(
                     it.styles.firstOrNull() ?: "",
-                    it.column
+                    col
                 )
             }
             val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
             AglLineTokensMonaco(
-                AglLineStateMonaco(row, ""),
+                AglLineStateMonaco(row, mcState.lineStartPosition+line.length,""),
                 lt
             )
         }
     }
 
-    fun decorateLine(lineNum: Int, tokens: List<AglToken>) {
+    private fun decorateLine(lineNum: Int, tokens: List<AglToken>) {
+        val lineStartPosition = tokens.first().position
         val decs: Array<IModelDeltaDecoration> = tokens.map { aglTok ->
+            val col = aglTok.position-lineStartPosition
             objectJSTyped<IModelDeltaDecoration> {
                 range = objectJSTyped<IRange> {
-                    startColumn = aglTok.column
-                    endColumn = aglTok.column + aglTok.value.length
-                    startLineNumber = aglTok.line
-                    endLineNumber = aglTok.line
+                    startColumn = col
+                    endColumn = col + aglTok.length
+                    startLineNumber = lineNum
+                    endLineNumber = lineNum
                 }
                 options = ModelDecorationOptions(
                     inlineClassName = aglTok.styles.joinToString(separator = " ") { "monaco_${it}" }

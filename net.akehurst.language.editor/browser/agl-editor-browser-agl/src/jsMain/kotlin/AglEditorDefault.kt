@@ -93,7 +93,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         if (doUpdate) {
             this.clearErrorMarkers()
             this.aglWorker.interrupt(this.languageIdentity, editorId, sessionId)
-            this.aglWorker.processSentence(this.languageIdentity, editorId, sessionId, this.agl.goalRule, this.text, this.agl.context as SentenceContext<Any>?)
+            this.aglWorker.processSentence(this.languageIdentity, editorId, sessionId, this.text, this.agl.options)
         }
     }
 
@@ -228,7 +228,8 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         //TODO: update only edited line onward
         val tokenised = this.workerTokenizer.tokensByLine.values.flatten().joinToString(separator = "") {
             val class_ = it.styles.joinToString(separator = " ")
-            "<span class='$class_'>${it.value}</span>"
+            val value = sentence.textAt(it.position,it.length)
+            "<span class='$class_'>${value}</span>"
         }
         val encoded = tokenised.replace(Regex("&"), "&amp;").replace(Regex("<"), "&lt;")
         highlightedContent.innerHTML = encoded

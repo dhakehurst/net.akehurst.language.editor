@@ -18,7 +18,6 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
-import net.akehurst.language.agl.semanticAnalyser.ScopeSimple
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
 
@@ -58,10 +57,9 @@ object AglWorkerSerialisation {
         serialiser.configureFromTypeModel(typeModel("ApiType", false) {
             namespace("net.akehurst.language.editor.common", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("AglToken") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "styles", "Array", listOf("String"))
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "line", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "column", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "styles", "List") { typeArgument("String") }
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "position", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "length", "Int")
                 }
             }
             namespace("net.akehurst.language.api.parser", imports = mutableListOf("kotlin", "kotlin.collections")) {
@@ -85,6 +83,47 @@ object AglWorkerSerialisation {
                 dataType("CompletionItem") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "ruleName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
+                }
+                dataType("ScanOptionsDefault") {
+
+                }
+                dataType("ParseOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reportErrors", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reportGrammarAmbiguities", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "cacheSkip", "Boolean")
+                }
+                dataType("SyntaxAnalysisOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "active", "Boolean")
+                }
+                dataType("SemanticAnalysisOptionsDefault") {
+                    typeParameters("AsmType","ContextType")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "active", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "locationMap", "Map") {
+                        typeArgument("Any")
+                        typeArgument("InputLocation")
+                    }
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "ContextType")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "checkReferences", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "resolveReferences", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "other", "Map") {
+                        typeArgument("String")
+                        typeArgument("Any")
+                    }
+                }
+                dataType("CompletionProviderOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "ContextType")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "other", "Map") {
+                        typeArgument("String")
+                        typeArgument("Any")
+                    }
+                }
+                dataType("ProcessOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scan", "ScanOptionsDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "parse", "ParseOptionsDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "syntaxAnalysis", "SyntaxAnalysisOptionsDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "semanticAnalysis", "SemanticAnalysisOptionsDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "completionProvider", "CompletionProviderOptionsDefault")
                 }
             }
         })
@@ -420,16 +459,24 @@ object AglWorkerSerialisation {
 
                 }
             }
-            namespace(
-                "net.akehurst.language.api.automaton", imports = mutableListOf(
-                    "kotlin", "kotlin.collections"
-                )
-            ) {
+            namespace("net.akehurst.language.api.automaton", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 enumType("ParseAction", emptyList())
+            }
+            namespace("net.akehurst.language.editor.api") {
+                dataType("EditorOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "parse", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "parseLineTokens", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "lineTokensChunkSize", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "parseTree", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "syntaxAnalysis", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "syntaxAnalysisAsm", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "semanticAnalysis", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "semanticAnalysisAsm", "Boolean")
+                }
             }
             namespace(
                 "net.akehurst.language.editor.common.messages",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.scanner")
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.scanner", "net.akehurst.language.agl.sppt", "net.akehurst.language.editor.api")
             ) {
                 enumType("MessageStatus", emptyList())
                 dataType("EndPointIdentity") {
@@ -441,6 +488,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "grammarStr", "String", emptyList(), true)
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "crossReferenceModelStr", "String", emptyList(), true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "editorOptions", "EditorOptionsDefault", emptyList(), false)
                 }
                 dataType("MessageProcessorCreateResponse") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
@@ -464,9 +512,8 @@ object AglWorkerSerialisation {
                 }
                 dataType("MessageProcessRequest") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String", emptyList(), true)
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "Any", emptyList(), true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "options", "ProcessOptionsDefault")
                 }
                 dataType("MessageParseResult") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
@@ -475,6 +522,15 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "treeSerialised", "String", emptyList(), true)
                 }
+//FIXME
+                dataType("MessageParseResult2") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "issues", "List", listOf("LanguageIssue"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "treeData", "TreeDataComplete", emptyList(), true)
+                }
+
                 dataType("MessageSyntaxAnalysisResult") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
@@ -497,7 +553,12 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "status", "MessageStatus")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "lineTokens", "Array", listOf("Array", "AglToken"))
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "startLine", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "lineTokens", "List") {
+                        typeArgument("List") {
+                            typeArgument("AglToken")
+                        }
+                    }
                 }
                 dataType("MessageSetStyle") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
@@ -765,18 +826,33 @@ object AglWorkerSerialisation {
 
     private fun initialiseSPPT() {
         serialiser.configureFromTypeModel(typeModel("SPPT", false) {
-            namespace("net.akehurst.language.agl.sppt", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("TreeDataComplete") {
+            namespace("net.akehurst.language.agl.runtime.structure",imports = mutableListOf("kotlin", "kotlin.collections")) {
+                dataType("RuntimeRule") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "runtimeRuleSetNumber", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "ruleNumber", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isSkip", "Boolean")
+                }
+            }
+            namespace("net.akehurst.language.agl.sppt", imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.agl.runtime.structure")) {
+                dataType("CompleteTreeDataNode") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "rule", "RuntimeRule")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "startPosition", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "nextInputPosition", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "nextInputNoSkip", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "option", "Int")
+                }
+                dataType("TreeDataComplete2") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forStateSetNumber", "Int")
 
-                    propertyOf(setOf(MEMBER, COMPOSITE), "root", "CN", emptyList(), true)
-                    propertyOf(setOf(MEMBER, COMPOSITE), "initialSkip", "TreeDataComplete", listOf("CN"), true)
+                    propertyOf(setOf(MEMBER, COMPOSITE), "root", "CompleteTreeDataNode", emptyList(), true)
+                    propertyOf(setOf(MEMBER, COMPOSITE), "initialSkip", "TreeDataComplete", listOf("CompleteTreeDataNode"), true)
                     propertyOf(setOf(MEMBER, COMPOSITE), "completeChildren", "Map") {
                         typeArgument("CN")
                         typeArgument("Map") {
                             typeArgument("Int")
                             typeArgument("List") {
-                                typeArgument("CN")
+                                typeArgument("CompleteTreeDataNode")
                             }
                         }
                     }

@@ -135,7 +135,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     private fun init_() {
         try {
-            this.connectWorker(AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl))
+            this.connectWorker(AglTokenizerByWorkerMonaco(this.monacoEditor, this.sentence, this.agl))
             val themeData = objectJS {
                 base = "vs"
                 inherit = false
@@ -164,7 +164,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 AglCompletionProviderMonaco(this.agl)
             )
 
-            this.onChange { this.update() }
+            this.onChange { this.onEditorTextChange() }
 
             val resizeObserver = ResizeObserver { entries -> onResize(entries) }
             resizeObserver.observe(this.containerElement)
@@ -243,7 +243,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                     this.aglWorker.setStyle(languageIdentity, editorId, "", styleStr) //TODO: sessionId
 
                     // need to update because token style types may have changed, not just their attributes
-                    this.update()
+                    this.onEditorTextChange()
                     this.resetTokenization()
                 } else {
                     //TODO: cannot process style rules
@@ -252,8 +252,9 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         }
     }
 
-    private fun update() {
+    override fun onEditorTextChange() {
         if (doUpdate) {
+            super.onEditorTextChange()
             this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
@@ -295,9 +296,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 languageIdentity,
                 editorId,
                 "",
-                this.agl.goalRule,
                 this.text,
-                this.agl.context as SentenceContext<Any>?
+                this.agl.options
             )
         }
     }
