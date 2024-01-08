@@ -15,11 +15,23 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.api.runtime.Rule
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.regex.RegexEngine
+import net.akehurst.language.agl.regex.RegexEngineAgl
+import net.akehurst.language.agl.regex.RegexEnginePlatform
 import net.akehurst.language.agl.scanner.Matchable
+import net.akehurst.language.agl.scanner.ScannerAbstract
+import net.akehurst.language.agl.scanner.ScannerClassic
+import net.akehurst.language.agl.scanner.ScannerOnDemand
+import net.akehurst.language.agl.sppt.CompleteTreeDataNode
 import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.processor.RegexEngineKind
+import net.akehurst.language.api.processor.ScannerKind
+import net.akehurst.language.api.scanner.Scanner
+import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
 
@@ -28,34 +40,37 @@ class AglComponents<AsmType : Any, ContextType : Any>(
     val editorId: String,
     val logger: AglEditorLogger
 ) {
-   // private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder<AsmType, ContextType>(languageId)
+    // private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder<AsmType, ContextType>(languageId)
     private var _styleHandler = AglStyleHandler(languageId)
     private var _languageIdentity = languageId
 
-    val languageDefinition get() = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
-        _languageIdentity,
-        aglOptions = Agl.options {
-            semanticAnalysis {
-                context(ContextFromGrammarRegistry(Agl.registry))
-                option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
-            }
-        },
-        configuration = Agl.configurationBase()
-    )
+    val languageDefinition
+        get() = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
+            _languageIdentity,
+            aglOptions = Agl.options {
+                semanticAnalysis {
+                    context(ContextFromGrammarRegistry(Agl.registry))
+                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+                }
+            },
+            configuration = Agl.configurationBase()
+        )
 
-    var options = Agl.options<AsmType, ContextType>{}
+    var options = Agl.options<AsmType, ContextType> {}
     var goalRule: String? = languageDefinition.defaultGoalRule
 
     val styleHandler get() = _styleHandler
 
     var context: ContextType? = null
-    var sppt: SharedPackedParseTree? = null
+    //var sppt: SharedPackedParseTree? = null
+
+    // provided by worker when processor created
     var scannerMatchables = listOf<Matchable>()
 
     var languageIdentity: String
         get() = languageDefinition.identity
         set(value) {
-            if (languageDefinition.identity ==value) {
+            if (languageDefinition.identity == value) {
                 //do NOT update, could end up in a loop and run out of memory with observer adding!
                 // it did for version 1.9.0-RC of kotlin on JS
             } else {
@@ -71,8 +86,22 @@ class AglComponents<AsmType : Any, ContextType : Any>(
                 new.styleStrObservers.addAll(styleStrObservers)
                 new.formatterStrObservers.addAll(formatterStrObservers)
                 this._styleHandler = AglStyleHandler(value)
-                this.sppt = null
+//                this.sppt = null
             }
         }
 
+    val simpleScanner: Scanner by lazy {
+        val regexEngine = when (this.languageDefinition.configuration.regexEngineKind) {
+            RegexEngineKind.PLATFORM -> RegexEnginePlatform
+            RegexEngineKind.AGL -> RegexEngineAgl
+        }
+        object : ScannerAbstract(regexEngine) {
+            override val kind: ScannerKind get() = error("Not used")
+            override val matchables: List<Matchable> get() = scannerMatchables
+            override val validTerminals: List<Rule> get() = error("Not used")
+            override fun reset() {}
+            override fun isLookingAt(sentence: Sentence, position: Int, terminalRule: Rule): Boolean = error("Not used")
+            override fun findOrTryCreateLeaf(sentence: Sentence, position: Int, terminalRule: Rule): CompleteTreeDataNode = error("Not used")
+        }
+    }
 }

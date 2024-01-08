@@ -23,7 +23,7 @@ package net.akehurst.language.editor.browser.ace
 //) : ace.BackgroundTokenizer(tok, ed) {
 //}
 
-class AglLineStateAce(
+data class AglLineStateAce(
     val lineNumber: Int,
     val nextLineStartPosition: Int,
     val leftOverText: String
@@ -33,11 +33,11 @@ class AglLineStateAce(
 class AglTokenAce(
     styles: Array<String>,
     override val value: String,
-    override val line: Int,
+    override val index: Int?,
     column: Int
 ) : ace.Token {
     override val type = styles.joinToString(".")
-    override var start = column
+    override var start:Int? = column
 }
 
 class AglLineTokensAce(

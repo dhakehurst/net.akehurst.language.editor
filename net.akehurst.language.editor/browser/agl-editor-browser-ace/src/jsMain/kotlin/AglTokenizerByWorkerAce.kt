@@ -21,72 +21,50 @@ import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.editor.common.*
 
 class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
-    sentence: Sentence,
     agl: AglComponents<AsmType, ContextType>
 ) : ace.Tokenizer, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
-    override var acceptingTokens = false
-    override val tokensByLine = mutableMapOf<Int, List<AglToken>>()
+    override var acceptingTokens
+        get() = aglTokenizer.acceptingTokens
+        set(value) {
+            aglTokenizer.acceptingTokens = value
+        }
 
     override fun reset() {
-        this.acceptingTokens = false
-        this.tokensByLine.clear()
+        this.aglTokenizer.reset()
     }
 
-    override fun receiveTokens(lineTokens: List<List<AglToken>>) {
-        if (this.acceptingTokens) {
-            lineTokens.forEachIndexed { index, tokens ->
-                // could get empty tokens for a line from a partial parse
-                if (tokens.isNotEmpty()) {
-                    this.tokensByLine[index] = tokens.toList()
-                } else {
-                    // nothing
-                }
-            }
-        }
+    override fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
+        this.aglTokenizer.receiveTokens(startLine, tokensForLines)
     }
 
     // --- ace.Ace.Tokenizer ---
-    override fun getLineTokens(line: String, pState: ace.LineState?, row: Int): ace.LineTokens {
-        val tokens = this.tokensByLine[row]
-        val aceState = if (null == pState) AglLineStateAce(row, 0, "") else pState as AglLineStateAce
-        return if (null == tokens) {
-            // no tokens received from worker, try local scan
-            val stateAgl = AglLineState(aceState.lineNumber, aceState.nextLineStartPosition, aceState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
-            val nextState = this.aglTokenizer.getLineTokensByScan(line, stateAgl, row)
-            val lineTokens: List<AglTokenAce> = nextState.tokens.map {
-                val col = it.position - aceState.nextLineStartPosition
-                val value = line.substring(col, col + it.length)
-                AglTokenAce(
-                    it.styles.toTypedArray(),
-                    value,
-                    row,
-                    col
-                )
-            }
-            val lt: Array<ace.Token> = lineTokens.toTypedArray()
-            AglLineTokensAce(
-                AglLineStateAce(row, nextState.nextLineStartPosition, ""),
-                lt
-            )
+    // first line has state==null
+    override fun getLineTokens(line: String, state: ace.LineState?): ace.LineTokens {
+        val stateAgl = if (null == state) {
+            AglLineState(-1, 0, "", emptyList()) //not really emptyList, but its not needed as input so ok to use
         } else {
-            val lineTokens: List<AglTokenAce> = tokens.map {
-                val col = it.position - aceState.nextLineStartPosition
-                val value = line.substring(col, col + it.length)
+           val aceState = state as AglLineStateAce
+            AglLineState(aceState.lineNumber, aceState.nextLineStartPosition, aceState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
+        }
+        val nextState = this.aglTokenizer.getLineTokens(line, stateAgl)
+        val lineTokens: List<AglTokenAce> = nextState.tokens
+            .map {aglTok ->
+                val col = aglTok.position - stateAgl.nextLineStartPosition
+                val value = line.substring(col, col + aglTok.length)
                 AglTokenAce(
-                    it.styles.toTypedArray(),
+                    aglTok.styles.toTypedArray(),
                     value,
-                    row,
+                    nextState.lineNumber,
                     col
                 )
             }
-            val lt: Array<ace.Token> = lineTokens.toTypedArray()
-            AglLineTokensAce(
-                AglLineStateAce(row, aceState.nextLineStartPosition + line.length+1, ""),
-                lt
-            )
-        }
+        val lt: Array<ace.Token> = lineTokens.toTypedArray()
+        return AglLineTokensAce(
+            state = AglLineStateAce(nextState.lineNumber, nextState.nextLineStartPosition, ""),
+           tokens = lt
+        )
     }
 
 

@@ -307,14 +307,14 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                     var chunkstart = 0
                     for (chunk in lineTokensChunked) {
                         val lineTokens = chunk.mapIndexed { lineNum, leaves ->
-                            style.transformToTokens(sentence, leaves)
+                            style.transformToTokens(leaves)
                         }
                         sendMessage(port, MessageLineTokens(endPoint, MessageStatus.SUCCESS, "Success", chunkstart, lineTokens))
                         chunkstart += chunk.size
                     }
                 } else {
                     val lineTokens = tokens.mapIndexed { lineNum, leaves ->
-                        style.transformToTokens(sentence, leaves)
+                        style.transformToTokens(leaves)
                     }
                     sendMessage(port, MessageLineTokens(endPoint, MessageStatus.SUCCESS, "Success", 0, lineTokens))
                 }

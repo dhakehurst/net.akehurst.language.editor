@@ -43,76 +43,56 @@ class ModelDecorationOptions(
 
 internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
     val monacoEditor: IStandaloneCodeEditor,
-    sentence: Sentence,
     agl: AglComponents<AsmType, ContextType>
 ) : monaco.languages.TokensProvider, AglTokenizerByWorker {
 
-    val aglTokenizer = AglTokenizer(agl)
-    override var acceptingTokens = false
-    override val tokensByLine = mutableMapOf<Int, List<AglToken>>()
     val decs = mutableMapOf<Int, Array<String>>()
 
+    val aglTokenizer = AglTokenizer(agl)
+    override var acceptingTokens
+        get() = aglTokenizer.acceptingTokens
+        set(value) {
+            aglTokenizer.acceptingTokens = value
+        }
+
     override fun reset() {
-        this.acceptingTokens = false
-        this.tokensByLine.clear()
+        this.aglTokenizer.reset()
     }
 
-    override fun receiveTokens(lineTokens: List<List<AglToken>>) {
-        if (this.acceptingTokens) {
-            lineTokens.forEachIndexed { index, tokens ->
-                this.tokensByLine[index] = tokens.toList()
-            }
-        }
+    override fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
+        this.aglTokenizer.receiveTokens(startLine, tokensForLines)
     }
 
     // --- monaco.languaes.Tokenizer ---
-
     override fun getInitialState(): monaco.languages.IState {
-        return AglLineStateMonaco(0, 0,"")
+        return AglLineStateMonaco(0, 0, "")
     }
 
     override fun tokenize(line: String, pState: monaco.languages.IState): monaco.languages.ILineTokens {
         val mcState = pState as AglLineStateMonaco
         val row = mcState.lineNumber + 1
-        val tokens = this.tokensByLine[row - 1]
-        return if (null == tokens) {
-            // no tokens received from worker, try local scan
-            val stateAgl = AglLineState(mcState.lineNumber, mcState.lineStartPosition, mcState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
-            val ltokens = this.aglTokenizer.getLineTokensByScan(line, stateAgl, row)
-            this.decorateLine(row, ltokens.tokens) //TODO: move inside the loop
-            val lineTokens: List<AglTokenMonaco> = ltokens.tokens.map {
-                val col = it.position-mcState.lineStartPosition
-                AglTokenMonaco(
-                    it.styles.firstOrNull() ?: "",
-                    col
-                )
-            }
-            val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
-            AglLineTokensMonaco(
-                AglLineStateMonaco(row, mcState.lineStartPosition+line.length,""),
-                lt
-            )
-        } else {
-            this.decorateLine(row, tokens) //TODO: move inside the loop
-            val lineTokens: List<AglTokenMonaco> = tokens.map {
-                val col = it.position-mcState.lineStartPosition
-                AglTokenMonaco(
-                    it.styles.firstOrNull() ?: "",
-                    col
-                )
-            }
-            val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
-            AglLineTokensMonaco(
-                AglLineStateMonaco(row, mcState.lineStartPosition+line.length,""),
-                lt
+        val stateAgl = AglLineState(mcState.lineNumber, mcState.lineStartPosition, mcState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
+        val nextState = this.aglTokenizer.getLineTokens(line, stateAgl)
+        val tokens = nextState.tokens
+        this.decorateLine(row, tokens) //TODO: move inside the loop
+        val lineTokens: List<AglTokenMonaco> = tokens.map {aglTok->
+            val col = aglTok.position - mcState.lineStartPosition
+            AglTokenMonaco(
+                aglTok.styles.firstOrNull() ?: "",
+                col
             )
         }
+        val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
+        return AglLineTokensMonaco(
+            AglLineStateMonaco(row, mcState.lineStartPosition + line.length, ""),
+            lt
+        )
     }
 
     private fun decorateLine(lineNum: Int, tokens: List<AglToken>) {
         val lineStartPosition = tokens.first().position
         val decs: Array<IModelDeltaDecoration> = tokens.map { aglTok ->
-            val col = aglTok.position-lineStartPosition
+            val col = aglTok.position - lineStartPosition
             objectJSTyped<IModelDeltaDecoration> {
                 range = objectJSTyped<IRange> {
                     startColumn = col

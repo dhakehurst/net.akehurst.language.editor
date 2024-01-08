@@ -24,7 +24,7 @@ class AglTokenizerByWorkerDefault<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>
 ) : AglTokenizerByWorker {
 
-    override val tokensByLine = mutableMapOf<Int, List<AglToken>>()
+     val tokensByLine = mutableMapOf<Int, List<AglToken>>()
 
     override var acceptingTokens = false
     override fun reset() {
@@ -32,17 +32,8 @@ class AglTokenizerByWorkerDefault<AsmType : Any, ContextType : Any>(
         this.tokensByLine.clear()
     }
 
-    override fun receiveTokens(lineTokens: List<List<AglToken>>) {
-        if (this.acceptingTokens) {
-            lineTokens.forEachIndexed { index, tokens ->
-                // could get empty tokens for a line from a partial parse
-                if (tokens.isNotEmpty()) {
-                    this.tokensByLine[index] = tokens.toList()
-                } else {
-                    // nothing
-                }
-            }
-        }
+    override fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
+        TODO("not implemented")
     }
 
 }

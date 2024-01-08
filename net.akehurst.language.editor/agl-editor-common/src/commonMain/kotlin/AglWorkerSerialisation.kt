@@ -84,6 +84,8 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "ruleName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
                 }
+            }
+            namespace("net.akehurst.language.agl.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 dataType("ScanOptionsDefault") {
 
                 }

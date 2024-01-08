@@ -226,12 +226,12 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
     private fun highlight(inputText: String) {
         //TODO: update only edited line onward
-        val tokenised = this.workerTokenizer.tokensByLine.values.flatten().joinToString(separator = "") {
-            val class_ = it.styles.joinToString(separator = " ")
-            val value = sentence.textAt(it.position,it.length)
-            "<span class='$class_'>${value}</span>"
-        }
-        val encoded = tokenised.replace(Regex("&"), "&amp;").replace(Regex("<"), "&lt;")
-        highlightedContent.innerHTML = encoded
+//        val tokenised = this.workerTokenizer.tokensByLine.values.flatten().joinToString(separator = "") {
+//            val class_ = it.styles.joinToString(separator = " ")
+//            val value = sentence.textAt(it.position,it.length)
+//            "<span class='$class_'>${value}</span>"
+//        }
+//        val encoded = tokenised.replace(Regex("&"), "&amp;").replace(Regex("<"), "&lt;")
+//        highlightedContent.innerHTML = encoded
     }
 }

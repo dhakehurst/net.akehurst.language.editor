@@ -116,12 +116,12 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     }
 
     fun init_() {
-        this.connectWorker(AglTokenizerByWorkerAce(this.sentence, this.agl))
+        this.connectWorker(AglTokenizerByWorkerAce(this.agl))
 
         //TODO: set session and mouseHandler options
 
 //        this.aceEditor.getSession()?.bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer as ace.Tokenizer, this.aceEditor)
-        this.aceEditor.getSession()?.bgTokenizer?.tokenizer = this.workerTokenizer as ace.Tokenizer
+        this.aceEditor.getSession()?.bgTokenizer?.setTokenizer(this.workerTokenizer as ace.Tokenizer)
         this.aceEditor.getSession()?.bgTokenizer?.setDocument(this.aceEditor.getSession()?.getDocument())
         //this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
         this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl, this.aglWorker))

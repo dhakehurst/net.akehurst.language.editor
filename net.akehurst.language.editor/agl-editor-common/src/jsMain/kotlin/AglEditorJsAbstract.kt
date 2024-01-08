@@ -89,13 +89,13 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
         this.createIssueMarkers(message.issues.toList())
     }
 
-    private fun lineTokens(event: MessageLineTokens) {
-        if (event.status == MessageStatus.SUCCESS) {
+    private fun lineTokens(message: MessageLineTokens) {
+        if (message.status == MessageStatus.SUCCESS) {
             this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}", null)
-            this.workerTokenizer.receiveTokens(event.lineTokens)
+            this.workerTokenizer.receiveTokens(message.startLine, message.lineTokens)
             this.resetTokenization()
         } else {
-            this.log(LogLevel.Error, "LineTokens - ${event.message}", null)
+            this.log(LogLevel.Error, "LineTokens - ${message.message}", null)
         }
     }
 

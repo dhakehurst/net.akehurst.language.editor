@@ -135,7 +135,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     private fun init_() {
         try {
-            this.connectWorker(AglTokenizerByWorkerMonaco(this.monacoEditor, this.sentence, this.agl))
+            this.connectWorker(AglTokenizerByWorkerMonaco(this.monacoEditor,this.agl))
             val themeData = objectJS {
                 base = "vs"
                 inherit = false

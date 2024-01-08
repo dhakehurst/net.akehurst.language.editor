@@ -24,9 +24,9 @@ import kotlin.time.measureTimedValue
 interface AglTokenizerByWorker {
 
     var acceptingTokens: Boolean
-    val tokensByLine: Map<Int, List<AglToken>>
+    //val tokensByLine: Map<Int, List<AglToken>>
 
-    fun receiveTokens(lineTokens: List<List<AglToken>>)
+    fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>)
     fun reset()
 
 }
@@ -59,87 +59,81 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
     val agl: AglComponents<AsmType, ContextType>
 ) {
 
-    fun getLineTokens(lineText: String, pState: AglLineState, line: Int): AglLineState {
-        val sppt = this.agl.sppt
-        return if (null == sppt) {
-            this.getLineTokensByScan(lineText, pState, line)
-        } else {
-            this.getLineTokensByParse(lineText, pState, line)
+    var acceptingTokens = false
+    val tokensByLine = mutableMapOf<Int, List<AglToken>>()
+
+    fun reset() {
+        this.acceptingTokens = false
+        this.tokensByLine.clear()
+    }
+
+    fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
+        if (this.acceptingTokens) {
+            tokensForLines.forEachIndexed { index, tokens ->
+                // could get empty tokens for a line from a partial parse
+                if (tokens.isNotEmpty()) {
+                    this.tokensByLine[startLine + index] = tokens
+                } else {
+                    // nothing
+                }
+            }
         }
     }
 
-    private fun mapTokenTypeToClass(tokenType: String): String {
-        val cssClass = this.agl.styleHandler.mapClass(tokenType)// this.agl.styleHandler.tokenToClassMap.get(tokenType)
-        return cssClass
-    }
-
-    private fun mapToCssClasses(leaf: LeafData): List<String> {
-        val metaTagClasses = leaf.metaTags.map { this.mapTokenTypeToClass(it) }
-        val otherClasses = if (!leaf.tagList.isEmpty()) {
-            leaf.tagList.map { this.mapTokenTypeToClass(it) }
+    /**
+     * row - 0 indexed line number
+     */
+    fun getLineTokens(lineText: String, previousLineState: AglLineState): AglLineState {
+        val tokens = this.tokensByLine[previousLineState.lineNumber+1]
+        return if (null == tokens) {
+            this.getLineTokensByScan(lineText, previousLineState)
         } else {
-            listOf(this.mapTokenTypeToClass(leaf.name)).map { it }
-        }
-        val classes = metaTagClasses + otherClasses
-        return if (classes.isEmpty()) {
-            listOf("nostyle")
-        } else {
-            classes.toSet().toList()
-        }
-    }
-
-    fun transformToTokens(leafs: List<LeafData>): List<AglToken> {
-        return leafs.map { leaf ->
-            val cssClasses = this.mapToCssClasses(leaf)
-            AglToken(
-                cssClasses.toSet().toList(),
-                leaf.position,
-                leaf.length
-            )
+            this.useCachedTokens(tokens, lineText, previousLineState)
         }
     }
 
     /**
      * row assumed to start at 0
      */
-    fun getLineTokensByScan(lineText: String, state: AglLineState, row: Int): AglLineState {
+    fun getLineTokensByScan(lineText: String, previousLineState: AglLineState): AglLineState {
         return try {
-            val scanner = agl.languageDefinition.processor!!.scanner!! //FIXME: don't create the processor here in main thread!! //AglScanner()
-            val text = state.leftOverText + lineText
-            val offset = state.nextLineStartPosition - state.leftOverText.length
+            val scanner = agl.simpleScanner
+            val text = previousLineState.leftOverText + lineText
+            val offset = previousLineState.nextLineStartPosition - previousLineState.leftOverText.length
             val sentence = SentenceDefault(text)
             val tv = measureTimedValue {
                 scanner.scan(sentence, 0, offset)
             }
             this.agl.logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
             val leafs = tv.value.tokens
-            val tokens = transformToTokens(leafs)
+            val tokens = this.agl.styleHandler.transformToTokens(leafs)
+            //val tokens = transformToTokens(leafs)
             if (leafs.isEmpty()) {
-                AglLineState(row, state.nextLineStartPosition+1, "", emptyList())
+                AglLineState(previousLineState.lineNumber+1, previousLineState.nextLineStartPosition + 1, "", emptyList())
             } else {
                 val lastLeaf = leafs.last()
                 val endOfLastLeaf = lastLeaf.position - offset + lastLeaf.length
                 val leftOverText = lineText.substring(endOfLastLeaf, lineText.length)
-                AglLineState(row, state.nextLineStartPosition + lineText.length+1, leftOverText, tokens)
+                val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length + 1
+                AglLineState(previousLineState.lineNumber+1, nextLineStartPosition, leftOverText, tokens)
             }
         } catch (t: Throwable) {
             agl.logger.log(LogLevel.Error, "Unable to create LanguageProcessor", t)
             val tokens = when {
                 lineText.isEmpty() -> emptyList()
-                else -> listOf(AglToken(listOf("nostyle"), state.nextLineStartPosition, lineText.length))
+                else -> listOf(AglToken(listOf("nostyle"), previousLineState.nextLineStartPosition, lineText.length))
             }
-            AglLineState(row, state.nextLineStartPosition + lineText.length+1, "", tokens)
+            val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length + 1
+            AglLineState(previousLineState.lineNumber+1, nextLineStartPosition, "", tokens)
         }
     }
 
     /**
      * row assumed to start at 0
      */
-    fun getLineTokensByParse(lineText: String, state: AglLineState, row: Int): AglLineState {
-        val sppt = this.agl.sppt!!
-        val leafs = sppt.tokensByLine(row) //TODO: find more efficient way to do this, i.e. using lineText and state
-        val tokens = transformToTokens(leafs)
-        val endState = AglLineState(row, state.nextLineStartPosition + lineText.length+1, "", tokens)
+    fun useCachedTokens(tokens:List<AglToken>, lineText: String, previousLineState: AglLineState): AglLineState {
+        val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length + 1
+        val endState = AglLineState(previousLineState.lineNumber+1, nextLineStartPosition, "", tokens)
         return endState
     }
 }
