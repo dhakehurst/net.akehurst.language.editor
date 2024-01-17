@@ -18,12 +18,16 @@ package net.akehurst.language.editor.browser.monaco
 
 import monaco.CancellationToken
 import monaco.IPosition
+import monaco.IRange
 import monaco.editor.ITextModel
+import monaco.languages.CompletionItemKind
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.editor.common.AglComponents
+import net.akehurst.language.editor.common.objectJSTyped
 
 class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
+    val monaco: Monaco,
     val agl: AglComponents<AsmType, ContextType>
 ) : monaco.languages.CompletionItemProvider {
     override val triggerCharacters: Array<String>? = null
@@ -33,23 +37,17 @@ class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
         position: IPosition,
         context: monaco.languages.CompletionContext,
         token: CancellationToken
-    ): monaco.languages.CompletionList? {
+    ): monaco.languages.CompletionList {
         val posn = model.getOffsetAt(position)
         val wordList = this.getCompletionItems(model, posn);
-        val cil = wordList.map { ci ->
-            object : monaco.languages.CompletionItem {
-                override val label: String = "${ci.text} (${ci.name})"
-                override val insertText: String = ci.text
-                override val kind: monaco.languages.CompletionItemKind = monaco.languages.CompletionItemKind.Text
-            }
-        }
+        val cil = wordList.map { ci -> monaco.createCompletionItem(position, ci) }
         return object : monaco.languages.CompletionList {
             override val incomplete = false
             override val suggestions: Array<monaco.languages.CompletionItem> = cil.toTypedArray()
         }
     }
 
-    override fun resolveCompletionItem(model: ITextModel, position: IPosition, item: monaco.languages.CompletionItem, token: CancellationToken): monaco.languages.CompletionList? {
+    override fun resolveCompletionItem(item: monaco.languages.CompletionItem, token: CancellationToken): monaco.languages.CompletionItem? {
         return null
     }
 

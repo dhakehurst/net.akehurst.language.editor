@@ -1,3 +1,1 @@
-
-//ignored because of blank line above
 SysML v2 (Std version)

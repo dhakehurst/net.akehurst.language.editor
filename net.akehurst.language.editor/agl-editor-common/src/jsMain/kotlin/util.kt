@@ -22,8 +22,8 @@ inline fun objectJS(init: dynamic.() -> Unit): dynamic {
     return o
 }
 
-inline  fun <T> objectJSTyped(init: T.() -> Unit): dynamic {
+inline fun <T:Any> objectJSTyped(init: T.() -> Unit): T {
     val o:dynamic =  js("{}")
     init(o)
-    return o
+    return o as T
 }

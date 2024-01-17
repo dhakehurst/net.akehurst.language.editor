@@ -112,10 +112,6 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     var parseTimeout: dynamic = null
 
     init {
-        this.init_()
-    }
-
-    fun init_() {
         this.connectWorker(AglTokenizerByWorkerAce(this.agl))
 
         //TODO: set session and mouseHandler options
@@ -174,7 +170,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             this.aceEditor.getSession()?.also { session ->
                 val aglStyleClass = this.agl.styleHandler.aglStyleClass
                 val str = this.editorSpecificStyleStr
-                if (null != str && str.isNotEmpty()) {
+                if (!str.isNullOrEmpty()) {
                     this.agl.styleHandler.reset()
                     val styleMdl: AglStyleModel? = Agl.registry.agl.style.processor!!.process(str).asm //TODO: pass context?
                     if (null != styleMdl) {
@@ -222,7 +218,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
                         // need to update because token style types may have changed, not just their attributes
                         this.onEditorTextChange()
-                        this.resetTokenization()
+                        this.resetTokenization(0)
                     } else {
                         //TODO: cannot parse style rules
                     }
@@ -234,7 +230,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     override fun onEditorTextChange() {
         if (doUpdate) {
             super.onEditorTextChange()
-            this.workerTokenizer.reset()
+            //this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
                 this.workerTokenizer.acceptingTokens = true
@@ -263,8 +259,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
          */
     }
 
-    override fun resetTokenization() {
-        this.aceEditor.renderer.updateText()
+    override fun resetTokenization(fromLine:Int) {
         val sess = this.aceEditor.getSession()
         if (null == sess) {
             this.log(LogLevel.Error, "session is null ??", null)
@@ -273,7 +268,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             if (null == bgt) {
                 this.log(LogLevel.Error, "bgTokenizer is null ??", null)
             } else {
-                bgt.start(0)
+                bgt.start(fromLine)
+                this.aceEditor.renderer.updateText()
             }
         }
     }

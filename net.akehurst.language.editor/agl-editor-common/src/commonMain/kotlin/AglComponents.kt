@@ -65,7 +65,16 @@ class AglComponents<AsmType : Any, ContextType : Any>(
     //var sppt: SharedPackedParseTree? = null
 
     // provided by worker when processor created
-    var scannerMatchables = listOf<Matchable>()
+    private var _scannerMatchables= listOf<Matchable>()
+    var scannerMatchables
+        get() = _scannerMatchables
+        set(value) {
+            val regexEngine = when (this.languageDefinition.configuration.regexEngineKind) {
+                RegexEngineKind.PLATFORM -> RegexEnginePlatform
+                RegexEngineKind.AGL -> RegexEngineAgl
+            }
+            _scannerMatchables = value.map { it.using(regexEngine) }
+        }
 
     var languageIdentity: String
         get() = languageDefinition.identity

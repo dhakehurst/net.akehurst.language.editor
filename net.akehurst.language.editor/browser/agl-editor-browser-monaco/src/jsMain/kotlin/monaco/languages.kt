@@ -19,6 +19,7 @@ package monaco.languages
 import monaco.CancellationToken
 import monaco.IDisposable
 import monaco.IPosition
+import monaco.IRange
 import monaco.editor.ITextModel
 
 external interface ILanguageExtensionPoint {
@@ -65,7 +66,7 @@ external interface CompletionItemProvider {
      *
      * The editor will only resolve a completion item once.
      */
-    fun resolveCompletionItem(model: ITextModel, position: IPosition, item: CompletionItem, token: CancellationToken): CompletionList?
+    fun resolveCompletionItem(item: CompletionItem, token: CancellationToken): CompletionItem? // ProviderResult<CompletionItem>
 }
 
 external interface CompletionList {
@@ -92,13 +93,7 @@ external enum class CompletionTriggerKind {
     Invoke, TriggerCharacter, TriggerForIncompleteCompletions
 }
 
-external enum class CompletionItemKind {
-    Method, Function, Constructor, Field, Variable, Class,
-    Struct, Interface, Module, Property, Event, Operator,
-    Unit, Value, Constant, Enum, EnumMember,
-    Keyword, Text, Color, File, Reference,
-    Customcolor, Folder, TypeParameter, Snippet
-}
+external interface CompletionItemKind
 
 /**
  * A completion item represents a text snippet that is
@@ -171,7 +166,7 @@ external interface CompletionItem {
      * *Note:* The range must be a [single line](#Range.isSingleLine) and it must
      * [contain](#Range.contains) the position at which completion has been [requested](#CompletionItemProvider.provideCompletionItems).
      */
-    //val range: IRange
+    val range: IRange
     /**
      * An optional set of characters that when pressed while this completion is active will accept it first and
      * then type that character. *Note* that all commit characters should have `length=1` and that superfluous

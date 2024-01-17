@@ -4,28 +4,32 @@ val version_agl_editor: String by project
 val version_html_builder: String by project
 val version_ace: String by project
 val version_monaco:String by project
+val version_codemirror:String by project
 
 dependencies {
 
     jsMainImplementation(project(":information-editor"))
     jsMainImplementation(project(":technology-gui-widgets"))
-    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-ace:$version_agl_editor")
-    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-monaco:$version_agl_editor")
-    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-codemirror:$version_agl_editor")
     jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-agl:$version_agl_editor")
-
     jsMainImplementation("net.akehurst.kotlin.html5:html-builder:$version_html_builder")
 
+    // Ace
+    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-ace:$version_agl_editor")
     jsMainImplementation(npm("ace-builds", version_ace))
     jsMainImplementation(npm("net.akehurst.language.editor-kotlin-ace-loader", "1.5.1"))
-    jsMainImplementation(npm("monaco-editor", version_monaco))
 
-    // for webpack
-    jsMainImplementation(npm("monaco-editor-webpack-plugin", "1.8.2"))
-    jsMainImplementation(npm("css-loader", "3.4.2"))
-    jsMainImplementation(npm("style-loader", "1.1.3"))
-    jsMainImplementation(npm("ts-loader", "6.2.1"))
-    jsMainImplementation(npm("file-loader", "5.0.2"))
+    // Monaco
+    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-monaco:$version_agl_editor")
+    jsMainImplementation(npm("monaco-editor", version_monaco))
+    jsMainImplementation(npm("monaco-editor-webpack-plugin", "7.1.0"))
+    jsMainImplementation(npm("css-loader", "6.8.1"))
+    jsMainImplementation(npm("style-loader", "3.3.3"))
+    jsMainImplementation(npm("ts-loader", "9.5.1"))
+    jsMainImplementation(npm("file-loader", "6.2.0"))
+
+    // Codemirror
+    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-codemirror:$version_agl_editor")
+    jsMainImplementation("net.akehurst.kotlin:codemirror-api-realisation:$version_codemirror")
 
     jsMainImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.7.3")
 }
@@ -50,6 +54,7 @@ kotlin {
 buildConfig {
     buildConfigField("String", "versionEditorMonaco", "\"${version_monaco}\"")
     buildConfigField("String", "versionEditorAce", "\"${version_ace}\"")
+    buildConfigField("String", "versionEditorCodeMirror", "\"${version_codemirror}\"")
 }
 
 val workerTask = tasks.register<Copy>("copyAglEditorWorkerJs") {

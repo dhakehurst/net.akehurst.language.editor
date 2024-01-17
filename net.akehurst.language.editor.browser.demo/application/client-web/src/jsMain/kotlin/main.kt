@@ -17,13 +17,14 @@
 package net.akehurst.language.editor.application.client.web
 
 import ace.IRange
-import codemirror.view.EditorViewConfig
+
 import korlibs.io.async.asyncImmediately
 import korlibs.io.file.std.localVfs
 import kotlinx.browser.document
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import monaco.IDisposable
+import monaco.IPosition
 import monaco.editor.IMarkerData
 import monaco.editor.IStandaloneEditorConstructionOptions
 import monaco.editor.IStandaloneThemeData
@@ -37,13 +38,13 @@ import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
 import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.api.asm.*
 import net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace
 import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.language.reference.CrossReferenceModel
+import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
@@ -75,12 +76,13 @@ external var resourcesPath: String = definedExternally
 val workerScriptName = "${aglScriptBasePath}/application-agl-editor-worker.js"
 var demo: Demo? = null
 
-enum class AlternativeEditors {
+enum class EditorKind {
     ACE, MONACO, CODEMIRROR, AGL
 }
 
 object Constants {
-    val initialLogLevel = LogLevel.All
+    val initialLogLevel = LogLevel.Warning
+    val initialEditorKind = EditorKind.CODEMIRROR
 
     const val sentenceEditorId = "editor-sentence"
     const val grammarEditorId = "editor-grammar"
@@ -148,16 +150,17 @@ fun main() {
 //        })
 
         val editorChoice = document.querySelector("#agl-options-editor")!! as HTMLSelectElement
+        editorChoice.value = Constants.initialEditorKind.name
         editorChoice.addEventListener("change", {
             val optionStr = editorChoice.value
-            val edKind = AlternativeEditors.valueOf(optionStr)
+            val edKind = EditorKind.valueOf(optionStr)
             createDemo(edKind, logger)
         })
 
         TabView.initialise(document)
         initialiseExamples()
 
-        createDemo(AlternativeEditors.ACE, logger)
+        createDemo(Constants.initialEditorKind, logger)
     } catch (t: Throwable) {
         console.error(t)
     }
@@ -351,10 +354,10 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
                                     select {
                                         attribute.id = "agl-options-editor"
                                         //attribute.name = "editor-choice"
-                                        option(value = AlternativeEditors.ACE.name, selected = true) { content = "Ace" }
-                                        //                                option(value = AlternativeEditors.MONACO.name) { content = "Monaco" }
-                                        //option(value = AlternativeEditors.CODEMIRROR.name) { content = "CodeMirror" }
-                                        //                                option(value = AlternativeEditors.AGL.name, selected = true) { content = "Minimal (Agl)" }
+                                        option(value = EditorKind.ACE.name) { content = "Ace" }
+                                        option(value = EditorKind.MONACO.name) { content = "Monaco" }
+                                        option(value = EditorKind.CODEMIRROR.name) { content = "CodeMirror" }
+                                        //option(value = AlternativeEditors.AGL.name, selected = true) { content = "Minimal (Agl)" }
                                     }
                                 }
                             }
@@ -420,7 +423,7 @@ fun initialiseExamples() {
     }
 }
 
-fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
+fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
     if (null != demo) {
         demo!!.finalize()
     }
@@ -437,10 +440,10 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
         }
         val logFunction: LogFunction = { lvl, msg, t -> logger.log(lvl, msg, t) }
         val ed = when (editorChoice) {
-            AlternativeEditors.ACE -> createAce(element, logFunction)
-            AlternativeEditors.MONACO -> createMonaco(element, logFunction)
-            AlternativeEditors.CODEMIRROR -> createCodeMirror(element, logFunction)
-            AlternativeEditors.AGL -> createAgl(element, logFunction)
+            EditorKind.ACE -> createAce(element, logFunction)
+            EditorKind.MONACO -> createMonaco(element, logFunction)
+            EditorKind.CODEMIRROR -> createCodeMirror(element, logFunction)
+            EditorKind.AGL -> createAgl(element, logFunction)
         }
         Pair(element.id, ed)// (editorId)
     }
@@ -486,7 +489,7 @@ fun createMonaco(editorElement: Element, logFunction: LogFunction): AglEditor<An
     val languageId = editorElement.getAttribute("agl-language")!!
     val editorOptions = objectJSTyped<IStandaloneEditorConstructionOptions> {
         value = ""
-        wordBasedSuggestions = false
+        wordBasedSuggestions = "off"
     }
     val ed = monaco.editor.create(editorElement, editorOptions, null)
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
@@ -500,6 +503,19 @@ fun createMonaco(editorElement: Element, logFunction: LogFunction): AglEditor<An
         override fun register(language: ILanguageExtensionPoint) = monaco.languages.register(language)
         override fun setTokensProvider(languageId: String, provider: TokensProvider): IDisposable = monaco.languages.setTokensProvider(languageId, provider)
         override fun registerCompletionItemProvider(languageId: String, provider: CompletionItemProvider): IDisposable = monaco.languages.registerCompletionItemProvider(languageId, provider)
+        override fun createCompletionItem(position: IPosition, aglCompletionItem: CompletionItem): monaco.languages.CompletionItem {
+            return object : monaco.languages.CompletionItem {
+                override val label: String = "${aglCompletionItem.text} (${aglCompletionItem.name})"
+                override val insertText: String = aglCompletionItem.text
+                override val kind = monaco.languages.CompletionItemKind.Text
+                override val range: monaco.IRange = objectJSTyped<monaco.IRange> {
+                    startColumn = position.column
+                    endColumn = position.column + aglCompletionItem.text.length //TODO: may not be same line
+                    startLineNumber = position.lineNumber
+                    endLineNumber = position.lineNumber //TODO: may not be same line
+                }
+            }
+        }
     }
     return Agl.attachToMonaco(editorElement, ed, languageId, editorId, logFunction, worker, monaco)
 }
@@ -507,14 +523,19 @@ fun createMonaco(editorElement: Element, logFunction: LogFunction): AglEditor<An
 fun createCodeMirror(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
-    val editorOptions = objectJSTyped<EditorViewConfig> {
-        doc = "hello"
-        //extensions= [keymap.of(defaultKeymap)],
+    val editorOptions = objectJSTyped<codemirror.view.EditorViewConfig> {
+        doc = ""
+        extensions = arrayOf(
+            codemirror.extensions.view.lineNumbers(),
+            codemirror.extensions.view.highlightActiveLine(),
+            codemirror.extensions.view.highlightActiveLineGutter(),
+            codemirror.extensions.commands.history(),
+        )
         parent = editorElement
     }
     val ed = codemirror.view.EditorView(editorOptions)
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, logFunction, worker)
+    return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, logFunction, worker, codemirror.CodeMirror)
 }
 
 fun createAgl(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {

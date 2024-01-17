@@ -67,7 +67,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
             editing.value = value
         }
 
-    override fun resetTokenization() {
+    override fun resetTokenization(fromLine:Int) {
         highlight(text)
     }
 

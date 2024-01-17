@@ -22,12 +22,12 @@ import kotlinx.browser.window
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
 import monaco.IDisposable
+import monaco.IPosition
 import monaco.MarkerSeverity
 import monaco.editor.*
-import monaco.languages.CompletionItemProvider
-import monaco.languages.ILanguageExtensionPoint
-import monaco.languages.TokensProvider
+import monaco.languages.*
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.semanticAnalyser.SentenceContext
@@ -74,6 +74,13 @@ interface Monaco {
     fun register(language: ILanguageExtensionPoint)
     fun setTokensProvider(languageId: String, provider: TokensProvider): IDisposable
     fun registerCompletionItemProvider(languageId: String, provider: CompletionItemProvider): IDisposable
+
+    fun createCompletionItem(position: IPosition, aglCompletionItem: CompletionItem): monaco.languages.CompletionItem
+}
+
+interface ICompletionItemKind {
+    val Text: CompletionItemKind
+    val Snippet: CompletionItemKind
 }
 
 private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
@@ -130,16 +137,17 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     var parseTimeout: dynamic = null
 
     init {
-        this.init_()
-    }
-
-    private fun init_() {
         try {
-            this.connectWorker(AglTokenizerByWorkerMonaco(this.monacoEditor,this.agl))
-            val themeData = objectJS {
+            this.connectWorker(AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl))
+            val themeData = objectJSTyped<IStandaloneThemeData> {
                 base = "vs"
                 inherit = false
-                rules = emptyArray<Any>()
+                rules = emptyArray<ITokenThemeRule>()
+                colors = object {}.also { o: dynamic ->
+                    o["editor.foreground"] = "#000000"
+                    o["editor.background"] = "#FFFFFE"
+                }
+
             }
             // https://github.com/Microsoft/monaco-editor/issues/338
             // all editors on the same page must share the same theme!
@@ -161,7 +169,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
             )
             monaco.registerCompletionItemProvider(
                 this.languageIdentity,
-                AglCompletionProviderMonaco(this.agl)
+                AglCompletionProviderMonaco(monaco, this.agl)
             )
 
             this.onChange { this.onEditorTextChange() }
@@ -169,8 +177,11 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
             val resizeObserver = ResizeObserver { entries -> onResize(entries) }
             resizeObserver.observe(this.containerElement)
 
+            this.updateLanguage(null)
+            this.updateProcessor()
+            this.updateStyle()
         } catch (t: Throwable) {
-            console.error(t.message)
+            console.error(t.message, t)
         }
     }
 
@@ -244,7 +255,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
                     // need to update because token style types may have changed, not just their attributes
                     this.onEditorTextChange()
-                    this.resetTokenization()
+                    this.resetTokenization(0)
                 } else {
                     //TODO: cannot process style rules
                 }
@@ -284,84 +295,18 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun resetTokenization() {
-        this.monacoEditor.getModel().resetTokenization()
+    override fun resetTokenization(fromLine: Int) {
+        this.monacoEditor.getModel().tokenization.resetTokenization()
     }
 
     override fun processSentence() {
         if (doUpdate) {
             this.clearErrorMarkers()
             this.aglWorker.interrupt(languageIdentity, editorId, "")//TODO: get session
-            this.aglWorker.processSentence(
-                languageIdentity,
-                editorId,
-                "",
-                this.text,
-                this.agl.options
-            )
+            this.aglWorker.processSentence(languageIdentity, editorId, "", this.text, this.agl.options)
         }
     }
 
-    /*
-    private fun tryParse() {
-        val proc = this.agl.languageDefinition.processor
-        if (null != proc) {
-            try {
-
-                val goalRule = this.agl.goalRule
-                val sppt = if (null == goalRule) {
-                    proc.parse(this.text)
-                } else {
-                    proc.parseForGoal(goalRule, this.text)
-                }
-                this.agl.sppt = sppt
-                this.resetTokenization()
-                val event = ParseEventSuccess(sppt)
-                this.notifyParse(event)
-                //this.doBackgroundTryProcess()
-            } catch (e: ParseFailedException) {
-                this.agl.sppt = null
-                // parse failed so re-tokenize from scan
-                this.resetTokenization()
-                console.error("Error parsing text in " + this.editorId + " for language " + this.languageIdentity, e.message);
-                val errors = mutableListOf<IMarkerData>()
-                errors.add(objectJSTyped<IMarkerData> {
-                    code = null
-                    severity = MarkerSeverity.Error
-                    startLineNumber = e.location.line
-                    startColumn = e.location.column
-                    endLineNumber = e.location.line
-                    endColumn = e.location.column
-                    this.message = e.message!!
-                    source = null
-                })
-                monaco.editor.setModelMarkers(this.monacoEditor.getModel(), "", errors.toTypedArray())
-                val event = ParseEventFailure(e.message!!, e.longestMatch)
-                this.notifyParse(event)
-            } catch (t: Throwable) {
-                console.error("Error parsing text in " + this.editorId + " for language " + this.languageIdentity, t.message);
-            }
-        }
-    }
-
-    private fun tryProcess() {
-        val proc = this.agl.languageDefinition.processor
-        val sppt = this.agl.sppt
-        if (null != proc && null != sppt) {
-            try {
-                this.agl.asm = proc.processFromSPPT(Any::class, sppt)
-                val event = ProcessEventSuccess(this.agl.asm!!)
-                this.notifyProcess(event)
-            } catch (e: SyntaxAnalyserException) {
-                this.agl.asm = null
-                val event = SyntaxAnalysisEventFailure(e.message!!, "No Asm")
-                this.notifyProcess(event)
-            } catch (t: Throwable) {
-                console.error("Error processing parse result in " + this.editorId + " for language " + this.languageIdentity, t.message)
-            }
-        }
-    }
-    */
     private fun convertColor(value: String?): String? {
         if (null == value) {
             return null

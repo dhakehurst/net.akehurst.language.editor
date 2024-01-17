@@ -30,7 +30,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
     worker: AbstractWorker
 ) : AglEditorAbstract<AsmType, ContextType>(languageId, editorId, logFunction) {
 
-    protected abstract fun resetTokenization()
+    protected abstract fun resetTokenization(fromLine:Int)
     protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)
 
     protected var aglWorker = AglWorkerClient(super.agl, worker)
@@ -40,7 +40,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
     protected fun connectWorker(workerTokenizer: AglTokenizerByWorker) {
         this.workerTokenizer = workerTokenizer
         this.aglWorker.initialise()
-        this.aglWorker.setStyleResult = { message -> if (message.status == MessageStatus.SUCCESS) this.resetTokenization() else this.log(LogLevel.Error, message.message, null) }
+        this.aglWorker.setStyleResult = { message -> if (message.status == MessageStatus.SUCCESS) this.resetTokenization(0) else this.log(LogLevel.Error, message.message, null) }
         this.aglWorker.processorCreateResult = this::processorCreateResult
         this.aglWorker.syntaxAnalyserConfigureResult = this::syntaxAnalyserConfigureResult
         this.aglWorker.parseResult = this::parseResult
@@ -58,7 +58,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                         this.workerTokenizer.acceptingTokens = true
                         this.agl.scannerMatchables = message.scannerMatchables
                         this.processSentence()
-                        this.resetTokenization()
+                        this.resetTokenization(0)
                     }
 
                     "reset" -> {
@@ -93,7 +93,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
         if (message.status == MessageStatus.SUCCESS) {
             this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}", null)
             this.workerTokenizer.receiveTokens(message.startLine, message.lineTokens)
-            this.resetTokenization()
+            this.resetTokenization(message.startLine)
         } else {
             this.log(LogLevel.Error, "LineTokens - ${message.message}", null)
         }
@@ -109,15 +109,15 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                 // a failure to parse is not an 'error' in the editor - we expect some parse failures
                 this.log(LogLevel.Debug, "Cannot parse text in ${this.editorId} for language ${this.languageIdentity}: ${event.message}", null)
                 // parse failed so re-tokenize from scan
-                this.workerTokenizer.reset()
-                this.resetTokenization()
+//                this.workerTokenizer.reset()
+//                this.resetTokenization()
                 clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 this.notifyParse(ParseEvent(EventStatus.FAILURE, event.message, null, event.issues.toList()))
             }
 
             MessageStatus.SUCCESS -> {
-                this.resetTokenization()
+//                this.resetTokenization()
                 clearErrorMarkers()
                 this.createIssueMarkers(event.issues.toList())
                 val treeStr = event.treeSerialised
@@ -187,7 +187,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
                 this.editorOptions
             ) //TODO: sessionId
             this.workerTokenizer.reset()
-            this.resetTokenization() //new processor so find new tokens, first by scan
+            this.resetTokenization(0) //new processor so find new tokens, first by scan
         }
     }
 

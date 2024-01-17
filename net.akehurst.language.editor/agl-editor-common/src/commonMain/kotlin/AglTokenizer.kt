@@ -31,6 +31,11 @@ interface AglTokenizerByWorker {
 
 }
 
+data class LineTokensResult(
+    val tokens:List<AglToken>,
+    val state:AglLineState
+)
+
 class AglLineState(
     val lineNumber: Int,
     val nextLineStartPosition: Int,
@@ -85,10 +90,13 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
      */
     fun getLineTokens(lineText: String, previousLineState: AglLineState): AglLineState {
         val tokens = this.tokensByLine[previousLineState.lineNumber+1]
-        return if (null == tokens) {
-            this.getLineTokensByScan(lineText, previousLineState)
-        } else {
+        val validStart = tokens?.firstOrNull()?.position == previousLineState.nextLineStartPosition
+        // last token should be length 1 and an eol, so only need its position as linesText does not include the eol
+        val validEnd = tokens?.lastOrNull()?.position == previousLineState.nextLineStartPosition+lineText.length
+        return if (validStart && validEnd && null!=tokens) {
             this.useCachedTokens(tokens, lineText, previousLineState)
+        } else {
+            this.getLineTokensByScan(lineText, previousLineState)
         }
     }
 

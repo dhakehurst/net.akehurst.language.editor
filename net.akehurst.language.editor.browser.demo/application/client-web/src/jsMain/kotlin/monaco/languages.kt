@@ -13,3 +13,7 @@ import monaco.editor.ITextModel
 external fun register(language: ILanguageExtensionPoint)
 external fun setTokensProvider(languageId: String, provider: TokensProvider): IDisposable
 external fun registerCompletionItemProvider(languageId: String, provider: CompletionItemProvider): IDisposable
+
+external enum class CompletionItemKind {
+    Text, Snippet
+}

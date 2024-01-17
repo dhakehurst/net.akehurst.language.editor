@@ -16,27 +16,29 @@
 
 package net.akehurst.language.editor.browser.monaco
 
-import net.akehurst.language.api.sppt.SPPTLeaf
-import net.akehurst.language.api.sppt.Sentence
-import net.akehurst.language.editor.common.AglComponents
-
 
 class AglLineStateMonaco(
     val lineNumber: Int,
-    val lineStartPosition:Int,
+    val nextLineStartPosition: Int,
     val leftOverText: String
 ) : monaco.languages.IState {
+
     override fun clone(): monaco.languages.IState {
-        return AglLineStateMonaco(lineNumber, lineStartPosition, leftOverText)
+        return AglLineStateMonaco(lineNumber, nextLineStartPosition, leftOverText)
     }
 
-    override fun equals(other: Any?): Boolean {
-        return when (other) {
-            is AglLineStateMonaco -> other.lineNumber == this.lineNumber
-            else -> false
-        }
+    override fun hashCode(): Int = this.lineNumber
+    override fun equals(other: Any?): Boolean = when {
+        other !is AglLineStateMonaco -> false
+        other.lineNumber != this.lineNumber -> false
+        other.nextLineStartPosition != this.nextLineStartPosition -> false
+        other.leftOverText != this.leftOverText -> false
+        else -> true
     }
+
+    override fun toString(): String = "LineState{$lineNumber, $nextLineStartPosition, '$leftOverText'}"
 }
+
 
 class AglTokenMonaco(
     style: String,

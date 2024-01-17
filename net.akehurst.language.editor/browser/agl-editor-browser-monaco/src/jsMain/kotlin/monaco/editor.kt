@@ -69,7 +69,7 @@ external interface IStandaloneEditorConstructionOptions {
     var language: String
     var value: String
     var theme: String
-    var wordBasedSuggestions: Boolean
+    var wordBasedSuggestions: String
 }
 
 external interface IEditorOverrideServices
@@ -79,7 +79,7 @@ external interface IStandaloneThemeData {
     var inherit: Boolean;
     var rules: Array<ITokenThemeRule>
     //val encodedTokensColors: Array<String>?
-    //val colors: IColors
+    var colors: dynamic
 }
 
 external interface IModelContentChangedEvent
@@ -87,12 +87,13 @@ external interface IModelContentChangedEvent
 external interface IDimension
 
 external interface ITextModel {
+    val tokenization: dynamic
+
     fun getValue(eol: EndOfLinePreference? = definedExternally, preserveBOM: Boolean? = definedExternally): String
     fun setValue(newValue: String)
 
     fun getOffsetAt(position: IPosition): Int
 
-    fun resetTokenization()
 }
 
 external interface ITokenThemeRule {

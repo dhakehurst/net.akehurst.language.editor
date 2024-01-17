@@ -1,0 +1,5 @@
+package test;
+
+part def Part {
+  attribute x:String;
+}

@@ -17,10 +17,9 @@
 package net.akehurst.language.editor.browser.ace
 
 
-import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.editor.common.*
 
-class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
+internal class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>
 ) : ace.Tokenizer, AglTokenizerByWorker {
 
@@ -49,15 +48,15 @@ class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
             AglLineState(aceState.lineNumber, aceState.nextLineStartPosition, aceState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
         }
         val nextState = this.aglTokenizer.getLineTokens(line, stateAgl)
-        val lineTokens: List<AglTokenAce> = nextState.tokens
-            .map {aglTok ->
+        val tokens = nextState.tokens
+        val lineTokens = tokens.map {aglTok ->
                 val col = aglTok.position - stateAgl.nextLineStartPosition
                 val value = line.substring(col, col + aglTok.length)
                 AglTokenAce(
-                    aglTok.styles.toTypedArray(),
-                    value,
-                    nextState.lineNumber,
-                    col
+                    styles = aglTok.styles.toTypedArray(),
+                    value = value,
+                    column = col,
+                    index = null
                 )
             }
         val lt: Array<ace.Token> = lineTokens.toTypedArray()

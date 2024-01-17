@@ -33,7 +33,7 @@ data class AglLineStateAce(
 class AglTokenAce(
     styles: Array<String>,
     override val value: String,
-    override val index: Int?,
+    override var index: Int?,
     column: Int
 ) : ace.Token {
     override val type = styles.joinToString(".")

@@ -20,7 +20,6 @@ import monaco.IRange
 import monaco.editor.IModelDecorationOptions
 import monaco.editor.IModelDeltaDecoration
 import monaco.editor.IStandaloneCodeEditor
-import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.editor.common.*
 
 class ModelDecorationOptions(
@@ -65,18 +64,17 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
 
     // --- monaco.languaes.Tokenizer ---
     override fun getInitialState(): monaco.languages.IState {
-        return AglLineStateMonaco(0, 0, "")
+        return AglLineStateMonaco(-1, 0, "")
     }
 
-    override fun tokenize(line: String, pState: monaco.languages.IState): monaco.languages.ILineTokens {
-        val mcState = pState as AglLineStateMonaco
-        val row = mcState.lineNumber + 1
-        val stateAgl = AglLineState(mcState.lineNumber, mcState.lineStartPosition, mcState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
-        val nextState = this.aglTokenizer.getLineTokens(line, stateAgl)
-        val tokens = nextState.tokens
-        this.decorateLine(row, tokens) //TODO: move inside the loop
-        val lineTokens: List<AglTokenMonaco> = tokens.map {aglTok->
-            val col = aglTok.position - mcState.lineStartPosition
+    override fun tokenize(line: String, state: monaco.languages.IState): monaco.languages.ILineTokens {
+        val mcState = state as AglLineStateMonaco
+        val stateAgl = AglLineState(mcState.lineNumber, mcState.nextLineStartPosition, mcState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
+        val lineState = this.aglTokenizer.getLineTokens(line, stateAgl)
+        val tokens = lineState.tokens
+        this.decorateLine(stateAgl.nextLineStartPosition, lineState.lineNumber, tokens) //TODO: move inside the loop
+        val lineTokens = tokens.map { aglTok ->
+            val col = aglTok.position - stateAgl.nextLineStartPosition +1
             AglTokenMonaco(
                 aglTok.styles.firstOrNull() ?: "",
                 col
@@ -84,21 +82,20 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
         }
         val lt: Array<monaco.languages.IToken> = lineTokens.toTypedArray()
         return AglLineTokensMonaco(
-            AglLineStateMonaco(row, mcState.lineStartPosition + line.length, ""),
+            AglLineStateMonaco(lineState.lineNumber, lineState.nextLineStartPosition, ""),
             lt
         )
     }
 
-    private fun decorateLine(lineNum: Int, tokens: List<AglToken>) {
-        val lineStartPosition = tokens.first().position
+    private fun decorateLine(lineStartPosition:Int, lineNum: Int, tokens: List<AglToken>) {
         val decs: Array<IModelDeltaDecoration> = tokens.map { aglTok ->
-            val col = aglTok.position - lineStartPosition
+            val col = aglTok.position - lineStartPosition +1
             objectJSTyped<IModelDeltaDecoration> {
                 range = objectJSTyped<IRange> {
                     startColumn = col
                     endColumn = col + aglTok.length
-                    startLineNumber = lineNum
-                    endLineNumber = lineNum
+                    startLineNumber = lineNum+1
+                    endLineNumber = lineNum+1
                 }
                 options = ModelDecorationOptions(
                     inlineClassName = aglTok.styles.joinToString(separator = " ") { "monaco_${it}" }

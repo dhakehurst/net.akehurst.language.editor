@@ -16,7 +16,7 @@ external interface LineState
 external interface Token {
     val type : String
     val value: String
-    val index:Int?
+    var index:Int?
     var start:Int?
 }
 
