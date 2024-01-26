@@ -36,31 +36,29 @@ import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.api.style.AglStyleSelector
 import net.akehurst.language.api.style.AglStyleSelectorKind
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.LanguageService
 import net.akehurst.language.editor.api.LogFunction
-import net.akehurst.language.editor.common.AglEditorJsAbstract
-import net.akehurst.language.editor.common.AglStyleHandler
-import net.akehurst.language.editor.common.objectJS
-import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.editor.common.*
 import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
+    languageService: LanguageService,
     containerElement: Element,
     monacoEditor: IStandaloneCodeEditor,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    worker: AbstractWorker,
     monaco: Monaco
 ): AglEditor<AsmType, ContextType> {
     return AglEditorMonaco<AsmType, ContextType>(
+        languageService = languageService,
         containerElement = containerElement,
         monacoEditor = monacoEditor,
         languageId = languageId,
         editorId = editorId,
         logFunction = logFunction,
-        worker = worker,
         monaco = monaco
     )
 }
@@ -89,9 +87,9 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    worker: AbstractWorker,
-    val monaco: Monaco
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, worker) {
+    val monaco: Monaco,
+    languageService: LanguageService,
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, languageService) {
 
     companion object {
         private val init = js(
@@ -136,9 +134,10 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     var parseTimeout: dynamic = null
 
+    override var workerTokenizer: AglTokenizerByWorker = AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl)
+
     init {
         try {
-            this.connectWorker(AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl))
             val themeData = objectJSTyped<IStandaloneThemeData> {
                 base = "vs"
                 inherit = false
@@ -179,7 +178,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
             this.updateLanguage(null)
             this.updateProcessor()
-            this.updateStyle()
+            this.updateStyleModel()
         } catch (t: Throwable) {
             console.error(t.message, t)
         }
@@ -199,13 +198,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
-    override fun configureSyntaxAnalyser(configuration: Map<String, Any>) {
-        //this.aceEditor.getSession()?.also { session ->
-        this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, "", configuration) //TODO: sessionId
-        //}
-    }
-
-    override fun updateStyle() {
+    override fun updateStyleModel() {
         if (this.containerElement.isConnected) {
             val aglStyleClass = this.agl.styleHandler.aglStyleClass
             val styleStr = this.editorSpecificStyleStr
@@ -251,7 +244,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                     this.containerElement.ownerDocument?.querySelector("head")?.appendChild(
                         styleElement
                     )
-                    this.aglWorker.setStyle(languageIdentity, editorId, "", styleStr) //TODO: sessionId
+                    this.languageService.request.processorSetStyleRequest(this.endPointId,this.languageIdentity, styleStr)
 
                     // need to update because token style types may have changed, not just their attributes
                     this.onEditorTextChange()
@@ -297,14 +290,6 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     override fun resetTokenization(fromLine: Int) {
         this.monacoEditor.getModel().tokenization.resetTokenization()
-    }
-
-    override fun processSentence() {
-        if (doUpdate) {
-            this.clearErrorMarkers()
-            this.aglWorker.interrupt(languageIdentity, editorId, "")//TODO: get session
-            this.aglWorker.processSentence(languageIdentity, editorId, "", this.text, this.agl.options)
-        }
     }
 
     private fun convertColor(value: String?): String? {

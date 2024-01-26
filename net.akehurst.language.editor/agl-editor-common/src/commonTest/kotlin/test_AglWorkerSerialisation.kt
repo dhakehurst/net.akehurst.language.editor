@@ -448,11 +448,11 @@ class test_AglWorkerSerialisation {
             0,
             listOf(
                 listOf(
-                    AglToken(listOf("xxx"),0,3),
-                    AglToken(listOf("eol"),3,1)
+                    AglTokenDefault(listOf("xxx"),0,3),
+                    AglTokenDefault(listOf("eol"),3,1)
                 ),
                 listOf(
-                    AglToken(listOf("xx"),4,2)
+                    AglTokenDefault(listOf("xx"),4,2)
                 )
             )
         )

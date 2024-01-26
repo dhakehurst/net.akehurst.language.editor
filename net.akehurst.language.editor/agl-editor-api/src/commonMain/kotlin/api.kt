@@ -88,7 +88,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
      */
     val logger: AglEditorLogger
 
-    fun configureSyntaxAnalyser(configuration: Map<String, Any>)
+    //fun configureSyntaxAnalyser(configuration: Map<String, Any>)
 
     fun onParse(handler: (ParseEvent) -> Unit)
 

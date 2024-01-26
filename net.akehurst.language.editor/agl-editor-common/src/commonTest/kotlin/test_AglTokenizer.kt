@@ -108,11 +108,11 @@ internal class test_AglTokenizer {
 
         val expected = AglLineState(
             0, lineText.length + 1, "", listOf(
-                AglToken(listOf("agl_testLangId-1"), 0, 3),
-                AglToken(listOf("agl_testLangId-2"), 3, 1),
-                AglToken(listOf("agl_testLangId-1"), 4, 3),
-                AglToken(listOf("agl_testLangId-2"), 7, 1),
-                AglToken(listOf("agl_testLangId-1"), 8, 3),
+                AglTokenDefault(listOf("agl_testLangId-1"), 0, 3),
+                AglTokenDefault(listOf("agl_testLangId-2"), 3, 1),
+                AglTokenDefault(listOf("agl_testLangId-1"), 4, 3),
+                AglTokenDefault(listOf("agl_testLangId-2"), 7, 1),
+                AglTokenDefault(listOf("agl_testLangId-1"), 8, 3),
             )
         )
 
@@ -134,11 +134,11 @@ internal class test_AglTokenizer {
 
         val expected = AglLineState(
             0, split[0].length + 1, "", listOf(
-                AglToken(listOf("agl_testLangId-1"), 0, 3),
-                AglToken(listOf("agl_testLangId-2"), 3, 1),
-                AglToken(listOf("agl_testLangId-1"), 4, 3),
-                AglToken(listOf("agl_testLangId-2"), 7, 2),
-                AglToken(listOf("agl_testLangId-1"), 9, 3),
+                AglTokenDefault(listOf("agl_testLangId-1"), 0, 3),
+                AglTokenDefault(listOf("agl_testLangId-2"), 3, 1),
+                AglTokenDefault(listOf("agl_testLangId-1"), 4, 3),
+                AglTokenDefault(listOf("agl_testLangId-2"), 7, 2),
+                AglTokenDefault(listOf("agl_testLangId-1"), 9, 3),
             )
         )
 
@@ -160,11 +160,11 @@ internal class test_AglTokenizer {
 
         val expected = AglLineState(
             1, state.nextLineStartPosition + split[1].length + 1, "", listOf(
-                AglToken(listOf("agl_testLangId-1"), state.nextLineStartPosition + 0, 2),
-                AglToken(listOf("agl_testLangId-2"), state.nextLineStartPosition + 2, 2),
-                AglToken(listOf("agl_testLangId-1"), state.nextLineStartPosition + 4, 3),
-                AglToken(listOf("agl_testLangId-2"), state.nextLineStartPosition + 7, 1),
-                AglToken(listOf("agl_testLangId-1"), state.nextLineStartPosition + 8, 4),
+                AglTokenDefault(listOf("agl_testLangId-1"), state.nextLineStartPosition + 0, 2),
+                AglTokenDefault(listOf("agl_testLangId-2"), state.nextLineStartPosition + 2, 2),
+                AglTokenDefault(listOf("agl_testLangId-1"), state.nextLineStartPosition + 4, 3),
+                AglTokenDefault(listOf("agl_testLangId-2"), state.nextLineStartPosition + 7, 1),
+                AglTokenDefault(listOf("agl_testLangId-1"), state.nextLineStartPosition + 8, 4),
             )
         )
 
@@ -186,7 +186,7 @@ internal class test_AglTokenizer {
 
         val expected = AglLineState(
             2, state.nextLineStartPosition + split[2].length + 1, "", listOf(
-                AglToken(listOf("agl_testLangId-1"), state.nextLineStartPosition + 0, 3),
+                AglTokenDefault(listOf("agl_testLangId-1"), state.nextLineStartPosition + 0, 3),
             )
         )
 
@@ -214,11 +214,11 @@ internal class test_AglTokenizer {
 
         val expected = AglLineState(
             0, lineText.length + 1, "", listOf(
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), 0, 3),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-2"), 3, 1),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), 4, 3),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-2"), 7, 1),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), 8, 3),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 0, 3),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), 3, 1),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 4, 3),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), 7, 1),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 8, 3),
             )
         )
 
@@ -239,12 +239,12 @@ internal class test_AglTokenizer {
 
         val expected = AglLineState(
             0, split[0].length + 1, "", listOf(
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), 0, 3),  //aaa
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-2"), 3, 1),  // .
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), 4, 3),  // bbb
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-2"), 7, 2),  // ..
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), 9, 3),  // ccc
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-2"), 12, 1), // EOL
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 0, 3),  //aaa
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), 3, 1),  // .
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 4, 3),  // bbb
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), 7, 2),  // ..
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 9, 3),  // ccc
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), 12, 1), // EOL
             )
         )
 
@@ -265,12 +265,12 @@ internal class test_AglTokenizer {
 
         val expected = AglLineState(
             1, state.nextLineStartPosition + split[1].length + 1, "", listOf(
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 0, 2),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-2"), state.nextLineStartPosition + 2, 2),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 4, 3),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-2"), state.nextLineStartPosition + 7, 1),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 8, 4),
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-2"), state.nextLineStartPosition + 12, 1),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 0, 2),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), state.nextLineStartPosition + 2, 2),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 4, 3),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), state.nextLineStartPosition + 7, 1),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 8, 4),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), state.nextLineStartPosition + 12, 1),
             )
         )
 
@@ -291,7 +291,7 @@ internal class test_AglTokenizer {
 
         val expected = AglLineState(
             2, state.nextLineStartPosition + split[2].length + 1, "", listOf(
-                AglToken(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 0, 3),
+                AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 0, 3),
             )
         )
 

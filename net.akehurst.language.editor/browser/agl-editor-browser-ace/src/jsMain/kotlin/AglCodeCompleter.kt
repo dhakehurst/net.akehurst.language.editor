@@ -19,6 +19,7 @@ package net.akehurst.language.editor.browser.ace
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.CompletionItemKind
+import net.akehurst.language.editor.api.LanguageService
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglWorkerClient
@@ -27,7 +28,7 @@ import net.akehurst.language.editor.common.objectJS
 
 class AglCodeCompleter<AsmType : Any, ContextType : Any>(
     val agl: AglComponents<AsmType, ContextType>,
-    val aglWorker: AglWorkerClient<AsmType, ContextType>
+    val languageService: LanguageService
 ) {
 
     //val identifierRegexps = arrayOf( js("/$^/") )
@@ -82,7 +83,7 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
     }
 
     private fun getCompletionItemsFromWorker(editor: ace.IEditor, pos: Int): List<CompletionItem> {
-        this.aglWorker.getCompletionItems()
+        //this.languageService.request.sentenceCodeCompleteRequest()
         TODO()
     }
 

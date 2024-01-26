@@ -16,8 +16,9 @@
 
 package net.akehurst.language.editor.browser.agl
 
+import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.AglToken
+import net.akehurst.language.editor.common.AglTokenDefault
 import net.akehurst.language.editor.common.AglTokenizerByWorker
 
 class AglTokenizerByWorkerDefault<AsmType : Any, ContextType : Any>(

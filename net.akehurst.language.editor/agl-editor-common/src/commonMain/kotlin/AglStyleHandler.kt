@@ -17,8 +17,6 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.language.style.asm.AglStyleModelDefault
 import net.akehurst.language.api.sppt.LeafData
-import net.akehurst.language.api.sppt.SPPTLeaf
-import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.api.style.AglStyleModel
 
 class AglStyleHandler(
@@ -34,6 +32,8 @@ class AglStyleHandler(
             return "${cssClassPrefixStart}_${cssLangId}"
         }
     }
+
+    var styleModel:AglStyleModel = AglStyleModelDefault(emptyList())
 
     // AglStyleHandler is recreated if languageId changes for the editor
     val cssLanguageId = languageId.replace(Regex("[^a-z0-9A-Z_-]"), "_")
@@ -65,10 +65,10 @@ class AglStyleHandler(
         }
     }
 
-    fun transformToTokens(leafs: List<LeafData>): List<AglToken> {
+    fun transformToTokens(leafs: List<LeafData>): List<AglTokenDefault> {
         return leafs.map { leaf ->
             val cssClasses = this.mapToCssClasses(leaf)
-            AglToken(
+            AglTokenDefault(
                 cssClasses.toSet().toList(),
                 leaf.position,
                 leaf.length

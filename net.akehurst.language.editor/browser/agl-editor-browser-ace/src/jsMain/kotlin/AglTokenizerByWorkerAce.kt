@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.browser.ace
 
 
+import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.common.*
 
 internal class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(

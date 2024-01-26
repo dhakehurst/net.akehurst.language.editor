@@ -15,6 +15,7 @@
  */
 package net.akehurst.language.editor.browser.codemirror
 
+import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.common.*
 
 class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
@@ -52,7 +53,7 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
             val marks = mutableListOf<codemirror.state.IRange<codemirror.view.IDecoration>>()
             for (e in transaction.effects) {
                 if (e._is(_tokenEffect)) {
-                    val lineTokens = e.value as List<AglToken>
+                    val lineTokens = e.value as List<AglTokenDefault>
                     for (tk in lineTokens) {
                         val mark = codemirror.view.Decoration.mark(
                             objectJSTyped<codemirror.view.MarkDecorationSpec> {

@@ -29,13 +29,15 @@ import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.EditorOptions
+import net.akehurst.language.editor.api.EndPointIdentity
+import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.messages.*
 
-abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
+abstract class AglWorkerAbstract {
 
     // languageId -> def
-    private var _languageDefinition: MutableMap<String, LanguageDefinition<AsmType, ContextType>> = mutableMapOf()
+    private var _languageDefinition: MutableMap<String, LanguageDefinition<Any, Any>> = mutableMapOf()
 
     // languageId -> sh
     private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
@@ -46,15 +48,15 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
     protected abstract fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String?
 
-    protected open fun configureLanguageDefinition(ld: LanguageDefinition<AsmType, ContextType>, grammarStr: String?, crossReferenceModelStr: String?) {
+    protected open fun configureLanguageDefinition(ld: LanguageDefinition<Any, Any>, grammarStr: String?, crossReferenceModelStr: String?) {
         // TODO: could be an argument
-        ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<AsmType, ContextType>
+        ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>
         ld.grammarStr = grammarStr
         ld.crossReferenceModelStr = crossReferenceModelStr
     }
 
-    protected open fun createLanguageDefinition(languageId: String, grammarStr: String?, crossReferenceModelStr: String?): LanguageDefinition<AsmType, ContextType> {
-        val ld = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
+    protected open fun createLanguageDefinition(languageId: String, grammarStr: String?, crossReferenceModelStr: String?): LanguageDefinition<Any, Any> {
+        val ld = Agl.registry.findOrPlaceholder<Any, Any>(
             identity = languageId,
             aglOptions = Agl.options {
                 semanticAnalysis {
@@ -75,7 +77,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
         when (msg) {
             is MessageProcessorCreate -> this.createProcessor(port, msg)
             is MessageParserInterruptRequest -> this.interrupt(port, msg)
-            is MessageProcessRequest<*, *> -> this.process(port, msg as MessageProcessRequest<AsmType, ContextType>)
+            is MessageProcessRequest<*, *> -> this.process(port, msg as MessageProcessRequest<Any, Any>)
             is MessageSetStyle -> this.setStyle(port, msg)
             is MessageCodeCompleteRequest -> this.getCodeCompletions(port, msg)
             else -> error("Unknown Message type")
@@ -87,8 +89,8 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
             MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "Cannot createProcessor if there is no grammar", emptyList(), emptyList())
         } else {
             try {
-                val ld = createLanguageDefinition(message.endPoint.languageId, message.grammarStr, message.crossReferenceModelStr)
-                _languageDefinition[message.endPoint.languageId] = ld
+                val ld = createLanguageDefinition(message.languageId, message.grammarStr, message.crossReferenceModelStr)
+                _languageDefinition[message.languageId] = ld
                 _editorOptions[message.endPoint.editorId] = message.editorOptions
                 //if there is a grammar check that grammar is well-defined and a processor can be created from it
 
@@ -105,43 +107,43 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     }
 
     protected fun deleteProcessor(port: Any, message: MessageProcessorDelete) {
-        this._languageDefinition.remove(message.endPoint.languageId)
-        Agl.registry.unregister(message.endPoint.languageId)
+        this._languageDefinition.remove(message.languageId)
+        Agl.registry.unregister(message.languageId)
         sendMessage(port, MessageProcessorDeleteResponse(message.endPoint, MessageStatus.SUCCESS, "OK"))
     }
 
     protected fun interrupt(port: Any, message: MessageParserInterruptRequest) {
-        _languageDefinition[message.endPoint.languageId]?.processor?.interrupt(message.reason)
+        _languageDefinition[message.languageId]?.processor?.interrupt(message.reason)
     }
 
     protected fun setStyle(port: Any, message: MessageSetStyle) {
         try {
-            val style = AglStyleHandler(message.endPoint.languageId)
-            this._styleHandler[message.endPoint.languageId] = style
-            val result = Agl.registry.agl.style.processor!!.process(message.css)
+            val style = AglStyleHandler(message.languageId)
+            this._styleHandler[message.languageId] = style
+            val result = Agl.registry.agl.style.processor!!.process(message.styleStr)
             val styleMdl = result.asm
             if (null != styleMdl) {
                 styleMdl.rules.forEach { rule ->
                     rule.selector.forEach { sel -> style.mapClass(sel.value) }
                 }
-                sendMessage(port, MessageSetStyleResult(message.endPoint, MessageStatus.SUCCESS, "OK"))
+                sendMessage(port, MessageSetStyleResult(message.endPoint, MessageStatus.SUCCESS, "OK",styleMdl))
             } else {
                 //TODO: handle issues!
             }
         } catch (t: Throwable) {
-            sendMessage(port, MessageSetStyleResult(message.endPoint, MessageStatus.FAILURE, t.message!!))
+            sendMessage(port, MessageSetStyleResult(message.endPoint, MessageStatus.FAILURE, t.message!!,null))
         }
     }
 
-    protected fun process(port: Any, message: MessageProcessRequest<AsmType, ContextType>) {
+    protected fun process(port: Any, message: MessageProcessRequest<Any, Any>) {
         //val editorOptions = _editorOptions[message.endPoint.editorId]
-        val ld = this._languageDefinition[message.endPoint.languageId] ?: error("LanguageDefinition '${message.endPoint.languageId}' not found, was it created correctly?")
-        val proc = ld.processor ?: error("Processor for '${message.endPoint.languageId}' not found, is the grammar correctly set ?")
+        val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
+        val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
 
         //val scan = scan(port, message.endPoint, proc, message.text)
-        val parse = parse(port, message.endPoint, proc, message.options, message.text)
+        val parse = parse(port, message.endPoint, message.languageId, proc, message.options, message.text)
         val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(port, message.endPoint, proc, message.options, it) }
-        val semanticAnalysis = syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(port, message.endPoint, proc, message.options, it, r.locationMap) } }
+        val semanticAnalysis = syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(port, message.endPoint, message.languageId, proc, message.options, it, r.locationMap) } }
     }
 
     /*
@@ -164,8 +166,9 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     protected fun parse(
         port: Any,
         endPoint: EndPointIdentity,
-        proc: LanguageProcessor<AsmType, ContextType>,
-        processOptions: ProcessOptions<AsmType, ContextType>,
+        languageId:String,
+        proc: LanguageProcessor<Any, Any>,
+        processOptions: ProcessOptions<Any, Any>,
         sentence: String
     ): ParseResult {
         return try {
@@ -177,7 +180,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                 if (null == sppt) {
                     sendMessage(port, MessageParseResult(endPoint, MessageStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null))
                 } else {
-                    this.sendLineTokens(port, endPoint, SentenceDefault(sentence), sppt, editorOptions.lineTokensChunkSize)
+                    this.sendLineTokens(port, endPoint, languageId, SentenceDefault(sentence), sppt, editorOptions.lineTokensChunkSize)
                     if (editorOptions.parseTree) {
                         //TODO: send TreeData rather than encode parse tree...it should be faster
                         val treeStr = serialiseParseTreeToStringJson(sentence, sppt)
@@ -203,10 +206,10 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     private fun syntaxAnalysis(
         port: Any,
         endPoint: EndPointIdentity,
-        proc: LanguageProcessor<AsmType, ContextType>,
-        options: ProcessOptions<AsmType, ContextType>,
+        proc: LanguageProcessor<Any, Any>,
+        options: ProcessOptions<Any, Any>,
         sppt: SharedPackedParseTree
-    ): SyntaxAnalysisResult<AsmType> {
+    ): SyntaxAnalysisResult<Any> {
         return try {
             sendMessage(port, MessageSyntaxAnalysisResult(endPoint, MessageStatus.START, "Start", emptyList(), null))
             val editorOptions = _editorOptions[endPoint.editorId]
@@ -241,9 +244,10 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     private fun semanticAnalysis(
         port: Any,
         endPoint: EndPointIdentity,
-        proc: LanguageProcessor<AsmType, ContextType>,
-        options: ProcessOptions<AsmType, ContextType>,
-        asm: AsmType,
+        languageId:String,
+        proc: LanguageProcessor<Any, Any>,
+        options: ProcessOptions<Any, Any>,
+        asm: Any,
         locationMap: Map<Any, InputLocation>
     ) {
         try {
@@ -255,7 +259,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                 //  is Agl Grammar -> create ContextFromGrammarRegistry
                 //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefinition, get its typemodel and create ContextFromTypeModel
                 // }
-                val ctx = when (endPoint.languageId) {
+                val ctx = when (languageId) {
                     Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: ContextFromGrammarRegistry(Agl.registry)
                     Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
                         is ContextFromTypeModelReference -> {
@@ -273,7 +277,7 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
                 val opts = Agl.options(options) {
                     semanticAnalysis {
                         locationMap(locationMap)
-                        context(ctx as ContextType)
+                        context(ctx as Any)
                         option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                     }
                 }
@@ -296,12 +300,12 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
         }
     }
 
-    private fun sendLineTokens(port: Any, endPoint: EndPointIdentity, sentence: Sentence, sppt: SharedPackedParseTree, lineTokensChunkSize: Int) {
+    private fun sendLineTokens(port: Any, endPoint: EndPointIdentity, languageId:String, sentence: Sentence, sppt: SharedPackedParseTree, lineTokensChunkSize: Int) {
         try {
             val editorOptions = _editorOptions[endPoint.editorId]
             if (true == editorOptions?.parseLineTokens) {
                 val tokens = sppt.tokensByLineAll()
-                val style = this._styleHandler[endPoint.languageId] ?: error("StyleHandler for ${endPoint.languageId} not found") //TODO: send Error msg not exception
+                val style = this._styleHandler[languageId] ?: error("StyleHandler for ${languageId} not found") //TODO: send Error msg not exception
                 if (0 < lineTokensChunkSize) {
                     val lineTokensChunked = tokens.chunked(lineTokensChunkSize)
                     var chunkstart = 0
@@ -331,8 +335,8 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     private fun grammarAmbiguityAnalysis(port: Any, message: MessageGrammarAmbiguityAnalysisRequest) {
         try {
             sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.endPoint, MessageStatus.START, null, emptyList()))
-            val ld = this._languageDefinition[message.endPoint.languageId] ?: error("LanguageDefinition '${message.endPoint.languageId}' not found, was it created correctly?")
-            val proc = ld.processor ?: error("Processor for '${message.endPoint.languageId}' not found, is the grammar correctly set ?")
+            val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
+            val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(listOf(proc.grammar!!), Agl.options {
                 semanticAnalysis {
                     context(ContextFromGrammarRegistry(Agl.registry))
@@ -350,8 +354,8 @@ abstract class AglWorkerAbstract<AsmType : Any, ContextType : Any> {
     private fun getCodeCompletions(port: Any, message: MessageCodeCompleteRequest) {
         try {
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.START, "Start", emptyList(), null))
-            val ld = this._languageDefinition[message.endPoint.languageId] ?: error("LanguageDefinition '${message.endPoint.languageId}' not found, was it created correctly?")
-            val proc = ld.processor ?: error("Processor for '${message.endPoint.languageId}' not found, is the grammar correctly set ?")
+            val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
+            val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val result = proc.expectedItemsAt(
                 message.text,
                 message.position,

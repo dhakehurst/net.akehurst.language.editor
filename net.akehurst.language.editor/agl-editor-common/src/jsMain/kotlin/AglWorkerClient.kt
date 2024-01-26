@@ -18,6 +18,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.EditorOptions
+import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.messages.*
 import org.w3c.dom.*
@@ -49,11 +50,6 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
     var codeCompleteResult: (message: MessageCodeCompleteResult) -> Unit = { _ -> }
 
     fun initialise() {
-//        this.worker = if (this.sharedWorker) {
-//            SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-//        } else {
-//            Worker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-//        }
         this.worker.onerror = {
             this.agl.logger.log(LogLevel.Error, it.toString(), null)
         }
@@ -93,7 +89,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
 
     private fun receiveMessageFromWorker(msg: AglWorkerMessage) {
         this.agl.logger.log(LogLevel.Trace, "Received message: $msg",null)
-        if (this.agl.languageIdentity==msg.endPoint.languageId && this.agl.editorId == msg.endPoint.editorId) { //TODO: should  test for sessionId also
+        if ( this.agl.editorId == msg.endPoint.editorId) { //TODO: should  test for sessionId also
             when (msg) {
                 is MessageSetStyleResult -> this.setStyleResult(msg)
                 is MessageProcessorCreateResponse -> this.processorCreateResult(msg)
@@ -125,23 +121,19 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
     }
 
     fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String, scopeModelStr:String?, editorOptions: EditorOptions) {
-        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(languageId, editorId, sessionId), grammarStr, scopeModelStr, editorOptions))
-    }
-
-    fun configureSyntaxAnalyser(languageId: String, editorId: String, sessionId: String, configuration: Map<String,Any>) {
-        this.sendToWorker(MessageSyntaxAnalyserConfigure(EndPointIdentity(languageId, editorId, sessionId), configuration))
+        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(editorId, sessionId), languageId, grammarStr, scopeModelStr, editorOptions))
     }
 
     fun interrupt(languageId: String, editorId: String, sessionId: String) {
-        this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(languageId, editorId, sessionId), "New parse request"))
+        this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(editorId, sessionId), languageId,"New parse request"))
     }
 
     fun processSentence(languageId: String, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
-        this.sendToWorker(MessageProcessRequest(EndPointIdentity(languageId, editorId, sessionId), sentence, processOptions))
+        this.sendToWorker(MessageProcessRequest(EndPointIdentity(editorId, sessionId), languageId, sentence, processOptions))
     }
 
     fun setStyle(languageId: String, editorId: String, sessionId: String, css: String) {
-        this.sendToWorker(MessageSetStyle(EndPointIdentity(languageId, editorId, sessionId), css))
+        this.sendToWorker(MessageSetStyle(EndPointIdentity(editorId, sessionId), languageId,css))
     }
 
     fun getCompletionItems() {

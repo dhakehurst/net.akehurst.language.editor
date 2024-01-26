@@ -20,6 +20,7 @@ import monaco.IRange
 import monaco.editor.IModelDecorationOptions
 import monaco.editor.IModelDeltaDecoration
 import monaco.editor.IStandaloneCodeEditor
+import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.common.*
 
 class ModelDecorationOptions(

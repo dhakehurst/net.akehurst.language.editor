@@ -16,13 +16,12 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.agl.parser.SentenceAbstract
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.scanner.ScannerOnDemand
-import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageDefinition
+import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.ProcessOptions
-import net.akehurst.language.api.sppt.Sentence
-import net.akehurst.language.api.sppt.SpptDataNode
+import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.*
 
 class SentenceFromEditor<AsmType : Any, ContextType : Any>(
@@ -39,8 +38,9 @@ class SentenceFromEditor<AsmType : Any, ContextType : Any>(
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     languageId: String,
     final override val editorId: String,
-    logFunction: LogFunction?
-) : AglEditor<AsmType, ContextType> {
+    logFunction: LogFunction?,
+    val languageService: LanguageService
+) : AglEditor<AsmType, ContextType>, LanguageServiceResponse {
 
     abstract val sessionId: String
 
@@ -48,12 +48,18 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
 
     protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger)
 
+    val endPointId: EndPointIdentity = EndPointIdentity(editorId, sessionId)
+
+    abstract val workerTokenizer: AglTokenizerByWorker
+
     init {
         //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
-        this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
-        this.agl.languageDefinition.scopeStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
-        this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.updateStyle() }
+        this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyleModel() }
+        this.agl.languageDefinition.scopeStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyleModel() }
+        this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.updateStyleModel() }
         //this.agl.languageDefinition.formatterStrObservers.add { _, _ -> }
+
+        this.languageService.addResponseListener(endPointId, this)
     }
 
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
@@ -73,32 +79,19 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
                 this.agl.languageIdentity = value
                 this.updateLanguage(oldId)
                 this.updateProcessor()
-                this.updateStyle()
+                this.updateStyleModel()
             }
         }
 
     override val languageDefinition: LanguageDefinition<AsmType, ContextType>
         get() = agl.languageDefinition
 
-//    override var goalRuleName: String?
-//        get() = this.agl.goalRule
-//        set(value) {
-//            this.agl.goalRule = value
-//        }
-
     override var editorSpecificStyleStr: String?
         get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.styleStr
         set(value) {
             this._editorSpecificStyleStr = value
-            this.updateStyle()
+            this.updateStyleModel()
         }
-
-//    override var sentenceContext: ContextType?
-//        get() = this.agl.context
-//        set(value) {
-//            this.agl.context = value
-//            this.processSentence()
-//        }
 
     override var processOptions: ProcessOptions<AsmType, ContextType>
         get() = this.agl.options
@@ -146,8 +139,140 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         }
     }
 
+    protected abstract fun resetTokenization(fromLine: Int)
+    protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)
     protected abstract fun updateLanguage(oldId: String?)
     protected abstract fun updateProcessor()
-    protected abstract fun updateStyle()
-    protected abstract fun processSentence()
+    protected abstract fun updateStyleModel()
+    protected abstract fun updateEditorStyles()
+
+    fun processSentence() {
+        if (doUpdate) {
+            this.clearErrorMarkers()
+            this.languageService.request.interruptRequest(this.endPointId, this.languageIdentity, "process Sentence")
+            this.languageService.request.sentenceProcessRequest(this.endPointId, this.languageIdentity, this.text, this.agl.options)
+        }
+    }
+
+    ///
+    override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
+        if (status == MessageStatus.SUCCESS) {
+            when (message) {
+                "OK" -> {
+                    this.log(LogLevel.Debug, "New Processor created for ${editorId}", null)
+                    this.workerTokenizer.acceptingTokens = true
+                    this.agl.scannerMatchables = scannerMatchables
+                    this.processSentence()
+                    this.resetTokenization(0)
+                }
+
+                "reset" -> {
+                    this.log(LogLevel.Debug, "Reset Processor for ${editorId}", null)
+                }
+
+                else -> {
+                    this.log(LogLevel.Error, "Unknown result message from create Processor for ${editorId}: $message", null)
+                }
+            }
+        } else {
+            this.log(LogLevel.Error, "Failed to create processor ${message}", null)
+            issues.forEach {
+                this.log(LogLevel.Error, " Issue - ${it}", null)
+            }
+        }
+    }
+
+    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String) {
+        TODO("not implemented")
+    }
+
+    override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, styleModel: AglStyleModel?) {
+        if (status == MessageStatus.SUCCESS && null != styleModel) {
+            this.updateEditorStyles()
+            this.resetTokenization(0)
+            this.agl.styleHandler.styleModel=styleModel
+        } else {
+            this.log(LogLevel.Error, message, null)
+        }
+    }
+
+    override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
+        if (status == MessageStatus.SUCCESS) {
+            this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}", null)
+            this.workerTokenizer.receiveTokens(startLine, lineTokens)
+            this.resetTokenization(startLine)
+        } else {
+            this.log(LogLevel.Error, "LineTokens - ${message}", null)
+        }
+    }
+
+    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+        when (status) {
+            MessageStatus.START -> {
+                this.notifyParse(ParseEvent(EventStatus.START, "Start", null, emptyList()))
+            }
+
+            MessageStatus.FAILURE -> {
+                // a failure to parse is not an 'error' in the editor - we expect some parse failures
+                this.log(LogLevel.Debug, "Cannot parse text in ${this.editorId} for language ${this.languageIdentity}: ${message}", null)
+                // parse failed so re-tokenize from scan
+//                this.workerTokenizer.reset()
+//                this.resetTokenization()
+                clearErrorMarkers()
+                this.createIssueMarkers(issues.toList())
+                this.notifyParse(ParseEvent(EventStatus.FAILURE, message, null, issues.toList()))
+            }
+
+            MessageStatus.SUCCESS -> {
+                clearErrorMarkers()
+                this.createIssueMarkers(issues.toList())
+                this.notifyParse(ParseEvent(EventStatus.SUCCESS, "Success", tree, issues.toList()))
+            }
+        }
+    }
+
+    override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+        when (status) {
+            MessageStatus.START -> {
+                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.START, "Start", null, emptyList()))
+            }
+
+            MessageStatus.FAILURE -> {
+                clearErrorMarkers()
+                this.createIssueMarkers(issues.toList())
+                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.FAILURE, message, asm, issues.toList()))
+            }
+
+            MessageStatus.SUCCESS -> {
+                clearErrorMarkers()
+                this.createIssueMarkers(issues.toList())
+                this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.SUCCESS, "Success", asm, issues.toList()))
+            }
+        }
+    }
+
+    override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+        when (status) {
+            MessageStatus.START -> {
+                this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.START, "Start", null, emptyList()))
+            }
+
+            MessageStatus.FAILURE -> {
+                clearErrorMarkers()
+                this.createIssueMarkers(issues.toList())
+                this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.FAILURE, message, asm, issues.toList()))
+            }
+
+            MessageStatus.SUCCESS -> {
+                clearErrorMarkers()
+                this.createIssueMarkers(issues.toList())
+                this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.SUCCESS, "Success", asm, issues.toList()))
+            }
+        }
+    }
+
+    override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>) {
+        TODO("not implemented")
+    }
+
 }

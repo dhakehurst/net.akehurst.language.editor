@@ -24,6 +24,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.LanguageService
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.*
 import org.w3c.dom.AbstractWorker
@@ -46,12 +47,12 @@ class AglErrorAnnotation(
 }
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
+    languageService:LanguageService,
     containerElement: Element,
     cmEditor: codemirror.view.IEditorView,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    worker: AbstractWorker,
     codemirror: codemirror.ICodeMirror
 ): AglEditor<AsmType, ContextType> {
     return AglEditorCodeMirror<AsmType, ContextType>(
@@ -60,8 +61,8 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
         languageId = languageId,
         editorId = editorId,
         logFunction = logFunction,
-        worker = worker,
-        codemirror
+        languageService = languageService,
+        codemirror = codemirror
     )
 }
 
@@ -71,9 +72,9 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    worker: AbstractWorker,
-    val codemirror: codemirror.ICodeMirror
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, worker) {
+    val codemirror: codemirror.ICodeMirror,
+    languageService: LanguageService
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, languageService) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
@@ -85,15 +86,6 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     override val sessionId: String get() = "none"
 
-    /*
-       private val _annotations = mutableListOf<CodeMirrorAnnotation>()
-
-       val aceEditor: ace.Editor = ace.Editor(
-           ace.VirtualRenderer(this.element, null),
-           ace.Ace.createEditSession(""),
-           objectJS { } //options are set later in init_
-       )
-   */
     override var text: String
         get() {
             try {
@@ -117,41 +109,11 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                 throw RuntimeException("Failed to set text in editor")
             }
         }
-    /*
-        var parseTimeout: dynamic = null
 
-        init {
-            this.init_(options)
-        }
-     */
-    /*
-        fun init_(options: CodeMirrorOptions) {
-            this.connectWorker(AglTokenizerByWorkerCodeMirror(this.agl))
-
-
-            if (null != options.editor) this.aceEditor.setOptions(options.editor)
-            if (null != options.renderer) this.aceEditor.renderer.setOptions(options.renderer)
-            //TODO: set session and mouseHandler options
-
-            this.aceEditor.getSession()?.bgTokenizer = AglBackgroundTokenizer(this.workerTokenizer as ace.Tokenizer, this.aceEditor)
-            this.aceEditor.getSession()?.bgTokenizer?.setDocument(this.aceEditor.getSession()?.getDocument())
-            this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
-            this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl))
-
-            this.aceEditor.on("change") { event -> this.update() }
-
-            val resizeObserver = ResizeObserver { entries -> onResize(entries) }
-            resizeObserver.observe(this.element)
-
-            this.updateLanguage(null)
-            this.updateGrammar()
-            this.updateStyle()
-        }
-    */
+    override val workerTokenizer = AglTokenizerByWorkerCodeMirror(this.codemirror, this.cmEditorView, this.agl)
 
     init {
-        val tokenizer = AglTokenizerByWorkerCodeMirror(this.codemirror, this.cmEditorView, this.agl)
-        this.connectWorker(tokenizer)
+        val tokenizer =
         // add agl extensions
         this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
             effects = arrayOf(
@@ -167,8 +129,8 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                         _aglThemeCompartment.of(
                             codemirror.view.EditorView.theme(objectJS {})
                         ),
-                        tokenizer._tokenUpdateListener,
-                        tokenizer._decorationUpdater
+                        workerTokenizer._tokenUpdateListener,
+                        workerTokenizer._decorationUpdater
                     )
                 )
             )
@@ -176,7 +138,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
         this.updateLanguage(null)
         this.updateProcessor()
-        this.updateStyle()
+        this.updateStyleModel()
     }
 
     override fun destroy() {
@@ -185,26 +147,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     }
 
     fun format() {
-        /*
-        val proc = this.agl.languageDefinition.processor
-        if (null != proc) {
-            val pos = this.aceEditor.getSelection().getCursor()
-            val result = proc.format(this.text)
-            if (null != result.sentence) {
-                this.aceEditor.setValue(result.sentence!!, -1)
-            } else {
-                TODO()
-            }
-        }
-         */
-    }
 
-    override fun configureSyntaxAnalyser(configuration: Map<String, Any>) {
-        /*
-        this.aceEditor.getSession()?.also { session ->
-            this.aglWorker.configureSyntaxAnalyser(this.languageIdentity, editorId, session.id, configuration)
-        }
-        */
     }
 
     override fun updateLanguage(oldId: String?) {
@@ -215,13 +158,13 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
-    override fun updateStyle() {
+    override fun updateStyleModel() {
         if (this.containerElement.isConnected) {
             val aglStyleClass = this.agl.styleHandler.aglStyleClass
-            val str = this.editorSpecificStyleStr
-            if (!str.isNullOrEmpty()) {
+            val styleStr = this.editorSpecificStyleStr
+            if (!styleStr.isNullOrEmpty()) {
                 this.agl.styleHandler.reset()
-                val styleMdl: AglStyleModel? = Agl.registry.agl.style.processor!!.process(str).asm //TODO: pass context?
+                val styleMdl: AglStyleModel? = Agl.registry.agl.style.processor!!.process(styleStr).asm //TODO: pass context?
                 if (null != styleMdl) {
                     val theme = objectJS {}
                     for (r in styleMdl.rules) {
@@ -252,7 +195,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                         )
                     })
 
-                    this.aglWorker.setStyle(this.languageIdentity, editorId, "", str)
+                    this.languageService.request.processorSetStyleRequest(this.endPointId,this.languageIdentity, styleStr)
 
                     // need to update because token style types may have changed, not just their attributes
                     this.onEditorTextChange()
@@ -262,68 +205,6 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                 }
             }
         }
-
-        /*
-        // style requires that the element is part of the dom
-        if (this.element.isConnected) {
-            this.aceEditor.getSession()?.also { session ->
-                val aglStyleClass = this.agl.styleHandler.aglStyleClass
-                val str = this.editorSpecificStyleStr
-                if (null != str && str.isNotEmpty()) {
-                    this.agl.styleHandler.reset()
-                    val rules: List<AglStyleRule>? = Agl.registry.agl.style.processor!!.process(str).asm //TODO: pass context?
-                    if (null != rules) {
-                        var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
-                        rules.forEach { rule ->
-                            val ruleClasses = rule.selector.map{
-                                val mappedSelName = this.agl.styleHandler.mapClass(it)
-                                ".ace_$mappedSelName"
-                            }
-                            val cssClasses = listOf(".$aglStyleClass") + ruleClasses
-                            val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
-                            mappedRule.styles = rule.styles.values.associate { oldStyle ->
-                                val style = when (oldStyle.name) {
-                                    "foreground" -> AglStyle("color", oldStyle.value)
-                                    "background" -> AglStyle("background-color", oldStyle.value)
-                                    "font-style" -> when (oldStyle.value) {
-                                        "bold" -> AglStyle("font-weight", oldStyle.value)
-                                        "italic" -> AglStyle("font-style", oldStyle.value)
-                                        else -> oldStyle
-                                    }
-                                    else -> oldStyle
-                                }
-                                Pair(style.name, style)
-                            }.toMutableMap()
-                            mappedCss = mappedCss + "\n" + mappedRule.toCss()
-                        }
-
-                        val root = this.element.getRootNode() as ParentNode?
-                        if (null != root) {
-                            var curStyle = root.querySelector("style#$aglStyleClass")
-                            if (null == curStyle) {
-                                curStyle = this.element.ownerDocument!!.createElement("style")
-                                curStyle.id = aglStyleClass
-                                if (root == curStyle.ownerDocument) {
-                                    curStyle.ownerDocument!!.head!!.prepend(curStyle)
-                                } else {
-                                    //shadowDom case
-                                    root.prepend(curStyle)
-                                }
-                            }
-                            curStyle.textContent = mappedCss
-                        }
-                        this.aglWorker.setStyle(this.languageIdentity, editorId, session.id, str)
-
-                        // need to update because token style types may have changed, not just their attributes
-                        this.update()
-                        this.resetTokenization()
-                    } else {
-                        //TODO: cannot parse style rules
-                    }
-                }
-            }
-        }
-         */
     }
 
     override fun onEditorTextChange() {
@@ -339,15 +220,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     }
 
     private fun update() {
-        /*
-        this.workerTokenizer.reset()
-        window.clearTimeout(parseTimeout)
-        this.parseTimeout = window.setTimeout({
-            this.workerTokenizer.acceptingTokens = true
-            this.processSentence()
-        }, 500)
 
-         */
     }
 
     @JsName("onResize")
@@ -360,26 +233,11 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     }
 
     private fun setupCommands() {
-        /*
-        this.aceEditor.commands.addCommand({
-            name: 'format',
-            bindKey: {win: 'Ctrl-F', mac: 'Command-F'},
-            exec: (editor) => this.format(),
-            readOnly: false
-        })
-         */
+
     }
 
     override fun resetTokenization(fromLine: Int) {
        // (this.workerTokenizer as AglTokenizerByWorkerCodeMirror<AsmType, ContextType>).update()
-    }
-
-    override fun processSentence() {
-        if (doUpdate) {
-            this.clearErrorMarkers()
-            this.aglWorker.interrupt(this.languageIdentity, editorId, "")
-            this.aglWorker.processSentence(this.languageIdentity, editorId, "", this.text, this.agl.options)
-        }
     }
 
     /*

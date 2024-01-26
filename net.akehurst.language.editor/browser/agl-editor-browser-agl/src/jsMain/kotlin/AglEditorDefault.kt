@@ -25,9 +25,11 @@ import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.editor.api.AglEditor
+import net.akehurst.language.editor.api.LanguageService
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
+import net.akehurst.language.editor.common.AglTokenizerByWorker
 import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
@@ -37,18 +39,18 @@ import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
+    languageService:LanguageService,
     containerElement: Element,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    worker: AbstractWorker
 ): AglEditor<AsmType, ContextType> {
     return AglEditorDefault<AsmType, ContextType>(
         containerElement = containerElement,
         languageId = languageId,
         editorId = editorId,
         logFunction = logFunction,
-        worker = worker
+        languageService = languageService
     )
 }
 
@@ -57,8 +59,8 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    worker: AbstractWorker
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, worker) {
+    languageService: LanguageService
+) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, languageService) {
 
     override val baseEditor: Any get() = this
     override var text: String
@@ -66,6 +68,8 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         set(value) {
             editing.value = value
         }
+
+    override val workerTokenizer = AglTokenizerByWorkerDefault(this.agl)
 
     override fun resetTokenization(fromLine:Int) {
         highlight(text)
@@ -85,19 +89,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
-    override fun updateStyle() {
-        //TODO("not implemented")
-    }
-
-    override fun processSentence() {
-        if (doUpdate) {
-            this.clearErrorMarkers()
-            this.aglWorker.interrupt(this.languageIdentity, editorId, sessionId)
-            this.aglWorker.processSentence(this.languageIdentity, editorId, sessionId, this.text, this.agl.options)
-        }
-    }
-
-    override fun configureSyntaxAnalyser(configuration: Map<String, Any>) {
+    override fun updateStyleModel() {
         //TODO("not implemented")
     }
 
@@ -182,11 +174,9 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         editing.onscroll = this::onscroll
         editing.onkeydown = this::onkeydown
 
-        this.connectWorker(AglTokenizerByWorkerDefault(this.agl))
-
         this.updateLanguage(null)
         this.updateProcessor()
-        this.updateStyle()
+        this.updateStyleModel()
     }
 
     private fun oninput(ev: InputEvent) {

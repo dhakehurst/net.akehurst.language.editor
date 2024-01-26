@@ -26,7 +26,7 @@ import net.akehurst.language.editor.common.messages.AglWorkerMessage
 import net.akehurst.language.editor.common.objectJS
 import org.w3c.dom.MessageEvent
 
-abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract<AsmType, ContextType>() {
+abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract() {
 
     override fun sendMessage(port: dynamic, msg: AglWorkerMessage, transferables: Array<dynamic>) {
         try {
