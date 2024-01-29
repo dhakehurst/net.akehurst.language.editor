@@ -18,6 +18,7 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.agl.agl.parser.SentenceAbstract
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.scanner.ScannerOnDemand
+import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.ProcessOptions
@@ -190,7 +191,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         if (status == MessageStatus.SUCCESS && null != styleModel) {
             this.updateEditorStyles()
             this.resetTokenization(0)
-            this.agl.styleHandler.styleModel=styleModel
+            this.agl.styleHandler.updateStyleModel(styleModel)
         } else {
             this.log(LogLevel.Error, message, null)
         }
@@ -271,7 +272,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>) {
+    override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems:List<CompletionItem>) {
         TODO("not implemented")
     }
 

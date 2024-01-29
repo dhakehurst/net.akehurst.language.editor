@@ -20,10 +20,8 @@ import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.scanner.Matchable
-import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.processor.LanguageProcessorConfiguration
-import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.processor.*
+import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.messages.*
 import java.util.concurrent.ExecutorService
@@ -47,7 +45,7 @@ open class LanguageServiceByJvmThread(
         }
 
         override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: String, reason: String) {
-            submit{ direct.interruptRequest(endPointIdentity, languageId, "New parse request") }
+            submit { direct.interruptRequest(endPointIdentity, languageId, "New parse request") }
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
@@ -56,11 +54,17 @@ open class LanguageServiceByJvmThread(
             text: String,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            submit{ direct.sentenceProcessRequest(endPointIdentity, languageId, text, processOptions) }
+            submit { direct.sentenceProcessRequest(endPointIdentity, languageId, text, processOptions) }
         }
 
-        override fun sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity) {
-            submit{ direct.sentenceCodeCompleteRequest(endPointIdentity) }
+        override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
+            endPointIdentity: EndPointIdentity,
+            languageId: String,
+            text: String,
+            position: Int,
+            processOptions: ProcessOptions<AsmType, ContextType>
+        ) {
+            submit { direct.sentenceCodeCompleteRequest(endPointIdentity, languageId, text, position, processOptions) }
         }
     }
 
@@ -82,8 +86,8 @@ open class LanguageServiceByJvmThread(
                 responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, status, message)
             }
 
-            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String) {
-                responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, status, message)
+            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, styleModel: AglStyleModel?) {
+                responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, status, message, styleModel)
             }
 
             override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
@@ -102,8 +106,8 @@ open class LanguageServiceByJvmThread(
                 responseObjects[endPointIdentity]?.sentenceSemanticAnalysisResponse(endPointIdentity, status, message, issues, asm)
             }
 
-            override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>) {
-                responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, status, message, issues)
+            override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
+                responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, status, message, issues, completionItems)
             }
         }
     )

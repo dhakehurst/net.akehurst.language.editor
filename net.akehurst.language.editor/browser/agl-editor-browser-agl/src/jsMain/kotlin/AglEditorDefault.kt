@@ -93,6 +93,10 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         //TODO("not implemented")
     }
 
+    override fun updateEditorStyles() {
+        TODO("not implemented")
+    }
+
     override fun clearErrorMarkers() {
         //TODO("not implemented")
     }

@@ -167,7 +167,6 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
                     this.agl.styleHandler.reset()
                     this.languageService.request.processorSetStyleRequest(this.endPointId,this.languageIdentity, styleStr)
                     //val styleMdl: AglStyleModel? = Agl.registry.agl.style.processor!!.process(styleStr).asm //TODO: pass context?
-
                 }
             }
         }

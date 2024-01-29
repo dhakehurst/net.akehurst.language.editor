@@ -206,7 +206,7 @@ data class MessageCodeCompleteResult(
     override val status: MessageStatus,
     val message: String,
     val issues: List<LanguageIssue>,
-    val completionItems: List<CompletionItem>?
+    val completionItems: List<CompletionItem>
 ) : AglWorkerMessageResponse("MessageCodeCompleteResult")
 
 data class MessageGrammarAmbiguityAnalysisRequest(

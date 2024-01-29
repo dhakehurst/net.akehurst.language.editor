@@ -207,6 +207,10 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         }
     }
 
+    override fun updateEditorStyles() {
+        TODO("not implemented")
+    }
+
     override fun onEditorTextChange() {
         if (doUpdate) {
             super.onEditorTextChange()

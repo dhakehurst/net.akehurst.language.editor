@@ -51,8 +51,14 @@ class AglLanguageServiceByWorker(
             sendToWorker(MessageProcessRequest(endPointIdentity, languageId, text, processOptions))
         }
 
-        override fun sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity) {
-            TODO("not implemented")
+        override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
+            endPointIdentity: EndPointIdentity,
+            languageId: String,
+            text: String,
+            position: Int,
+            processOptions: ProcessOptions<AsmType, ContextType>
+        ) {
+//TODO            sendToWorker(MessageCodeCompleteRequest(endPointIdentity, languageId))
         }
 
     }
@@ -128,7 +134,7 @@ class AglLanguageServiceByWorker(
                 is MessageParseResult -> endPoint.sentenceParseResponse(msg.endPoint,msg.status, msg.message, msg.issues, deserialiseParseTree(msg.treeSerialised))
                 is MessageSyntaxAnalysisResult -> endPoint.sentenceSyntaxAnalysisResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.asm)
                 is MessageSemanticAnalysisResult -> endPoint.sentenceSemanticAnalysisResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.asm)
-                is MessageCodeCompleteResult -> endPoint.sentenceCodeCompleteResponse(msg.endPoint,msg.status, msg.message, msg.issues)
+                is MessageCodeCompleteResult -> endPoint.sentenceCodeCompleteResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.completionItems)
                 else -> error("Unknown Message type")
             }
         } else {

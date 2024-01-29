@@ -353,7 +353,7 @@ abstract class AglWorkerAbstract {
 
     private fun getCodeCompletions(port: Any, message: MessageCodeCompleteRequest) {
         try {
-            sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.START, "Start", emptyList(), null))
+            sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.START, "Start", emptyList(), emptyList()))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
             val result = proc.expectedItemsAt(
@@ -366,7 +366,7 @@ abstract class AglWorkerAbstract {
             result.items
         } catch (t: Throwable) {
             val msg = "Exception during 'getCodeCompletions' - ${t::class.simpleName} - ${t.message!!}"
-            sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.FAILURE, msg, emptyList(), null))
+            sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.FAILURE, msg, emptyList(), emptyList()))
         }
     }
 

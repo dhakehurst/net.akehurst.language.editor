@@ -33,7 +33,9 @@ class AglStyleHandler(
         }
     }
 
-    var styleModel:AglStyleModel = AglStyleModelDefault(emptyList())
+    private var _styleModel:AglStyleModel = AglStyleModelDefault(emptyList())
+
+    val styleModel get() = _styleModel
 
     // AglStyleHandler is recreated if languageId changes for the editor
     val cssLanguageId = languageId.replace(Regex("[^a-z0-9A-Z_-]"), "_")
@@ -82,8 +84,12 @@ class AglStyleHandler(
         this.tokenToClassMap[AglStyleModelDefault.NO_STYLE_ID] = EDITOR_NO_STYLE
     }
 
-    fun updateStyleMap(aglSelectors: List<String>) {
-        aglSelectors.forEach { mapClass(it) }
+    fun updateStyleModel(styleModel:AglStyleModel) {
+        styleModel.rules.forEach {
+            it.selector.forEach {
+                mapClass(it.value)
+            }
+        }
     }
 
     fun mapClass(aglSelector: String): String {

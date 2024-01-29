@@ -1,6 +1,7 @@
 package net.akehurst.language.editor.api
 
 import net.akehurst.language.agl.scanner.Matchable
+import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.api.style.AglStyleModel
@@ -17,7 +18,7 @@ interface LanguageServiceRequest {
 
     fun interruptRequest(endPointIdentity: EndPointIdentity, languageId:String, reason:String)
     fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(endPointIdentity: EndPointIdentity, languageId:String, text: String, processOptions: ProcessOptions<AsmType, ContextType>)
-    fun sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity)
+    fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity, languageId: String, text:String, position:Int, processOptions: ProcessOptions<AsmType, ContextType>)
 }
 
 interface LanguageServiceResponse {
@@ -29,7 +30,7 @@ interface LanguageServiceResponse {
     fun sentenceParseResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?)
     fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, asm:Any?)
     fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, asm:Any?)
-    fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>)
+    fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems:List<CompletionItem>)
 }
 
 data class EndPointIdentity(
