@@ -46,10 +46,7 @@ import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.language.reference.CrossReferenceModel
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.style.AglStyleModel
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.EventStatus
-import net.akehurst.language.editor.api.LogFunction
-import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.browser.ace.IAce
 import net.akehurst.language.editor.browser.ace.attachToAce
 import net.akehurst.language.editor.browser.agl.attachToAglEditor
@@ -57,6 +54,7 @@ import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
 import net.akehurst.language.editor.browser.demo.BuildConfig
 import net.akehurst.language.editor.browser.monaco.Monaco
 import net.akehurst.language.editor.browser.monaco.attachToMonaco
+import net.akehurst.language.editor.common.AglLanguageServiceByWorker
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.information.Example
@@ -430,6 +428,9 @@ fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
     // kill shared worker to start
     val w = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
     w.port.close()
+    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+    val logFunction: LogFunction = { lvl, msg, t -> logger.log(lvl, msg, t) }
+    val languageService = AglLanguageServiceByWorker(worker, AglEditorLogger(logFunction))
 
     val editorEls = document.querySelectorAll("agl-editor")
     val editors = editorEls.asList().associate { node ->
@@ -438,9 +439,8 @@ fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
         while (element.childElementCount != 0) {
             element.removeChild(element.firstChild!!)
         }
-        val logFunction: LogFunction = { lvl, msg, t -> logger.log(lvl, msg, t) }
         val ed = when (editorChoice) {
-            EditorKind.ACE -> createAce(element, logFunction)
+            EditorKind.ACE -> createAce(element, logFunction, languageService)
             EditorKind.MONACO -> createMonaco(element, logFunction)
             EditorKind.CODEMIRROR -> createCodeMirror(element, logFunction)
             EditorKind.AGL -> createAgl(element, logFunction)
@@ -452,7 +452,7 @@ fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
     demo!!.configure()
 }
 
-fun createAce(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
+fun createAce(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
 
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
@@ -474,17 +474,25 @@ fun createAce(editorElement: Element, logFunction: LogFunction): AglEditor<Any, 
     //ed.commands.addCommand(ace.ext.Autocomplete.startCommand)
     ed.setOptions(aceOptions.editor)
     ed.renderer.setOptions(aceOptions.renderer)
-    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+
 
     val ace = object : IAce {
         override fun createRange(startRow: Int, startColumn: Int, endRow: Int, endColumn: Int): IRange {
             return ace.Range(startRow, startColumn, endRow, endColumn)
         }
     }
-    return Agl.attachToAce(editorElement, ed, languageId, editorId, logFunction, worker, ace)
+    return Agl.attachToAce(
+        languageService = languageService,
+        containerElement = editorElement,
+        languageId = languageId,
+        editorId = editorId,
+        logFunction = logFunction,
+        aceEditor = ed,
+        ace = ace
+    )
 }
 
-fun createMonaco(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
+fun createMonaco(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
     val editorOptions = objectJSTyped<IStandaloneEditorConstructionOptions> {
@@ -517,10 +525,18 @@ fun createMonaco(editorElement: Element, logFunction: LogFunction): AglEditor<An
             }
         }
     }
-    return Agl.attachToMonaco(editorElement, ed, languageId, editorId, logFunction, worker, monaco)
+    return Agl.attachToMonaco(
+        languageService = languageService,
+        containerElement = editorElement,
+        languageId = languageId,
+        editorId = editorId,
+        logFunction = logFunction,
+        monacoEditor = ed,
+        monaco = monaco
+    )
 }
 
-fun createCodeMirror(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
+fun createCodeMirror(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
     val editorOptions = objectJSTyped<codemirror.view.EditorViewConfig> {
@@ -535,7 +551,15 @@ fun createCodeMirror(editorElement: Element, logFunction: LogFunction): AglEdito
     }
     val ed = codemirror.view.EditorView(editorOptions)
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    return Agl.attachToCodeMirror(editorElement, ed, languageId, editorId, logFunction, worker, codemirror.CodeMirror)
+    return Agl.attachToCodeMirror(
+        languageService = languageService,
+        containerElement = editorElement,
+        languageId = languageId,
+        editorId = editorId,
+        logFunction = logFunction,
+        cmEditor = ed,
+        codemirror = codemirror.CodeMirror
+    )
 }
 
 fun createAgl(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {

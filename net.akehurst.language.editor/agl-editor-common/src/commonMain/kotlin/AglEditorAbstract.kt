@@ -187,13 +187,16 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         TODO("not implemented")
     }
 
-    override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, styleModel: AglStyleModel?) {
+    override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
         if (status == MessageStatus.SUCCESS && null != styleModel) {
             this.updateEditorStyles()
             this.resetTokenization(0)
             this.agl.styleHandler.updateStyleModel(styleModel)
         } else {
             this.log(LogLevel.Error, message, null)
+            issues.forEach {
+                this.log(LogLevel.Error,it.toString(),null)
+            }
         }
     }
 

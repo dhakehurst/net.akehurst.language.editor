@@ -86,8 +86,8 @@ open class LanguageServiceByJvmThread(
                 responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, status, message)
             }
 
-            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, styleModel: AglStyleModel?) {
-                responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, status, message, styleModel)
+            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
+                responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, status, message, issues, styleModel)
             }
 
             override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {

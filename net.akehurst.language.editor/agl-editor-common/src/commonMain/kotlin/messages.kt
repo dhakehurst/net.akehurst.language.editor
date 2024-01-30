@@ -65,8 +65,8 @@ data class MessageProcessorCreateResponse(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
-    val scannerMatchables: List<Matchable>,
-    val issues: List<LanguageIssue>
+    val issues: List<LanguageIssue>,
+    val scannerMatchables: List<Matchable>
 ) : AglWorkerMessageResponse("MessageProcessorCreateResponse")
 
 data class MessageProcessorDelete(
@@ -80,18 +80,6 @@ data class MessageProcessorDeleteResponse(
     override val status: MessageStatus,
     val message: String
 ) : AglWorkerMessageResponse("MessageProcessorDeleteResponse")
-
-data class MessageSyntaxAnalyserConfigure(
-    override val endPoint: EndPointIdentity,
-    val configuration: Map<String, Any>
-) : AglWorkerMessage("MessageSyntaxAnalyserConfigure")
-
-data class MessageSyntaxAnalyserConfigureResponse(
-    override val endPoint: EndPointIdentity,
-    override val status: MessageStatus,
-    val message: String,
-    val issues: List<LanguageIssue>
-) : AglWorkerMessageResponse("MessageSyntaxAnalyserConfigureResponse")
 
 data class MessageProcessRequest<AsmType : Any, ContextType : Any>(
     override val endPoint: EndPointIdentity,
@@ -186,10 +174,11 @@ data class MessageSetStyle(
     override fun toString(): String = "${super.action}(endPoint=$endPoint, styleStr='...')"
 }
 
-data class MessageSetStyleResult(
+data class MessageSetStyleResponse(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
+    val issues: List<LanguageIssue>,
     val styleModel: AglStyleModel?
 ) : AglWorkerMessageResponse("MessageSetStyleResult")
 

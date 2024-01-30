@@ -40,9 +40,8 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
 
     //lateinit var worker: AbstractWorker
     val sharedWorker: Boolean = this.worker is SharedWorker
-    var setStyleResult: (message: MessageSetStyleResult) -> Unit = { _ -> }
+    var setStyleResult: (message: MessageSetStyleResponse) -> Unit = { _ -> }
     var processorCreateResult: (message: MessageProcessorCreateResponse) -> Unit = { _ -> }
-    var syntaxAnalyserConfigureResult: (message: MessageSyntaxAnalyserConfigureResponse) -> Unit = { _ -> }
     var parseResult: (message: MessageParseResult) -> Unit = { _ -> }
     var lineTokens: (message: MessageLineTokens) -> Unit = { _ -> }
     var syntaxAnalysisResult: (message: MessageSyntaxAnalysisResult) -> Unit = { _ -> }
@@ -91,9 +90,8 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         this.agl.logger.log(LogLevel.Trace, "Received message: $msg",null)
         if ( this.agl.editorId == msg.endPoint.editorId) { //TODO: should  test for sessionId also
             when (msg) {
-                is MessageSetStyleResult -> this.setStyleResult(msg)
+                is MessageSetStyleResponse -> this.setStyleResult(msg)
                 is MessageProcessorCreateResponse -> this.processorCreateResult(msg)
-                is MessageSyntaxAnalyserConfigureResponse -> this.syntaxAnalyserConfigureResult(msg)
                 is MessageParseResult -> this.parseResult(msg)
                 is MessageLineTokens -> this.lineTokens(msg)
                 is MessageSyntaxAnalysisResult -> this.syntaxAnalysisResult(msg)

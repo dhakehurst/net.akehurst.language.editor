@@ -75,12 +75,12 @@ open class LanguageServiceDirectExecution(
                 styleMdl.rules.forEach { rule ->
                     rule.selector.forEach { sel -> style.mapClass(sel.value) }
                 }
-                response.processorSetStyleResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", styleMdl)
+                response.processorSetStyleResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl)
             } else {
-                //TODO: handle issues!
+                response.processorSetStyleResponse(endPointIdentity, MessageStatus.FAILURE, "Error in style string", result.issues.all.toList(), null)
             }
         } catch (t: Throwable) {
-            response.processorSetStyleResponse(endPointIdentity, MessageStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", null)
+            response.processorSetStyleResponse(endPointIdentity, MessageStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(),null)
         }
     }
 

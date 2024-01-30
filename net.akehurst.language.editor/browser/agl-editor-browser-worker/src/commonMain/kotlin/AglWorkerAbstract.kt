@@ -96,9 +96,9 @@ abstract class AglWorkerAbstract {
 
                 val proc = ld.processor // should throw exception if there are problems
                 if (null == proc) {
-                    sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "Error", emptyList(), ld.issues.all.toList()))
+                    sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "Error",  ld.issues.all.toList(),emptyList()))
                 } else {
-                    sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.SUCCESS, "OK", proc.scanner!!.matchables, ld.issues.all.toList()))
+                    sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.SUCCESS, "OK", ld.issues.all.toList(), proc.scanner!!.matchables))
                 }
             } catch (t: Throwable) {
                 sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, t.message!!, emptyList(), emptyList()))
@@ -126,12 +126,12 @@ abstract class AglWorkerAbstract {
                 styleMdl.rules.forEach { rule ->
                     rule.selector.forEach { sel -> style.mapClass(sel.value) }
                 }
-                sendMessage(port, MessageSetStyleResult(message.endPoint, MessageStatus.SUCCESS, "OK",styleMdl))
+                sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl))
             } else {
                 //TODO: handle issues!
             }
         } catch (t: Throwable) {
-            sendMessage(port, MessageSetStyleResult(message.endPoint, MessageStatus.FAILURE, t.message!!,null))
+            sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.FAILURE, t.message!!, emptyList(), null))
         }
     }
 
@@ -166,7 +166,7 @@ abstract class AglWorkerAbstract {
     protected fun parse(
         port: Any,
         endPoint: EndPointIdentity,
-        languageId:String,
+        languageId: String,
         proc: LanguageProcessor<Any, Any>,
         processOptions: ProcessOptions<Any, Any>,
         sentence: String
@@ -244,7 +244,7 @@ abstract class AglWorkerAbstract {
     private fun semanticAnalysis(
         port: Any,
         endPoint: EndPointIdentity,
-        languageId:String,
+        languageId: String,
         proc: LanguageProcessor<Any, Any>,
         options: ProcessOptions<Any, Any>,
         asm: Any,
@@ -300,7 +300,7 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    private fun sendLineTokens(port: Any, endPoint: EndPointIdentity, languageId:String, sentence: Sentence, sppt: SharedPackedParseTree, lineTokensChunkSize: Int) {
+    private fun sendLineTokens(port: Any, endPoint: EndPointIdentity, languageId: String, sentence: Sentence, sppt: SharedPackedParseTree, lineTokensChunkSize: Int) {
         try {
             val editorOptions = _editorOptions[endPoint.editorId]
             if (true == editorOptions?.parseLineTokens) {

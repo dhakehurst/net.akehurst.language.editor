@@ -129,7 +129,7 @@ class AglLanguageServiceByWorker(
         if (null != endPoint) { //TODO: should  test for sessionId also
             when (msg) {
                 is MessageProcessorCreateResponse -> endPoint.processorCreateResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.scannerMatchables)
-                is MessageSetStyleResult -> endPoint.processorSetStyleResponse(msg.endPoint,msg.status, msg.message, msg.styleModel)
+                is MessageSetStyleResponse -> endPoint.processorSetStyleResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.styleModel)
                 is MessageLineTokens -> endPoint.sentenceLineTokensResponse(msg.endPoint,msg.status, msg.message, msg.startLine, msg.lineTokens)
                 is MessageParseResult -> endPoint.sentenceParseResponse(msg.endPoint,msg.status, msg.message, msg.issues, deserialiseParseTree(msg.treeSerialised))
                 is MessageSyntaxAnalysisResult -> endPoint.sentenceSyntaxAnalysisResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.asm)

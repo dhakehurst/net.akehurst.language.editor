@@ -51,23 +51,23 @@ internal class test_AglTokenizer {
             configuration = Agl.configurationDefault()
         )
 
-        fun test_getLineTokensByScan(lineText: String, row: Int, state: AglLineState, expected: AglLineState) {
+        fun test_getLineTokensByScan(lineText: String, previousLineState: AglLineState, expected: AglLineState) {
             val agl = AglComponents<Any, Any>(testLangId, testEditorId, logger)
-            agl.styleHandler.updateStyleMap(styleMdl.rules.flatMap { it.selector.map { it.value } })
+            agl.styleHandler.updateStyleModel(styleMdl)
             agl.scannerMatchables = agl.languageDefinition.processor!!.scanner!!.matchables
             val sut = AglTokenizer<Any, Any>(agl)
 
-            val actual = sut.getLineTokensByScan(lineText, state, row)
+            val actual = sut.getLineTokensByScan(lineText, previousLineState)
 
-            assertEquals(expected.lineNumber, actual.lineNumber)
-            assertEquals(expected.nextLineStartPosition, actual.nextLineStartPosition)
-            assertEquals(expected.leftOverText, actual.leftOverText)
-            assertEquals(expected.tokens, actual.tokens)
+            assertEquals(expected.lineNumber, actual.lineNumber,"lineNumber")
+            assertEquals(expected.nextLineStartPosition, actual.nextLineStartPosition, "nextLineStartPosition")
+            assertEquals(expected.leftOverText, actual.leftOverText,"leftOverText")
+            assertEquals(expected.tokens, actual.tokens, "tokens")
         }
 
         fun test_getLineTokensByParse(fullText: String, row: Int, state: AglLineState, expected: AglLineState) {
             val agl = AglComponents<Any, Any>(testLangId, testEditorId, logger)
-            agl.styleHandler.updateStyleMap(styleMdl.rules.flatMap { it.selector.map { it.value } })
+            agl.styleHandler.updateStyleModel(styleMdl)
             val sut = AglTokenizer<Any, Any>(agl)
             sut.acceptingTokens = true
 
@@ -78,7 +78,7 @@ internal class test_AglTokenizer {
             sut.receiveTokens(0, tokens)
 
             val lineText = fullText.split("\n")[row]
-            val actual = sut.useCachedTokens(sut.tokensByLine[row]!!, lineText, state, row)
+            val actual = sut.useCachedTokens(sut.tokensByLine[row]!!, lineText, state)
 
             assertEquals(expected.lineNumber, actual.lineNumber)
             assertEquals(expected.nextLineStartPosition, actual.nextLineStartPosition)
@@ -90,21 +90,21 @@ internal class test_AglTokenizer {
     @Test
     fun getLineTokensByScan_empty_0_0() {
         val lineText = ""
-        val row = 0
+        val lineNumber = 0
         val sp = 0
-        val state = AglLineState(row, sp, "", emptyList())
+        val prevState = AglLineState(lineNumber-1, sp, "", emptyList())
 
-        val expected = AglLineState(0, 1, "", emptyList())
+        val expected = AglLineState(lineNumber, 1, "", emptyList())
 
-        test_getLineTokensByScan(lineText, row, state, expected)
+        test_getLineTokensByScan(lineText, prevState, expected)
     }
 
     @Test
     fun getLineTokensByScan_oneline_0_0() {
         val lineText = "abc def ghi"
-        val row = 0
+        val lineNumber = 0
         val sp = 0
-        val state = AglLineState(row, sp, "", emptyList())
+        val prevState = AglLineState(lineNumber-1, sp, "", emptyList())
 
         val expected = AglLineState(
             0, lineText.length + 1, "", listOf(
@@ -116,7 +116,7 @@ internal class test_AglTokenizer {
             )
         )
 
-        test_getLineTokensByScan(lineText, row, state, expected)
+        test_getLineTokensByScan(lineText, prevState, expected)
     }
 
     @Test
@@ -128,9 +128,9 @@ internal class test_AglTokenizer {
         """.trimIndent()
         val split = totalText.split("\n")
         val lineText = split[0]
-        val row = 0
+        val lineNumber = 0
         val sp = 0
-        val state = AglLineState(row, sp, "", emptyList())
+        val prevState = AglLineState(lineNumber-1, sp, "", emptyList())
 
         val expected = AglLineState(
             0, split[0].length + 1, "", listOf(
@@ -142,7 +142,7 @@ internal class test_AglTokenizer {
             )
         )
 
-        test_getLineTokensByScan(lineText, row, state, expected)
+        test_getLineTokensByScan(lineText, prevState, expected)
     }
 
     @Test
@@ -168,7 +168,7 @@ internal class test_AglTokenizer {
             )
         )
 
-        test_getLineTokensByScan(lineText, row, state, expected)
+        test_getLineTokensByScan(lineText, state, expected)
     }
 
     @Test
@@ -190,7 +190,7 @@ internal class test_AglTokenizer {
             )
         )
 
-        test_getLineTokensByScan(lineText, row, state, expected)
+        test_getLineTokensByScan(lineText, state, expected)
     }
 
     @Test

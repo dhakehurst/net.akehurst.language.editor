@@ -24,7 +24,7 @@ interface LanguageServiceRequest {
 interface LanguageServiceResponse {
     fun processorCreateResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>)
     fun processorDeleteResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String)
-    fun processorSetStyleResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, styleModel:AglStyleModel?)
+    fun processorSetStyleResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel:AglStyleModel?)
 
     fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>)
     fun sentenceParseResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?)

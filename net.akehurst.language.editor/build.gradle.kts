@@ -141,12 +141,21 @@ subprojects {
             }
         }
     }
+//    fun KotlinMultiplatformExtension.configureWasmJs() {
+//        @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+//        wasmJs() {
+//            binaries.library()
+//            browser()
+//        }
+//    }
     fun KotlinMultiplatformExtension.configureCommon() {
         configureJs()
         configureJvm()
+//        configureWasmJs()
     }
     project.ext.set("configureJs", KotlinMultiplatformExtension::configureJs )
     project.ext.set("configureJvm", KotlinMultiplatformExtension::configureJvm)
+//    project.ext.set("configureWasmJs", KotlinMultiplatformExtension::configureWasmJs)
     project.ext.set("configureCommon", KotlinMultiplatformExtension::configureCommon)
 
     val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)

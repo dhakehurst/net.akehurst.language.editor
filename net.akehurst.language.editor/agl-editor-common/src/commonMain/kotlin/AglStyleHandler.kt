@@ -17,9 +17,11 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.language.style.asm.AglStyleModelDefault
 import net.akehurst.language.api.sppt.LeafData
+import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleModel
+import net.akehurst.language.api.style.AglStyleRule
 
-class AglStyleHandler(
+open class AglStyleHandler(
     languageId: String,
     val cssClassPrefixStart: String = "agl"
 ) {
@@ -33,9 +35,11 @@ class AglStyleHandler(
         }
     }
 
-    private var _styleModel:AglStyleModel = AglStyleModelDefault(emptyList())
+    private var _styleModel: AglStyleModel = AglStyleModelDefault(emptyList())
 
     val styleModel get() = _styleModel
+
+    private var _editorStyles = mutableMapOf<String, Any>()
 
     // AglStyleHandler is recreated if languageId changes for the editor
     val cssLanguageId = languageId.replace(Regex("[^a-z0-9A-Z_-]"), "_")
@@ -84,10 +88,12 @@ class AglStyleHandler(
         this.tokenToClassMap[AglStyleModelDefault.NO_STYLE_ID] = EDITOR_NO_STYLE
     }
 
-    fun updateStyleModel(styleModel:AglStyleModel) {
-        styleModel.rules.forEach {
-            it.selector.forEach {
-                mapClass(it.value)
+    fun updateStyleModel(styleModel: AglStyleModel) {
+        styleModel.rules.forEach { sr ->
+            val edStyle = convert<Any>(sr)
+            sr.selector.forEach { sel ->
+                val sn = mapClass(sel.value)
+                _editorStyles[sn] = edStyle
             }
         }
     }
@@ -99,5 +105,13 @@ class AglStyleHandler(
             this.tokenToClassMap[aglSelector] = cssClass
         }
         return cssClass
+    }
+
+    open fun <EditorStyleType : Any> convert(rule: AglStyleRule): EditorStyleType {
+        return rule as EditorStyleType
+    }
+
+    fun <EditorStyleType : Any> editorStyleFor(styleName: String): EditorStyleType? {
+        return _editorStyles[styleName] as EditorStyleType?
     }
 }
