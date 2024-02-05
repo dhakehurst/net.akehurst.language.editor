@@ -9,12 +9,10 @@ plugins {
     kotlin("multiplatform")
 }
 
-kotlin {
-    (project.ext["configureJs"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
-}
 
 dependencies {
 
+    "jsMainApi"(project(":agl-editor-common"))
     "jsMainApi"(project(":agl-language-service-serialisation"))
     "jsMainApi"(project(":agl-editor-browser-worker"))
 

@@ -1,18 +1,6 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
-plugins {
-    kotlin("multiplatform")
-}
-
-kotlin {
-    (project.ext["configureCommon"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
-
-    macosArm64()
-}
-
-val version_agl:String by project
 dependencies {
-    commonMainApi("net.akehurst.language:agl-processor:$version_agl")
+    commonMainApi(libs.nal.agl.processor)
 }
 
 exportPublic {

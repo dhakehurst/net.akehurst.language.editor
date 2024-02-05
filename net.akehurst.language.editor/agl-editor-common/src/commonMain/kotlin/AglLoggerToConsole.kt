@@ -1,6 +1,5 @@
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.LogLevel
 
 class AglLoggerToConsole(

@@ -71,10 +71,6 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         TODO("not implemented")
     }
 
-    override fun updateProcessor() {
-        TODO("not implemented")
-    }
-
     override fun updateEditorStyles() {
         TODO("not implemented")
     }

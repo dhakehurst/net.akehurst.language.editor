@@ -59,6 +59,7 @@ subprojects {
     val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
     val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
 
+    apply(plugin = "org.jetbrains.kotlin.multiplatform")
     apply(plugin = "maven-publish")
     apply(plugin = "signing")
     apply(plugin = "org.jetbrains.dokka")
@@ -81,36 +82,7 @@ subprojects {
         buildConfigField("String", "buildTime", "\"${fBuildTime()}\"")
     }
 
-    fun KotlinMultiplatformExtension.configureJs() {
-        js("js", IR) {
-            binaries.library()
-            generateTypeScriptDefinitions()
-            useEsModules()
-            tasks.withType<KotlinJsCompile>().configureEach {
-                kotlinOptions {
-                    useEsClasses = true
-                }
-            }
-            nodejs()
-            browser {
-                webpackTask {
-                    mainOutputFileName = "${project.group}-${project.name}.js"
-                }
-            }
-        }
-        sourceSets {
-            val commonMain by getting {
-                kotlin.srcDir("$buildDir/generated/kotlin")
-                dependencies {
-                    implementation(kotlin("test"))
-                }
-            }
-            all {
-                languageSettings.optIn("kotlin.ExperimentalStdlibApi")
-            }
-        }
-    }
-    fun KotlinMultiplatformExtension.configureJvm() {
+    configure<KotlinMultiplatformExtension> {
         jvm("jvm8") {
             compilations {
                 val main by getting {
@@ -129,6 +101,32 @@ subprojects {
                 }
             }
         }
+
+        js("js", IR) {
+            binaries.library()
+            generateTypeScriptDefinitions()
+            useEsModules()
+            tasks.withType<KotlinJsCompile>().configureEach {
+                kotlinOptions {
+                    useEsClasses = true
+                }
+            }
+            nodejs()
+            browser {
+                webpackTask {
+                    mainOutputFileName = "${project.group}-${project.name}.js"
+                }
+            }
+        }
+
+        macosArm64()
+
+        //        @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+//        wasmJs() {
+//            binaries.library()
+//            browser()
+//        }
+
         sourceSets {
             val commonMain by getting {
                 kotlin.srcDir("$buildDir/generated/kotlin")
@@ -141,22 +139,7 @@ subprojects {
             }
         }
     }
-//    fun KotlinMultiplatformExtension.configureWasmJs() {
-//        @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
-//        wasmJs() {
-//            binaries.library()
-//            browser()
-//        }
-//    }
-    fun KotlinMultiplatformExtension.configureCommon() {
-        configureJs()
-        configureJvm()
-//        configureWasmJs()
-    }
-    project.ext.set("configureJs", KotlinMultiplatformExtension::configureJs )
-    project.ext.set("configureJvm", KotlinMultiplatformExtension::configureJvm)
-//    project.ext.set("configureWasmJs", KotlinMultiplatformExtension::configureWasmJs)
-    project.ext.set("configureCommon", KotlinMultiplatformExtension::configureCommon)
+
 
     val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
 

@@ -28,10 +28,7 @@ import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.style.*
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.AglEditorJsAbstract
-import net.akehurst.language.editor.common.AglStyleHandler
-import net.akehurst.language.editor.common.AglTokenizerByWorker
-import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.editor.common.*
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -83,7 +80,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     editorId: String,
     logFunction: LogFunction?,
     val ace: IAce,
-) : AglEditorJsAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()

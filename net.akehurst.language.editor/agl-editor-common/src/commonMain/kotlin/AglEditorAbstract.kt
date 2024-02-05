@@ -142,8 +142,19 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     protected abstract fun resetTokenization(fromLine: Int)
     protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)
     protected abstract fun updateLanguage(oldId: String?)
-    protected abstract fun updateProcessor()
     protected abstract fun updateEditorStyles()
+
+     fun updateProcessor() {
+        val grammarStr = this.agl.languageDefinition.grammarStr
+        if (grammarStr.isNullOrBlank()) {
+            //do nothing
+        } else {
+            this.clearErrorMarkers()
+            this.languageServiceRequest.processorCreateRequest(this.endPointId, this.languageIdentity, grammarStr, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
+            this.workerTokenizer.reset()
+            this.resetTokenization(0) //new processor so find new tokens, first by scan
+        }
+    }
 
     fun requestUpdateStyleModel() {
         if (this.isConnected) {

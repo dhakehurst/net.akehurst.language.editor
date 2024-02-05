@@ -4,13 +4,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 val version_agl:String by project
 val version_coroutines:String by project
 
-plugins {
-    kotlin("multiplatform")
-}
-
-kotlin {
-    (project.ext["configureJs"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
-}
 
 dependencies {
 

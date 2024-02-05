@@ -1,0 +1,23 @@
+[versions]
+nal-agl-processor = "4.0.22"
+
+nak-compose-code-editor-api = "1.9.22"
+
+nak-serialisation = "1.9.22"
+nak-json = "1.9.22"
+nak-kotlinx = "1.9.22"
+
+kotlinx-coroutines = "1.8.0-RC2"
+
+
+[libraries]
+nal-agl-processor = { module = "net.akehurst.language:agl-processor", version.ref = "nal-agl-processor" }
+
+nak-compose-code-editor-api = { module = "net.akehurst.kotlin.compose:code-editor-api", version.ref = "nak-compose-code-editor-api" }
+
+nak-serialisation-json = { module = "net.akehurst.kotlin.kserialisation:kserialisation-json", version.ref = "nak-serialisation" }
+nak-json = { module = "net.akehurst.kotlin.json:json", version.ref = "nak-json" }
+nak-kotlinx-collections = { module = "net.akehurst.kotlinx:kotlinx-collections", version.ref = "nak-kotlinx" }
+nak-kotlinx-reflect = { module = "net.akehurst.kotlinx:kotlinx-reflect", version.ref = "nak-kotlinx" }
+
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }

@@ -36,7 +36,7 @@ object AglWorkerSerialisation {
 
     private fun initialise() {
         if (!initialised) {
-            agl_editor_common_commonMain.KotlinxReflectForModule.registerUsedClasses()
+            agl_language_service_serialisation_commonMain.KotlinxReflectForModule.registerUsedClasses()
             //TODO: enable kserialisation/komposite/reflect to auto add these some how!!
             initialiseApiTypes()
             initialiseTypeModel()

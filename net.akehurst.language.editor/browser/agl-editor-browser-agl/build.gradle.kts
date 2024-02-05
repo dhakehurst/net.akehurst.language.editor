@@ -10,9 +10,6 @@ plugins {
     kotlin("multiplatform")
 }
 
-kotlin {
-    (project.ext["configureJs"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
-}
 
 dependencies {
     "jsMainApi"(project(":agl-language-service-serialisation"))
