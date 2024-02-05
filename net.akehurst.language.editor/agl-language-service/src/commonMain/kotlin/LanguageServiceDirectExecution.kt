@@ -16,7 +16,6 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.agl.parser.SentenceDefault
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser

@@ -35,6 +35,15 @@ println("===============================================")
 
 allprojects {
 
+    repositories {
+        mavenLocal {
+            content {
+                includeGroupByRegex("net\\.akehurst.+")
+            }
+        }
+        mavenCentral()
+    }
+
     val version_project: String by project
     val group_project = rootProject.name
 
@@ -55,15 +64,6 @@ subprojects {
     apply(plugin = "org.jetbrains.dokka")
     apply(plugin = "com.github.gmazzo.buildconfig")
     apply(plugin = "net.akehurst.kotlin.gradle.plugin.exportPublic")
-
-    repositories {
-        mavenLocal {
-            content {
-                includeGroupByRegex("net\\.akehurst.+")
-            }
-        }
-        mavenCentral()
-    }
 
     configure<BuildConfigExtension> {
         useKotlinOutput {

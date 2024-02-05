@@ -5,6 +5,7 @@ val version_html_builder: String by project
 val version_ace: String by project
 val version_monaco:String by project
 val version_codemirror:String by project
+val version_compose_editor:String by project
 
 dependencies {
 
@@ -30,6 +31,10 @@ dependencies {
     // Codemirror
     jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-codemirror:$version_agl_editor")
     jsMainImplementation("net.akehurst.kotlin:codemirror-api-realisation:$version_codemirror")
+
+    // ComposeEditor
+    jsMainImplementation("net.akehurst.kotlin.compose:code-editor:$version_compose_editor")
+    jsMainImplementation("net.akehurst.language.editor:agl-editor-compose:$version_agl_editor")
 
     jsMainImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.7.3")
 }

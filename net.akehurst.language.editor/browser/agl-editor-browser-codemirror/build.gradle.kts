@@ -14,7 +14,7 @@ kotlin {
 
 dependencies {
 
-    "jsMainApi"(project(":agl-editor-common"))
+    "jsMainApi"(project(":agl-language-service-serialisation"))
     "jsMainApi"("net.akehurst.kotlin:codemirror-api:$version_codemirror")
 
     //commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$version_coroutines")

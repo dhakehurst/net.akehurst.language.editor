@@ -1,7 +1,9 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 plugins {
     kotlin("multiplatform")
+    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin")
 }
 
 kotlin {
@@ -16,8 +18,6 @@ dependencies {
     commonMainApi(project(":agl-editor-api"))
     commonMainApi(project(":agl-language-service"))
 
-    commonMainApi("net.akehurst.kotlin.compose:code-editor-api:1.9.22")
+//    commonMainImplementation("net.akehurst.kotlinx:kotlinx-collections:$version_kotlinx")
 
-    commonMainImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0-RC2")
 }
-

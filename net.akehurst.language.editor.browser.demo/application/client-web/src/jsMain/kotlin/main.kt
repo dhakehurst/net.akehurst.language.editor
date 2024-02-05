@@ -17,7 +17,6 @@
 package net.akehurst.language.editor.application.client.web
 
 import ace.IRange
-
 import korlibs.io.async.asyncImmediately
 import korlibs.io.file.std.localVfs
 import kotlinx.browser.document
@@ -55,6 +54,7 @@ import net.akehurst.language.editor.browser.demo.BuildConfig
 import net.akehurst.language.editor.browser.monaco.Monaco
 import net.akehurst.language.editor.browser.monaco.attachToMonaco
 import net.akehurst.language.editor.common.AglLanguageServiceByWorker
+import net.akehurst.language.editor.common.compose.attachToComposeEditor
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.editor.information.Example
@@ -68,6 +68,7 @@ import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
 import net.akehurst.language.typemodel.api.*
 import org.w3c.dom.*
+import net.akehurst.kotlin.compose.editor.ComposeCodeEditorJs
 
 external var aglScriptBasePath: String = definedExternally
 external var resourcesPath: String = definedExternally
@@ -75,7 +76,7 @@ val workerScriptName = "${aglScriptBasePath}/application-agl-editor-worker.js"
 var demo: Demo? = null
 
 enum class EditorKind {
-    ACE, MONACO, CODEMIRROR, AGL
+    ACE, MONACO, CODEMIRROR, AGL, COMPOSE
 }
 
 object Constants {
@@ -441,9 +442,10 @@ fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
         }
         val ed = when (editorChoice) {
             EditorKind.ACE -> createAce(element, logFunction, languageService)
-            EditorKind.MONACO -> createMonaco(element, logFunction)
-            EditorKind.CODEMIRROR -> createCodeMirror(element, logFunction)
-            EditorKind.AGL -> createAgl(element, logFunction)
+            EditorKind.MONACO -> createMonaco(element, logFunction, languageService)
+            EditorKind.CODEMIRROR -> createCodeMirror(element, logFunction, languageService)
+            EditorKind.AGL -> createAgl(element, logFunction, languageService)
+            EditorKind.COMPOSE -> createCompose(element, logFunction, languageService)
         }
         Pair(element.id, ed)// (editorId)
     }
@@ -453,7 +455,6 @@ fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
 }
 
 fun createAce(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
-
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
     val ed: ace.Editor = ace.Editor(
@@ -474,8 +475,6 @@ fun createAce(editorElement: Element, logFunction: LogFunction, languageService:
     //ed.commands.addCommand(ace.ext.Autocomplete.startCommand)
     ed.setOptions(aceOptions.editor)
     ed.renderer.setOptions(aceOptions.renderer)
-
-
     val ace = object : IAce {
         override fun createRange(startRow: Int, startColumn: Int, endRow: Int, endColumn: Int): IRange {
             return ace.Range(startRow, startColumn, endRow, endColumn)
@@ -500,8 +499,6 @@ fun createMonaco(editorElement: Element, logFunction: LogFunction, languageServi
         wordBasedSuggestions = "off"
     }
     val ed = monaco.editor.create(editorElement, editorOptions, null)
-    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-
     val monaco = object : Monaco {
         override fun defineTheme(themeName: String, themeData: IStandaloneThemeData) = monaco.editor.defineTheme(themeName, themeData)
         override fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>) = monaco.editor.setModelMarkers(model, owner, markers)
@@ -550,7 +547,6 @@ fun createCodeMirror(editorElement: Element, logFunction: LogFunction, languageS
         parent = editorElement
     }
     val ed = codemirror.view.EditorView(editorOptions)
-    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
     return Agl.attachToCodeMirror(
         languageService = languageService,
         containerElement = editorElement,
@@ -562,14 +558,35 @@ fun createCodeMirror(editorElement: Element, logFunction: LogFunction, languageS
     )
 }
 
-fun createAgl(editorElement: Element, logFunction: LogFunction): AglEditor<Any, Any> {
+fun createAgl(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
+    val editorId = editorElement.id
+    val languageId = editorElement.getAttribute("agl-language")!!
+    return Agl.attachToAglEditor(
+        languageService = languageService,
+        containerElement = editorElement,
+        languageId = languageId,
+        editorId = editorId,
+        logFunction = logFunction,
+    )
+}
+
+fun createCompose(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = editorElement.getAttribute("agl-language")!!
 
-    val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    return Agl.attachToAglEditor(editorElement, languageId, editorId, logFunction, worker)
-}
+    val editor = ComposeCodeEditorJs(
+        editorElement = editorElement,
+        initialText = "",
+    )
 
+    return Agl.attachToComposeEditor(
+        languageService = languageService,
+        languageId = languageId,
+        editorId = editorId,
+        logFunction = logFunction,
+        composeEditor = editor
+    )
+}
 
 //fun createFirepad(editorElement: Element): AglEditor<Any, Any> {
 //    val id = editorElement.id

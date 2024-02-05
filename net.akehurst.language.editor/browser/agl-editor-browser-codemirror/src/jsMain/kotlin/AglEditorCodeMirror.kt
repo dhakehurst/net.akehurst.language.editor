@@ -25,6 +25,7 @@ import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LanguageService
+import net.akehurst.language.editor.api.LanguageServiceRequest
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.*
 import org.w3c.dom.AbstractWorker
@@ -47,7 +48,7 @@ class AglErrorAnnotation(
 }
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
-    languageService:LanguageService,
+    languageService: LanguageService,
     containerElement: Element,
     cmEditor: codemirror.view.IEditorView,
     languageId: String,
@@ -55,26 +56,28 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
     logFunction: LogFunction?,
     codemirror: codemirror.ICodeMirror
 ): AglEditor<AsmType, ContextType> {
-    return AglEditorCodeMirror<AsmType, ContextType>(
+    val aglEditor = AglEditorCodeMirror<AsmType, ContextType>(
+        languageServiceRequest = languageService.request,
         containerElement = containerElement,
         cmEditorView = cmEditor,
         languageId = languageId,
         editorId = editorId,
         logFunction = logFunction,
-        languageService = languageService,
         codemirror = codemirror
     )
+    languageService.addResponseListener(aglEditor.endPointId, aglEditor)
+    return aglEditor
 }
 
 private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
+    languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val cmEditorView: codemirror.view.IEditorView,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
     val codemirror: codemirror.ICodeMirror,
-    languageService: LanguageService
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, languageService) {
+) : AglEditorJsAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
@@ -85,6 +88,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     private var _parseTimeout: dynamic = null
 
     override val sessionId: String get() = "none"
+    override val isConnected: Boolean get() = this.containerElement.isConnected
 
     override var text: String
         get() {
@@ -114,31 +118,31 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     init {
         val tokenizer =
-        // add agl extensions
-        this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
-            effects = arrayOf(
-                codemirror.StateEffect.appendConfig<Any>().of(
-                    arrayOf(
-                        codemirror.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
-                            if (!view.docChanged || !view.viewportChanged) {
-                                // do nothing
-                            } else {
-                                this@AglEditorCodeMirror.onEditorTextChange()
-                            }
-                        }),
-                        _aglThemeCompartment.of(
-                            codemirror.view.EditorView.theme(objectJS {})
-                        ),
-                        workerTokenizer._tokenUpdateListener,
-                        workerTokenizer._decorationUpdater
+            // add agl extensions
+            this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
+                effects = arrayOf(
+                    codemirror.StateEffect.appendConfig<Any>().of(
+                        arrayOf(
+                            codemirror.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
+                                if (!view.docChanged || !view.viewportChanged) {
+                                    // do nothing
+                                } else {
+                                    this@AglEditorCodeMirror.onEditorTextChange()
+                                }
+                            }),
+                            _aglThemeCompartment.of(
+                                codemirror.view.EditorView.theme(objectJS {})
+                            ),
+                            workerTokenizer._tokenUpdateListener,
+                            workerTokenizer._decorationUpdater
+                        )
                     )
                 )
-            )
-        })
+            })
 
         this.updateLanguage(null)
         this.updateProcessor()
-        this.updateStyleModel()
+        this.requestUpdateStyleModel()
     }
 
     override fun destroy() {
@@ -158,57 +162,40 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
-    override fun updateStyleModel() {
-        if (this.containerElement.isConnected) {
-            val aglStyleClass = this.agl.styleHandler.aglStyleClass
-            val styleStr = this.editorSpecificStyleStr
-            if (!styleStr.isNullOrEmpty()) {
-                this.agl.styleHandler.reset()
-                val styleMdl: AglStyleModel? = Agl.registry.agl.style.processor!!.process(styleStr).asm //TODO: pass context?
-                if (null != styleMdl) {
-                    val theme = objectJS {}
-                    for (r in styleMdl.rules) {
-                        val sel = r.selector.joinToString(separator = ", ") { ".${this.agl.styleHandler.mapClass(it.value)}" }
-                        val css = objectJS {}
-                        for (oldStyle in r.styles.values) {
-                            val style = when (oldStyle.name) {
-                                "foreground" -> AglStyle("color", oldStyle.value)
-                                "background" -> AglStyle("background-color", oldStyle.value)
-                                "font-style" -> when (oldStyle.value) {
-                                    "bold" -> AglStyle("font-weight", oldStyle.value)
-                                    "italic" -> AglStyle("font-style", oldStyle.value)
-                                    else -> oldStyle
-                                }
-
-                                else -> oldStyle
-                            }
-                            (css as Any).set(style.name, style.value)
-                        }
-                        (theme as Any).set(sel, css)
-                    }
-                    //TODO: use computed facet instead of reconfiguring!
-                    this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
-                        effects = arrayOf(
-                            _aglThemeCompartment.reconfigure(
-                                codemirror.view.EditorView.theme(theme)
-                            )
-                        )
-                    })
-
-                    this.languageService.request.processorSetStyleRequest(this.endPointId,this.languageIdentity, styleStr)
-
-                    // need to update because token style types may have changed, not just their attributes
-                    this.onEditorTextChange()
-                    this.resetTokenization(0)
-                } else {
-                    //TODO: cannot parse style rules
-                }
-            }
-        }
-    }
-
     override fun updateEditorStyles() {
-        TODO("not implemented")
+        val aglStyleClass = this.agl.styleHandler.aglStyleClass
+        val theme = objectJS {}
+        for (r in this.agl.styleHandler.styleModel.rules) {
+            val sel = r.selector.joinToString(separator = ", ") { ".${this.agl.styleHandler.mapClass(it.value)}" }
+            val css = objectJS {}
+            for (oldStyle in r.styles.values) {
+                val style = when (oldStyle.name) {
+                    "foreground" -> AglStyle("color", oldStyle.value)
+                    "background" -> AglStyle("background-color", oldStyle.value)
+                    "font-style" -> when (oldStyle.value) {
+                        "bold" -> AglStyle("font-weight", oldStyle.value)
+                        "italic" -> AglStyle("font-style", oldStyle.value)
+                        else -> oldStyle
+                    }
+
+                    else -> oldStyle
+                }
+                (css as Any).set(style.name, style.value)
+            }
+            (theme as Any).set(sel, css)
+        }
+        //TODO: use computed facet instead of reconfiguring!
+        this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
+            effects = arrayOf(
+                _aglThemeCompartment.reconfigure(
+                    codemirror.view.EditorView.theme(theme)
+                )
+            )
+        })
+
+        // need to update because token style types may have changed, not just their attributes
+        this.onEditorTextChange()
+        this.resetTokenization(0)
     }
 
     override fun onEditorTextChange() {
@@ -241,7 +228,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     }
 
     override fun resetTokenization(fromLine: Int) {
-       // (this.workerTokenizer as AglTokenizerByWorkerCodeMirror<AsmType, ContextType>).update()
+        // (this.workerTokenizer as AglTokenizerByWorkerCodeMirror<AsmType, ContextType>).update()
     }
 
     /*

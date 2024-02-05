@@ -15,18 +15,15 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.kotlin.json.JsonString
-import net.akehurst.language.agl.scanner.Matchable
-import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.editor.api.LanguageServiceRequest
+import net.akehurst.language.editor.api.LogFunction
 
 abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
+    languageServiceRequest: LanguageServiceRequest,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    languageService: LanguageService
-) : AglEditorAbstract<AsmType, ContextType>(languageId, editorId, logFunction, languageService) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
     override fun updateProcessor() {
         val grammarStr = this.agl.languageDefinition.grammarStr
@@ -34,7 +31,7 @@ abstract class AglEditorJsAbstract<AsmType : Any, ContextType : Any>(
             //do nothing
         } else {
             this.clearErrorMarkers()
-            this.languageService.request.processorCreateRequest(this.endPointId, this.languageIdentity, grammarStr, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
+            this.languageServiceRequest.processorCreateRequest(this.endPointId, this.languageIdentity, grammarStr, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
             this.workerTokenizer.reset()
             this.resetTokenization(0) //new processor so find new tokens, first by scan
         }

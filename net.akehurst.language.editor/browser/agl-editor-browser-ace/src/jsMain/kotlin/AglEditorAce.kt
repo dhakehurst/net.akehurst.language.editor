@@ -27,10 +27,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.style.*
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.LanguageService
-import net.akehurst.language.editor.api.LogFunction
-import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.AglTokenizerByWorker
@@ -49,7 +46,7 @@ class AglErrorAnnotation(
 }
 
 interface IAce {
-    fun createRange(startRow:Int, startColumn:Int, endRow:Int, endColumn:Int): IRange
+    fun createRange(startRow: Int, startColumn: Int, endRow: Int, endColumn: Int): IRange
 }
 
 /**
@@ -63,28 +60,30 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    ace:IAce
+    ace: IAce
 ): AglEditor<AsmType, ContextType> {
-    return AglEditorAce<AsmType, ContextType>(
-        languageService = languageService,
+    val aglEditor = AglEditorAce<AsmType, ContextType>(
+        languageServiceRequest = languageService.request,
         containerElement = containerElement,
         aceEditor = aceEditor,
         languageId = languageId,
         editorId = editorId,
         logFunction = logFunction,
-        ace=ace
+        ace = ace
     )
+    languageService.addResponseListener(aglEditor.endPointId, aglEditor)
+    return aglEditor
 }
 
 private class AglEditorAce<AsmType : Any, ContextType : Any>(
+    languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val aceEditor: ace.IEditor,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    val ace:IAce,
-    languageService: LanguageService,
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, languageService) {
+    val ace: IAce,
+) : AglEditorJsAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
@@ -93,6 +92,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     override val baseEditor: Any get() = this.aceEditor
 
     override val sessionId: String get() = this.aceEditor.getSession()?.id ?: "none"
+
+    override val isConnected: Boolean get() = this.containerElement.isConnected
 
     override var text: String
         get() {
@@ -120,7 +121,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         this.aceEditor.getSession()?.bgTokenizer?.setTokenizer(this.workerTokenizer as ace.Tokenizer)
         this.aceEditor.getSession()?.bgTokenizer?.setDocument(this.aceEditor.getSession()?.getDocument())
         //this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
-        this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl, this.languageService))
+        this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl, this.languageServiceRequest))
 
         this.aceEditor.on("change") { _ -> this.onEditorTextChange() }
 
@@ -129,7 +130,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
         this.updateLanguage(null)
         this.updateProcessor()
-        this.updateStyleModel()
+        this.requestUpdateStyleModel()
     }
 
     override fun destroy() {
@@ -158,66 +159,53 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
-    override fun updateStyleModel() {
-        // style requires that the element is part of the dom
-        if (this.containerElement.isConnected) {
-            this.aceEditor.getSession()?.also { session ->
-                val styleStr = this.editorSpecificStyleStr
-                if (!styleStr.isNullOrEmpty()) {
-                    this.agl.styleHandler.reset()
-                    this.languageService.request.processorSetStyleRequest(this.endPointId,this.languageIdentity, styleStr)
-                    //val styleMdl: AglStyleModel? = Agl.registry.agl.style.processor!!.process(styleStr).asm //TODO: pass context?
-                }
-            }
-        }
-    }
-
     override fun updateEditorStyles() {
-            val aglStyleClass = this.agl.styleHandler.aglStyleClass
-            var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
-            this.agl.styleHandler.styleModel.rules.forEach { rule ->
-                val ruleClasses = rule.selector.map {
-                    val mappedSelName = this.agl.styleHandler.mapClass(it.value)
-                    AglStyleSelector(".ace_$mappedSelName", it.kind)
-                }
-                val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
-                val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
-                mappedRule.styles = rule.styles.values.associate { oldStyle ->
-                    val style = when (oldStyle.name) {
-                        "foreground" -> AglStyle("color", oldStyle.value)
-                        "background" -> AglStyle("background-color", oldStyle.value)
-                        "font-style" -> when (oldStyle.value) {
-                            "bold" -> AglStyle("font-weight", oldStyle.value)
-                            "italic" -> AglStyle("font-style", oldStyle.value)
-                            else -> oldStyle
-                        }
-
+        // style requires that the element is part of the dom
+        val aglStyleClass = this.agl.styleHandler.aglStyleClass
+        var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
+        this.agl.styleHandler.styleModel.rules.forEach { rule ->
+            val ruleClasses = rule.selector.map {
+                val mappedSelName = this.agl.styleHandler.mapClass(it.value)
+                AglStyleSelector(".ace_$mappedSelName", it.kind)
+            }
+            val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
+            val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
+            mappedRule.styles = rule.styles.values.associate { oldStyle ->
+                val style = when (oldStyle.name) {
+                    "foreground" -> AglStyle("color", oldStyle.value)
+                    "background" -> AglStyle("background-color", oldStyle.value)
+                    "font-style" -> when (oldStyle.value) {
+                        "bold" -> AglStyle("font-weight", oldStyle.value)
+                        "italic" -> AglStyle("font-style", oldStyle.value)
                         else -> oldStyle
                     }
-                    Pair(style.name, style)
-                }.toMutableMap()
-                mappedCss = mappedCss + "\n" + mappedRule.toCss()
-            }
 
-            val root = this.containerElement.getRootNode() as ParentNode?
-            if (null != root) {
-                var curStyle = root.querySelector("style#$aglStyleClass")
-                if (null == curStyle) {
-                    curStyle = this.containerElement.ownerDocument!!.createElement("style")
-                    curStyle.id = aglStyleClass
-                    if (root == curStyle.ownerDocument) {
-                        curStyle.ownerDocument!!.head!!.prepend(curStyle)
-                    } else {
-                        //shadowDom case
-                        root.prepend(curStyle)
-                    }
+                    else -> oldStyle
                 }
-                curStyle.textContent = mappedCss
-            }
+                Pair(style.name, style)
+            }.toMutableMap()
+            mappedCss = mappedCss + "\n" + mappedRule.toCss()
+        }
 
-            // need to update because token style types may have changed, not just their attributes
-            this.onEditorTextChange()
-            this.resetTokenization(0)
+        val root = this.containerElement.getRootNode() as ParentNode?
+        if (null != root) {
+            var curStyle = root.querySelector("style#$aglStyleClass")
+            if (null == curStyle) {
+                curStyle = this.containerElement.ownerDocument!!.createElement("style")
+                curStyle.id = aglStyleClass
+                if (root == curStyle.ownerDocument) {
+                    curStyle.ownerDocument!!.head!!.prepend(curStyle)
+                } else {
+                    //shadowDom case
+                    root.prepend(curStyle)
+                }
+            }
+            curStyle.textContent = mappedCss
+        }
+
+        // need to update because token style types may have changed, not just their attributes
+        this.onEditorTextChange()
+        this.resetTokenization(0)
     }
 
     override fun onEditorTextChange() {
@@ -252,7 +240,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
          */
     }
 
-    override fun resetTokenization(fromLine:Int) {
+    override fun resetTokenization(fromLine: Int) {
         val sess = this.aceEditor.getSession()
         if (null == sess) {
             this.log(LogLevel.Error, "session is null ??", null)
@@ -327,7 +315,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             val row = issue.location?.let { it.line - 1 } ?: 0
             val startColumn = issue.location?.let { it.column - 1 } ?: 0
             val endColumn = startColumn + (issue.location?.length ?: 1)
-            val range = ace.createRange( row, startColumn, row, endColumn)
+            val range = ace.createRange(row, startColumn, row, endColumn)
             val cls = "ace_marker_text_$errType"
             val errMrkId = this.aceEditor.getSession()?.addMarker(range, cls, "text")
             if (null != errMrkId) this.errorParseMarkerIds.add(errMrkId)

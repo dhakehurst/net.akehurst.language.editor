@@ -37,13 +37,14 @@ class SentenceFromEditor<AsmType : Any, ContextType : Any>(
 }
 
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
+    val languageServiceRequest: LanguageServiceRequest,
     languageId: String,
     final override val editorId: String,
     logFunction: LogFunction?,
-    val languageService: LanguageService
 ) : AglEditor<AsmType, ContextType>, LanguageServiceResponse {
 
     abstract val sessionId: String
+    abstract val isConnected:Boolean
 
     final override val logger = AglEditorLogger(logFunction)
 
@@ -55,12 +56,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
 
     init {
         //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
-        this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyleModel() }
-        this.agl.languageDefinition.scopeStrObservers.add { _, _ -> this.updateProcessor(); this.updateStyleModel() }
-        this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.updateStyleModel() }
+        this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
+        this.agl.languageDefinition.scopeStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
+        this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.requestUpdateStyleModel() }
         //this.agl.languageDefinition.formatterStrObservers.add { _, _ -> }
-
-        this.languageService.addResponseListener(endPointId, this)
     }
 
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
@@ -80,7 +79,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
                 this.agl.languageIdentity = value
                 this.updateLanguage(oldId)
                 this.updateProcessor()
-                this.updateStyleModel()
+                this.requestUpdateStyleModel()
             }
         }
 
@@ -91,7 +90,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.styleStr
         set(value) {
             this._editorSpecificStyleStr = value
-            this.updateStyleModel()
+            this.requestUpdateStyleModel()
         }
 
     override var processOptions: ProcessOptions<AsmType, ContextType>
@@ -144,14 +143,23 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)
     protected abstract fun updateLanguage(oldId: String?)
     protected abstract fun updateProcessor()
-    protected abstract fun updateStyleModel()
     protected abstract fun updateEditorStyles()
+
+    fun requestUpdateStyleModel() {
+        if (this.isConnected) {
+            val styleStr = this.editorSpecificStyleStr
+            if (!styleStr.isNullOrEmpty()) {
+                this.agl.styleHandler.reset()
+                this.languageServiceRequest.processorSetStyleRequest(this.endPointId, this.languageIdentity, styleStr)
+            }
+        }
+    }
 
     fun processSentence() {
         if (doUpdate) {
             this.clearErrorMarkers()
-            this.languageService.request.interruptRequest(this.endPointId, this.languageIdentity, "process Sentence")
-            this.languageService.request.sentenceProcessRequest(this.endPointId, this.languageIdentity, this.text, this.agl.options)
+            this.languageServiceRequest.interruptRequest(this.endPointId, this.languageIdentity, "process Sentence")
+            this.languageServiceRequest.sentenceProcessRequest(this.endPointId, this.languageIdentity, this.text, this.agl.options)
         }
     }
 
@@ -195,7 +203,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         } else {
             this.log(LogLevel.Error, message, null)
             issues.forEach {
-                this.log(LogLevel.Error,it.toString(),null)
+                this.log(LogLevel.Error, it.toString(), null)
             }
         }
     }
@@ -275,7 +283,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems:List<CompletionItem>) {
+    override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
         TODO("not implemented")
     }
 

@@ -16,49 +16,55 @@
 
 package net.akehurst.language.editor.common.compose
 
+import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.LanguageService
-import net.akehurst.language.editor.api.LogFunction
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglTokenizerByWorker
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
+    languageService: LanguageService,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    languageService: LanguageService
+    composeEditor: ComposeCodeEditor
 ): AglEditor<AsmType, ContextType> {
-    return AglEditorCompose(
-        languageService = languageService,
+    val aglEditor = AglEditorCompose<AsmType, ContextType>(
+        languageServiceRequest = languageService.request,
         languageId = languageId,
         editorId = editorId,
-        logFunction = logFunction
+        logFunction = logFunction,
+        composeEditor = composeEditor
     )
+    languageService.addResponseListener(aglEditor.endPointId, aglEditor)
+    return aglEditor
 }
 
+
 class AglEditorCompose<AsmType : Any, ContextType : Any>(
+    languageServiceRequest: LanguageServiceRequest,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    languageService: LanguageService
-) : AglEditorAbstract<AsmType, ContextType>(languageId, editorId, logFunction, languageService) {
+    val composeEditor: ComposeCodeEditor
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
-    override val baseEditor: Any
-        get() = TODO("not implemented")
-    override val sessionId: String
-        get() = TODO("not implemented")
+    override val baseEditor: Any get() = composeEditor
+    override val sessionId: String get() = ""
+    override val isConnected: Boolean get() = true
     override var text: String
-        get() = TODO("not implemented")
-        set(value) {}
+        get() = composeEditor.text
+        set(value) {
+            composeEditor.text = value
+        }
 
     override var workerTokenizer: AglTokenizerByWorker
         get() = TODO("not implemented")
         set(value) {}
 
     override fun destroy() {
-        TODO("not implemented")
+        composeEditor.destroy()
     }
 
     override fun updateLanguage(oldId: String?) {
@@ -70,10 +76,6 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     }
 
     override fun updateEditorStyles() {
-        TODO("not implemented")
-    }
-
-    override fun updateStyleModel() {
         TODO("not implemented")
     }
 

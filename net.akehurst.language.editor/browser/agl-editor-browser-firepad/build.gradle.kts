@@ -15,7 +15,7 @@ kotlin {
 
 dependencies {
 
-    "jsMainApi"(project(":agl-editor-common"))
+    "jsMainApi"(project(":agl-language-service-serialisation"))
 
 }
 

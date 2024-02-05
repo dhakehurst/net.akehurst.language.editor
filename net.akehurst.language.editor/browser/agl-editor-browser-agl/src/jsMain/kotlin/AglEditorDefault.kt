@@ -26,6 +26,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LanguageService
+import net.akehurst.language.editor.api.LanguageServiceRequest
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.AglEditorJsAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
@@ -39,7 +40,7 @@ import org.w3c.dom.events.InputEvent
 import org.w3c.dom.events.KeyboardEvent
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
-    languageService:LanguageService,
+    languageService: LanguageService,
     containerElement: Element,
     languageId: String,
     editorId: String,
@@ -50,17 +51,17 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
         languageId = languageId,
         editorId = editorId,
         logFunction = logFunction,
-        languageService = languageService
+        languageServiceRequest = languageService.request
     )
 }
 
 class AglEditorDefault<AsmType : Any, ContextType : Any>(
+    languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    languageService: LanguageService
-) : AglEditorJsAbstract<AsmType, ContextType>(languageId, editorId, logFunction, languageService) {
+) : AglEditorJsAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
     override val baseEditor: Any get() = this
     override var text: String
@@ -71,7 +72,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
     override val workerTokenizer = AglTokenizerByWorkerDefault(this.agl)
 
-    override fun resetTokenization(fromLine:Int) {
+    override fun resetTokenization(fromLine: Int) {
         highlight(text)
     }
 
@@ -80,6 +81,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     }
 
     override val sessionId: String get() = "session" //TODO
+    override val isConnected: Boolean get() = this.containerElement.isConnected
 
     override fun updateLanguage(oldId: String?) {
         if (null != oldId) {
@@ -87,10 +89,6 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
             this.containerElement.removeClass(oldAglStyleClass)
         }
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
-    }
-
-    override fun updateStyleModel() {
-        //TODO("not implemented")
     }
 
     override fun updateEditorStyles() {
@@ -180,7 +178,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
         this.updateLanguage(null)
         this.updateProcessor()
-        this.updateStyleModel()
+        this.requestUpdateStyleModel()
     }
 
     private fun oninput(ev: InputEvent) {

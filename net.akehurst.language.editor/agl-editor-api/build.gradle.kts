@@ -6,6 +6,8 @@ plugins {
 
 kotlin {
     (project.ext["configureCommon"] as (KotlinMultiplatformExtension)->Unit).invoke(this)
+
+    macosArm64()
 }
 
 val version_agl:String by project

@@ -20,7 +20,7 @@ kotlin {
 val version_agl:String by project
 val version_kjson:String by project
 dependencies {
-    commonMainApi(project(":agl-editor-common"))
+    commonMainApi(project(":agl-language-service-serialisation"))
     commonMainApi("net.akehurst.language:agl-processor:$version_agl")
     //commonMainApi(platform("net.akehurst.language:agl-processor"))
     commonMainImplementation("net.akehurst.kotlin.json:json:$version_kjson")
