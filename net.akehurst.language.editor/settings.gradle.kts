@@ -31,13 +31,6 @@ pluginManagement {
 }
 rootProject.name = file(".").name
 
-//dependencyResolutionManagement {
-//    versionCatalogs {
-//        create("libs") {
-//            from(files("gradle/libs.versions.toml"))
-//        }
-//    }
-//}
 
 fileTree(".") {
     include ("**/build.gradle")

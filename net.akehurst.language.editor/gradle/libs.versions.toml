@@ -1,4 +1,7 @@
 [versions]
+kotlin = "1.9.22"
+dokka = "1.9.10"
+
 nal-agl-processor = "4.0.22"
 
 nak-compose-code-editor-api = "1.9.22"
@@ -6,6 +9,8 @@ nak-compose-code-editor-api = "1.9.22"
 nak-serialisation = "1.9.22"
 nak-json = "1.9.22"
 nak-kotlinx = "1.9.22"
+nak-html-builder = "1.9.22"
+nak-codemirror-api = "6.0.1"
 
 kotlinx-coroutines = "1.8.0-RC2"
 
@@ -19,5 +24,10 @@ nak-serialisation-json = { module = "net.akehurst.kotlin.kserialisation:kseriali
 nak-json = { module = "net.akehurst.kotlin.json:json", version.ref = "nak-json" }
 nak-kotlinx-collections = { module = "net.akehurst.kotlinx:kotlinx-collections", version.ref = "nak-kotlinx" }
 nak-kotlinx-reflect = { module = "net.akehurst.kotlinx:kotlinx-reflect", version.ref = "nak-kotlinx" }
-
+nak-html-builder = { module = "net.akehurst.kotlin.html5:html-builder", version.ref = "nak-html-builder" }
+nak-codemirror-api = { module = "net.akehurst.kotlin:codemirror-api", version.ref = "nak-codemirror-api" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

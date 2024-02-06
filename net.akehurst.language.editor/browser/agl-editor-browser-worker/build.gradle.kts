@@ -1,8 +1,6 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackOutput
 
 kotlin {
-
     js("js") {
         browser {
             webpackTask {
@@ -12,9 +10,8 @@ kotlin {
     }
 }
 
-val version_kjson:String by project
 dependencies {
-    commonMainApi(project(":agl-language-service-serialisation"))
+    commonMainApi(project(":agl-language-service"))
     commonMainApi(libs.nal.agl.processor)
     //commonMainApi(platform("net.akehurst.language:agl-processor"))
     commonMainImplementation(libs.nak.json)

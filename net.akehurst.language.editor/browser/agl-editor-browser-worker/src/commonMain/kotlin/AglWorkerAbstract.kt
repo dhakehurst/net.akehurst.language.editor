@@ -32,7 +32,8 @@ import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.common.AglStyleHandler
-import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.editor.language.service.*
+
 
 abstract class AglWorkerAbstract {
 

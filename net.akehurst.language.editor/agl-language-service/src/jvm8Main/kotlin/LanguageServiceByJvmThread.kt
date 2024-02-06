@@ -16,14 +16,11 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
-import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
-import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 import java.util.concurrent.ExecutorService
 
 open class LanguageServiceByJvmThread(

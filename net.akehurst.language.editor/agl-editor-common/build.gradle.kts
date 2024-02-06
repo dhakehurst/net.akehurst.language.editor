@@ -1,6 +1,6 @@
 
 dependencies {
     commonMainApi(project(":agl-editor-api"))
-    commonMainApi(project(":agl-language-service"))
+    //commonMainApi(project(":agl-language-service"))
 
 }

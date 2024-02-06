@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.common.messages
+package net.akehurst.language.editor.language.service
 
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.sppt.TreeData

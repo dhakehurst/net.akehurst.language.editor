@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.common
+package net.akehurst.language.editor.language.service
 
 import net.akehurst.language.agl.agl.parser.SentenceDefault
 import net.akehurst.language.agl.default.TypeModelFromGrammar
@@ -31,7 +31,7 @@ import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.sppt.Sentence
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.editor.common.AglStyleHandler
 
 open class LanguageServiceDirectExecution(
     val response: LanguageServiceResponse

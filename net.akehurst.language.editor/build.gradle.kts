@@ -20,8 +20,8 @@ import org.gradle.internal.jvm.Jvm
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 
 plugins {
-    kotlin("multiplatform") version ("1.9.22") apply false
-    id("org.jetbrains.dokka") version ("1.9.10") apply false
+    alias(libs.plugins.kotlin) apply false
+    alias(libs.plugins.dokka) apply false
     id("com.github.gmazzo.buildconfig") version ("4.1.2") apply false
     id("nu.studer.credentials") version ("3.0")
     id("net.akehurst.kotlin.gradle.plugin.exportPublic") version ("1.9.22") apply false
@@ -82,6 +82,10 @@ subprojects {
         buildConfigField("String", "buildTime", "\"${fBuildTime()}\"")
     }
 
+    project.ext.set("jvmTarget", true)
+    project.ext.set("jsTarget", true)
+    project.ext.set("macosArm64Target", true)
+
     configure<KotlinMultiplatformExtension> {
         jvm("jvm8") {
             compilations {
@@ -119,8 +123,9 @@ subprojects {
             }
         }
 
-        macosArm64()
-
+//        if (project.name != "agl-language-service-serialisation") {
+//            macosArm64()
+//        }
         //        @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
 //        wasmJs() {
 //            binaries.library()

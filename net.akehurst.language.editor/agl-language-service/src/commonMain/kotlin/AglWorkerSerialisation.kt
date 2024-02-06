@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.common
-
 import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
 import net.akehurst.language.typemodel.api.TypeModel
@@ -36,7 +34,7 @@ object AglWorkerSerialisation {
 
     private fun initialise() {
         if (!initialised) {
-            agl_language_service_serialisation_commonMain.KotlinxReflectForModule.registerUsedClasses()
+            agl_language_service_commonMain.KotlinxReflectForModule.registerUsedClasses()
             //TODO: enable kserialisation/komposite/reflect to auto add these some how!!
             initialiseApiTypes()
             initialiseTypeModel()

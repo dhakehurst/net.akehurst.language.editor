@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.common
+package net.akehurst.language.editor.language.service
 
+import AglWorkerSerialisation
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
-import org.w3c.dom.*
-import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.editor.common.objectJS
+import org.w3c.dom.AbstractWorker
+import org.w3c.dom.MessageEvent
+import org.w3c.dom.SharedWorker
+import org.w3c.dom.Worker
 import org.w3c.dom.events.EventTarget
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
 import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
 

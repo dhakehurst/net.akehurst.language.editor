@@ -77,7 +77,7 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     editorId: String,
     logFunction: LogFunction?,
     val codemirror: codemirror.ICodeMirror,
-) : AglEditorJsAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()

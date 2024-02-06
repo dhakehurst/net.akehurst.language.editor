@@ -9,7 +9,8 @@ val version_codemirror:String by project
 dependencies {
 
     "jsMainApi"(project(":agl-language-service-serialisation"))
-    "jsMainApi"("net.akehurst.kotlin:codemirror-api:$version_codemirror")
+    "jsMainApi"(project(":agl-editor-common"))
+    "jsMainApi"(libs.nak.codemirror.api)
 
     //commonMainApi("org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$version_coroutines")
 

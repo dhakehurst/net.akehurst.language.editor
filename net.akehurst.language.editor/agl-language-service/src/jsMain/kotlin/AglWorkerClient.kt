@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.common
+package net.akehurst.language.editor.language.service
 
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.LogLevel
-import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.editor.common.AglComponents
+import net.akehurst.language.editor.common.objectJS
 import org.w3c.dom.*
 import org.w3c.dom.events.EventTarget
 import kotlin.time.DurationUnit

@@ -25,12 +25,14 @@ import monaco.IDisposable
 import monaco.IPosition
 import monaco.MarkerSeverity
 import monaco.editor.*
-import monaco.languages.*
+import monaco.languages.CompletionItemKind
+import monaco.languages.CompletionItemProvider
+import monaco.languages.ILanguageExtensionPoint
+import monaco.languages.TokensProvider
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.api.style.AglStyleSelector
@@ -39,8 +41,10 @@ import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LanguageService
 import net.akehurst.language.editor.api.LanguageServiceRequest
 import net.akehurst.language.editor.api.LogFunction
-import net.akehurst.language.editor.common.*
-import org.w3c.dom.AbstractWorker
+import net.akehurst.language.editor.common.AglEditorAbstract
+import net.akehurst.language.editor.common.AglStyleHandler
+import net.akehurst.language.editor.common.AglTokenizerByWorker
+import net.akehurst.language.editor.common.objectJSTyped
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -92,7 +96,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     editorId: String,
     logFunction: LogFunction?,
     val monaco: Monaco,
-) : AglEditorJsAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
     companion object {
         private val init = js(

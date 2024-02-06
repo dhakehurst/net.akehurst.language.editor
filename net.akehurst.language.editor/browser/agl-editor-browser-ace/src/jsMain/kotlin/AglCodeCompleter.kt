@@ -19,11 +19,9 @@ package net.akehurst.language.editor.browser.ace
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.CompletionItemKind
-import net.akehurst.language.editor.api.LanguageService
 import net.akehurst.language.editor.api.LanguageServiceRequest
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.AglWorkerClient
 import net.akehurst.language.editor.common.objectJS
 
 

@@ -23,15 +23,12 @@ import kotlinx.dom.removeClass
 import net.akehurst.kotlin.html5.update
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LanguageService
 import net.akehurst.language.editor.api.LanguageServiceRequest
 import net.akehurst.language.editor.api.LogFunction
-import net.akehurst.language.editor.common.AglEditorJsAbstract
+import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
-import net.akehurst.language.editor.common.AglTokenizerByWorker
-import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLTextAreaElement
@@ -61,7 +58,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-) : AglEditorJsAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
     override val baseEditor: Any get() = this
     override var text: String

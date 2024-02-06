@@ -12,9 +12,10 @@ plugins {
 
 
 dependencies {
+    "jsMainApi"(project(":agl-editor-common"))
     "jsMainApi"(project(":agl-language-service-serialisation"))
     "jsMainApi"(project(":agl-editor-browser-worker"))
-    "jsMainImplementation"("net.akehurst.kotlin.html5:html-builder:$version_html_builder")
+    "jsMainImplementation"(libs.nak.html.builder)
 }
 
 buildConfig {
