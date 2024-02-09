@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.language.service
+package net.akehurst.language.editor.language.service.messages
 
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.sppt.TreeData
@@ -182,12 +182,12 @@ data class MessageSetStyleResponse(
     val styleModel: AglStyleModel?
 ) : AglWorkerMessageResponse("MessageSetStyleResult")
 
-data class MessageCodeCompleteRequest(
+data class MessageCodeCompleteRequest<AsmType : Any, ContextType : Any>(
     override val endPoint: EndPointIdentity,
     val languageId:String,
-    val goalRuleName: String?,
     val text: String,
-    val position: Int
+    val position: Int,
+    val options: ProcessOptions<AsmType,ContextType>
 ) : AglWorkerMessage("MessageCodeCompleteRequest")
 
 data class MessageCodeCompleteResult(

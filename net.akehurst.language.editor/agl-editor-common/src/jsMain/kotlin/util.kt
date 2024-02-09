@@ -27,3 +27,9 @@ inline fun <T:Any> objectJSTyped(init: T.() -> Unit): T {
     init(o)
     return o as T
 }
+
+fun <T : Any> T.set(key: String, value: Any): T {
+    val self = this
+    js("self[key] = value")
+    return self
+}

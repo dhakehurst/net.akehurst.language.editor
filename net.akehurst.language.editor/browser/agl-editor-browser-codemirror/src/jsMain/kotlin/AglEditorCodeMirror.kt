@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package net.akehurst.language.editor.browser.codemirror
 
 
@@ -22,20 +23,13 @@ import kotlinx.dom.removeClass
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.style.AglStyle
-import net.akehurst.language.api.style.AglStyleModel
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LanguageService
 import net.akehurst.language.editor.api.LanguageServiceRequest
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.*
-import org.w3c.dom.AbstractWorker
 import org.w3c.dom.Element
-
-fun <T : Any> T.set(key: String, value: String): T {
-    val self = this
-    js("self[key] = value")
-    return self
-}
+import kotlin.js.Promise
 
 class AglErrorAnnotation(
     val line: Int,
@@ -69,7 +63,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
     return aglEditor
 }
 
-private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
+internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val cmEditorView: codemirror.view.IEditorView,
@@ -115,30 +109,35 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         }
 
     override val workerTokenizer = AglTokenizerByWorkerCodeMirror(this.codemirror, this.cmEditorView, this.agl)
+    override val completionProvider = AglCompletionProviderCodeMirror(this)
 
     init {
-        val tokenizer =
-            // add agl extensions
-            this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
-                effects = arrayOf(
-                    codemirror.StateEffect.appendConfig<Any>().of(
-                        arrayOf(
-                            codemirror.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
-                                if (!view.docChanged || !view.viewportChanged) {
-                                    // do nothing
-                                } else {
-                                    this@AglEditorCodeMirror.onEditorTextChange()
-                                }
-                            }),
-                            _aglThemeCompartment.of(
-                                codemirror.view.EditorView.theme(objectJS {})
-                            ),
-                            workerTokenizer._tokenUpdateListener,
-                            workerTokenizer._decorationUpdater
+        // add agl extensions
+        this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
+            effects = arrayOf(
+                codemirror.StateEffect.appendConfig<Any>().of(
+                    arrayOf(
+                        codemirror.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
+                            if (!view.docChanged || !view.viewportChanged) {
+                                // do nothing
+                            } else {
+                                this@AglEditorCodeMirror.onEditorTextChangeInternal()
+                            }
+                        }),
+                        _aglThemeCompartment.of(
+                            codemirror.view.EditorView.theme(objectJS {})
+                        ),
+                        workerTokenizer._tokenUpdateListener,
+                        workerTokenizer._decorationUpdater,
+                        codemirror.extensions.autocomplete.autocompletion(
+                            (objectJS {} as Any).set(
+                                "override", arrayOf(completionProvider::autocompletion)
+                            )
                         )
                     )
                 )
-            })
+            )
+        })
 
         this.updateLanguage(null)
         this.updateProcessor()
@@ -194,13 +193,13 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         })
 
         // need to update because token style types may have changed, not just their attributes
-        this.onEditorTextChange()
+        this.onEditorTextChangeInternal()
         this.resetTokenization(0)
     }
 
-    override fun onEditorTextChange() {
+    override fun onEditorTextChangeInternal() {
+        super.onEditorTextChangeInternal()
         if (doUpdate) {
-            super.onEditorTextChange()
             this.workerTokenizer.reset() //current tokens are invalid if text changes
             window.clearTimeout(_parseTimeout)
             this._parseTimeout = window.setTimeout({
@@ -324,4 +323,6 @@ private class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         }
          */
     }
+
+
 }

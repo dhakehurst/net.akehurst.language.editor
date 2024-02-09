@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package net.akehurst.language.editor.language.service
+
 import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
 import net.akehurst.language.typemodel.api.TypeModel
@@ -63,6 +65,7 @@ object AglWorkerSerialisation {
             }
             namespace("net.akehurst.language.api.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 enumType("LanguageIssueKind", emptyList())
+                enumType("CompletionItemKind", emptyList())
                 enumType("LanguageProcessorPhase", emptyList())
                 dataType("LanguageIssue") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "LanguageIssueKind")
@@ -72,8 +75,10 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "data", "Any")
                 }
                 dataType("CompletionItem") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "ruleName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "CompletionItemKind")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(MEMBER, COMPOSITE), "description", "String")
                 }
             }
             namespace("net.akehurst.language.agl.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
@@ -486,7 +491,7 @@ object AglWorkerSerialisation {
                 }
             }
             namespace(
-                "net.akehurst.language.editor.common.messages",
+                "net.akehurst.language.editor.language.service.messages",
                 imports = mutableListOf(
                     "kotlin", "kotlin.collections",
                     "net.akehurst.language.agl.scanner",
@@ -585,9 +590,9 @@ object AglWorkerSerialisation {
                 dataType("MessageCodeCompleteRequest") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "position", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "options", "ProcessOptionsDefault")
                 }
                 dataType("MessageCodeCompleteResult") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "endPoint", "EndPointIdentity")

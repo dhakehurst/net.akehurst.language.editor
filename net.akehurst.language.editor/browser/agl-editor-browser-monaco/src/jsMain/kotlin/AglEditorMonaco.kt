@@ -37,10 +37,7 @@ import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.api.style.AglStyleRule
 import net.akehurst.language.api.style.AglStyleSelector
 import net.akehurst.language.api.style.AglStyleSelectorKind
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.LanguageService
-import net.akehurst.language.editor.api.LanguageServiceRequest
-import net.akehurst.language.editor.api.LogFunction
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.AglTokenizerByWorker
@@ -143,7 +140,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     var parseTimeout: dynamic = null
 
     override var workerTokenizer: AglTokenizerByWorker = AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl)
-
+    override val completionProvider: AglEditorCompletionProvider
+        get() = TODO("not implemented")
     init {
         try {
             val themeData = objectJSTyped<IStandaloneThemeData> {
@@ -179,7 +177,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 AglCompletionProviderMonaco(monaco, this.agl)
             )
 
-            this.onChange { this.onEditorTextChange() }
+            this.onChange { this.onEditorTextChangeInternal() }
 
             val resizeObserver = ResizeObserver { entries -> onResize(entries) }
             resizeObserver.observe(this.containerElement)
@@ -248,13 +246,13 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         )
 
         // need to update because token style types may have changed, not just their attributes
-        this.onEditorTextChange()
+        this.onEditorTextChangeInternal()
         this.resetTokenization(0)
     }
 
-    override fun onEditorTextChange() {
+    override fun onEditorTextChangeInternal() {
         if (doUpdate) {
-            super.onEditorTextChange()
+            super.onEditorTextChangeInternal()
             this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({

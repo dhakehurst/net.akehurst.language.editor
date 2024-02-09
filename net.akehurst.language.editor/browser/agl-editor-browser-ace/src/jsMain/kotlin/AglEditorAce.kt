@@ -111,7 +111,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     var parseTimeout: dynamic = null
 
     override var workerTokenizer: AglTokenizerByWorker = AglTokenizerByWorkerAce(this.agl)
-
+    override val completionProvider: AglEditorCompletionProvider
+        get() = TODO("not implemented")
     init {
         //TODO: set session and mouseHandler options
 
@@ -120,7 +121,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         //this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
         this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl, this.languageServiceRequest))
 
-        this.aceEditor.on("change") { _ -> this.onEditorTextChange() }
+        this.aceEditor.on("change") { _ -> this.onEditorTextChangeInternal() }
 
         val resizeObserver = ResizeObserver { entries -> onResize(entries) }
         resizeObserver.observe(this.containerElement)
@@ -201,13 +202,13 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         }
 
         // need to update because token style types may have changed, not just their attributes
-        this.onEditorTextChange()
+        this.onEditorTextChangeInternal()
         this.resetTokenization(0)
     }
 
-    override fun onEditorTextChange() {
+    override fun onEditorTextChangeInternal() {
         if (doUpdate) {
-            super.onEditorTextChange()
+            super.onEditorTextChangeInternal()
             //this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({

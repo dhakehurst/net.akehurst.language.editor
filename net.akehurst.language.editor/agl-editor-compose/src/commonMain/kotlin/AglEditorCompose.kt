@@ -63,6 +63,9 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         get() = TODO("not implemented")
         set(value) {}
 
+    override val completionProvider: AglEditorCompletionProvider
+        get() = TODO("not implemented")
+
     override fun destroy() {
         composeEditor.destroy()
     }

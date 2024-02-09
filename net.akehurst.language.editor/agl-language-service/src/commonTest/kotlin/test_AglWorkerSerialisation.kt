@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.default.TypeModelFromGrammar
@@ -34,7 +35,9 @@ import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.editor.api.EditorOptionsDefault
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
-import net.akehurst.language.editor.common.messages.*
+import net.akehurst.language.editor.language.service.AglWorkerSerialisation
+import net.akehurst.language.editor.language.service.*
+import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
 import net.akehurst.language.typemodel.simple.SimpleTypeModelStdLib

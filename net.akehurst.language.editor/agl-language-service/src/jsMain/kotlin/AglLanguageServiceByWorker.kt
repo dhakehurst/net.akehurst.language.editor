@@ -16,11 +16,11 @@
 
 package net.akehurst.language.editor.language.service
 
-import AglWorkerSerialisation
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.objectJS
+import net.akehurst.language.editor.language.service.messages.*
 import org.w3c.dom.AbstractWorker
 import org.w3c.dom.MessageEvent
 import org.w3c.dom.SharedWorker
@@ -37,7 +37,7 @@ class AglLanguageServiceByWorker(
 ) : LanguageService {
 
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
-        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId:String, grammarStr: String, crossReferenceModelStr: String?, editorOptions: EditorOptions) {
+        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: String, grammarStr: String, crossReferenceModelStr: String?, editorOptions: EditorOptions) {
             sendToWorker(MessageProcessorCreate(endPointIdentity, languageId, grammarStr, crossReferenceModelStr, editorOptions))
         }
 
@@ -45,15 +45,20 @@ class AglLanguageServiceByWorker(
             TODO("not implemented")
         }
 
-        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId:String, styleStr:String) {
+        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: String, styleStr: String) {
             sendToWorker(MessageSetStyle(endPointIdentity, languageId, styleStr))
         }
 
-        override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId:String, reason:String) {
-            sendToWorker(MessageParserInterruptRequest(endPointIdentity, languageId,reason))
+        override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: String, reason: String) {
+            sendToWorker(MessageParserInterruptRequest(endPointIdentity, languageId, reason))
         }
 
-        override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(endPointIdentity: EndPointIdentity, languageId:String, text: String, processOptions: ProcessOptions<AsmType, ContextType>) {
+        override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
+            endPointIdentity: EndPointIdentity,
+            languageId: String,
+            text: String,
+            processOptions: ProcessOptions<AsmType, ContextType>
+        ) {
             sendToWorker(MessageProcessRequest(endPointIdentity, languageId, text, processOptions))
         }
 
@@ -64,12 +69,12 @@ class AglLanguageServiceByWorker(
             position: Int,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-//TODO            sendToWorker(MessageCodeCompleteRequest(endPointIdentity, languageId))
+            sendToWorker(MessageCodeCompleteRequest(endPointIdentity, languageId, text, position, processOptions))
         }
 
     }
 
-    override fun addResponseListener(endPointIdentity: EndPointIdentity,response: LanguageServiceResponse) {
+    override fun addResponseListener(endPointIdentity: EndPointIdentity, response: LanguageServiceResponse) {
         responseObjects[endPointIdentity] = response
     }
 
@@ -134,13 +139,13 @@ class AglLanguageServiceByWorker(
         val endPoint = responseObjects[msg.endPoint]
         if (null != endPoint) { //TODO: should  test for sessionId also
             when (msg) {
-                is MessageProcessorCreateResponse -> endPoint.processorCreateResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.scannerMatchables)
-                is MessageSetStyleResponse -> endPoint.processorSetStyleResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.styleModel)
-                is MessageLineTokens -> endPoint.sentenceLineTokensResponse(msg.endPoint,msg.status, msg.message, msg.startLine, msg.lineTokens)
-                is MessageParseResult -> endPoint.sentenceParseResponse(msg.endPoint,msg.status, msg.message, msg.issues, deserialiseParseTree(msg.treeSerialised))
-                is MessageSyntaxAnalysisResult -> endPoint.sentenceSyntaxAnalysisResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.asm)
-                is MessageSemanticAnalysisResult -> endPoint.sentenceSemanticAnalysisResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.asm)
-                is MessageCodeCompleteResult -> endPoint.sentenceCodeCompleteResponse(msg.endPoint,msg.status, msg.message, msg.issues, msg.completionItems)
+                is MessageProcessorCreateResponse -> endPoint.processorCreateResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.scannerMatchables)
+                is MessageSetStyleResponse -> endPoint.processorSetStyleResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.styleModel)
+                is MessageLineTokens -> endPoint.sentenceLineTokensResponse(msg.endPoint, msg.status, msg.message, msg.startLine, msg.lineTokens)
+                is MessageParseResult -> endPoint.sentenceParseResponse(msg.endPoint, msg.status, msg.message, msg.issues, deserialiseParseTree(msg.treeSerialised))
+                is MessageSyntaxAnalysisResult -> endPoint.sentenceSyntaxAnalysisResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.asm)
+                is MessageSemanticAnalysisResult -> endPoint.sentenceSemanticAnalysisResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.asm)
+                is MessageCodeCompleteResult -> endPoint.sentenceCodeCompleteResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.completionItems)
                 else -> error("Unknown Message type")
             }
         } else {
@@ -149,7 +154,7 @@ class AglLanguageServiceByWorker(
         }
     }
 
-    private fun deserialiseParseTree(treeSerialised:String?):Any? {
+    private fun deserialiseParseTree(treeSerialised: String?): Any? {
         val tree = treeSerialised?.let {
             //this.agl.languageDefinition.processor!!.spptParser.parse(treeStr)
             val unescaped = JsonString.decode(it) // double decode the string as it itself is json

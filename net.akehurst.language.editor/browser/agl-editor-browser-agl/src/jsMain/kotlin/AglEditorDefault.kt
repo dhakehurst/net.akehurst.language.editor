@@ -23,10 +23,7 @@ import kotlinx.dom.removeClass
 import net.akehurst.kotlin.html5.update
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.LanguageService
-import net.akehurst.language.editor.api.LanguageServiceRequest
-import net.akehurst.language.editor.api.LogFunction
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
 import org.w3c.dom.Element
@@ -68,7 +65,8 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         }
 
     override val workerTokenizer = AglTokenizerByWorkerDefault(this.agl)
-
+    override val completionProvider: AglEditorCompletionProvider
+        get() = TODO("not implemented")
     override fun resetTokenization(fromLine: Int) {
         highlight(text)
     }

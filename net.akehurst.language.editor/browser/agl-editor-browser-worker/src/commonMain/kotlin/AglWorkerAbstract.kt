@@ -21,7 +21,10 @@ import net.akehurst.language.agl.agl.parser.SentenceDefault
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
-import net.akehurst.language.agl.processor.*
+import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.processor.IssueHolder
+import net.akehurst.language.agl.processor.ParseResultDefault
+import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.api.parser.InputLocation
@@ -32,7 +35,7 @@ import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.common.AglStyleHandler
-import net.akehurst.language.editor.language.service.*
+import net.akehurst.language.editor.language.service.messages.*
 
 
 abstract class AglWorkerAbstract {
@@ -80,7 +83,7 @@ abstract class AglWorkerAbstract {
             is MessageParserInterruptRequest -> this.interrupt(port, msg)
             is MessageProcessRequest<*, *> -> this.process(port, msg as MessageProcessRequest<Any, Any>)
             is MessageSetStyle -> this.setStyle(port, msg)
-            is MessageCodeCompleteRequest -> this.getCodeCompletions(port, msg)
+            is MessageCodeCompleteRequest<*,*> -> this.getCodeCompletions(port, msg as MessageCodeCompleteRequest<Any, Any>)
             else -> error("Unknown Message type")
         }
     }
@@ -352,7 +355,7 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    private fun getCodeCompletions(port: Any, message: MessageCodeCompleteRequest) {
+    private fun getCodeCompletions(port: Any, message: MessageCodeCompleteRequest<Any, Any>) {
         try {
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.START, "Start", emptyList(), emptyList()))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
@@ -361,7 +364,7 @@ abstract class AglWorkerAbstract {
                 message.text,
                 message.position,
                 1,
-                Agl.options { parse { goalRuleName(message.goalRuleName) } }
+                message.options
             )
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), result.items))
             result.items

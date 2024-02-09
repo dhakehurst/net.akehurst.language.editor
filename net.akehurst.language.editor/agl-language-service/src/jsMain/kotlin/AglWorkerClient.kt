@@ -22,6 +22,7 @@ import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.objectJS
+import net.akehurst.language.editor.language.service.messages.*
 import org.w3c.dom.*
 import org.w3c.dom.events.EventTarget
 import kotlin.time.DurationUnit

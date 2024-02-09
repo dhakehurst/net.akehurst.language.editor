@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.api
 
+import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.ProcessOptions
@@ -90,6 +91,8 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     //fun configureSyntaxAnalyser(configuration: Map<String, Any>)
 
+    fun onTextChange(handler: (String) -> Unit)
+
     fun onParse(handler: (ParseEvent) -> Unit)
 
     fun onSyntaxAnalysis(handler: (SyntaxAnalysisEvent) -> Unit)
@@ -101,14 +104,14 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     fun destroy()
 
     companion object {
-        fun options(base:EditorOptions = EditorOptionsDefault(),init:EditorOptionsBuilder.()->Unit) : EditorOptions = AglEditorOptions(base, init)
+        fun options(base: EditorOptions = EditorOptionsDefault(), init: EditorOptionsBuilder.() -> Unit): EditorOptions = AglEditorOptions(base, init)
     }
 }
 
 interface EditorOptions {
     var parse: Boolean
     var parseLineTokens: Boolean
-    var lineTokensChunkSize:Int
+    var lineTokensChunkSize: Int
     var parseTree: Boolean
     var syntaxAnalysis: Boolean
     var syntaxAnalysisAsm: Boolean
@@ -164,4 +167,11 @@ class SemanticAnalysisEvent(
 ) {
     val isStart: Boolean = status == EventStatus.START
     val failure: Boolean = status == EventStatus.FAILURE
+}
+
+interface AglEditorCompletionProvider {
+    /**
+     * does editor specific provision
+     */
+    fun provide(completionItems:List<CompletionItem>)
 }

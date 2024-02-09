@@ -16,7 +16,6 @@
 
 package net.akehurst.language.editor.worker
 
-import AglWorkerSerialisation
 import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.api.sppt.SpptDataNode
 import net.akehurst.language.api.sppt.SpptDataNodeInfo
@@ -24,7 +23,8 @@ import net.akehurst.language.api.sppt.SpptWalker
 import net.akehurst.language.collections.mutableStackOf
 
 import net.akehurst.language.editor.common.objectJS
-import net.akehurst.language.editor.language.service.AglWorkerMessage
+import net.akehurst.language.editor.language.service.AglWorkerSerialisation
+import net.akehurst.language.editor.language.service.messages.*
 import org.w3c.dom.MessageEvent
 
 abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract() {
