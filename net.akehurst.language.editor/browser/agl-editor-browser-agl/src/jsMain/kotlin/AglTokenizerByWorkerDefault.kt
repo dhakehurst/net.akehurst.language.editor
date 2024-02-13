@@ -27,9 +27,9 @@ class AglTokenizerByWorkerDefault<AsmType : Any, ContextType : Any>(
 
      val tokensByLine = mutableMapOf<Int, List<AglToken>>()
 
-    override var acceptingTokens = false
+//    override var acceptingTokens = false
     override fun reset() {
-        this.acceptingTokens = false
+//        this.acceptingTokens = false
         this.tokensByLine.clear()
     }
 

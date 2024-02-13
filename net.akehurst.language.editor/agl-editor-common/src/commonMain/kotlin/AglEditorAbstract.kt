@@ -195,7 +195,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             when (message) {
                 "OK" -> {
                     this.log(LogLevel.Debug, "New Processor created for ${editorId}", null)
-                    this.workerTokenizer.acceptingTokens = true
+//                    this.workerTokenizer.acceptingTokens = true
                     this.agl.scannerMatchables = scannerMatchables
                     this.processSentence()
                     this.resetTokenization(0)

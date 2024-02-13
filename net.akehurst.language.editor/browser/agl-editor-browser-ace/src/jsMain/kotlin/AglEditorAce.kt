@@ -212,7 +212,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             //this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
-                this.workerTokenizer.acceptingTokens = true
+//                this.workerTokenizer.acceptingTokens = true
                 this.processSentence()
             }, 500)
         }

@@ -25,11 +25,11 @@ internal class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
 ) : ace.Tokenizer, AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
-    override var acceptingTokens
-        get() = aglTokenizer.acceptingTokens
-        set(value) {
-            aglTokenizer.acceptingTokens = value
-        }
+//    override var acceptingTokens
+//        get() = aglTokenizer.acceptingTokens
+//        set(value) {
+//            aglTokenizer.acceptingTokens = value
+//        }
 
     override fun reset() {
         this.aglTokenizer.reset()

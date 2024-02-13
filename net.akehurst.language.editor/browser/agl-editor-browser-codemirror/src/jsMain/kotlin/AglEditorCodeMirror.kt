@@ -21,7 +21,10 @@ import kotlinx.browser.window
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
 import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.LanguageIssueKind
+import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.style.AglStyle
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.LanguageService
@@ -30,6 +33,7 @@ import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.*
 import org.w3c.dom.Element
 import kotlin.js.Promise
+import kotlin.math.min
 
 class AglErrorAnnotation(
     val line: Int,
@@ -40,6 +44,11 @@ class AglErrorAnnotation(
 ) {
     val row = line - 1
 }
+
+class DeferredIssues(
+    val resolve: (Array<codemirror.lint.Diagnostic>) -> Unit,
+    val reject: (Throwable) -> Unit
+)
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
     languageService: LanguageService,
@@ -57,7 +66,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
         languageId = languageId,
         editorId = editorId,
         logFunction = logFunction,
-        codemirror = codemirror
+        codemirrorFunctions = codemirror
     )
     languageService.addResponseListener(aglEditor.endPointId, aglEditor)
     return aglEditor
@@ -70,16 +79,16 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-    val codemirror: codemirror.ICodeMirror,
+    val codemirrorFunctions: codemirror.ICodeMirror,
 ) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
 
-    private val errorParseMarkerIds = mutableListOf<Int>()
-    private val errorProcessMarkerIds = mutableListOf<Int>()
-
     override val baseEditor: Any get() = this.cmEditorView
-    private val _aglThemeCompartment = codemirror.createCompartment()
-    private val _aglTokensCompartment = codemirror.createCompartment()
+    private val _aglThemeCompartment = codemirrorFunctions.createCompartment()
+    private val _aglTokensCompartment = codemirrorFunctions.createCompartment()
     private var _parseTimeout: dynamic = null
+    private val _issueMarkers = mutableListOf<codemirror.lint.Diagnostic>()
+    private var _needsRefresh = true
+
 
     override val sessionId: String get() = "none"
     override val isConnected: Boolean get() = this.containerElement.isConnected
@@ -108,30 +117,44 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
             }
         }
 
-    override val workerTokenizer = AglTokenizerByWorkerCodeMirror(this.codemirror, this.cmEditorView, this.agl)
+    override val workerTokenizer = AglTokenizerByWorkerCodeMirror(this.codemirrorFunctions, this.cmEditorView, this.agl)
     override val completionProvider = AglCompletionProviderCodeMirror(this)
+    private var _linterPromise = mutableListOf<DeferredIssues>()
 
     init {
         // add agl extensions
         this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
             effects = arrayOf(
-                codemirror.StateEffect.appendConfig<Any>().of(
+                codemirrorFunctions.StateEffect.appendConfig<Any>().of(
                     arrayOf(
-                        codemirror.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
+                        // react to text changes
+                        codemirrorFunctions.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
                             if (!view.docChanged || !view.viewportChanged) {
                                 // do nothing
                             } else {
                                 this@AglEditorCodeMirror.onEditorTextChangeInternal()
                             }
                         }),
+                        // theme and token colors
                         _aglThemeCompartment.of(
-                            codemirror.view.EditorView.theme(objectJS {})
+                            codemirrorFunctions.view.EditorView.theme(objectJS {})
                         ),
                         workerTokenizer._tokenUpdateListener,
                         workerTokenizer._decorationUpdater,
-                        codemirror.extensions.autocomplete.autocompletion(
+                        // autocomplete
+                        codemirrorFunctions.extensions.autocomplete.autocompletion(
                             (objectJS {} as Any).set(
                                 "override", arrayOf(completionProvider::autocompletion)
+                            )
+                        ),
+                        // markers (errors etc)
+                        codemirrorFunctions.extensions.lint.lintGutter(objectJS { }),
+                        codemirrorFunctions.extensions.lint.linter(
+                            source = ::lintSource,
+                            config = codemirror.lint.LinterConfigDefault(
+                                needsRefresh = { _ ->
+                                    _needsRefresh.also { _needsRefresh = false }
+                                }
                             )
                         )
                     )
@@ -187,7 +210,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
             effects = arrayOf(
                 _aglThemeCompartment.reconfigure(
-                    codemirror.view.EditorView.theme(theme)
+                    codemirrorFunctions.view.EditorView.theme(theme)
                 )
             )
         })
@@ -197,17 +220,33 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         this.resetTokenization(0)
     }
 
-    override fun onEditorTextChangeInternal() {
-        super.onEditorTextChangeInternal()
-        if (doUpdate) {
-            this.workerTokenizer.reset() //current tokens are invalid if text changes
-            window.clearTimeout(_parseTimeout)
-            this._parseTimeout = window.setTimeout({
-                this.workerTokenizer.acceptingTokens = true
-                this.processSentence()
-            }, 500)
+    // linter detects changes and calls this when idle
+    private fun lintSource(view: codemirror.view.IEditorView): Promise<Array<codemirror.lint.Diagnostic>> {
+//        super.onEditorTextChangeInternal()
+        return if(doUpdate) {
+            this.workerTokenizer.reset()
+//            this.workerTokenizer.acceptingTokens = true
+            this.processSentence()
+            Promise { resolve, reject ->
+                _linterPromise.add(DeferredIssues(resolve, reject))
+            }
+        } else {
+            Promise { resolve, reject ->  resolve(emptyArray()) }
         }
+
     }
+
+//    override fun onEditorTextChangeInternal() {
+//        super.onEditorTextChangeInternal()
+//        if (doUpdate) {
+//            this.workerTokenizer.reset() //current tokens are invalid if text changes
+//            window.clearTimeout(_parseTimeout)
+//            this._parseTimeout = window.setTimeout({
+//                this.workerTokenizer.acceptingTokens = true
+//                this.processSentence()
+//            }, 500)
+//        }
+//    }
 
     private fun update() {
 
@@ -266,63 +305,54 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     }
 */
     override fun clearErrorMarkers() {
-        /*
-            this._annotations.clear()
-            this.aceEditor.getSession()?.clearAnnotations(); //assume there are no parse errors or there would be no sppt!
-            this.errorParseMarkerIds.forEach { id -> this.aceEditor.getSession()?.removeMarker(id) }
-            */
+        _issueMarkers.clear()
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        /*
-        val aceIssues = issues.map { issue ->
-            val aceColumn = issue.location?.let { it.column - 1 } ?: 0
-            val errMsg: String = when (issue.phase) {
+        val editorMarkers = issues.map { issue ->
+            val loc = issue.location ?: InputLocation(0, 1, 1, 1)
+            val errMsg = when (issue.phase) {
+                LanguageProcessorPhase.GRAMMAR -> "Grammar Error: ${issue.message}"
+                LanguageProcessorPhase.SCAN -> "Scan Error ${issue.message}"
                 LanguageProcessorPhase.PARSE -> {
                     val expected = issue.data as Set<String>?
                     when {
-                        null == expected -> "Syntax Error"
-                        expected.isEmpty() -> "Syntax Error"
-                        1 == expected.size -> "Syntax Error, expected: $expected"
-                        else -> "Syntax Error, expected one of: $expected"
+                        null == expected -> "Parse Error"
+                        expected.isEmpty() -> "Parse Error"
+                        1 == expected.size -> "Parse Error, expected: $expected"
+                        else -> "Parse Error, expected one of: $expected"
                     }
                 }
-                LanguageProcessorPhase.SYNTAX_ANALYSIS -> "Error ${issue.message}"
-                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> "Error ${issue.message}"
+
+                LanguageProcessorPhase.SYNTAX_ANALYSIS -> "Syntax Analysis Error ${issue.message}"
+                LanguageProcessorPhase.SEMANTIC_ANALYSIS -> "Semantic Analysis Error ${issue.message}"
+                LanguageProcessorPhase.FORMAT -> "Format Error ${issue.message}"
+                LanguageProcessorPhase.INTERPRET -> "Interpret Error ${issue.message}"
+                LanguageProcessorPhase.GENERATE -> "Generate ${issue.message}"
+                LanguageProcessorPhase.ALL -> "Error ${issue.message}"
             }
-            val errType = when (issue.kind) {
-                LanguageIssueKind.ERROR -> "error"
-                LanguageIssueKind.WARNING -> "warning"
-                LanguageIssueKind.INFORMATION -> "information"
-            }
-            objectJSTyped<AceAnnotation> {
-                row = issue.location?.let { it.line - 1 } ?: 0
-                column = aceColumn
-                text = errMsg //issue.message
-                type = errType
-                raw = null
-            }
+            val eot = text.length
+            codemirror.lint.DiagnosticDefault(
+                from = min(eot, loc.position),
+                to = min(eot, loc.position + loc.length),
+                severity = when (issue.kind) {
+                    LanguageIssueKind.ERROR -> codemirror.lint.SeverityKind.error
+                    LanguageIssueKind.WARNING -> codemirror.lint.SeverityKind.warning
+                    LanguageIssueKind.INFORMATION -> codemirror.lint.SeverityKind.info
+                },
+                message = errMsg
+            )
         }
-        // add/update annotations to indicate errors in gutter
-        this._annotations.addAll(aceIssues)
-        this.aceEditor.getSession()?.setAnnotations(this._annotations.toTypedArray())
-        // add markers to indicate in the actual text - i.e. underline
-        issues.forEach { issue ->
-            val errType = when (issue.kind) {
-                LanguageIssueKind.ERROR -> "error"
-                LanguageIssueKind.WARNING -> "warning"
-                LanguageIssueKind.INFORMATION -> "information"
-            }
-            val row = issue.location?.let { it.line - 1 } ?: 0
-            val startColumn = issue.location?.let { it.column - 1 } ?: 0
-            val endColumn = startColumn + (issue.location?.length ?: 1)
-            val range = ace.Range(row, startColumn, row, endColumn)
-            val cls = "ace_marker_text_$errType"
-            val errMrkId = this.aceEditor.getSession()?.addMarker(range, cls, "text")
-            if (null != errMrkId) this.errorParseMarkerIds.add(errMrkId)
-        }
-         */
+        displayErrorMarkers(editorMarkers)
     }
 
-
+    private fun displayErrorMarkers(editorMarkers: List<codemirror.lint.Diagnostic>) {
+        val prm = _linterPromise.removeFirstOrNull()
+        when {
+            null == prm -> Unit
+            else -> {
+                prm.resolve(editorMarkers.toTypedArray())
+            }
+        }
+    }
 }

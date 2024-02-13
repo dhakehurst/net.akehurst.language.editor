@@ -23,7 +23,7 @@ import kotlin.time.measureTimedValue
 
 interface AglTokenizerByWorker {
 
-    var acceptingTokens: Boolean
+//    var acceptingTokens: Boolean
     //val tokensByLine: Map<Int, List<AglToken>>
 
     fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>)
@@ -64,16 +64,16 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
     val agl: AglComponents<AsmType, ContextType>
 ) {
 
-    var acceptingTokens = false
+//    var acceptingTokens = false
     val tokensByLine = mutableMapOf<Int, List<AglToken>>()
 
     fun reset() {
-        this.acceptingTokens = false
+//        this.acceptingTokens = false
         this.tokensByLine.clear()
     }
 
     fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
-        if (this.acceptingTokens) {
+//        if (this.acceptingTokens) {
             tokensForLines.forEachIndexed { index, tokens ->
                 // could get empty tokens for a line from a partial parse
                 if (tokens.isNotEmpty()) {
@@ -82,7 +82,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
                     // nothing
                 }
             }
-        }
+//        }
     }
 
     /**

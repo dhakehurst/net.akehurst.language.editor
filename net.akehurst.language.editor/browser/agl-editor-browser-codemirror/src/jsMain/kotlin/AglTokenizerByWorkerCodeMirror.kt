@@ -25,11 +25,11 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
 ) : AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
-    override var acceptingTokens
-        get() = aglTokenizer.acceptingTokens
-        set(value) {
-            aglTokenizer.acceptingTokens = value
-        }
+//    override var acceptingTokens
+//        get() = aglTokenizer.acceptingTokens
+//        set(value) {
+//            aglTokenizer.acceptingTokens = value
+//        }
 
     private val _updateTokens = codemirror.StateEffect.define<Boolean>()
     private val _tokenEffect = codemirror.StateEffect.define<List<AglToken>>()
