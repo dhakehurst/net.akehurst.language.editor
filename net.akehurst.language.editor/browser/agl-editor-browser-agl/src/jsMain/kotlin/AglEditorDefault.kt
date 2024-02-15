@@ -55,7 +55,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     languageId: String,
     editorId: String,
     logFunction: LogFunction?,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"session"), logFunction) {
 
     override val baseEditor: Any get() = this
     override var text: String
@@ -75,7 +75,6 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         //TODO("not implemented")
     }
 
-    override val sessionId: String get() = "session" //TODO
     override val isConnected: Boolean get() = this.containerElement.isConnected
 
     override fun updateLanguage(oldId: String?) {

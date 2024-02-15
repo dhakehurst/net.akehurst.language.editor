@@ -18,8 +18,10 @@ package net.akehurst.language.editor.information
 
 import korlibs.io.async.suspendTest
 import korlibs.io.file.std.resourcesVfs
-import net.akehurst.language.agl.processor.Agl
-import net.akehurst.language.agl.semanticAnalyser.ContextSimple
+import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
+import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
+import net.akehurst.language.agl.processor.*
+import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.information.examples.AglStyle
 import net.akehurst.language.editor.information.examples.BasicTutorial
 import net.akehurst.language.typemodel.api.typeModel
@@ -29,7 +31,15 @@ import kotlin.test.fail
 class test_examples {
 
     companion object {
-
+        const val languageId = "testLang"
+    }
+    var ld:LanguageDefinition<Any, Any>?=null
+    fun configureLanguageDefinition(grammarStr: String?, crossReferenceModelStr: String?, styleStr:String?) {
+        // TODO: could be an argument
+        ld?.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>
+        ld?.grammarStr = grammarStr
+        ld?.crossReferenceModelStr = crossReferenceModelStr
+        ld?.styleStr = styleStr
     }
 
     suspend fun before() {
@@ -46,6 +56,18 @@ class test_examples {
         Examples.add(AglStyle.example)
         //Examples.add(AglGrammar.example)
 
+        ld = Agl.registry.findOrPlaceholder<Any, Any>(
+            identity = languageId,
+            aglOptions = Agl.options {
+                semanticAnalysis {
+                    context(ContextFromGrammarRegistry(Agl.registry))
+                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+                }
+            },
+            //TODO: how to use configurationDefault ? - needed once completion-provider moved to worker
+            configuration = Agl.configurationBase() //use if placeholder created, not found
+        )
+
     }
 
     @Test
@@ -55,16 +77,13 @@ class test_examples {
             println(it.label)
 
             println("  CreateProcessor")
-            // create processor
-            val result = Agl.processorFromStringDefault(
-                grammarDefinitionStr = it.grammar,
-                crossReferenceModelStr = it.references,
-                styleModelStr = it.style
-            )
-            if (result.issues.errors.isNotEmpty()) {
-                fail("CreateProcessor: ${it.id}\n" + result.issues.toString())
+
+            // update processor
+            configureLanguageDefinition(it.grammar, it.references, it.style)
+            if (ld!!.issues.errors.isNotEmpty()) {
+                fail("CreateProcessor: ${it.id}\n" + ld!!.issues.toString())
             }
-            result.processor!!.let { proc ->
+            ld!!.processor!!.let { proc ->
                 proc.typeModel
                 if (proc.issues.errors.isNotEmpty()) {
                     fail("TypeModel: ${it.id}\n" + proc.issues.toString())
@@ -101,13 +120,13 @@ class test_examples {
 
             //check parse
             println("  Parse")
-            val parse = result.processor!!.parse(it.sentence)
+            val parse = ld!!.processor!!.parse(it.sentence)
             if (parse.issues.errors.isNotEmpty()) {
                 fail("Parse: ${it.id}\n" + parse.issues.toString())
             }
 
             println("  SyntaxAnalysis")
-            val syntaxAnalysis = result.processor!!.syntaxAnalysis(parse.sppt!!)
+            val syntaxAnalysis = ld!!.processor!!.syntaxAnalysis(parse.sppt!!)
             if (syntaxAnalysis.issues.errors.isNotEmpty()) {
                 fail("SyntaxAnalysis: ${it.id}\n" + syntaxAnalysis.issues.toString())
             }
@@ -115,7 +134,7 @@ class test_examples {
             println("  SemanticAnalysis")
             val ctx = ExternalContextLanguage.processor.process(it.context).asm
 
-            val semanticAnalysis = result.processor!!.semanticAnalysis(
+            val semanticAnalysis = ld!!.processor!!.semanticAnalysis(
                 syntaxAnalysis.asm!!,
                 Agl.options { semanticAnalysis { context(ctx) } }
             )

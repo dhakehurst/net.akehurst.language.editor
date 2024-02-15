@@ -39,18 +39,16 @@ class SentenceFromEditor<AsmType : Any, ContextType : Any>(
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     val languageServiceRequest: LanguageServiceRequest,
     languageId: String,
-    final override val editorId: String,
+    override val endPointIdentity: EndPointIdentity,
     logFunction: LogFunction?,
 ) : AglEditor<AsmType, ContextType>, LanguageServiceResponse {
 
-    abstract val sessionId: String
     abstract val isConnected:Boolean
 
     final override val logger = AglEditorLogger(logFunction)
 
+    val editorId get() = endPointIdentity.editorId
     protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger)
-
-    val endPointId: EndPointIdentity = EndPointIdentity(editorId, sessionId)
 
     abstract val workerTokenizer: AglTokenizerByWorker
     abstract val completionProvider:AglEditorCompletionProvider
@@ -58,7 +56,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     init {
         //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
         this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
-        this.agl.languageDefinition.scopeStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
+        this.agl.languageDefinition.crossReferenceModelStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
         this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.requestUpdateStyleModel() }
         //this.agl.languageDefinition.formatterStrObservers.add { _, _ -> }
     }
@@ -165,7 +163,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             //do nothing
         } else {
             this.clearErrorMarkers()
-            this.languageServiceRequest.processorCreateRequest(this.endPointId, this.languageIdentity, grammarStr, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
+            this.languageServiceRequest.processorCreateRequest(this.endPointIdentity, this.languageIdentity, grammarStr, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
             this.workerTokenizer.reset()
             this.resetTokenization(0) //new processor so find new tokens, first by scan
         }
@@ -176,7 +174,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             val styleStr = this.editorSpecificStyleStr
             if (!styleStr.isNullOrEmpty()) {
                 this.agl.styleHandler.reset()
-                this.languageServiceRequest.processorSetStyleRequest(this.endPointId, this.languageIdentity, styleStr)
+                this.languageServiceRequest.processorSetStyleRequest(this.endPointIdentity, this.languageIdentity, styleStr)
             }
         }
     }
@@ -184,8 +182,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     fun processSentence() {
         if (doUpdate) {
             this.clearErrorMarkers()
-            this.languageServiceRequest.interruptRequest(this.endPointId, this.languageIdentity, "process Sentence")
-            this.languageServiceRequest.sentenceProcessRequest(this.endPointId, this.languageIdentity, this.text, this.agl.options)
+            this.languageServiceRequest.interruptRequest(this.endPointIdentity, this.languageIdentity, "process Sentence")
+            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, this.languageIdentity, this.text, this.agl.options)
         }
     }
 

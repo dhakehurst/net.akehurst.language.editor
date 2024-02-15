@@ -11,6 +11,9 @@ dependencies {
 
     jsMainImplementation(project(":information-editor"))
     jsMainImplementation(project(":technology-gui-widgets"))
+
+    jsMainImplementation("net.akehurst.language.editor:agl-language-service:$version_agl_editor")
+
     jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-agl:$version_agl_editor")
     jsMainImplementation("net.akehurst.kotlin.html5:html-builder:$version_html_builder")
 

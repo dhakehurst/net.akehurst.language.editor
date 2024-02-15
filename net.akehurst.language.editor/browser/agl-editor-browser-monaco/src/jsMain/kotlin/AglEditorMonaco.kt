@@ -63,7 +63,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
         logFunction = logFunction,
         monaco = monaco
     )
-    languageService.addResponseListener(aglEditor.endPointId, aglEditor)
+    languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
     return aglEditor
 }
 
@@ -93,7 +93,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     editorId: String,
     logFunction: LogFunction?,
     val monaco: Monaco,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"none"), logFunction) {
 
     companion object {
         private val init = js(
@@ -118,7 +118,6 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     override val baseEditor: Any get() = this.monacoEditor
 
-    override val sessionId: String get() = "none"
     override val isConnected: Boolean get() = this.containerElement.isConnected
 
     override var text: String

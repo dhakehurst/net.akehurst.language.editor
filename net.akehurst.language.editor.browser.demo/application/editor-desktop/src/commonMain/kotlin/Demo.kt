@@ -365,7 +365,7 @@ class Demo(
                 EventStatus.FAILURE -> {
                     referencesEditor.processOptions.semanticAnalysis.context = null
                     styleEditor.processOptions.semanticAnalysis.context = null
-                    logger.logError(grammarEditor.editorId + ": " + event.message)
+                    logger.logError(grammarEditor.endPointIdentity.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
 
@@ -380,7 +380,7 @@ class Demo(
                         logger.logDebug("Debug: Grammar parse success, resetting sentence processor")
                         sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, grammarEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, grammarEditor.endPointIdentity.editorId + ": " + t.message, t)
                         sentenceEditor.languageDefinition.grammarStr = ""
                     }
                 }
@@ -392,7 +392,7 @@ class Demo(
             when (event.status) {
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
-                    logger.logError(styleEditor.editorId + ": " + event.message)
+                    logger.logError(styleEditor.endPointIdentity.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.styleStr = ""
                 }
 
@@ -401,7 +401,7 @@ class Demo(
                         logger.logDebug("Debug: Style parse success, resetting sentence style")
                         sentenceEditor.languageDefinition.styleStr = styleEditor.text
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, styleEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, styleEditor.endPointIdentity.editorId + ": " + t.message, t)
                         sentenceEditor.languageDefinition.styleStr = ""
                     }
                 }
@@ -411,7 +411,7 @@ class Demo(
             when (event.status) {
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
-                    logger.logError(referencesEditor.editorId + ": " + event.message)
+                    logger.logError(referencesEditor.endPointIdentity.editorId + ": " + event.message)
                 }
 
                 EventStatus.SUCCESS -> {
@@ -420,7 +420,7 @@ class Demo(
                         logger.logDebug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
                         sentenceEditor.languageDefinition.crossReferenceModelStr = referencesEditor.text
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, referencesEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, referencesEditor.endPointIdentity.editorId + ": " + t.message, t)
                     }
                 }
             }

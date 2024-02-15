@@ -35,7 +35,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
      * identifies the editor, important that it is unique wrt to each SharedWorker
      * used to identify source and target of messages to/from the worker
      */
-    val editorId: String
+    val endPointIdentity: EndPointIdentity
 
     /**
      * the language identity for this editor

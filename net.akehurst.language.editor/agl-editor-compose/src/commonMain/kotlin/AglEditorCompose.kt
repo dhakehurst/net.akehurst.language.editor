@@ -37,7 +37,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
         logFunction = logFunction,
         composeEditor = composeEditor
     )
-    languageService.addResponseListener(aglEditor.endPointId, aglEditor)
+    languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
     return aglEditor
 }
 
@@ -48,10 +48,9 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     editorId: String,
     logFunction: LogFunction?,
     val composeEditor: ComposeCodeEditor
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"none"), logFunction) {
 
     override val baseEditor: Any get() = composeEditor
-    override val sessionId: String get() = ""
     override val isConnected: Boolean get() = true
     override var text: String
         get() = composeEditor.text

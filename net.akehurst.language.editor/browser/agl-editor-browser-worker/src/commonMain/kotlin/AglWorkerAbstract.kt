@@ -19,8 +19,12 @@ package net.akehurst.language.editor.worker
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.agl.parser.SentenceDefault
 import net.akehurst.language.agl.default.TypeModelFromGrammar
+import net.akehurst.language.agl.language.format.AglFormatterModelFromAsm
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
+import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
+import net.akehurst.language.agl.language.reference.asm.CrossReferenceModelDefault
+import net.akehurst.language.agl.language.style.asm.AglStyleModelDefault
 import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.processor.IssueHolder
 import net.akehurst.language.agl.processor.ParseResultDefault
@@ -53,10 +57,15 @@ abstract class AglWorkerAbstract {
     protected abstract fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String?
 
     protected open fun configureLanguageDefinition(ld: LanguageDefinition<Any, Any>, grammarStr: String?, crossReferenceModelStr: String?) {
+        //style and format not handled here, handled separately
         // TODO: could be an argument
         ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>
-        ld.grammarStr = grammarStr
-        ld.crossReferenceModelStr = crossReferenceModelStr
+        ld.configuration = Agl.configuration(base = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any> ) {
+            if (null != crossReferenceModelStr) {
+                crossReferenceModelResolver { p -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typeModel), crossReferenceModelStr) }
+            }
+        }
+        ld.update(grammarStr = grammarStr,crossReferenceModelStr,null)
     }
 
     protected open fun createLanguageDefinition(languageId: String, grammarStr: String?, crossReferenceModelStr: String?): LanguageDefinition<Any, Any> {
@@ -257,45 +266,50 @@ abstract class AglWorkerAbstract {
         try {
             sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.START, "Start", emptyList(), null))
             val editorOptions = _editorOptions[endPoint.editorId]
-            if (true == editorOptions?.semanticAnalysis) {
-                // to save time serialisating/deserialising contexts that are based on information already in the worker
-                // when (language) {
-                //  is Agl Grammar -> create ContextFromGrammarRegistry
-                //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefinition, get its typemodel and create ContextFromTypeModel
-                // }
-                val ctx = when (languageId) {
-                    Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: ContextFromGrammarRegistry(Agl.registry)
-                    Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
-                        is ContextFromTypeModelReference -> {
-                            val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId
-                            val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                            val tm = TypeModelFromGrammar.createFromGrammarList(ld.grammarList)
-                            ContextFromTypeModel(tm)
+            when {
+                true!=editorOptions?.semanticAnalysis -> {
+                    sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.FAILURE, "SemanticAnalysis Interest not registered during Processor Creation", emptyList(), null))
+                }
+
+                else -> {
+                    // to save time serialisating/deserialising contexts that are based on information already in the worker
+                    // when (language) {
+                    //  is Agl Grammar -> create ContextFromGrammarRegistry
+                    //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefinition, get its typemodel and create ContextFromTypeModel
+                    // }
+                    val ctx = when (languageId) {
+                        Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: ContextFromGrammarRegistry(Agl.registry)
+                        Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
+                            is ContextFromTypeModelReference -> {
+                                val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId
+                                val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
+                                val tm = TypeModelFromGrammar.createFromGrammarList(ld.grammarList)
+                                ContextFromTypeModel(tm)
+                            }
+
+                            else -> options.semanticAnalysis.context
                         }
 
                         else -> options.semanticAnalysis.context
                     }
-
-                    else -> options.semanticAnalysis.context
-                }
-                val opts = Agl.options(options) {
-                    semanticAnalysis {
-                        locationMap(locationMap)
-                        context(ctx as Any)
-                        option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+                    val opts = Agl.options(options) {
+                        semanticAnalysis {
+                            locationMap(locationMap)
+                            context(ctx as Any)
+                            option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+                        }
+                    }
+                    val result = proc.semanticAnalysis(asm, opts)
+                    val issues =  result.issues.all
+                    if (editorOptions.semanticAnalysisAsm) {
+                        sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.SUCCESS, "Success", issues.toList(), asm))
+                    } else {
+                        sendMessage(
+                            port,
+                            MessageSemanticAnalysisResult(endPoint, MessageStatus.SUCCESS, "SemanticAnalysis ASM Interest not registered during Processor Creation", issues.toList(), null)
+                        )
                     }
                 }
-                val result = proc.semanticAnalysis(asm, opts)
-                if (editorOptions.semanticAnalysisAsm) {
-                    sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), asm))
-                } else {
-                    sendMessage(
-                        port,
-                        MessageSemanticAnalysisResult(endPoint, MessageStatus.SUCCESS, "SemanticAnalysis ASM Interest not registered during Processor Creation", result.issues.all.toList(), null)
-                    )
-                }
-            } else {
-                sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.FAILURE, "SemanticAnalysis Interest not registered during Processor Creation", emptyList(), null))
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)

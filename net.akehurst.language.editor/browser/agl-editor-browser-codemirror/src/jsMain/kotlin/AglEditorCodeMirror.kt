@@ -26,10 +26,7 @@ import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
 import net.akehurst.language.api.style.AglStyle
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.LanguageService
-import net.akehurst.language.editor.api.LanguageServiceRequest
-import net.akehurst.language.editor.api.LogFunction
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
 import org.w3c.dom.Element
 import kotlin.js.Promise
@@ -68,7 +65,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
         logFunction = logFunction,
         codemirrorFunctions = codemirror
     )
-    languageService.addResponseListener(aglEditor.endPointId, aglEditor)
+    languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
     return aglEditor
 }
 
@@ -80,7 +77,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     editorId: String,
     logFunction: LogFunction?,
     val codemirrorFunctions: codemirror.ICodeMirror,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"none"), logFunction) {
 
     override val baseEditor: Any get() = this.cmEditorView
     private val _aglThemeCompartment = codemirrorFunctions.createCompartment()
@@ -90,7 +87,6 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     private var _needsRefresh = true
 
 
-    override val sessionId: String get() = "none"
     override val isConnected: Boolean get() = this.containerElement.isConnected
 
     override var text: String

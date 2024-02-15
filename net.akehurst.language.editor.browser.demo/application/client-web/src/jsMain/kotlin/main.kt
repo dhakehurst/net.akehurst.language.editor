@@ -53,7 +53,7 @@ import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
 import net.akehurst.language.editor.browser.demo.BuildConfig
 import net.akehurst.language.editor.browser.monaco.Monaco
 import net.akehurst.language.editor.browser.monaco.attachToMonaco
-import net.akehurst.language.editor.common.AglLanguageServiceByWorker
+import net.akehurst.language.editor.language.service.AglLanguageServiceByWorker
 import net.akehurst.language.editor.common.compose.attachToComposeEditor
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
@@ -80,8 +80,8 @@ enum class EditorKind {
 }
 
 object Constants {
-    val initialLogLevel = LogLevel.Warning
-    val initialEditorKind = EditorKind.CODEMIRROR
+    val initialLogLevel = LogLevel.All
+    val initialEditorKind = EditorKind.ACE
 
     const val sentenceEditorId = "editor-sentence"
     const val grammarEditorId = "editor-grammar"
@@ -253,14 +253,14 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
                     }
                     section {
                         class_.add("trees")
-                        htmlElement("tabview") {
+                        htmlElement("tabview") { //TODO: use from lib
                             htmlElement("tab") {
                                 attribute.id = "ParseTree"
-                                htmlElement("treeview") { attribute.id = "parse" }
+                                htmlElement("treeview") { attribute.id = "parse" } //TODO: use from lib
                             }
                             htmlElement("tab") {
                                 attribute.id = "AST"
-                                htmlElement("treeview") { attribute.id = "ast" }
+                                htmlElement("treeview") { attribute.id = "ast" } //TODO: use from lib
                             }
                         }
                     }
@@ -632,7 +632,7 @@ class Demo(
                 EventStatus.FAILURE -> {
                     styleEditor.processOptions.semanticAnalysis.context?.clear()
                     //referencesEditor.sentenceContext?.clear()
-                    logger.logError(grammarEditor.editorId + ": " + event.message)
+                    logger.logError(grammarEditor.endPointIdentity.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.grammarStr = ""
                 }
 
@@ -647,7 +647,7 @@ class Demo(
                             sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
                         }
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, grammarEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, grammarEditor.endPointIdentity.editorId + ": " + t.message, t)
                         sentenceEditor.languageDefinition.grammarStr = ""
                     }
                 }
@@ -658,7 +658,7 @@ class Demo(
             when (event.status) {
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
-                    logger.logError(styleEditor.editorId + ": " + event.message)
+                    logger.logError(styleEditor.endPointIdentity.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.styleStr = ""
                 }
 
@@ -670,7 +670,7 @@ class Demo(
                             sentenceEditor.languageDefinition.styleStr = styleEditor.text
                         }
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, styleEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, styleEditor.endPointIdentity.editorId + ": " + t.message, t)
                         sentenceEditor.languageDefinition.styleStr = ""
                     }
                 }
@@ -680,7 +680,7 @@ class Demo(
             when (event.status) {
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
-                    logger.logError(referencesEditor.editorId + ": " + event.message)
+                    logger.logError(referencesEditor.endPointIdentity.editorId + ": " + event.message)
                 }
 
                 EventStatus.SUCCESS -> {
@@ -692,7 +692,7 @@ class Demo(
                             sentenceEditor.languageDefinition.crossReferenceModelStr = referencesEditor.text
                         }
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, referencesEditor.editorId + ": " + t.message, t)
+                        logger.log(LogLevel.Error, referencesEditor.endPointIdentity.editorId + ": " + t.message, t)
                     }
                 }
             }

@@ -68,7 +68,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
         logFunction = logFunction,
         ace = ace
     )
-    languageService.addResponseListener(aglEditor.endPointId, aglEditor)
+    languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
     return aglEditor
 }
 
@@ -80,15 +80,13 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     editorId: String,
     logFunction: LogFunction?,
     val ace: IAce,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, editorId, logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId, aceEditor.getSession()?.id!!), logFunction) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
     private val _annotations = mutableListOf<AceAnnotation>()
 
     override val baseEditor: Any get() = this.aceEditor
-
-    override val sessionId: String get() = this.aceEditor.getSession()?.id ?: "none"
 
     override val isConnected: Boolean get() = this.containerElement.isConnected
 
