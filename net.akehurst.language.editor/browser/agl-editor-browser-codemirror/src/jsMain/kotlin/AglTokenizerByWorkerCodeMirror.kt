@@ -31,8 +31,8 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
 //            aglTokenizer.acceptingTokens = value
 //        }
 
-    private val _updateTokens = codemirror.StateEffect.define<Boolean>()
-    private val _tokenEffect = codemirror.StateEffect.define<List<AglToken>>()
+    private val _updateTokens = codemirror.state.StateEffect.define<Boolean>()
+    private val _tokenEffect = codemirror.state.StateEffect.define<List<AglToken>>()
 
     // if the doc changes or the visible part of the doc changes, we also need to update the decorations
     val _tokenUpdateListener = codemirror.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
@@ -43,7 +43,7 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
         }
     })
 
-    val _decorationUpdater = codemirror.StateField.define(object : codemirror.state.StateFieldConfig<codemirror.view.DecorationSet> {
+    val _decorationUpdater = codemirror.state.StateField.define(object : codemirror.state.StateFieldConfig<codemirror.view.DecorationSet> {
         override var create: (state: codemirror.state.IEditorState) -> codemirror.view.DecorationSet = {
             codemirror.view.Decoration.none
         }

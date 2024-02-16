@@ -80,8 +80,8 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 ) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"none"), logFunction) {
 
     override val baseEditor: Any get() = this.cmEditorView
-    private val _aglThemeCompartment = codemirrorFunctions.createCompartment()
-    private val _aglTokensCompartment = codemirrorFunctions.createCompartment()
+    private val _aglThemeCompartment = codemirrorFunctions.state.createCompartment()
+    private val _aglTokensCompartment = codemirrorFunctions.state.createCompartment()
     private var _parseTimeout: dynamic = null
     private val _issueMarkers = mutableListOf<codemirror.lint.Diagnostic>()
     private var _needsRefresh = true
@@ -121,7 +121,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         // add agl extensions
         this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
             effects = arrayOf(
-                codemirrorFunctions.StateEffect.appendConfig<Any>().of(
+                codemirrorFunctions.state.StateEffect.appendConfig<Any>().of(
                     arrayOf(
                         // react to text changes
                         codemirrorFunctions.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->

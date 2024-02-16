@@ -539,6 +539,7 @@ fun createCodeMirror(editorElement: Element, logFunction: LogFunction, languageS
     val editorOptions = objectJSTyped<codemirror.view.EditorViewConfig> {
         doc = ""
         extensions = arrayOf(
+            codemirror.extensions.view.keymap.of(codemirror.extensions.commands.defaultKeymap),
             codemirror.extensions.view.lineNumbers(),
             codemirror.extensions.view.highlightActiveLine(),
             codemirror.extensions.view.highlightActiveLineGutter(),
@@ -546,7 +547,7 @@ fun createCodeMirror(editorElement: Element, logFunction: LogFunction, languageS
         )
         parent = editorElement
     }
-    val ed = codemirror.view.EditorView(editorOptions)
+    val ed = codemirror.extensions.view.EditorView(editorOptions)
     return Agl.attachToCodeMirror(
         languageService = languageService,
         containerElement = editorElement,
