@@ -75,12 +75,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
     fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
 //        if (this.acceptingTokens) {
             tokensForLines.forEachIndexed { index, tokens ->
-                // could get empty tokens for a line from a partial parse
-                if (tokens.isNotEmpty()) {
-                    this.tokensByLine[startLine + index] = tokens
-                } else {
-                    // nothing
-                }
+                 this.tokensByLine[startLine + index] = tokens
             }
 //        }
     }

@@ -60,8 +60,8 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
                                 inclusiveEnd = true
                                 _class = tk.styles.joinToString(separator = " ")
                             }
-                        ).range(tk.position, tk.position + tk.length) as codemirror.state.IRange<codemirror.view.IDecoration>
-                        marks.add(mark)
+                        ).range(tk.position, tk.position + tk.length)
+                        marks.add(mark  as codemirror.state.IRange<codemirror.view.IDecoration>)
                     }
                 }
             }

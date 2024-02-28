@@ -128,6 +128,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                             if (!view.docChanged || !view.viewportChanged) {
                                 // do nothing
                             } else {
+                                _needsRefresh = true
                                 this@AglEditorCodeMirror.onEditorTextChangeInternal()
                             }
                         }),
