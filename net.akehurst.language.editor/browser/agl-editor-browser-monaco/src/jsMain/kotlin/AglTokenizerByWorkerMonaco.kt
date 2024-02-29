@@ -70,9 +70,8 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
 
     override fun tokenize(line: String, state: monaco.languages.IState): monaco.languages.ILineTokens {
         val mcState = state as AglLineStateMonaco
-        val stateAgl = AglLineState(mcState.lineNumber, mcState.nextLineStartPosition, mcState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
-        val lineState = this.aglTokenizer.getLineTokens(line, stateAgl)
-        val tokens = lineState.tokens
+        val stateAgl = AglLineState(mcState.lineNumber, mcState.nextLineStartPosition, mcState.leftOverText)
+        val (lineState,tokens) = this.aglTokenizer.getLineTokens(line, stateAgl)
         this.decorateLine(stateAgl.nextLineStartPosition, lineState.lineNumber, tokens) //TODO: move inside the loop
         val lineTokens = tokens.map { aglTok ->
             val col = aglTok.position - stateAgl.nextLineStartPosition +1

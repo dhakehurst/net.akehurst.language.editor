@@ -125,17 +125,12 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                     arrayOf(
                         // react to text changes
                         codemirrorFunctions.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
-                            if (!view.docChanged || !view.viewportChanged) {
-                                // do nothing
-                            } else {
-                                _needsRefresh = true
-                                this@AglEditorCodeMirror.onEditorTextChangeInternal()
+                            if (view.docChanged || view.viewportChanged) {
+                                this@AglEditorCodeMirror.onEditorTextChanged()
                             }
                         }),
                         // theme and token colors
-                        _aglThemeCompartment.of(
-                            codemirrorFunctions.view.EditorView.theme(objectJS {})
-                        ),
+                        _aglThemeCompartment.of(codemirrorFunctions.view.EditorView.theme(objectJS {})),
                         workerTokenizer._tokenUpdateListener,
                         workerTokenizer._decorationUpdater,
                         // autocomplete
@@ -149,9 +144,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                         codemirrorFunctions.extensions.lint.linter(
                             source = ::lintSource,
                             config = codemirror.lint.LinterConfigDefault(
-                                needsRefresh = { _ ->
-                                    _needsRefresh.also { _needsRefresh = false }
-                                }
+                                needsRefresh = { _ -> _needsRefresh.also { _needsRefresh = false } }
                             )
                         )
                     )
@@ -219,10 +212,8 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     // linter detects changes and calls this when idle
     private fun lintSource(view: codemirror.view.IEditorView): Promise<Array<codemirror.lint.Diagnostic>> {
-//        super.onEditorTextChangeInternal()
         return if(doUpdate) {
             this.workerTokenizer.reset()
-//            this.workerTokenizer.acceptingTokens = true
             this.processSentence()
             Promise { resolve, reject ->
                 _linterPromise.add(DeferredIssues(resolve, reject))
@@ -233,17 +224,10 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     }
 
-//    override fun onEditorTextChangeInternal() {
-//        super.onEditorTextChangeInternal()
-//        if (doUpdate) {
-//            this.workerTokenizer.reset() //current tokens are invalid if text changes
-//            window.clearTimeout(_parseTimeout)
-//            this._parseTimeout = window.setTimeout({
-//                this.workerTokenizer.acceptingTokens = true
-//                this.processSentence()
-//            }, 500)
-//        }
-//    }
+    private fun onEditorTextChanged() {
+        _needsRefresh = true
+        super.onEditorTextChangeInternal()
+    }
 
     private fun update() {
 

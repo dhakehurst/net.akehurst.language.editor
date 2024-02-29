@@ -94,7 +94,8 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
                 if (null != lineToks) {
                     tokenEffects.add(_tokenEffect.of(lineToks))
                 } else {
-                    //no line tokens to add
+                    //TODO: get tokens using scanner
+                    //aglTokenizer.
                 }
             }
         }

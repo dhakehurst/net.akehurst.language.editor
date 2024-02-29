@@ -43,13 +43,12 @@ internal class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
     // first line has state==null
     override fun getLineTokens(line: String, state: ace.LineState?): ace.LineTokens {
         val stateAgl = if (null == state) {
-            AglLineState(-1, 0, "", emptyList()) //not really emptyList, but its not needed as input so ok to use
+            AglLineState(-1, 0, "")
         } else {
            val aceState = state as AglLineStateAce
-            AglLineState(aceState.lineNumber, aceState.nextLineStartPosition, aceState.leftOverText, emptyList()) //not really emptyList, but its not needed as input so ok to use
+            AglLineState(aceState.lineNumber, aceState.nextLineStartPosition, aceState.leftOverText)
         }
-        val nextState = this.aglTokenizer.getLineTokens(line, stateAgl)
-        val tokens = nextState.tokens
+        val (nextState, tokens) = this.aglTokenizer.getLineTokens(line, stateAgl)
         val lineTokens = tokens.map {aglTok ->
                 val col = aglTok.position - stateAgl.nextLineStartPosition
                 val value = line.substring(col, col + aglTok.length)

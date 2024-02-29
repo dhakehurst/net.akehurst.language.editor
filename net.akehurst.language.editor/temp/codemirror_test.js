@@ -78,6 +78,11 @@ function updateVisibleTokens(v) {
             }
         }
     }
+    if(tokenEffects.length > 0) {
+        v.dispatch({
+            effects: tokenEffects
+        })
+    }
 }
 
 let themeCompartment = new Compartment();
@@ -120,20 +125,21 @@ let decorationUpdater = StateField.define({
 
 });
 
+// --- Simulation of Parsing/processing from web-worker
 let _linterPromise = null;
 const RE = new RegExp('[a-zA-Z0-9_]+', 'g');
-function processLine(line)  {
+function processLine(lineStart, line)  {
     let matches = line.matchAll(RE);
     let toks = []
-    let p = 0;
+    let p = lineStart;
     for(const mch of matches) {
-        const st = mch.index
-        const en = st+mch[0].length-1
+        const st = lineStart+ mch.index
+        const en = st+mch[0].length
         if(st > p) {
             // add tok for unmatched
             toks.push({
                 start:p,
-                end:st-1,
+                end:en,
                 style: 'nostyle',
             })
         }
@@ -142,27 +148,30 @@ function processLine(line)  {
             end:en,
             style:'keyword',
         })
-        p = en+1
+        p = lineStart+en+1
     }
     if(p < line.length) {
         // add tok for unmatched after all matches
         toks.push({
             start:p,
-            end:line.length-1,
+            end:lineStart+line.length-1,
             style: 'nostyle',
         })
     }
     return toks
 }
 function processText(text) {
-    console.log('processText')
-    let lines = text.split('\n')
+    console.log('processText');
+    let lines = text.split('\n');
+    let lineStart = 0;
     for (let i = 0; i < lines.length; i++) {
-        let ln = lines[i]
-        let lnToks = processLine(ln)
-        receiveTokens(i, [lnToks])
+        let ln = lines[i];
+        let lnToks = processLine(lineStart, ln);
+        lineStart = lineStart+ ln.length +1;
+        receiveTokens(i, [lnToks]);
     }
 }
+
 function lintSource(view) {
     console.log('lintSource')
     processText(view.state.doc.toString());
@@ -180,7 +189,6 @@ function lintSource(view) {
         }
     });
 }
-
 
 // --- extend editor to add support for language processing
 ev.dispatch({
@@ -214,3 +222,4 @@ ev.dispatch({
         })),
     ]
 });
+
