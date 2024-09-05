@@ -16,7 +16,7 @@
 
 package net.akehurst.language.editor.information.examples
 
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.editor.information.Example
 
 object AglGrammar {

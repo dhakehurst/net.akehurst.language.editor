@@ -16,8 +16,8 @@
 
 package net.akehurst.language.editor.information
 
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.asm.AsmPathSimple
-import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.processor.IssueHolder
 import net.akehurst.language.agl.processor.ProcessResultDefault
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple

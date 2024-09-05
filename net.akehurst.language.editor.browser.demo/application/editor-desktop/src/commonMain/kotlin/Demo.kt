@@ -19,20 +19,21 @@ package demo
 import korlibs.io.async.asyncImmediately
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.api.asm.Asm
 import net.akehurst.language.api.language.grammar.Grammar
 import net.akehurst.language.api.language.reference.CrossReferenceModel
+import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.style.AglStyleModel
-import net.akehurst.language.editor.api.AglEditor
-import net.akehurst.language.editor.api.EventStatus
-import net.akehurst.language.editor.api.LogFunction
-import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.api.*
+import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 
 
 //external var aglScriptBasePath: dynamic = definedExternally
@@ -306,7 +307,41 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
 
 fun createDummyEditor(editorId: String, languageId: String): AglEditor<Any, Any> {
     val logFunction: LogFunction = { _,_,_ -> }
-    return EditorDummy<Any, Any>(languageId, editorId, logFunction)
+    val langServer = LanguageServiceDirectExecution(object :LanguageServiceResponse {
+        override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
+            TODO("not implemented")
+        }
+
+        override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String) {
+            TODO("not implemented")
+        }
+
+        override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
+            TODO("not implemented")
+        }
+
+        override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
+            TODO("not implemented")
+        }
+
+        override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
+            TODO("not implemented")
+        }
+
+        override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+            TODO("not implemented")
+        }
+
+        override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+            TODO("not implemented")
+        }
+
+        override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+            TODO("not implemented")
+        }
+
+    })
+    return EditorDummy<Any, Any>(langServer,languageId,  editorId, logFunction)
 }
 
 

@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.api
 
+import net.akehurst.language.api.language.base.QualifiedName
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIssue
@@ -40,7 +41,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     /**
      * the language identity for this editor
      */
-    var languageIdentity: String
+    var languageIdentity: QualifiedName
 
     /**
      * The language definition for the editor, found or created using the languageId

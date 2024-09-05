@@ -31,12 +31,13 @@ import monaco.editor.ITextModel
 import monaco.languages.CompletionItemProvider
 import monaco.languages.ILanguageExtensionPoint
 import monaco.languages.TokensProvider
-import net.akehurst.kotlin.html5.create
+import net.akehurst.kotlin.compose.editor.ComposeCodeEditorJs
+import net.akehurst.kotlin.html5.elCreate
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.default.TypeModelFromGrammar
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
-import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.agl.semanticAnalyser.ContextSimple
 import net.akehurst.language.api.asm.*
@@ -53,7 +54,6 @@ import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
 import net.akehurst.language.editor.browser.demo.BuildConfig
 import net.akehurst.language.editor.browser.monaco.Monaco
 import net.akehurst.language.editor.browser.monaco.attachToMonaco
-import net.akehurst.language.editor.language.service.AglLanguageServiceByWorker
 import net.akehurst.language.editor.common.compose.attachToComposeEditor
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
@@ -63,12 +63,12 @@ import net.akehurst.language.editor.information.ExternalContextLanguage
 import net.akehurst.language.editor.information.examples.AglGrammar
 import net.akehurst.language.editor.information.examples.AglStyle
 import net.akehurst.language.editor.information.examples.BasicTutorial
+import net.akehurst.language.editor.language.service.AglLanguageServiceByWorker
 import net.akehurst.language.editor.technology.gui.widgets.TabView
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
 import net.akehurst.language.typemodel.api.*
 import org.w3c.dom.*
-import net.akehurst.kotlin.compose.editor.ComposeCodeEditorJs
 
 external var aglScriptBasePath: String = definedExternally
 external var resourcesPath: String = definedExternally
@@ -171,7 +171,7 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
         appDiv.removeChild(appDiv.firstChild!!)
     }
     //val aglEditorVersion = net.akehurst.language.editor.ace.
-    appDiv.create().article {
+    appDiv.elCreate().article {
         header {
             section {
                 class_.add("agl-menubar")

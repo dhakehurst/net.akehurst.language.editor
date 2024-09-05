@@ -57,7 +57,7 @@ class Server(
             install(Sessions) {
                 cookie<String>("SESSION_ID")
             }
-            intercept(ApplicationCallPipeline.Features) {
+            intercept(ApplicationCallPipeline.Plugins) {
                 call.sessions.set<String>(generateNonce())
             }
             //install(SinglePageApplication) {

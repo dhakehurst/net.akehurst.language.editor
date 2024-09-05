@@ -39,6 +39,7 @@ object AglWorkerSerialisation {
             agl_language_service_commonMain.KotlinxReflectForModule.registerUsedClasses()
             //TODO: enable kserialisation/komposite/reflect to auto add these some how!!
             initialiseApiTypes()
+            initialiseBase()
             initialiseTypeModel()
             initialiseExpressionsAsm()
             initialiseStyleAsm()
@@ -127,6 +128,47 @@ object AglWorkerSerialisation {
         })
     }
 
+    private fun initialiseBase() {
+        serialiser.configureFromTypeModel(typeModel("Base", false) {
+            namespace(
+                "net.akehurst.language.api.language.base",
+                imports = mutableListOf("kotlin", "kotlin.collections")
+            ) {
+                interfaceType("PossiblyQualifiedName")
+                valueType("QualifiedName") {
+                    supertypes("PossiblyQualifiedName")
+                    propertyPrimitiveType("value", "String", false, 0)
+                }
+                valueType("SimpleName") {
+                    supertypes("PossiblyQualifiedName")
+                    propertyPrimitiveType("value", "String", false, 0)
+                }
+                valueType("Import") {
+                    propertyPrimitiveType("value", "String", false, 0)
+                }
+                dataType("Indent") {
+                    propertyPrimitiveType("value", "String", false, 0)
+                    propertyPrimitiveType("increment", "String", false, 1)
+                }
+                interfaceType("Formatable")
+                interfaceType("Model")
+                interfaceType("Namespace")
+                interfaceType("Definition")
+            }
+            namespace(
+                "net.akehurst.language.agl.language.base",
+                imports = mutableListOf("kotlin", "kotlin.collections")
+            ) {
+                dataType("ModelDefault")
+                dataType("ModelAbstract")
+                dataType("NamespaceDefault")
+                dataType("NamespaceAbstract")
+                dataType("ModelDefault")
+                dataType("ModelDefault")
+            }
+        })
+    }
+
     private fun initialiseTypeModel() {
         serialiser.configureFromTypeModel(typeModel("TypeModel", false) {
 /*            namespace(
@@ -187,7 +229,7 @@ object AglWorkerSerialisation {
                 dataType("TypeInstanceSimple") {
                     supertypes("TypeInstanceAbstract")
                     //propertyOf(setOf(CONSTRUCTOR, REFERENCE), "context", "TypeDeclaration")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "contextQualifiedTypeName", "String", emptyList(), true)
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "contextQualifiedTypeName", "String",true)
                     propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedOrImportedTypeName", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
@@ -306,32 +348,32 @@ object AglWorkerSerialisation {
                 }
             }
             namespace("net.akehurst.language.typemodel.api", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("TypeModel") { }
-                dataType("TypeNamespace") {}
-                dataType("TypeInstance") {}
-                dataType("TypeDeclaration") {}
-                dataType("PrimitiveType") {
+                interfaceType("TypeModel") { }
+                interfaceType("TypeNamespace") {}
+                interfaceType("TypeInstance") {}
+                interfaceType("TypeDeclaration") {}
+                interfaceType("PrimitiveType") {
                     supertypes("TypeDeclaration")
                 }
-                dataType("EnumType") {
+                interfaceType("EnumType") {
                     supertypes("TypeDeclaration")
                 }
-                dataType("StructuredType") {
+                interfaceType("StructuredType") {
                     supertypes("TypeDeclaration")
                 }
-                dataType("TupleType") {
+                interfaceType("TupleType") {
                     supertypes("StructuredType")
                 }
-                dataType("DataType") {
+                interfaceType("DataType") {
                     supertypes("StructuredType")
                 }
-                dataType("PropertyDeclaration") {
+                interfaceType("PropertyDeclaration") {
                 }
                 enumType("PropertyCharacteristic", listOf())
-                dataType("UnnamedSupertypeType") {
+                interfaceType("UnnamedSupertypeType") {
                     supertypes("TypeDeclaration")
                 }
-                dataType("CollectionType") {
+                interfaceType("CollectionType") {
                     supertypes("TypeDeclaration")
                 }
             }
@@ -726,6 +768,9 @@ object AglWorkerSerialisation {
                 "net.akehurst.language.agl.language.grammar.asm",
                 imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.api.language.grammar")
             ) {
+                dataType("GrammarModelDefault") {
+
+                }
                 dataType("NamespaceDefault") {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
                 }

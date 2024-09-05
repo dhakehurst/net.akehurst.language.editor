@@ -15,10 +15,10 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.api.runtime.Rule
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
-import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.regex.RegexEngine
 import net.akehurst.language.agl.regex.RegexEngineAgl
 import net.akehurst.language.agl.regex.RegexEnginePlatform
@@ -27,6 +27,8 @@ import net.akehurst.language.agl.scanner.ScannerAbstract
 import net.akehurst.language.agl.scanner.ScannerClassic
 import net.akehurst.language.agl.scanner.ScannerOnDemand
 import net.akehurst.language.agl.sppt.CompleteTreeDataNode
+import net.akehurst.language.api.language.base.QualifiedName
+import net.akehurst.language.api.language.grammar.GrammarRuleName
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.api.processor.RegexEngineKind
 import net.akehurst.language.api.processor.ScannerKind
@@ -36,7 +38,7 @@ import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
 
 class AglComponents<AsmType : Any, ContextType : Any>(
-    languageId: String,
+    languageId: QualifiedName,
     val editorId: String,
     val logger: AglEditorLogger
 ) {
@@ -57,7 +59,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
         )
 
     var options = Agl.options<AsmType, ContextType> {}
-    var goalRule: String? = languageDefinition.defaultGoalRule
+    var goalRule: GrammarRuleName? = languageDefinition.defaultGoalRule
 
     val styleHandler get() = _styleHandler
 
@@ -76,7 +78,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
             _scannerMatchables = value.map { it.using(regexEngine) }
         }
 
-    var languageIdentity: String
+    var languageIdentity: QualifiedName
         get() = languageDefinition.identity
         set(value) {
             if (languageDefinition.identity == value) {

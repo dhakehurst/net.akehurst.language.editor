@@ -29,7 +29,7 @@ import monaco.languages.CompletionItemKind
 import monaco.languages.CompletionItemProvider
 import monaco.languages.ILanguageExtensionPoint
 import monaco.languages.TokensProvider
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageProcessorPhase

@@ -15,8 +15,10 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.language.base.QualifiedName
 import net.akehurst.language.editor.api.AglEditorLogger
+import net.akehurst.language.editor.api.AglToken
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -44,32 +46,32 @@ internal class test_AglTokenizer {
         val styleMdl = Agl.registry.agl.style.processor!!.process(styleStr).asm!!
 
         val langDef = Agl.registry.register(
-            identity = testLangId,
+            identity = QualifiedName(testLangId),
             grammarStr = grammarStr,
             aglOptions = null,
             buildForDefaultGoal = false,
             configuration = Agl.configurationDefault()
         )
 
-        fun test_getLineTokensByScan(lineText: String, previousLineState: AglLineState, expected: AglLineState) {
-            val agl = AglComponents<Any, Any>(testLangId, testEditorId, logger)
+        fun test_getLineTokensByScan(lineText: String, previousLineState: AglLineState, expected: Pair<AglLineState, List<AglToken>>) {
+            val agl = AglComponents<Any, Any>(QualifiedName(testLangId), testEditorId, logger)
             agl.styleHandler.updateStyleModel(styleMdl)
             agl.scannerMatchables = agl.languageDefinition.processor!!.scanner!!.matchables
             val sut = AglTokenizer<Any, Any>(agl)
 
             val actual = sut.getLineTokensByScan(lineText, previousLineState)
 
-            assertEquals(expected.lineNumber, actual.lineNumber,"lineNumber")
-            assertEquals(expected.nextLineStartPosition, actual.nextLineStartPosition, "nextLineStartPosition")
-            assertEquals(expected.leftOverText, actual.leftOverText,"leftOverText")
-            assertEquals(expected.tokens, actual.tokens, "tokens")
+            assertEquals(expected.first.lineNumber, actual.first.lineNumber, "lineNumber")
+            assertEquals(expected.first.nextLineStartPosition, actual.first.nextLineStartPosition, "nextLineStartPosition")
+            assertEquals(expected.first.leftOverText, actual.first.leftOverText, "leftOverText")
+            assertEquals(expected.second, actual.second, "tokens")
         }
 
-        fun test_getLineTokensByParse(fullText: String, row: Int, state: AglLineState, expected: AglLineState) {
-            val agl = AglComponents<Any, Any>(testLangId, testEditorId, logger)
+        fun test_getLineTokensByParse(fullText: String, row: Int, state: AglLineState, expected: Pair<AglLineState, List<AglToken>>) {
+            val agl = AglComponents<Any, Any>(QualifiedName(testLangId), testEditorId, logger)
             agl.styleHandler.updateStyleModel(styleMdl)
             val sut = AglTokenizer<Any, Any>(agl)
-            sut.acceptingTokens = true
+            //sut.acceptingTokens = true
 
             val result = agl.languageDefinition.processor!!.parse(fullText, Agl.parseOptions { })
             val tokens = result.sppt!!.tokensByLineAll().map { ln ->
@@ -80,10 +82,10 @@ internal class test_AglTokenizer {
             val lineText = fullText.split("\n")[row]
             val actual = sut.useCachedTokens(sut.tokensByLine[row]!!, lineText, state)
 
-            assertEquals(expected.lineNumber, actual.lineNumber)
-            assertEquals(expected.nextLineStartPosition, actual.nextLineStartPosition)
-            assertEquals(expected.leftOverText, actual.leftOverText)
-            assertEquals(expected.tokens, actual.tokens)
+            assertEquals(expected.first.lineNumber, actual.first.lineNumber)
+            assertEquals(expected.first.nextLineStartPosition, actual.first.nextLineStartPosition)
+            assertEquals(expected.first.leftOverText, actual.first.leftOverText)
+            assertEquals(expected.second, actual.second)
         }
     }
 
@@ -92,9 +94,9 @@ internal class test_AglTokenizer {
         val lineText = ""
         val lineNumber = 0
         val sp = 0
-        val prevState = AglLineState(lineNumber-1, sp, "", emptyList())
+        val prevState = AglLineState(lineNumber - 1, sp, "")
 
-        val expected = AglLineState(lineNumber, 1, "", emptyList())
+        val expected = Pair<AglLineState, List<AglToken>>(AglLineState(lineNumber, 1, ""), emptyList())
 
         test_getLineTokensByScan(lineText, prevState, expected)
     }
@@ -104,10 +106,11 @@ internal class test_AglTokenizer {
         val lineText = "abc def ghi"
         val lineNumber = 0
         val sp = 0
-        val prevState = AglLineState(lineNumber-1, sp, "", emptyList())
+        val prevState = AglLineState(lineNumber - 1, sp, "")
 
-        val expected = AglLineState(
-            0, lineText.length + 1, "", listOf(
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(0, lineText.length + 1, ""),
+            listOf(
                 AglTokenDefault(listOf("agl_testLangId-1"), 0, 3),
                 AglTokenDefault(listOf("agl_testLangId-2"), 3, 1),
                 AglTokenDefault(listOf("agl_testLangId-1"), 4, 3),
@@ -130,10 +133,11 @@ internal class test_AglTokenizer {
         val lineText = split[0]
         val lineNumber = 0
         val sp = 0
-        val prevState = AglLineState(lineNumber-1, sp, "", emptyList())
+        val prevState = AglLineState(lineNumber - 1, sp, "")
 
-        val expected = AglLineState(
-            0, split[0].length + 1, "", listOf(
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(0, split[0].length + 1, ""),
+            listOf(
                 AglTokenDefault(listOf("agl_testLangId-1"), 0, 3),
                 AglTokenDefault(listOf("agl_testLangId-2"), 3, 1),
                 AglTokenDefault(listOf("agl_testLangId-1"), 4, 3),
@@ -142,7 +146,9 @@ internal class test_AglTokenizer {
             )
         )
 
-        test_getLineTokensByScan(lineText, prevState, expected)
+        test_getLineTokensByScan(
+            lineText, prevState, expected
+        )
     }
 
     @Test
@@ -156,10 +162,11 @@ internal class test_AglTokenizer {
         val lineText = split[1]
         val row = 1
         val sp = 0
-        val state = AglLineState(row, split[0].length + 1, "", emptyList())
+        val state = AglLineState(row, split[0].length + 1, "")
 
-        val expected = AglLineState(
-            1, state.nextLineStartPosition + split[1].length + 1, "", listOf(
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(1, state.nextLineStartPosition + split[1].length + 1, ""),
+            listOf(
                 AglTokenDefault(listOf("agl_testLangId-1"), state.nextLineStartPosition + 0, 2),
                 AglTokenDefault(listOf("agl_testLangId-2"), state.nextLineStartPosition + 2, 2),
                 AglTokenDefault(listOf("agl_testLangId-1"), state.nextLineStartPosition + 4, 3),
@@ -182,10 +189,11 @@ internal class test_AglTokenizer {
         val lineText = split[2]
         val row = 2
         val sp = 0
-        val state = AglLineState(row, split[0].length + 1 + split[1].length + 1, "", emptyList())
+        val state = AglLineState(row, split[0].length + 1 + split[1].length + 1, "")
 
-        val expected = AglLineState(
-            2, state.nextLineStartPosition + split[2].length + 1, "", listOf(
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(2, state.nextLineStartPosition + split[2].length + 1, ""),
+            listOf(
                 AglTokenDefault(listOf("agl_testLangId-1"), state.nextLineStartPosition + 0, 3),
             )
         )
@@ -198,9 +206,12 @@ internal class test_AglTokenizer {
         val lineText = ""
         val row = 0
         val sp = 0
-        val state = AglLineState(row, sp, "", emptyList())
+        val state = AglLineState(row, sp, "")
 
-        val expected = AglLineState(0, 1, "", emptyList())
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(0, 1, ""),
+            emptyList()
+        )
 
         test_getLineTokensByParse(lineText, row, state, expected)
     }
@@ -210,10 +221,11 @@ internal class test_AglTokenizer {
         val lineText = "abc def ghi"
         val row = 0
         val sp = 0
-        val state = AglLineState(row, sp, "", emptyList())
+        val state = AglLineState(row, sp, "")
 
-        val expected = AglLineState(
-            0, lineText.length + 1, "", listOf(
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(0, lineText.length + 1, ""),
+            listOf(
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 0, 3),
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), 3, 1),
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 4, 3),
@@ -235,10 +247,11 @@ internal class test_AglTokenizer {
         val split = totalText.split("\n")
         val row = 0
         val sp = 0
-        val state = AglLineState(row, sp, "", emptyList())
+        val state = AglLineState(row, sp, "")
 
-        val expected = AglLineState(
-            0, split[0].length + 1, "", listOf(
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(0, split[0].length + 1, ""),
+            listOf(
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 0, 3),  //aaa
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), 3, 1),  // .
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), 4, 3),  // bbb
@@ -261,10 +274,11 @@ internal class test_AglTokenizer {
         val split = totalText.split("\n")
         val row = 1
         val sp = 0
-        val state = AglLineState(row, split[0].length + 1, "", emptyList())
+        val state = AglLineState(row, split[0].length + 1, "")
 
-        val expected = AglLineState(
-            1, state.nextLineStartPosition + split[1].length + 1, "", listOf(
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(1, state.nextLineStartPosition + split[1].length + 1, ""),
+            listOf(
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 0, 2),
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-2"), state.nextLineStartPosition + 2, 2),
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 4, 3),
@@ -287,10 +301,11 @@ internal class test_AglTokenizer {
         val split = totalText.split("\n")
         val row = 2
         val sp = 0
-        val state = AglLineState(row, split[0].length + 1 + split[1].length + 1, "", emptyList())
+        val state = AglLineState(row, split[0].length + 1 + split[1].length + 1, "")
 
-        val expected = AglLineState(
-            2, state.nextLineStartPosition + split[2].length + 1, "", listOf(
+        val expected = Pair<AglLineState, List<AglToken>>(
+            AglLineState(2, state.nextLineStartPosition + split[2].length + 1, ""),
+            listOf(
                 AglTokenDefault(listOf("agl_testLangId-3", "agl_testLangId-1"), state.nextLineStartPosition + 0, 3),
             )
         )

@@ -17,15 +17,12 @@
 package net.akehurst.language.editor.worker
 
 import net.akehurst.kotlin.json.JsonString
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.agl.parser.SentenceDefault
 import net.akehurst.language.agl.default.TypeModelFromGrammar
-import net.akehurst.language.agl.language.format.AglFormatterModelFromAsm
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
-import net.akehurst.language.agl.language.grammar.ContextFromGrammar
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
 import net.akehurst.language.agl.language.reference.asm.CrossReferenceModelDefault
-import net.akehurst.language.agl.language.style.asm.AglStyleModelDefault
-import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.processor.IssueHolder
 import net.akehurst.language.agl.processor.ParseResultDefault
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault

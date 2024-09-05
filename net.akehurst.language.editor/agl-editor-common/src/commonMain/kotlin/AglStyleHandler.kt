@@ -16,33 +16,33 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.language.style.asm.AglStyleModelDefault
+import net.akehurst.language.api.language.base.QualifiedName
+import net.akehurst.language.api.language.style.AglStyleModel
+import net.akehurst.language.api.language.style.AglStyleRule
 import net.akehurst.language.api.sppt.LeafData
-import net.akehurst.language.api.style.AglStyle
-import net.akehurst.language.api.style.AglStyleModel
-import net.akehurst.language.api.style.AglStyleRule
 
 open class AglStyleHandler(
-    languageId: String,
+    languageId: QualifiedName,
     val cssClassPrefixStart: String = "agl"
 ) {
 
     companion object {
         const val EDITOR_NO_STYLE = "nostyle"
 
-        fun languageIdToStyleClass(cssClassPrefixStart: String, languageId: String): String {
-            val cssLangId = languageId.replace(Regex("[^a-z0-9A-Z_-]"), "_")
+        fun languageIdToStyleClass(cssClassPrefixStart: String, languageId: QualifiedName): String {
+            val cssLangId = languageId.value.replace(Regex("[^a-z0-9A-Z_-]"), "_")
             return "${cssClassPrefixStart}_${cssLangId}"
         }
     }
 
-    private var _styleModel: AglStyleModel = AglStyleModelDefault(emptyList())
+    private var _styleModel: AglStyleModel = AglStyleModelDefault(languageId.last,emptyList())
 
     val styleModel get() = _styleModel
 
     private var _editorStyles = mutableMapOf<String, Any>()
 
     // AglStyleHandler is recreated if languageId changes for the editor
-    val cssLanguageId = languageId.replace(Regex("[^a-z0-9A-Z_-]"), "_")
+    //val cssLanguageId = languageId.value.replace(Regex("[^a-z0-9A-Z_-]"), "_")
     val aglStyleClass = languageIdToStyleClass(cssClassPrefixStart, languageId)
 
     private var nextCssClassNum = 1
@@ -90,7 +90,7 @@ open class AglStyleHandler(
 
     fun updateStyleModel(styleModel: AglStyleModel) {
         _styleModel = styleModel // TODO: should not need to store this , need to modify 'updateEditorStyles' in editor specific code!
-        styleModel.rules.forEach { sr ->
+        styleModel.allDefinitions.forEach { sr ->
             val edStyle = convert<Any>(sr)
             sr.selector.forEach { sel ->
                 val sn = mapClass(sel.value)

@@ -18,7 +18,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.api.processor.*
-import net.akehurst.language.api.style.AglStyleModel
+import net.akehurst.language.api.language.style.AglStyleModel
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 import java.util.concurrent.ExecutorService

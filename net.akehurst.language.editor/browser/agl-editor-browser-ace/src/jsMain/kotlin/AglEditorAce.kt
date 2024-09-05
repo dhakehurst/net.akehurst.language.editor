@@ -22,13 +22,19 @@ import ace.IRange
 import kotlinx.browser.window
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.LanguageIssueKind
 import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.style.*
+import net.akehurst.language.api.style.AglStyle
+import net.akehurst.language.api.style.AglStyleRule
+import net.akehurst.language.api.style.AglStyleSelector
+import net.akehurst.language.api.style.AglStyleSelectorKind
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.common.AglEditorAbstract
+import net.akehurst.language.editor.common.AglStyleHandler
+import net.akehurst.language.editor.common.AglTokenizerByWorker
+import net.akehurst.language.editor.common.objectJSTyped
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 

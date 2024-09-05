@@ -21,7 +21,7 @@ import net.akehurst.language.agl.sppt.TreeData
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.ProcessOptions
-import net.akehurst.language.api.style.AglStyleModel
+import net.akehurst.language.api.language.style.AglStyleModel
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity

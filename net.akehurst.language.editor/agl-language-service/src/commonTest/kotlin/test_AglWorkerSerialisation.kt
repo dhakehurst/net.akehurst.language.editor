@@ -16,9 +16,10 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.default.TypeModelFromGrammar
+import net.akehurst.language.agl.language.asmTransform.TransformModelDefault
+import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.agl.language.grammar.ContextFromGrammar
-import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.scanner.MatchableKind
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
@@ -36,7 +37,6 @@ import net.akehurst.language.editor.api.EditorOptionsDefault
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.language.service.AglWorkerSerialisation
-import net.akehurst.language.editor.language.service.*
 import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.api.typeModel
@@ -82,7 +82,7 @@ class test_AglWorkerSerialisation {
                     leaf b = 'b' 'b' ;
                 }
             """.trimIndent()
-        ).asm!![0]
+        ).asm!!.primary!!
 
         test(input)
     }
@@ -181,8 +181,8 @@ class test_AglWorkerSerialisation {
                     leaf b = 'b' 'b' ;
                 }
             """.trimIndent()
-        ).asm!![0]
-        val input: TypeModel = TypeModelFromGrammar.create(grammar)
+        ).asm!!
+        val input: TypeModel = TransformModelDefault.fromGrammarModel(grammar).asm!!.typeModel!!
 
         test(input) { expected, actual ->
             assertEquals(expected.asString(), actual.asString())
@@ -319,8 +319,8 @@ class test_AglWorkerSerialisation {
               S = 'a' ;
             }
         """
-        val grammar = Agl.registry.agl.grammar.processor!!.process(grammarStr).asm!!.first()
-        val context = ContextFromGrammar.createContextFrom(listOf(grammar))
+        val grammar = Agl.registry.agl.grammar.processor!!.process(grammarStr).asm!!
+        val context = ContextFromGrammar.createContextFrom(grammar)
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), languageId,
             "",
@@ -349,7 +349,7 @@ class test_AglWorkerSerialisation {
               S = 'a' ;
             }
         """
-        val proc = Agl.processorFromStringDefault(grammarStr).processor!!
+        val proc = Agl.processorFromStringDefault(GrammarString(grammarStr)).processor!!
         val context = ContextFromTypeModel(proc.typeModel)
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), languageId,
@@ -384,7 +384,7 @@ class test_AglWorkerSerialisation {
                 }
             """.trimIndent()
         val expected = MessageProcessRequest(
-            EndPointIdentity(editorId, sessionId), Agl.registry.agl.grammarLanguageIdentity,
+            EndPointIdentity(editorId, sessionId), Agl.registry.agl.grammarLanguageIdentity.value,
             userGrammar,
             Agl.options { }
         )
@@ -470,12 +470,12 @@ class test_AglWorkerSerialisation {
     @Test
     fun test_TreeDataComplete_a() {
         val p = Agl.processorFromStringDefault(
-            """
+           GrammarString( """
             namespace test
             grammar Test {
                 S = 'a' ;
             }
-        """.trimIndent()
+        """.trimIndent())
         ).processor!!
         val treeData = p.parse("a").sppt?.treeData!!
 
@@ -604,7 +604,7 @@ class test_AglWorkerSerialisation {
               S = 'a' ;
             }
         """
-        val proc = Agl.processorFromStringDefault(grammarStr).processor!!
+        val proc = Agl.processorFromStringDefault(GrammarString(grammarStr)).processor!!
         val expected = MessageSyntaxAnalysisResult(
             EndPointIdentity(editorId, sessionId),
             MessageStatus.SUCCESS,
@@ -720,8 +720,9 @@ class test_AglWorkerSerialisation {
                    S = 'a' ;
                 }
             """
-        ).asm!!.first()
-        val context = ContextFromTypeModel(TypeModelFromGrammar.create(grammar))
+        ).asm!!
+        val typeModel = TransformModelDefault.fromGrammarModel(grammar).asm!!.typeModel!!
+        val context = ContextFromTypeModel(typeModel)
 
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), languageId,

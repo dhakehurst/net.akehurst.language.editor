@@ -16,16 +16,17 @@
 
 package net.akehurst.language.editor.language.service
 
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.agl.parser.SentenceDefault
-import net.akehurst.language.agl.default.TypeModelFromGrammar
+import net.akehurst.language.agl.language.asmTransform.TransformModelDefault
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
-import net.akehurst.language.agl.processor.Agl
 import net.akehurst.language.agl.processor.IssueHolder
 import net.akehurst.language.agl.processor.ParseResultDefault
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
+import net.akehurst.language.api.language.base.QualifiedName
 import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.sppt.Sentence
@@ -66,12 +67,12 @@ open class LanguageServiceDirectExecution(
 
     override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: String, styleStr: String) {
         try {
-            val style = AglStyleHandler(languageId)
+            val style = AglStyleHandler(QualifiedName( languageId))
             this._styleHandler[languageId] = style
             val result = Agl.registry.agl.style.processor!!.process(styleStr)
             val styleMdl = result.asm
             if (null != styleMdl) {
-                styleMdl.rules.forEach { rule ->
+                styleMdl.allDefinitions.forEach { rule ->
                     rule.selector.forEach { sel -> style.mapClass(sel.value) }
                 }
                 response.processorSetStyleResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl)
@@ -122,7 +123,7 @@ open class LanguageServiceDirectExecution(
 
     protected open fun createLanguageDefinition(languageId: String, grammarStr: String?, crossReferenceModelStr: String?): LanguageDefinition<Any, Any> {
         val ld = Agl.registry.findOrPlaceholder<Any, Any>(
-            identity = languageId,
+            identity = QualifiedName(languageId),
             aglOptions = Agl.options {
                 semanticAnalysis {
                     context(ContextFromGrammarRegistry(Agl.registry))
@@ -264,12 +265,12 @@ open class LanguageServiceDirectExecution(
                 //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefinition, get its typemodel and create ContextFromTypeModel
                 // }
                 val ctx = when (languageId) {
-                    Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: ContextFromGrammarRegistry(Agl.registry)
-                    Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
+                    Agl.registry.agl.grammar.identity.value -> options.semanticAnalysis.context ?: ContextFromGrammarRegistry(Agl.registry)
+                    Agl.registry.agl.crossReference.identity.value -> when (options.semanticAnalysis.context) {
                         is ContextFromTypeModelReference -> {
-                            val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId
+                            val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId.value
                             val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                            val tm = TypeModelFromGrammar.createFromGrammarList(ld.grammarList)
+                            val tm = TransformModelDefault.fromGrammarModel(ld.grammarList).asm!!.typeModel!!
                             ContextFromTypeModel(tm)
                         }
 

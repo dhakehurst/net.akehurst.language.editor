@@ -1,18 +1,22 @@
 [versions]
-kotlin = "1.9.22"
+kotlin = "2.0.20"
 dokka = "1.9.10"
+exportPublic = "2.0.20"
+reflect = "2.0.20"
+buildconfig = "5.4.0"
+credentials = "3.0"
 
-nal-agl-processor = "4.0.22"
+nal-agl-processor = "4.2.0.20"
 
-nak-compose-code-editor-api = "1.9.22"
+nak-compose-code-editor-api = "2.0.20"
 
-nak-serialisation = "1.9.22"
-nak-json = "1.9.22"
-nak-kotlinx = "1.9.22"
-nak-html-builder = "1.9.22"
+nak-serialisation = "2.0.20"
+nak-json = "2.0.20"
+nak-kotlinx = "2.0.20"
+nak-html-builder = "2.0.20"
 nak-codemirror-api = "6.0.1"
 
-kotlinx-coroutines = "1.8.0-RC2"
+kotlinx-coroutines = "1.8.1"
 
 
 [libraries]
@@ -31,3 +35,7 @@ kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core",
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+exportPublic =  { id = "net.akehurst.kotlin.gradle.plugin.exportPublic", version.ref = "exportPublic" }
+reflect =  { id = "net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin", version.ref = "reflect" }
+buildconfig =  { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
+credentials =  { id = "nu.studer.credentials", version.ref = "credentials" }

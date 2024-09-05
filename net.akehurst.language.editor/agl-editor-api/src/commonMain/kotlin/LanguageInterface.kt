@@ -4,7 +4,7 @@ import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.ProcessOptions
-import net.akehurst.language.api.style.AglStyleModel
+import net.akehurst.language.api.language.style.AglStyleModel
 
 interface LanguageService {
     val request: LanguageServiceRequest

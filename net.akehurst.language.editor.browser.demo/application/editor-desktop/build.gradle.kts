@@ -15,6 +15,8 @@ dependencies {
 
     commonMainImplementation(project(":information-editor"))
     commonMainImplementation("net.akehurst.language.editor:agl-editor-common:$version_agl_editor")
+    commonMainImplementation("net.akehurst.language.editor:agl-language-service:$version_agl_editor")
+
     //jsMainImplementation(project(":technology-gui-widgets"))
     //jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-ace:$version_agl_editor")
     //jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-monaco:$version_agl_editor")

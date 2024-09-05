@@ -1,6 +1,7 @@
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.language.base.QualifiedName
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.LogLevel
 import kotlin.test.Test
@@ -17,7 +18,7 @@ class test_AglComponents {
         var modified = null as String?
         val langId = "test"
         val def = Agl.registry.register(
-            identity = langId,
+            identity = QualifiedName( langId),
             grammarStr = null,
             aglOptions = null,
             buildForDefaultGoal = false,
@@ -38,15 +39,15 @@ class test_AglComponents {
         val langId1 = "test1"
         val langId2 = Agl.registry.agl.grammarLanguageIdentity
         val def = Agl.registry.register(
-            identity = langId1,
+            identity = QualifiedName( langId1),
             grammarStr = null,
             aglOptions = null,
             buildForDefaultGoal = false,
             configuration = Agl.configurationDefault(),
         )
 
-        val sut = AglComponents<Any,Any>(langId1,"", logger)
-        assertEquals(langId1, sut.languageDefinition.identity)
+        val sut = AglComponents<Any,Any>(QualifiedName( langId1),"", logger)
+        assertEquals(langId1, sut.languageDefinition.identity.value)
 
         sut.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
 

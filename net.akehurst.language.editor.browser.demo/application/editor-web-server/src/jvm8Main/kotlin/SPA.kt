@@ -48,7 +48,7 @@ class SinglePageApplication(private val configuration: Configuration) {
         }
 
     }
-*/
+
     private suspend fun intercept(
             pipelineContext: PipelineContext<Any, ApplicationCall>,
             message: Any
@@ -99,7 +99,7 @@ class SinglePageApplication(private val configuration: Configuration) {
     ) {
         fun fullPath() = Paths.get(folderPath, defaultPage)!!
     }
-
+*/
 }
 
 fun String.notContains(regex: Regex) = !contains(regex)

@@ -18,11 +18,12 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.agl.agl.parser.SentenceAbstract
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.scanner.ScannerOnDemand
+import net.akehurst.language.api.language.base.QualifiedName
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.api.processor.ProcessOptions
-import net.akehurst.language.api.style.AglStyleModel
+import net.akehurst.language.api.language.style.AglStyleModel
 import net.akehurst.language.editor.api.*
 
 class SentenceFromEditor<AsmType : Any, ContextType : Any>(
@@ -38,7 +39,7 @@ class SentenceFromEditor<AsmType : Any, ContextType : Any>(
 
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     val languageServiceRequest: LanguageServiceRequest,
-    languageId: String,
+    languageId: QualifiedName,
     override val endPointIdentity: EndPointIdentity,
     logFunction: LogFunction?,
 ) : AglEditor<AsmType, ContextType>, LanguageServiceResponse {
@@ -69,7 +70,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
 
     override var sentence = SentenceFromEditor(this)
 
-    override var languageIdentity: String
+    override var languageIdentity: QualifiedName
         get() = this.agl.languageIdentity
         set(value) {
             val oldId = this.agl.languageIdentity
@@ -154,7 +155,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
 
     protected abstract fun resetTokenization(fromLine: Int)
     protected abstract fun createIssueMarkers(issues: List<LanguageIssue>)
-    protected abstract fun updateLanguage(oldId: String?)
+    protected abstract fun updateLanguage(oldId: QualifiedName?)
     protected abstract fun updateEditorStyles()
 
      fun updateProcessor() {
@@ -163,7 +164,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             //do nothing
         } else {
             this.clearErrorMarkers()
-            this.languageServiceRequest.processorCreateRequest(this.endPointIdentity, this.languageIdentity, grammarStr, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
+            this.languageServiceRequest.processorCreateRequest(this.endPointIdentity, this.languageIdentity.value, grammarStr, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
             this.workerTokenizer.reset()
             this.resetTokenization(0) //new processor so find new tokens, first by scan
         }
@@ -174,7 +175,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             val styleStr = this.editorSpecificStyleStr
             if (!styleStr.isNullOrEmpty()) {
                 this.agl.styleHandler.reset()
-                this.languageServiceRequest.processorSetStyleRequest(this.endPointIdentity, this.languageIdentity, styleStr)
+                this.languageServiceRequest.processorSetStyleRequest(this.endPointIdentity, this.languageIdentity.value, styleStr)
             }
         }
     }
@@ -182,8 +183,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     fun processSentence() {
         if (doUpdate) {
             this.clearErrorMarkers()
-            this.languageServiceRequest.interruptRequest(this.endPointIdentity, this.languageIdentity, "process Sentence")
-            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, this.languageIdentity, this.text, this.agl.options)
+            this.languageServiceRequest.interruptRequest(this.endPointIdentity, this.languageIdentity.value, "process Sentence")
+            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, this.languageIdentity.value, this.text, this.agl.options)
         }
     }
 

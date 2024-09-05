@@ -18,13 +18,10 @@ package net.akehurst.language.editor.browser.monaco
 
 import monaco.CancellationToken
 import monaco.IPosition
-import monaco.IRange
 import monaco.editor.ITextModel
-import monaco.languages.CompletionItemKind
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.objectJSTyped
 
 class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
     val monaco: Monaco,
@@ -58,7 +55,11 @@ class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
         return if (null == proc) {
             emptyList()
         } else {
-            val result = proc.expectedItemsAt(text, offset, 1, Agl.options { parse { goalRuleName(goalRule) } })
+            val result = proc.expectedItemsAt(text, offset, 1,
+                Agl.options {
+                    parse { goalRuleName(goalRule) }
+                }
+            )
             result.items
         }
     }

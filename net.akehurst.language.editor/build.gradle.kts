@@ -15,23 +15,17 @@
  */
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import com.github.gmazzo.gradle.plugins.BuildConfigExtension
-import org.gradle.internal.jvm.Jvm
+import com.github.gmazzo.buildconfig.BuildConfigExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 
 plugins {
     alias(libs.plugins.kotlin) apply false
     alias(libs.plugins.dokka) apply false
-    id("com.github.gmazzo.buildconfig") version ("4.1.2") apply false
-    id("nu.studer.credentials") version ("3.0")
-    id("net.akehurst.kotlin.gradle.plugin.exportPublic") version ("1.9.22") apply false
-    id("net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin") version ("1.9.22") apply false
+    alias(libs.plugins.buildconfig) apply false
+    alias(libs.plugins.credentials) apply true
+    alias(libs.plugins.exportPublic) apply false
+    alias(libs.plugins.reflect) apply false
 }
-
-println("===============================================")
-println("Gradle: ${GradleVersion.current()}")
-println("JVM: ${Jvm.current()} '${Jvm.current().javaHome}'")
-println("===============================================")
 
 allprojects {
 
@@ -55,8 +49,8 @@ allprojects {
 }
 
 subprojects {
-    val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
-    val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9
+    val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
+    val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
     val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
 
     apply(plugin = "org.jetbrains.kotlin.multiplatform")
@@ -144,7 +138,6 @@ subprojects {
             }
         }
     }
-
 
     val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
 

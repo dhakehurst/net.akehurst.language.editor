@@ -17,7 +17,7 @@
 package net.akehurst.language.editor.common.compose
 
 import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
-import net.akehurst.language.agl.processor.Agl
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIssue
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
