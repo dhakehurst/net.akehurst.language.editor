@@ -38,8 +38,8 @@ object AglWorkerSerialisation {
         if (!initialised) {
             agl_language_service_commonMain.KotlinxReflectForModule.registerUsedClasses()
             //TODO: enable kserialisation/komposite/reflect to auto add these some how!!
-            initialiseApiTypes()
             initialiseBase()
+            initialiseApiTypes()
             initialiseTypeModel()
             initialiseExpressionsAsm()
             initialiseStyleAsm()
@@ -53,6 +53,9 @@ object AglWorkerSerialisation {
         }
     }
 
+    /*
+    api.parser -->
+     */
     private fun initialiseApiTypes() {
         //classes registered with KotlinxReflect via gradle plugin
         serialiser.configureFromTypeModel(typeModel("ApiType", false) {
@@ -79,7 +82,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "CompletionItemKind")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
                     propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(MEMBER, COMPOSITE), "description", "String")
+                    propertyOf(setOf(READ_WRITE, COMPOSITE), "description", "String")
                 }
             }
             namespace("net.akehurst.language.agl.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
@@ -128,48 +131,1279 @@ object AglWorkerSerialisation {
         })
     }
 
+    /*
+     api.language.base --> std
+     agl.language.base --> std, api.language.base
+     */
     private fun initialiseBase() {
         serialiser.configureFromTypeModel(typeModel("Base", false) {
-            namespace(
-                "net.akehurst.language.api.language.base",
-                imports = mutableListOf("kotlin", "kotlin.collections")
-            ) {
-                interfaceType("PossiblyQualifiedName")
-                valueType("QualifiedName") {
-                    supertypes("PossiblyQualifiedName")
-                    propertyPrimitiveType("value", "String", false, 0)
-                }
+            namespace("net.akehurst.language.api.language.base", listOf("std")) {
                 valueType("SimpleName") {
-                    supertypes("PossiblyQualifiedName")
-                    propertyPrimitiveType("value", "String", false, 0)
+                    supertypes("PossiblyQualifiedName", "std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
+                }
+                valueType("QualifiedName") {
+                    supertypes("PossiblyQualifiedName", "std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
                 }
                 valueType("Import") {
-                    propertyPrimitiveType("value", "String", false, 0)
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
+                }
+                interfaceType("PossiblyQualifiedName") {
+                    supertypes("std.Any")
+                }
+                interfaceType("Namespace") {
+                    typeParameters("DT")
+                    supertypes("Formatable", "std.Any")
+                }
+                interfaceType("Model") {
+                    typeParameters("NT", "DT")
+                    supertypes("Formatable", "std.Any")
+                }
+                interfaceType("Formatable") {
+                    supertypes("std.Any")
+                }
+                interfaceType("Definition") {
+                    typeParameters("DT")
+                    supertypes("Formatable", "std.Any")
                 }
                 dataType("Indent") {
-                    propertyPrimitiveType("value", "String", false, 0)
-                    propertyPrimitiveType("increment", "String", false, 1)
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                        parameter("increment", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "increment", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
                 }
-                interfaceType("Formatable")
-                interfaceType("Model")
-                interfaceType("Namespace")
-                interfaceType("Definition")
             }
-            namespace(
-                "net.akehurst.language.agl.language.base",
-                imports = mutableListOf("kotlin", "kotlin.collections")
-            ) {
-                dataType("ModelDefault")
-                dataType("ModelAbstract")
-                dataType("NamespaceDefault")
-                dataType("NamespaceAbstract")
-                dataType("ModelDefault")
-                dataType("ModelDefault")
+            namespace("net.akehurst.language.agl.language.base", listOf("net.akehurst.language.api.language.base", "std")) {
+                dataType("NamespaceDefault") {
+                    supertypes("NamespaceAbstract")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                    }
+                }
+                dataType("NamespaceAbstract") {
+                    supertypes("net.akehurst.language.api.language.base.Namespace", "std.Any")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "import", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.base.Import")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                }
+                dataType("ModelDefault") {
+                    supertypes("ModelAbstract")
+                    constructor_ {
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                        parameter("namespace", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                }
+                dataType("ModelAbstract") {
+                    supertypes("net.akehurst.language.api.language.base.Model", "std.Any")
+                    constructor_ {
+                        parameter("namespace", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "std.List", false){
+                        typeArgument("NT")
+                    }
+                }
             }
         })
     }
 
+    /*
+    api.language.grammar --> api.language.base
+    agl.language.grammar.asm -> api.language.grammar, .api.language.base, agl.language.base
+     */
+    private fun initialiseGrammarAsm() {
+        //classes registered with KotlinxReflect via gradle plugin
+        serialiser.configureFromTypeModel(typeModel("GrammarAsm", false) {
+            namespace("net.akehurst.language.api.language.grammar", listOf("std", "net.akehurst.language.api.language.base")) {
+                enumType("SeparatedListKind", listOf("Flat", "Left", "Right"))
+                enumType("OverrideKind", listOf("REPLACE", "APPEND_ALTERNATIVE", "SUBSTITUTION"))
+                enumType("Associativity", listOf("LEFT", "RIGHT"))
+                valueType("GrammarRuleName") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
+                }
+                interfaceType("Terminal") {
+                    supertypes("TangibleItem", "std.Any")
+                }
+                interfaceType("TangibleItem") {
+                    supertypes("SimpleItem", "std.Any")
+                }
+                interfaceType("SimpleList") {
+                    supertypes("ListOfItems", "std.Any")
+                }
+                interfaceType("SimpleItem") {
+                    supertypes("ConcatenationItem", "std.Any")
+                }
+                interfaceType("SeparatedList") {
+                    supertypes("ListOfItems", "std.Any")
+                }
+                interfaceType("RuleItem") {
+                    supertypes("std.Any")
+                }
+                interfaceType("PreferenceRule") {
+                    supertypes("GrammarItem", "std.Any")
+                }
+                interfaceType("PreferenceOption") {
+                    supertypes("net.akehurst.language.api.language.base.Formatable", "std.Any")
+                }
+                interfaceType("OverrideRule") {
+                    supertypes("GrammarRule", "std.Any")
+                }
+                interfaceType("OptionalItem") {
+                    supertypes("ConcatenationItem", "std.Any")
+                }
+                interfaceType("NormalRule") {
+                    supertypes("GrammarRule", "std.Any")
+                }
+                interfaceType("NonTerminal") {
+                    supertypes("TangibleItem", "std.Any")
+                }
+                interfaceType("NodeType") {
+                    supertypes("std.Any")
+                }
+                interfaceType("ListOfItems") {
+                    supertypes("ConcatenationItem", "std.Any")
+                }
+                interfaceType("Group") {
+                    supertypes("SimpleItem", "std.Any")
+                }
+                interfaceType("GrammarRule") {
+                    supertypes("GrammarItem", "std.Any")
+                }
+                interfaceType("GrammarReference") {
+                    supertypes("std.Any")
+                }
+                interfaceType("GrammarOption") {
+                    supertypes("std.Any")
+                }
+                interfaceType("GrammarNamespace") {
+                    supertypes("net.akehurst.language.api.language.base.Namespace", "std.Any")
+                }
+                interfaceType("GrammarModel") {
+                    supertypes("net.akehurst.language.api.language.base.Model", "std.Any")
+                }
+                interfaceType("GrammarLoader") {
+                    supertypes("std.Any")
+                }
+                interfaceType("GrammarItem") {
+                    supertypes("net.akehurst.language.api.language.base.Formatable", "std.Any")
+                }
+                interfaceType("Grammar") {
+                    supertypes("net.akehurst.language.api.language.base.Definition", "std.Any")
+                }
+                interfaceType("EmptyRule") {
+                    supertypes("TangibleItem", "std.Any")
+                }
+                interfaceType("Embedded") {
+                    supertypes("TangibleItem", "std.Any")
+                }
+                interfaceType("ConcatenationItem") {
+                    supertypes("RuleItem", "std.Any")
+                }
+                interfaceType("Concatenation") {
+                    supertypes("RuleItem", "std.Any")
+                }
+                interfaceType("ChoicePriority") {
+                    supertypes("Choice", "std.Any")
+                }
+                interfaceType("ChoiceLongest") {
+                    supertypes("Choice", "std.Any")
+                }
+                interfaceType("ChoiceAmbiguous") {
+                    supertypes("Choice", "std.Any")
+                }
+                interfaceType("Choice") {
+                    supertypes("RuleItem", "std.Any")
+                }
+                dataType("GrammarRuleNotFoundException") {
+                    supertypes("std.Exception")
+                    constructor_ {
+                        parameter("message", "std.String", false)
+                    }
+                }
+                dataType("GrammarRuleItemNotFoundException") {
+                    supertypes("std.Exception")
+                    constructor_ {
+                        parameter("message", "std.String", false)
+                    }
+                }
+                dataType("GrammarExeception") {
+                    supertypes("std.Exception")
+                    constructor_ {
+                        parameter("message", "std.String", false)
+                        parameter("cause", "std.Exception", true)
+                    }
+                }
+            }
+            namespace("net.akehurst.language.agl.language.grammar.asm", listOf("net.akehurst.language.api.language.grammar", "std", "net.akehurst.language.api.language.base", "net.akehurst.language.agl.language.base")) {
+                dataType("TerminalDefault") {
+                    supertypes("TangibleItemAbstract", "net.akehurst.language.api.language.grammar.Terminal")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                        parameter("isPattern", "std.Boolean", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "id", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isPattern", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
+                }
+                dataType("TangibleItemAbstract") {
+                    supertypes("SimpleItemAbstract", "net.akehurst.language.api.language.grammar.TangibleItem")
+                    constructor_ {}
+                }
+                dataType("SimpleListDefault") {
+                    supertypes("ListOfItemsAbstract", "net.akehurst.language.api.language.grammar.SimpleList")
+                    constructor_ {
+                        parameter("min_", "std.Integer", false)
+                        parameter("max_", "std.Integer", false)
+                        parameter("item", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "item", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                }
+                dataType("SimpleItemAbstract") {
+                    supertypes("ConcatenationItemAbstract", "net.akehurst.language.api.language.grammar.SimpleItem")
+                    constructor_ {}
+                }
+                dataType("SeparatedListDefault") {
+                    supertypes("ListOfItemsAbstract", "net.akehurst.language.api.language.grammar.SeparatedList")
+                    constructor_ {
+                        parameter("min_", "std.Integer", false)
+                        parameter("max_", "std.Integer", false)
+                        parameter("item", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                        parameter("separator", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "item", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "separator", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                }
+                dataType("RuleItemAbstract") {
+                    supertypes("net.akehurst.language.api.language.grammar.RuleItem", "std.Any")
+                    constructor_ {}
+                    propertyOf(setOf(READ_WRITE, STORED), "index", "std.List", true){
+                        typeArgument("std.Integer")
+                    }
+                }
+                dataType("PreferenceRuleDefault") {
+                    supertypes("GrammarItemAbstract", "net.akehurst.language.api.language.grammar.PreferenceRule")
+                    constructor_ {
+                        parameter("grammar", "net.akehurst.language.api.language.grammar.Grammar", false)
+                        parameter("forItem", "net.akehurst.language.api.language.grammar.SimpleItem", false)
+                        parameter("optionList", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "forItem", "net.akehurst.language.api.language.grammar.SimpleItem", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "grammar", "net.akehurst.language.api.language.grammar.Grammar", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "optionList", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.PreferenceOption")
+                    }
+                }
+                dataType("PreferenceOptionDefault") {
+                    supertypes("net.akehurst.language.api.language.grammar.PreferenceOption", "std.Any")
+                    constructor_ {
+                        parameter("item", "net.akehurst.language.api.language.grammar.NonTerminal", false)
+                        parameter("choiceNumber", "std.Integer", false)
+                        parameter("onTerminals", "std.List", false)
+                        parameter("associativity", "net.akehurst.language.api.language.grammar.Associativity", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "associativity", "net.akehurst.language.api.language.grammar.Associativity", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "choiceNumber", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "item", "net.akehurst.language.api.language.grammar.NonTerminal", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "onTerminals", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.SimpleItem")
+                    }
+                }
+                dataType("OverrideRuleDefault") {
+                    supertypes("GrammarRuleAbstract", "net.akehurst.language.api.language.grammar.OverrideRule")
+                    constructor_ {
+                        parameter("grammar", "net.akehurst.language.api.language.grammar.Grammar", false)
+                        parameter("name", "net.akehurst.language.api.language.grammar.GrammarRuleName", false)
+                        parameter("isSkip", "std.Boolean", false)
+                        parameter("isLeaf", "std.Boolean", false)
+                        parameter("overrideKind", "net.akehurst.language.api.language.grammar.OverrideKind", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "grammar", "net.akehurst.language.api.language.grammar.Grammar", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isLeaf", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isOverride", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isSkip", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.grammar.GrammarRuleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "overrideKind", "net.akehurst.language.api.language.grammar.OverrideKind", false)
+                }
+                dataType("OptionalItemDefault") {
+                    supertypes("ConcatenationItemAbstract", "net.akehurst.language.api.language.grammar.OptionalItem")
+                    constructor_ {
+                        parameter("item", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "item", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                }
+                dataType("NormalRuleDefault") {
+                    supertypes("GrammarRuleAbstract", "net.akehurst.language.api.language.grammar.NormalRule")
+                    constructor_ {
+                        parameter("grammar", "net.akehurst.language.api.language.grammar.Grammar", false)
+                        parameter("name", "net.akehurst.language.api.language.grammar.GrammarRuleName", false)
+                        parameter("isSkip", "std.Boolean", false)
+                        parameter("isLeaf", "std.Boolean", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "grammar", "net.akehurst.language.api.language.grammar.Grammar", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isLeaf", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isOverride", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isSkip", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.grammar.GrammarRuleName", false)
+                }
+                dataType("NonTerminalDefault") {
+                    supertypes("TangibleItemAbstract", "net.akehurst.language.api.language.grammar.NonTerminal")
+                    constructor_ {
+                        parameter("targetGrammar", "net.akehurst.language.api.language.grammar.GrammarReference", true)
+                        parameter("ruleReference", "net.akehurst.language.api.language.grammar.GrammarRuleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "ruleReference", "net.akehurst.language.api.language.grammar.GrammarRuleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "targetGrammar", "net.akehurst.language.api.language.grammar.GrammarReference", true)
+                }
+                dataType("NodeTypeDefault") {
+                    supertypes("net.akehurst.language.api.language.grammar.NodeType", "std.Any")
+                    constructor_ {
+                        parameter("identity", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "identity", "std.String", false)
+                }
+                dataType("ListOfItemsAbstract") {
+                    supertypes("ConcatenationItemAbstract", "net.akehurst.language.api.language.grammar.ListOfItems")
+                    constructor_ {
+                        parameter("min", "std.Integer", false)
+                        parameter("max", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "max", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "min", "std.Integer", false)
+                }
+                dataType("GroupDefault") {
+                    supertypes("SimpleItemAbstract", "net.akehurst.language.api.language.grammar.Group")
+                    constructor_ {
+                        parameter("groupedContent", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "groupedContent", "net.akehurst.language.api.language.grammar.RuleItem", false)
+                }
+                dataType("GrammarRuleAbstract") {
+                    supertypes("GrammarItemAbstract", "net.akehurst.language.api.language.grammar.GrammarRule")
+                    constructor_ {}
+                }
+                dataType("GrammarReferenceDefault") {
+                    supertypes("net.akehurst.language.api.language.grammar.GrammarReference", "std.Any")
+                    constructor_ {
+                        parameter("localNamespace", "net.akehurst.language.api.language.base.Namespace", false)
+                        parameter("nameOrQName", "net.akehurst.language.api.language.base.PossiblyQualifiedName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "localNamespace", "net.akehurst.language.api.language.base.Namespace", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.Grammar")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "nameOrQName", "net.akehurst.language.api.language.base.PossiblyQualifiedName", false)
+                    propertyOf(setOf(READ_WRITE, STORED), "resolved", "net.akehurst.language.api.language.grammar.Grammar", true)
+                }
+                dataType("GrammarOptionDefault") {
+                    supertypes("net.akehurst.language.api.language.grammar.GrammarOption", "std.Any")
+                    constructor_ {
+                        parameter("name", "std.String", false)
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
+                }
+                dataType("GrammarNamespaceDefault") {
+                    supertypes("net.akehurst.language.api.language.grammar.GrammarNamespace", "net.akehurst.language.agl.language.base.NamespaceAbstract")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                    }
+                }
+                dataType("GrammarModelDefault") {
+                    supertypes("net.akehurst.language.api.language.grammar.GrammarModel", "net.akehurst.language.agl.language.base.ModelAbstract")
+                    constructor_ {
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                        parameter("namespace", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                }
+                dataType("GrammarItemAbstract") {
+                    supertypes("net.akehurst.language.api.language.grammar.GrammarItem", "std.Any")
+                    constructor_ {}
+                }
+                dataType("GrammarDefaultKt") {
+                    supertypes("std.Any")
+                }
+                dataType("GrammarDefault") {
+                    supertypes("GrammarAbstract")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.api.language.grammar.GrammarNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                        parameter("options", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "options", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.GrammarOption")
+                    }
+                }
+                dataType("GrammarAbstract") {
+                    supertypes("net.akehurst.language.api.language.grammar.Grammar", "std.Any")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.api.language.grammar.GrammarNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "extends", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.GrammarReference")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "grammarRule", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.GrammarRule")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.api.language.grammar.GrammarNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "preferenceRule", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.PreferenceRule")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "selfReference", "GrammarReferenceDefault", false)
+                }
+                dataType("EmptyRuleDefault") {
+                    supertypes("TangibleItemAbstract", "net.akehurst.language.api.language.grammar.EmptyRule")
+                    constructor_ {}
+                }
+                dataType("EmbeddedDefault") {
+                    supertypes("TangibleItemAbstract", "net.akehurst.language.api.language.grammar.Embedded")
+                    constructor_ {
+                        parameter("embeddedGoalName", "net.akehurst.language.api.language.grammar.GrammarRuleName", false)
+                        parameter("embeddedGrammarReference", "net.akehurst.language.api.language.grammar.GrammarReference", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "embeddedGoalName", "net.akehurst.language.api.language.grammar.GrammarRuleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "embeddedGrammarReference", "net.akehurst.language.api.language.grammar.GrammarReference", false)
+                }
+                dataType("ConcatenationItemAbstract") {
+                    supertypes("RuleItemAbstract", "net.akehurst.language.api.language.grammar.ConcatenationItem")
+                    constructor_ {}
+                }
+                dataType("ConcatenationDefault") {
+                    supertypes("RuleItemAbstract", "net.akehurst.language.api.language.grammar.Concatenation")
+                    constructor_ {
+                        parameter("items", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "items", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.RuleItem")
+                    }
+                }
+                dataType("ChoicePriorityDefault") {
+                    supertypes("ChoiceAbstract", "net.akehurst.language.api.language.grammar.ChoicePriority")
+                    constructor_ {
+                        parameter("alternative", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "alternative", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.RuleItem")
+                    }
+                }
+                dataType("ChoiceLongestDefault") {
+                    supertypes("ChoiceAbstract", "net.akehurst.language.api.language.grammar.ChoiceLongest")
+                    constructor_ {
+                        parameter("alternative", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "alternative", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.RuleItem")
+                    }
+                }
+                dataType("ChoiceAmbiguousDefault") {
+                    supertypes("ChoiceAbstract", "net.akehurst.language.api.language.grammar.ChoiceAmbiguous")
+                    constructor_ {
+                        parameter("alternative", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "alternative", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.RuleItem")
+                    }
+                }
+                dataType("ChoiceAbstract") {
+                    supertypes("RuleItemAbstract", "net.akehurst.language.api.language.grammar.Choice")
+                    constructor_ {
+                        parameter("alternative", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "alternative", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.RuleItem")
+                    }
+                }
+            }
+        })
+    }
+
+    /*
+    api.parser --> api.runtime
+    api.sppt --> api.runtime, api.parser
+    agl.sppt --> api.sppt, api.runtime
+     */
+    private fun initialiseSPPT() {
+        val tm = typeModel("Test", true, emptyList()) {
+            namespace("net.akehurst.language.api.parser", listOf("std", "net.akehurst.language.agl.api.runtime")) {
+                interfaceType("RuntimeSpine") {
+                    supertypes("std.Any")
+                }
+                interfaceType("Parser") {
+                    supertypes("std.Any")
+                }
+                dataType("InputLocation") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("position", "std.Integer", false)
+                        parameter("column", "std.Integer", false)
+                        parameter("line", "std.Integer", false)
+                        parameter("length", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "column", "std.Integer", false)
+                    propertyOf(setOf(READ_WRITE, STORED), "length", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "line", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "position", "std.Integer", false)
+                }
+            }
+            namespace("net.akehurst.language.api.sppt", listOf("std", "net.akehurst.language.agl.api.runtime", "net.akehurst.language.api.parser")) {
+                interfaceType("TreeData") {
+                    supertypes("std.Any")
+                }
+                interfaceType("SpptWalker") {
+                    supertypes("std.Any")
+                }
+                interfaceType("SpptDataNodeInfo") {
+                    supertypes("std.Any")
+                }
+                interfaceType("SpptDataNode") {
+                    supertypes("std.Any")
+                }
+                interfaceType("SharedPackedParseTreeVisitor") {
+                    typeParameters("T", "A")
+                    supertypes("std.Any")
+                }
+                interfaceType("SharedPackedParseTree") {
+                    supertypes("std.Any")
+                }
+                interfaceType("Sentence") {
+                    supertypes("std.Any")
+                }
+                interfaceType("SPPTParser") {
+                    supertypes("std.Any")
+                }
+                interfaceType("SPPTNodeIdentity") {
+                    supertypes("std.Any")
+                }
+                interfaceType("SPPTNode") {
+                    supertypes("std.Any")
+                }
+                interfaceType("SPPTLeaf") {
+                    supertypes("SPPTNode", "std.Any")
+                }
+                interfaceType("SPPTBranch") {
+                    supertypes("SPPTNode", "std.Any")
+                }
+                dataType("SPPTException") {
+                    supertypes("std.Exception")
+                    constructor_ {
+                        parameter("message", "std.String", false)
+                        parameter("cause", "std.Exception", true)
+                    }
+                }
+                dataType("LeafData") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("name", "std.String", false)
+                        parameter("isPattern", "std.Boolean", false)
+                        parameter("position", "std.Integer", false)
+                        parameter("length", "std.Integer", false)
+                        parameter("tagList", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "isPattern", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "length", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "position", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "tagList", "std.List", false){
+                        typeArgument("std.String")
+                    }
+                }
+                dataType("ChildInfo") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("propertyIndex", "std.Integer", false)
+                        parameter("index", "std.Integer", false)
+                        parameter("total", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "index", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "propertyIndex", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "total", "std.Integer", false)
+                }
+                dataType("AltInfo") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("option", "std.Integer", false)
+                        parameter("index", "std.Integer", false)
+                        parameter("totalMatched", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "index", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "option", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "totalMatched", "std.Integer", false)
+                }
+            }
+            namespace("net.akehurst.language.agl.sppt", listOf("std", "net.akehurst.language.api.sppt", "net.akehurst.language.agl.api.runtime")) {
+                dataType("TreeDataCompleteKt") {
+                    supertypes("std.Any")
+                }
+                dataType("TreeDataComplete2") {
+                    supertypes("net.akehurst.language.api.sppt.TreeData", "std.Any")
+                    constructor_ {
+                        parameter("forStateSetNumber", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "forStateSetNumber", "std.Integer", false)
+                    propertyOf(setOf(READ_WRITE, STORED), "initialSkip", "net.akehurst.language.api.sppt.TreeData", true)
+                    propertyOf(setOf(READ_WRITE, STORED), "root", "net.akehurst.language.api.sppt.SpptDataNode", true)
+                }
+                dataType("TreeDataComplete") {
+                    supertypes("net.akehurst.language.api.sppt.TreeData", "std.Any")
+                    constructor_ {
+                        parameter("forStateSetNumber", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "forStateSetNumber", "std.Integer", false)
+                    propertyOf(setOf(READ_WRITE, STORED), "initialSkip", "net.akehurst.language.api.sppt.TreeData", true)
+                    propertyOf(setOf(READ_WRITE, STORED), "root", "net.akehurst.language.api.sppt.SpptDataNode", true)
+                }
+                dataType("CompleteTreeDataNode") {
+                    supertypes("net.akehurst.language.api.sppt.SpptDataNode", "std.Any")
+                    constructor_ {
+                        parameter("rule", "net.akehurst.language.agl.api.runtime.Rule", false)
+                        parameter("startPosition", "std.Integer", false)
+                        parameter("nextInputPosition", "std.Integer", false)
+                        parameter("nextInputNoSkip", "std.Integer", false)
+                        parameter("option", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "nextInputNoSkip", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "nextInputPosition", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "option", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "rule", "net.akehurst.language.agl.api.runtime.Rule", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "startPosition", "std.Integer", false)
+                }
+                dataType("CompleteKey") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("rule", "net.akehurst.language.agl.api.runtime.Rule", false)
+                        parameter("startPosition", "std.Integer", false)
+                        parameter("nextInputPosition", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "nextInputPosition", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "rule", "net.akehurst.language.agl.api.runtime.Rule", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "startPosition", "std.Integer", false)
+                }
+            }
+        }
+
+        serialiser.configureFromTypeModel(tm)
+    }
+
+    /*
+
+     */
     private fun initialiseTypeModel() {
+        val tm = typeModel("Test", true, emptyList()) {
+            namespace("net.akehurst.language.typemodel.api", listOf("std", "net.akehurst.language.api.language.base", "net.akehurst.language.typemodel.simple")) {
+                enumType("PropertyCharacteristic", listOf("REFERENCE", "COMPOSITE", "READ_ONLY", "READ_WRITE", "STORED", "DERIVED", "PRIMITIVE", "CONSTRUCTOR", "IDENTITY"))
+                valueType("PropertyName") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
+                }
+                valueType("ParameterName") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
+                }
+                valueType("MethodName") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
+                }
+                interfaceType("ValueType") {
+                    supertypes("StructuredType", "std.Any")
+                }
+                interfaceType("UnnamedSupertypeType") {
+                    supertypes("TypeDeclaration", "std.Any")
+                }
+                interfaceType("TypeNamespace") {
+                    supertypes("net.akehurst.language.api.language.base.Namespace", "std.Any")
+                }
+                interfaceType("TypeModel") {
+                    supertypes("net.akehurst.language.api.language.base.Model", "std.Any")
+                }
+                interfaceType("TypeInstance") {
+                    supertypes("std.Any")
+                }
+                interfaceType("TypeDeclaration") {
+                    supertypes("net.akehurst.language.api.language.base.Definition", "std.Any")
+                }
+                interfaceType("TupleType") {
+                    supertypes("StructuredType", "std.Any")
+                }
+                interfaceType("StructuredType") {
+                    supertypes("TypeDeclaration", "std.Any")
+                }
+                interfaceType("SingletonType") {
+                    supertypes("TypeDeclaration", "std.Any")
+                }
+                interfaceType("PropertyDeclaration") {
+                    supertypes("std.Any")
+                }
+                interfaceType("PrimitiveType") {
+                    supertypes("TypeDeclaration", "std.Any")
+                }
+                interfaceType("ParameterDeclaration") {
+                    supertypes("std.Any")
+                }
+                interfaceType("MethodDeclaration") {
+                    supertypes("std.Any")
+                }
+                interfaceType("InterfaceType") {
+                    supertypes("StructuredType", "std.Any")
+                }
+                interfaceType("EnumType") {
+                    supertypes("TypeDeclaration", "std.Any")
+                }
+                interfaceType("DataType") {
+                    supertypes("StructuredType", "std.Any")
+                }
+                interfaceType("ConstructorDeclaration") {
+                    supertypes("std.Any")
+                }
+                interfaceType("CollectionType") {
+                    supertypes("StructuredType", "std.Any")
+                }
+                dataType("ValueTypeBuilder") {
+                    supertypes("StructuredTypeBuilder")
+                    constructor_ {
+                        parameter("_namespace", "TypeNamespace", false)
+                        parameter("_typeReferences", "std.List", false)
+                        parameter("_name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                }
+                dataType("TypeUsageReferenceBuilder") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("context", "TypeDeclaration", true)
+                        parameter("_namespace", "TypeNamespace", false)
+                        parameter("type", "TypeDeclaration", false)
+                        parameter("nullable", "std.Boolean", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "_namespace", "TypeNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "context", "TypeDeclaration", true)
+                    propertyOf(setOf(READ_ONLY, STORED), "nullable", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "type", "TypeDeclaration", false)
+                }
+                dataType("TypeNamespaceBuilder") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                        parameter("imports", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                }
+                dataType("TypeModelBuilderKt") {
+                    supertypes("std.Any")
+                }
+                dataType("TypeModelBuilder") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                        parameter("resolveImports", "std.Boolean", false)
+                        parameter("namespaces", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "_model", "net.akehurst.language.typemodel.simple.TypeModelSimple", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespaces", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeNamespace")
+                    }
+                }
+                dataType("TypeArgumentBuilder") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("_context", "TypeDeclaration", true)
+                        parameter("_namespace", "TypeNamespace", false)
+                    }
+                }
+                dataType("TupleTypeBuilder") {
+                    supertypes("StructuredTypeBuilder")
+                    constructor_ {
+                        parameter("_namespace", "TypeNamespace", false)
+                        parameter("_typeReferences", "std.List", false)
+                    }
+                }
+                dataType("SubtypeListBuilder") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("_namespace", "TypeNamespace", false)
+                        parameter("_typeReferences", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "_namespace", "TypeNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "_subtypeList", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                }
+                dataType("StructuredTypeBuilder") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("_namespace", "TypeNamespace", false)
+                        parameter("_typeReferences", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "COMPOSITE", "PropertyCharacteristic", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "CONSTRUCTOR", "PropertyCharacteristic", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "DERIVED", "PropertyCharacteristic", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "IDENTITY", "PropertyCharacteristic", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "READ_ONLY", "PropertyCharacteristic", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "READ_WRITE", "PropertyCharacteristic", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "REFERENCE", "PropertyCharacteristic", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "STORED", "PropertyCharacteristic", false)
+                }
+                dataType("InterfaceTypeBuilder") {
+                    supertypes("StructuredTypeBuilder")
+                    constructor_ {
+                        parameter("_namespace", "TypeNamespace", false)
+                        parameter("_typeReferences", "std.List", false)
+                        parameter("_name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                }
+                dataType("DataTypeBuilder") {
+                    supertypes("StructuredTypeBuilder")
+                    constructor_ {
+                        parameter("_namespace", "TypeNamespace", false)
+                        parameter("_typeReferences", "std.List", false)
+                        parameter("_name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                }
+                dataType("ConstructorBuilder") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("_namespace", "TypeNamespace", false)
+                        parameter("_type", "TypeDeclaration", false)
+                        parameter("_typeReferences", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "_namespace", "TypeNamespace", false)
+                }
+            }
+            namespace("net.akehurst.language.typemodel.simple", listOf("net.akehurst.language.typemodel.api", "net.akehurst.language.api.language.base", "std", "net.akehurst.language.agl.language.base")) {
+                dataType("ValueTypeSimple") {
+                    supertypes("StructuredTypeSimpleAbstract", "net.akehurst.language.typemodel.api.ValueType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "constructors", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.ConstructorDeclaration")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                }
+                dataType("UnnamedSupertypeTypeSimple") {
+                    supertypes("TypeDeclarationSimpleAbstract", "net.akehurst.language.typemodel.api.UnnamedSupertypeType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("id", "std.Integer", false)
+                        parameter("subtypes", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "id", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "subtypes", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                }
+                dataType("UnnamedSupertypeTypeInstance") {
+                    supertypes("TypeInstanceAbstract")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("declaration", "net.akehurst.language.typemodel.api.UnnamedSupertypeType", false)
+                        parameter("typeArguments", "std.List", false)
+                        parameter("isNullable", "std.Boolean", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "declaration", "net.akehurst.language.typemodel.api.UnnamedSupertypeType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isNullable", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeArguments", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                }
+                dataType("TypeNamespaceSimple") {
+                    supertypes("TypeNamespaceAbstract")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                        parameter("imports", "std.List", false)
+                    }
+                }
+                dataType("TypeNamespaceAbstract") {
+                    supertypes("net.akehurst.language.typemodel.api.TypeNamespace", "net.akehurst.language.agl.language.base.NamespaceAbstract")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                        parameter("imports", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "import", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.base.Import")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "ownedTupleTypes", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TupleType")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "ownedUnnamedSupertypeType", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.UnnamedSupertypeType")
+                    }
+                }
+                dataType("TypeModelSimpleAbstract") {
+                    supertypes("net.akehurst.language.typemodel.api.TypeModel", "std.Any")
+                    constructor_ {
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "allNamespace", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeNamespace")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                }
+                dataType("TypeModelSimple") {
+                    supertypes("TypeModelSimpleAbstract")
+                    constructor_ {
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                }
+                dataType("TypeInstanceSimple") {
+                    supertypes("TypeInstanceAbstract")
+                    constructor_ {
+                        parameter("contextQualifiedTypeName", "net.akehurst.language.api.language.base.QualifiedName", true)
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("qualifiedOrImportedTypeName", "net.akehurst.language.api.language.base.PossiblyQualifiedName", false)
+                        parameter("typeArguments", "std.List", false)
+                        parameter("isNullable", "std.Boolean", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "contextQualifiedTypeName", "net.akehurst.language.api.language.base.QualifiedName", true)
+                    propertyOf(setOf(READ_ONLY, STORED), "isNullable", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "qualifiedOrImportedTypeName", "net.akehurst.language.api.language.base.PossiblyQualifiedName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeArguments", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                }
+                dataType("TypeInstanceAbstract") {
+                    supertypes("net.akehurst.language.typemodel.api.TypeInstance", "std.Any")
+                    constructor_ {}
+                }
+                dataType("TypeDeclarationSimpleAbstract") {
+                    supertypes("net.akehurst.language.typemodel.api.TypeDeclaration", "std.Any")
+                    constructor_ {}
+                    propertyOf(setOf(READ_WRITE, STORED), "metaInfo", "std.Map", false){
+                        typeArgument("std.String")
+                        typeArgument("std.String")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "method", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.MethodDeclaration")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "propertyByIndex", "std.Map", false){
+                        typeArgument("std.Integer")
+                        typeArgument("net.akehurst.language.typemodel.api.PropertyDeclaration")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "supertypes", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "typeParameters", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.base.SimpleName")
+                    }
+                }
+                dataType("TupleTypeSimple") {
+                    supertypes("StructuredTypeSimpleAbstract", "net.akehurst.language.typemodel.api.TupleType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("id", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "id", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                }
+                dataType("TupleTypeInstance") {
+                    supertypes("TypeInstanceAbstract")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("declaration", "net.akehurst.language.typemodel.api.TupleType", false)
+                        parameter("typeArguments", "std.List", false)
+                        parameter("isNullable", "std.Boolean", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "declaration", "net.akehurst.language.typemodel.api.TupleType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "isNullable", "std.Boolean", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeArguments", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                }
+                dataType("StructuredTypeSimpleAbstract") {
+                    supertypes("TypeDeclarationSimpleAbstract", "net.akehurst.language.typemodel.api.StructuredType")
+                    constructor_ {}
+                }
+                dataType("SpecialTypeSimple") {
+                    supertypes("TypeDeclarationSimpleAbstract")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                }
+                dataType("SingletonTypeSimple") {
+                    supertypes("TypeDeclarationSimpleAbstract", "net.akehurst.language.typemodel.api.SingletonType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                }
+                dataType("SimpleTypeModelStdLib") {
+                    supertypes("TypeNamespaceAbstract")
+                    propertyOf(setOf(READ_ONLY, STORED), "AnyType", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Boolean", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Collection", "net.akehurst.language.typemodel.api.CollectionType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Exception", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Integer", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "List", "net.akehurst.language.typemodel.api.CollectionType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "ListSeparated", "net.akehurst.language.typemodel.api.CollectionType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Map", "net.akehurst.language.typemodel.api.CollectionType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "NothingType", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "OrderedSet", "net.akehurst.language.typemodel.api.CollectionType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Pair", "net.akehurst.language.typemodel.api.DataType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Real", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Set", "net.akehurst.language.typemodel.api.CollectionType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "String", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "Timestamp", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                }
+                dataType("PropertyDeclarationStored") {
+                    supertypes("PropertyDeclarationAbstract")
+                    constructor_ {
+                        parameter("owner", "net.akehurst.language.typemodel.api.StructuredType", false)
+                        parameter("name", "net.akehurst.language.typemodel.api.PropertyName", false)
+                        parameter("typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                        parameter("characteristics", "std.Set", false)
+                        parameter("index", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "characteristics", "std.Set", false){
+                        typeArgument("net.akehurst.language.typemodel.api.PropertyCharacteristic")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "description", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "index", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.typemodel.api.PropertyName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "owner", "net.akehurst.language.typemodel.api.StructuredType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                }
+                dataType("PropertyDeclarationResolved") {
+                    supertypes("PropertyDeclarationAbstract")
+                    constructor_ {
+                        parameter("owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                        parameter("name", "net.akehurst.language.typemodel.api.PropertyName", false)
+                        parameter("typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                        parameter("characteristics", "std.Set", false)
+                        parameter("description", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "characteristics", "std.Set", false){
+                        typeArgument("net.akehurst.language.typemodel.api.PropertyCharacteristic")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "description", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.typemodel.api.PropertyName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                }
+                dataType("PropertyDeclarationPrimitive") {
+                    supertypes("PropertyDeclarationAbstract")
+                    constructor_ {
+                        parameter("owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                        parameter("name", "net.akehurst.language.typemodel.api.PropertyName", false)
+                        parameter("typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                        parameter("description", "std.String", false)
+                        parameter("index", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "description", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "index", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.typemodel.api.PropertyName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                }
+                dataType("PropertyDeclarationDerived") {
+                    supertypes("PropertyDeclarationAbstract")
+                    constructor_ {
+                        parameter("owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                        parameter("name", "net.akehurst.language.typemodel.api.PropertyName", false)
+                        parameter("typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                        parameter("description", "std.String", false)
+                        parameter("expression", "std.String", false)
+                        parameter("index", "std.Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "description", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "expression", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "index", "std.Integer", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.typemodel.api.PropertyName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                }
+                dataType("PropertyDeclarationAbstract") {
+                    supertypes("net.akehurst.language.typemodel.api.PropertyDeclaration", "std.Any")
+                    constructor_ {}
+                    propertyOf(setOf(READ_WRITE, STORED), "metaInfo", "std.Map", false){
+                        typeArgument("std.String")
+                        typeArgument("std.String")
+                    }
+                }
+                dataType("PrimitiveTypeSimple") {
+                    supertypes("TypeDeclarationSimpleAbstract", "net.akehurst.language.typemodel.api.PrimitiveType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                }
+                dataType("ParameterDefinitionSimple") {
+                    supertypes("net.akehurst.language.typemodel.api.ParameterDeclaration", "std.Any")
+                    constructor_ {
+                        parameter("name", "net.akehurst.language.typemodel.api.ParameterName", false)
+                        parameter("typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                        parameter("defaultValue", "std.String", true)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "defaultValue", "std.String", true)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.typemodel.api.ParameterName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeInstance", "net.akehurst.language.typemodel.api.TypeInstance", false)
+                }
+                dataType("MethodDeclarationDerived") {
+                    supertypes("net.akehurst.language.typemodel.api.MethodDeclaration", "std.Any")
+                    constructor_ {
+                        parameter("owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                        parameter("name", "net.akehurst.language.typemodel.api.MethodName", false)
+                        parameter("parameters", "std.List", false)
+                        parameter("description", "std.String", false)
+                        parameter("body", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "body", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "description", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.typemodel.api.MethodName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "parameters", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.ParameterDeclaration")
+                    }
+                }
+                dataType("InterfaceTypeSimple") {
+                    supertypes("StructuredTypeSimpleAbstract", "net.akehurst.language.typemodel.api.InterfaceType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "subtypes", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                }
+                dataType("EnumTypeSimple") {
+                    supertypes("TypeDeclarationSimpleAbstract", "net.akehurst.language.typemodel.api.EnumType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                        parameter("literals", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "literals", "std.List", false){
+                        typeArgument("std.String")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                }
+                dataType("DataTypeSimple") {
+                    supertypes("StructuredTypeSimpleAbstract", "net.akehurst.language.typemodel.api.DataType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "constructors", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.ConstructorDeclaration")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "subtypes", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                }
+                dataType("ConstructorDeclarationSimple") {
+                    supertypes("net.akehurst.language.typemodel.api.ConstructorDeclaration", "std.Any")
+                    constructor_ {
+                        parameter("owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                        parameter("parameters", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "owner", "net.akehurst.language.typemodel.api.TypeDeclaration", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "parameters", "std.List", false){
+                        typeArgument("net.akehurst.language.typemodel.api.ParameterDeclaration")
+                    }
+                }
+                dataType("CollectionTypeSimple") {
+                    supertypes("StructuredTypeSimpleAbstract", "net.akehurst.language.typemodel.api.CollectionType")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                        parameter("typeParameters", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.typemodel.api.TypeNamespace", false)
+                    propertyOf(setOf(READ_WRITE, STORED), "typeParameters", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.base.SimpleName")
+                    }
+                }
+            }
+            namespace("net.akehurst.language.api.grammarTypeModel", listOf("net.akehurst.language.typemodel.api", "std", "net.akehurst.language.api.language.grammar")) {
+                interfaceType("GrammarTypeNamespace") {
+                    supertypes("net.akehurst.language.typemodel.api.TypeNamespace", "std.Any")
+                }
+            }
+            namespace("net.akehurst.language.agl.grammarTypeModel", listOf("net.akehurst.language.api.language.base", "std", "net.akehurst.language.typemodel.simple", "net.akehurst.language.api.grammarTypeModel", "net.akehurst.language.api.language.grammar", "net.akehurst.language.typemodel.api")) {
+                dataType("GrammarTypeNamespaceSimple") {
+                    supertypes("GrammarTypeNamespaceAbstract")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                        parameter("imports", "std.List", false)
+                    }
+                }
+                dataType("GrammarTypeNamespaceAbstract") {
+                    supertypes("net.akehurst.language.typemodel.simple.TypeNamespaceAbstract", "net.akehurst.language.api.grammarTypeModel.GrammarTypeNamespace")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                        parameter("imports", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, STORED), "allRuleNameToType", "std.Map", false){
+                        typeArgument("net.akehurst.language.api.language.grammar.GrammarRuleName")
+                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
+                    }
+                }
+                dataType("GrammarTypeModelBuilderKt") {
+                    supertypes("std.Any")
+                }
+                dataType("GrammarTypeModelBuilder") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("typeModel", "net.akehurst.language.typemodel.api.TypeModel", false)
+                        parameter("namespaceQualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                        parameter("imports", "std.List", false)
+                    }
+                }
+            }
+        }
+
         serialiser.configureFromTypeModel(typeModel("TypeModel", false) {
 /*            namespace(
                 "net.akehurst.language.agl.default",
@@ -737,194 +1971,6 @@ object AglWorkerSerialisation {
         })
     }
 
-    private fun initialiseGrammarAsm() {
-        //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("GrammarAsm", false) {
-            namespace(
-                "net.akehurst.language.api.language.grammar",
-                imports = mutableListOf("kotlin", "kotlin.collections")
-            ) {
-                dataType("Grammar") {}
-                dataType("RuleItem") {}
-                enumType("OverrideKind", listOf())
-            }
-            namespace(
-                "net.akehurst.language.agl.language.grammar",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.semanticAnalyser")
-            ) {
-                dataType("AglGrammarGrammar") {
-                    supertypes("GrammarAbstract")
-                }
-                dataType("ContextFromGrammar") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rootScope", "ScopeSimple", listOf("String"))
-                }
-            }
-            namespace("net.akehurst.language.agl.language.format", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("AglFormatGrammar") {
-                    supertypes("GrammarAbstract")
-                }
-            }
-            namespace(
-                "net.akehurst.language.agl.language.grammar.asm",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.api.language.grammar")
-            ) {
-                dataType("GrammarModelDefault") {
-
-                }
-                dataType("NamespaceDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
-                }
-                dataType("GrammarReferenceDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "localNamespace", "NamespaceDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "nameOrQName", " String")
-
-                    propertyOf(setOf(MEMBER, REFERENCE), "resolved", "GrammarAbstract")
-                }
-                dataType("GrammarDefault") {
-                    supertypes("GrammarAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "NamespaceDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "options", "List") { typeArgument("GrammarOptionDefault") }
-                }
-                dataType("GrammarOptionDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
-                }
-                dataType("GrammarAbstract") {
-                    supertypes("Grammar")
-
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "namespace", "NamespaceDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "extends", "List", listOf("GrammarReferenceDefault"))
-                    propertyOf(setOf(MEMBER, COMPOSITE), "grammarRule", "List", listOf("GrammarRuleAbstract"))
-                }
-                dataType("GrammarRuleAbstract")
-                dataType("NormalRuleDefault") {
-                    supertypes("GrammarRuleAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "grammar", "GrammarDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isSkip", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isLeaf", "Boolean")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "rhs", "RuleItemAbstract")
-                }
-
-                dataType("OverrideRuleDefault") {
-                    supertypes("GrammarRuleAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "grammar", "GrammarDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isSkip", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isLeaf", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "overrideKind", "OverrideKind")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "overridenRhs", "RuleItemAbstract")
-                }
-                dataType("RuleItemAbstract") {
-                    supertypes("RuleItem")
-                }
-                dataType("EmptyRuleDefault") {
-                    supertypes("RuleItemAbstract")
-                }
-                dataType("ChoiceAbstract") {
-                    supertypes("RuleItemAbstract")
-                }
-                dataType("ChoiceLongestDefault") {
-                    supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("RuleItem"))
-                }
-                dataType("ChoicePriorityDefault") {
-                    supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("RuleItem"))
-                }
-                dataType("ChoiceAmbiguousDefault") {
-                    supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "alternative", "List", listOf("RuleItem"))
-                }
-                dataType("ConcatenationDefault") {
-                    supertypes("RuleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "items", "List", listOf("RuleItem"))
-                }
-                dataType("ConcatenationItemAbstract") {
-                    supertypes("RuleItemAbstract")
-                }
-                dataType("SimpleItemAbstract") {
-                    supertypes("ConcatenationItemAbstract")
-                }
-                dataType("GroupDefault") {
-                    supertypes("ConcatenationItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "groupedContent", "RuleItem")
-                }
-                dataType("NonTerminalDefault") {
-                    supertypes("RuleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "targetGrammar", "GrammarReference", emptyList(), true)
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                }
-                dataType("TerminalDefault") {
-                    supertypes("RuleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isPattern", "Boolean")
-                }
-                dataType("EmbeddedDefault") {
-                    supertypes("RuleItemAbstract")
-
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "embeddedGoalName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "embeddedGrammarReference", "GrammarReferenceDefault")
-                }
-                dataType("SeparatedListDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "min", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "max", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "item", "SimpleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "separator", "SimpleItem")
-                }
-                dataType("SimpleListDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "min", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "max", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "item", "SimpleItemAbstract")
-                }
-                dataType("OptionalItemDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "item", "RuleItem")
-                }
-            }
-        })
-    }
-
-    private fun initialiseSPPT() {
-        serialiser.configureFromTypeModel(typeModel("SPPT", false) {
-            namespace("net.akehurst.language.agl.runtime.structure",imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("RuntimeRule") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "runtimeRuleSetNumber", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "ruleNumber", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isSkip", "Boolean")
-                }
-            }
-            namespace("net.akehurst.language.agl.sppt", imports = mutableListOf("kotlin", "kotlin.collections","net.akehurst.language.agl.runtime.structure")) {
-                dataType("CompleteTreeDataNode") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "rule", "RuntimeRule")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "startPosition", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "nextInputPosition", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "nextInputNoSkip", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "option", "Int")
-                }
-                dataType("TreeDataComplete2") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "forStateSetNumber", "Int")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "root", "CompleteTreeDataNode", emptyList(), true)
-                    propertyOf(setOf(MEMBER, COMPOSITE), "initialSkip", "TreeDataComplete", listOf("CompleteTreeDataNode"), true)
-                    propertyOf(setOf(MEMBER, COMPOSITE), "completeChildren", "Map") {
-                        typeArgument("CN")
-                        typeArgument("Map") {
-                            typeArgument("Int")
-                            typeArgument("List") {
-                                typeArgument("CompleteTreeDataNode")
-                            }
-                        }
-                    }
-                }
-            }
-        })
-    }
 
     fun check() {
         val issues = serialiser.registry.checkPublicAndReflectable()
