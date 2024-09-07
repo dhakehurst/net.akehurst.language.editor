@@ -39,96 +39,19 @@ object AglWorkerSerialisation {
             agl_language_service_commonMain.KotlinxReflectForModule.registerUsedClasses()
             //TODO: enable kserialisation/komposite/reflect to auto add these some how!!
             initialiseBase()
-            initialiseApiTypes()
+            initialiseGrammarAsm()
+            initialiseSPPT()
             initialiseTypeModel()
+
+            initialiseApiTypes()
             initialiseExpressionsAsm()
             initialiseStyleAsm()
             initialiseCrossReferencesAsm()
-            initialiseGrammarAsm()
             initialiseMessages()
             initialiseAsmSimple()
-            initialiseSPPT()
             serialiser.registry.resolveImports()
             initialised = true
         }
-    }
-
-    /*
-    api.parser -->
-     */
-    private fun initialiseApiTypes() {
-        //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("ApiType", false) {
-            namespace("net.akehurst.language.api.parser", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("InputLocation") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "position", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "column", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "line", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "length", "Int")
-                }
-            }
-            namespace("net.akehurst.language.api.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                enumType("LanguageIssueKind", emptyList())
-                enumType("CompletionItemKind", emptyList())
-                enumType("LanguageProcessorPhase", emptyList())
-                dataType("LanguageIssue") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "LanguageIssueKind")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "phase", "LanguageProcessorPhase")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "location", "InputLocation")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "data", "Any")
-                }
-                dataType("CompletionItem") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "CompletionItemKind")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(READ_WRITE, COMPOSITE), "description", "String")
-                }
-            }
-            namespace("net.akehurst.language.agl.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("ScanOptionsDefault") {
-
-                }
-                dataType("ParseOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reportErrors", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reportGrammarAmbiguities", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "cacheSkip", "Boolean")
-                }
-                dataType("SyntaxAnalysisOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "active", "Boolean")
-                }
-                dataType("SemanticAnalysisOptionsDefault") {
-                    typeParameters("AsmType","ContextType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "active", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "locationMap", "Map") {
-                        typeArgument("Any")
-                        typeArgument("InputLocation")
-                    }
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "ContextType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "checkReferences", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "resolveReferences", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "other", "Map") {
-                        typeArgument("String")
-                        typeArgument("Any")
-                    }
-                }
-                dataType("CompletionProviderOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "ContextType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "other", "Map") {
-                        typeArgument("String")
-                        typeArgument("Any")
-                    }
-                }
-                dataType("ProcessOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scan", "ScanOptionsDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "parse", "ParseOptionsDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "syntaxAnalysis", "SyntaxAnalysisOptionsDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "semanticAnalysis", "SemanticAnalysisOptionsDefault")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "completionProvider", "CompletionProviderOptionsDefault")
-                }
-            }
-        })
     }
 
     /*
@@ -136,7 +59,7 @@ object AglWorkerSerialisation {
      agl.language.base --> std, api.language.base
      */
     private fun initialiseBase() {
-        serialiser.configureFromTypeModel(typeModel("Base", false) {
+        val tm = typeModel("Base", false) {
             namespace("net.akehurst.language.api.language.base", listOf("std")) {
                 valueType("SimpleName") {
                     supertypes("PossiblyQualifiedName", "std.Any")
@@ -222,7 +145,8 @@ object AglWorkerSerialisation {
                     }
                 }
             }
-        })
+        }
+        serialiser.configureFromTypeModel(tm)
     }
 
     /*
@@ -231,7 +155,7 @@ object AglWorkerSerialisation {
      */
     private fun initialiseGrammarAsm() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("GrammarAsm", false) {
+        val tm = typeModel("GrammarAsm", false) {
             namespace("net.akehurst.language.api.language.grammar", listOf("std", "net.akehurst.language.api.language.base")) {
                 enumType("SeparatedListKind", listOf("Flat", "Left", "Right"))
                 enumType("OverrideKind", listOf("REPLACE", "APPEND_ALTERNATIVE", "SUBSTITUTION"))
@@ -638,7 +562,8 @@ object AglWorkerSerialisation {
                     }
                 }
             }
-        })
+        }
+        serialiser.configureFromTypeModel(tm)
     }
 
     /*
@@ -804,16 +729,18 @@ object AglWorkerSerialisation {
                 }
             }
         }
-
         serialiser.configureFromTypeModel(tm)
     }
 
     /*
-
+    typemodel.api --> api.language.base
+    typemodel.simple --> typemodel.api, agl.language.base
+    api.grammarTypeModel --> typemodel.api, api.language.grammar
+    agl.grammarTypeModel -->api.grammarTypeModel, typemodel.simple,
      */
     private fun initialiseTypeModel() {
         val tm = typeModel("Test", true, emptyList()) {
-            namespace("net.akehurst.language.typemodel.api", listOf("std", "net.akehurst.language.api.language.base", "net.akehurst.language.typemodel.simple")) {
+            namespace("net.akehurst.language.typemodel.api", listOf("std", "net.akehurst.language.api.language.base")) {
                 enumType("PropertyCharacteristic", listOf("REFERENCE", "COMPOSITE", "READ_ONLY", "READ_WRITE", "STORED", "DERIVED", "PRIMITIVE", "CONSTRUCTOR", "IDENTITY"))
                 valueType("PropertyName") {
                     supertypes("std.Any")
@@ -889,116 +816,6 @@ object AglWorkerSerialisation {
                 }
                 interfaceType("CollectionType") {
                     supertypes("StructuredType", "std.Any")
-                }
-                dataType("ValueTypeBuilder") {
-                    supertypes("StructuredTypeBuilder")
-                    constructor_ {
-                        parameter("_namespace", "TypeNamespace", false)
-                        parameter("_typeReferences", "std.List", false)
-                        parameter("_name", "net.akehurst.language.api.language.base.SimpleName", false)
-                    }
-                }
-                dataType("TypeUsageReferenceBuilder") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("context", "TypeDeclaration", true)
-                        parameter("_namespace", "TypeNamespace", false)
-                        parameter("type", "TypeDeclaration", false)
-                        parameter("nullable", "std.Boolean", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, STORED), "_namespace", "TypeNamespace", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "context", "TypeDeclaration", true)
-                    propertyOf(setOf(READ_ONLY, STORED), "nullable", "std.Boolean", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "type", "TypeDeclaration", false)
-                }
-                dataType("TypeNamespaceBuilder") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
-                        parameter("imports", "std.List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, STORED), "qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
-                }
-                dataType("TypeModelBuilderKt") {
-                    supertypes("std.Any")
-                }
-                dataType("TypeModelBuilder") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
-                        parameter("resolveImports", "std.Boolean", false)
-                        parameter("namespaces", "std.List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, STORED), "_model", "net.akehurst.language.typemodel.simple.TypeModelSimple", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "namespaces", "std.List", false){
-                        typeArgument("net.akehurst.language.typemodel.api.TypeNamespace")
-                    }
-                }
-                dataType("TypeArgumentBuilder") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("_context", "TypeDeclaration", true)
-                        parameter("_namespace", "TypeNamespace", false)
-                    }
-                }
-                dataType("TupleTypeBuilder") {
-                    supertypes("StructuredTypeBuilder")
-                    constructor_ {
-                        parameter("_namespace", "TypeNamespace", false)
-                        parameter("_typeReferences", "std.List", false)
-                    }
-                }
-                dataType("SubtypeListBuilder") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("_namespace", "TypeNamespace", false)
-                        parameter("_typeReferences", "std.List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, STORED), "_namespace", "TypeNamespace", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "_subtypeList", "std.List", false){
-                        typeArgument("net.akehurst.language.typemodel.api.TypeInstance")
-                    }
-                }
-                dataType("StructuredTypeBuilder") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("_namespace", "TypeNamespace", false)
-                        parameter("_typeReferences", "std.List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, STORED), "COMPOSITE", "PropertyCharacteristic", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "CONSTRUCTOR", "PropertyCharacteristic", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "DERIVED", "PropertyCharacteristic", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "IDENTITY", "PropertyCharacteristic", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "READ_ONLY", "PropertyCharacteristic", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "READ_WRITE", "PropertyCharacteristic", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "REFERENCE", "PropertyCharacteristic", false)
-                    propertyOf(setOf(READ_ONLY, STORED), "STORED", "PropertyCharacteristic", false)
-                }
-                dataType("InterfaceTypeBuilder") {
-                    supertypes("StructuredTypeBuilder")
-                    constructor_ {
-                        parameter("_namespace", "TypeNamespace", false)
-                        parameter("_typeReferences", "std.List", false)
-                        parameter("_name", "net.akehurst.language.api.language.base.SimpleName", false)
-                    }
-                }
-                dataType("DataTypeBuilder") {
-                    supertypes("StructuredTypeBuilder")
-                    constructor_ {
-                        parameter("_namespace", "TypeNamespace", false)
-                        parameter("_typeReferences", "std.List", false)
-                        parameter("_name", "net.akehurst.language.api.language.base.SimpleName", false)
-                    }
-                }
-                dataType("ConstructorBuilder") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("_namespace", "TypeNamespace", false)
-                        parameter("_type", "TypeDeclaration", false)
-                        parameter("_typeReferences", "std.List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, STORED), "_namespace", "TypeNamespace", false)
                 }
             }
             namespace("net.akehurst.language.typemodel.simple", listOf("net.akehurst.language.typemodel.api", "net.akehurst.language.api.language.base", "std", "net.akehurst.language.agl.language.base")) {
@@ -1403,322 +1220,419 @@ object AglWorkerSerialisation {
                 }
             }
         }
-
-        serialiser.configureFromTypeModel(typeModel("TypeModel", false) {
-/*            namespace(
-                "net.akehurst.language.agl.default",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.grammarTypeModel")
-            )
-            {
-                dataType("GrammarTypeNamespaceFromGrammar") {
-                    supertypes("GrammarTypeNamespaceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
-                }
-            }*/
-            namespace(
-                "net.akehurst.language.agl.grammarTypeModel",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typemodel.simple")
-            )
-            {
-                dataType("GrammarTypeNamespaceSimple") {
-                    supertypes("GrammarTypeNamespaceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
-                }
-                dataType("GrammarTypeNamespaceAbstract") {
-                    supertypes("TypeNamespaceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "allRuleNameToType", "Map") {
-                        typeArgument("String")
-                        typeArgument("TypeInstance")
-                    }
-                }
-            }
-            namespace(
-                "net.akehurst.language.typemodel.simple",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typemodel.api")
-            )
-            {
-                singleton("SimpleTypeModelStdLib")
-                dataType("TypeModelSimple") {
-                    supertypes("TypeModelSimpleAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                }
-                dataType("TypeModelSimpleAbstract") {
-                    supertypes("TypeModel")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "namespace", "Map") {
-                        typeArgument("String")
-                        typeArgument("TypeNamespace")
-                    }
-                    propertyOf(setOf(MEMBER, REFERENCE), "allNamespace", "List") { typeArgument("TypeNamespace") }
-                    //propertyOf(setOf(MEMBER, COMPOSITE), "rules", "Map", listOf("String", "net.akehurst.language.api.typemodel.RuleType"))
-                }
-                dataType("TypeInstanceAbstract") {
-                    supertypes("TypeInstance")
-                }
-                dataType("TypeInstanceSimple") {
-                    supertypes("TypeInstanceAbstract")
-                    //propertyOf(setOf(CONSTRUCTOR, REFERENCE), "context", "TypeDeclaration")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "contextQualifiedTypeName", "String",true)
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedOrImportedTypeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isNullable", "Boolean")
-                }
-                dataType("TupleTypeInstance") {
-                    supertypes("TypeInstanceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "declaration", "TupleType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isNullable", "Boolean")
-                }
-                dataType("UnnamedSupertypeTypeInstance") {
-                    supertypes("TypeInstanceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "declaration", "UnnamedSupertypeType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeArguments", "List") { typeArgument("TypeInstance") }
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "isNullable", "Boolean")
-                }
-                dataType("TypeNamespaceAbstract") {
-                    supertypes("TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
-                    propertyOf(setOf(MEMBER, COMPOSITE), "ownedUnnamedSupertypeType", "List") {
-                        typeArgument("UnnamedSupertypeTypeSimple")
-                    }
-                    propertyOf(setOf(MEMBER, COMPOSITE), "ownedTupleTypes", "List") {
-                        typeArgument("TupleTypeSimple")
-                    }
-                    propertyOf(setOf(MEMBER, COMPOSITE), "ownedTypesByName", "Map") {
-                        typeArgument("String")
-                        typeArgument("TypeDeclaration")
-                    }
-                }
-                dataType("TypeNamespaceSimple") {
-                    supertypes("TypeNamespaceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "imports", "List") { typeArgument("String") }
-                }
-                dataType("TypeDeclarationSimpleAbstract") {
-                    supertypes("TypeDeclaration")
-                    propertyOf(setOf(MEMBER, COMPOSITE), "typeParameters", "List") { typeArgument("String") }
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "propertyByIndex", "Map") {
-                        typeArgument("Int")
-                        typeArgument("PropertyDeclaration")
-                    }
-                }
-                dataType("SpecialTypeSimple") {
-                    supertypes("TypeDeclarationSimpleAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                }
-                dataType("PrimitiveTypeSimple") {
-                    supertypes("TypeDeclarationSimpleAbstract", "PrimitiveType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                }
-                dataType("EnumTypeSimple") {
-                    supertypes("TypeDeclarationSimpleAbstract", "EnumType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "literals", "List") { typeArgument("String") }
-                }
-                dataType("UnnamedSupertypeTypeSimple") {
-                    supertypes("TypeDeclarationSimpleAbstract", "UnnamedSupertypeType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "id", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "subtypes", "List") { typeArgument("TypeInstance") }
-                }
-                dataType("StructuredTypeSimpleAbstract") {
-                    supertypes("TypeDeclarationSimpleAbstract", "StructuredType")
-                }
-                dataType("TupleTypeSimple") {
-                    supertypes("StructuredTypeSimpleAbstract", "TupleType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "id", "Int")
-                }
-                dataType("DataTypeSimple") {
-                    supertypes("StructuredTypeSimpleAbstract", "DataType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-
-                    propertyOf(setOf(MEMBER, REFERENCE), "supertypes", "List", listOf("DataType"))
-                    propertyOf(setOf(MEMBER, REFERENCE), "subtypes", "List", listOf("DataType"))
-                }
-                dataType("CollectionTypeSimple") {
-                    supertypes("StructuredTypeSimpleAbstract", "CollectionType")
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeParameters", "String")
-
-                    propertyOf(setOf(MEMBER, REFERENCE), "supertypes", "List", listOf("CollectionType"))
-                }
-                dataType("PropertyDeclarationPrimitive") {
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "owner", "StructuredType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeInstance", "TypeInstance")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "description", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "index", "Int")
-                }
-                dataType("PropertyDeclarationDerived") {
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "owner", "StructuredType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeInstance", "TypeInstance")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "description", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "expression", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "index", "Int")
-                }
-                dataType("PropertyDeclarationStored") {
-                    propertyOf(setOf(CONSTRUCTOR, REFERENCE), "owner", "StructuredType")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeInstance", "TypeInstance")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "characteristics", "Set") { typeArgument("PropertyCharacteristic") }
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "index", "Int")
-                }
-            }
-            namespace("net.akehurst.language.typemodel.api", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                interfaceType("TypeModel") { }
-                interfaceType("TypeNamespace") {}
-                interfaceType("TypeInstance") {}
-                interfaceType("TypeDeclaration") {}
-                interfaceType("PrimitiveType") {
-                    supertypes("TypeDeclaration")
-                }
-                interfaceType("EnumType") {
-                    supertypes("TypeDeclaration")
-                }
-                interfaceType("StructuredType") {
-                    supertypes("TypeDeclaration")
-                }
-                interfaceType("TupleType") {
-                    supertypes("StructuredType")
-                }
-                interfaceType("DataType") {
-                    supertypes("StructuredType")
-                }
-                interfaceType("PropertyDeclaration") {
-                }
-                enumType("PropertyCharacteristic", listOf())
-                interfaceType("UnnamedSupertypeType") {
-                    supertypes("TypeDeclaration")
-                }
-                interfaceType("CollectionType") {
-                    supertypes("TypeDeclaration")
-                }
-            }
-        })
+        serialiser.configureFromTypeModel(tm)
     }
 
+    /*
+    api.language.style --> api.language.base
+    agl.language.style.asm --> api.language.style, agl.language.base
+     */
     private fun initialiseStyleAsm() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("StyleAsm", false) {
-            namespace("net.akehurst.language.agl.language.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("AglStyleGrammar") {
-                    supertypes("GrammarAbstract")
+        val tm = typeModel("Test", true, emptyList()) {
+            namespace("net.akehurst.language.api.language.style", listOf("net.akehurst.language.api.language.base", "std")) {
+                enumType("AglStyleSelectorKind", listOf("LITERAL", "PATTERN", "RULE_NAME", "META"))
+                interfaceType("StyleNamespace") {
+                    supertypes("net.akehurst.language.api.language.base.Namespace", "std.Any")
                 }
-            }
-            namespace("net.akehurst.language.agl.language.style.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("AglStyleModelDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "rules", "List", listOf("net.akehurst.language.api.style.AglStyleRule"))
+                interfaceType("AglStyleRule") {
+                    supertypes("net.akehurst.language.api.language.base.Definition", "std.Any")
                 }
-            }
-            namespace("net.akehurst.language.api.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("AglStyleRule") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "selector", "AglStyleSelector")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "styles", "Map") {
-                        typeArgument("String")
-                        typeArgument("AglStyle")
-                    }
+                interfaceType("AglStyleModel") {
+                    supertypes("net.akehurst.language.api.language.base.Model", "std.Any")
                 }
                 dataType("AglStyleSelector") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "AglStyleSelectorKind")
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("value", "std.String", false)
+                        parameter("kind", "AglStyleSelectorKind", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "kind", "AglStyleSelectorKind", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
                 }
-                enumType("AglStyleSelectorKind", listOf("LITERAL", "PATTERN", "RULE_NAME"))
-                dataType("AglStyle") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
+                dataType("AglStyleDeclaration") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("name", "std.String", false)
+                        parameter("value", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "std.String", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.String", false)
                 }
             }
-        })
+            namespace("net.akehurst.language.agl.language.style.asm", listOf("net.akehurst.language.api.language.style", "net.akehurst.language.agl.language.base", "net.akehurst.language.api.language.base", "std")) {
+                dataType("StyleNamespaceDefault") {
+                    supertypes("net.akehurst.language.api.language.style.StyleNamespace", "net.akehurst.language.agl.language.base.NamespaceAbstract")
+                    constructor_ {
+                        parameter("qualifiedName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                        parameter("import", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "import", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.base.Import")
+                    }
+                }
+                dataType("AglStyleRuleDefault") {
+                    supertypes("net.akehurst.language.api.language.style.AglStyleRule", "std.Any")
+                    constructor_ {
+                        parameter("namespace", "net.akehurst.language.api.language.style.StyleNamespace", false)
+                        parameter("selector", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, STORED), "declaration", "std.Map", false){
+                        typeArgument("std.String")
+                        typeArgument("net.akehurst.language.api.language.style.AglStyleDeclaration")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "namespace", "net.akehurst.language.api.language.style.StyleNamespace", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "selector", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.style.AglStyleSelector")
+                    }
+                }
+                dataType("AglStyleModelDefault") {
+                    supertypes("net.akehurst.language.api.language.style.AglStyleModel", "net.akehurst.language.agl.language.base.ModelAbstract")
+                    constructor_ {
+                        parameter("name", "net.akehurst.language.api.language.base.SimpleName", false)
+                        parameter("namespace", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "net.akehurst.language.api.language.base.SimpleName", false)
+                }
+            }
+        }
+        serialiser.configureFromTypeModel(tm)
     }
 
+    /*
+    api.language.expressions --> typemodel.api, api.language.base
+    agl.language.expressions.asm --> api.language.expressions,
+     */
     private fun initialiseExpressionsAsm() {
-        serialiser.configureFromTypeModel(typeModel("ExpressionsAsm", false) {
-            namespace("net.akehurst.language.agl.language.expressions", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("RootExpressionDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "String")
+        val tm = typeModel("Test", true, emptyList()) {
+            namespace("net.akehurst.language.api.language.expressions", listOf("std", "net.akehurst.language.typemodel.api", "net.akehurst.language.api.language.base")) {
+                interfaceType("WithExpression") {
+                    supertypes("Expression", "std.Any")
                 }
-                dataType("NavigationDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "value", "List", listOf("String"))
+                interfaceType("WhenOption") {
+                    supertypes("std.Any")
+                }
+                interfaceType("WhenExpression") {
+                    supertypes("Expression", "std.Any")
+                }
+                interfaceType("RootExpression") {
+                    supertypes("Expression", "std.Any")
+                }
+                interfaceType("PropertyCall") {
+                    supertypes("NavigationPart", "std.Any")
+                }
+                interfaceType("OnExpression") {
+                    supertypes("Expression", "std.Any")
+                }
+                interfaceType("NavigationPart") {
+                    supertypes("std.Any")
+                }
+                interfaceType("NavigationExpression") {
+                    supertypes("Expression", "std.Any")
+                }
+                interfaceType("MethodCall") {
+                    supertypes("NavigationPart", "std.Any")
+                }
+                interfaceType("LiteralExpression") {
+                    supertypes("Expression", "std.Any")
+                }
+                interfaceType("InfixExpression") {
+                    supertypes("Expression", "std.Any")
+                }
+                interfaceType("IndexOperation") {
+                    supertypes("NavigationPart", "std.Any")
+                }
+                interfaceType("Expression") {
+                    supertypes("std.Any")
+                }
+                interfaceType("CreateTupleExpression") {
+                    supertypes("Expression", "std.Any")
+                }
+                interfaceType("CreateObjectExpression") {
+                    supertypes("Expression", "std.Any")
+                }
+                interfaceType("AssignmentStatement") {
+                    supertypes("std.Any")
                 }
             }
-        })
+            namespace("net.akehurst.language.agl.language.expressions.asm", listOf("net.akehurst.language.api.language.expressions", "std", "net.akehurst.language.typemodel.api", "net.akehurst.language.api.language.base")) {
+                dataType("WithExpressionSimple") {
+                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.WithExpression")
+                    constructor_ {
+                        parameter("withContext", "net.akehurst.language.api.language.expressions.Expression", false)
+                        parameter("expression", "net.akehurst.language.api.language.expressions.Expression", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "expression", "net.akehurst.language.api.language.expressions.Expression", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "withContext", "net.akehurst.language.api.language.expressions.Expression", false)
+                }
+                dataType("WhenOptionSimple") {
+                    supertypes("net.akehurst.language.api.language.expressions.WhenOption", "std.Any")
+                    constructor_ {
+                        parameter("condition", "net.akehurst.language.api.language.expressions.Expression", false)
+                        parameter("expression", "net.akehurst.language.api.language.expressions.Expression", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "condition", "net.akehurst.language.api.language.expressions.Expression", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "expression", "net.akehurst.language.api.language.expressions.Expression", false)
+                }
+                dataType("WhenExpressionSimple") {
+                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.WhenExpression")
+                    constructor_ {
+                        parameter("options", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "options", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.WhenOption")
+                    }
+                }
+                dataType("RootExpressionSimple") {
+                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.RootExpression")
+                    constructor_ {
+                        parameter("name", "std.String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "name", "std.String", false)
+                }
+                dataType("PropertyCallSimple") {
+                    supertypes("net.akehurst.language.api.language.expressions.PropertyCall", "std.Any")
+                    constructor_ {
+                        parameter("propertyName", "net.akehurst.language.typemodel.api.PropertyName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "propertyName", "net.akehurst.language.typemodel.api.PropertyName", false)
+                }
+                dataType("OnExpressionSimple") {
+                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.OnExpression")
+                    constructor_ {
+                        parameter("expression", "net.akehurst.language.api.language.expressions.Expression", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "expression", "net.akehurst.language.api.language.expressions.Expression", false)
+                    propertyOf(setOf(READ_WRITE, STORED), "propertyAssignments", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.AssignmentStatement")
+                    }
+                }
+                dataType("NavigationSimple") {
+                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.NavigationExpression")
+                    constructor_ {
+                        parameter("start", "net.akehurst.language.api.language.expressions.Expression", false)
+                        parameter("parts", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "parts", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.NavigationPart")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "start", "net.akehurst.language.api.language.expressions.Expression", false)
+                }
+                dataType("MethodCallSimple") {
+                    supertypes("net.akehurst.language.api.language.expressions.MethodCall", "std.Any")
+                    constructor_ {
+                        parameter("methodName", "net.akehurst.language.typemodel.api.MethodName", false)
+                        parameter("arguments", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "arguments", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.Expression")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "methodName", "net.akehurst.language.typemodel.api.MethodName", false)
+                }
+                dataType("LiteralExpressionSimple") {
+                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.LiteralExpression")
+                    constructor_ {
+                        parameter("qualifiedTypeName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                        parameter("value", "std.Any", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "qualifiedTypeName", "net.akehurst.language.api.language.base.QualifiedName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "value", "std.Any", false)
+                }
+                dataType("InfixExpressionSimple") {
+                    supertypes("net.akehurst.language.api.language.expressions.InfixExpression", "std.Any")
+                    constructor_ {
+                        parameter("expressions", "std.List", false)
+                        parameter("operators", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "expressions", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.Expression")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "operators", "std.List", false){
+                        typeArgument("std.String")
+                    }
+                }
+                dataType("IndexOperationSimple") {
+                    supertypes("net.akehurst.language.api.language.expressions.IndexOperation", "std.Any")
+                    constructor_ {
+                        parameter("indices", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "indices", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.Expression")
+                    }
+                }
+                dataType("ExpressionAbstract") {
+                    supertypes("net.akehurst.language.api.language.expressions.Expression", "std.Any")
+                    constructor_ {}
+                }
+                dataType("CreateTupleExpressionSimple") {
+                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.CreateTupleExpression")
+                    constructor_ {
+                        parameter("propertyAssignments", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "propertyAssignments", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.AssignmentStatement")
+                    }
+                }
+                dataType("CreateObjectExpressionSimple") {
+                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.CreateObjectExpression")
+                    constructor_ {
+                        parameter("possiblyQualifiedTypeName", "net.akehurst.language.api.language.base.PossiblyQualifiedName", false)
+                        parameter("arguments", "std.List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "arguments", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.Expression")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "possiblyQualifiedTypeName", "net.akehurst.language.api.language.base.PossiblyQualifiedName", false)
+                    propertyOf(setOf(READ_WRITE, STORED), "propertyAssignments", "std.List", false){
+                        typeArgument("net.akehurst.language.api.language.expressions.AssignmentStatement")
+                    }
+                }
+                dataType("AssignmentStatementSimple") {
+                    supertypes("net.akehurst.language.api.language.expressions.AssignmentStatement", "std.Any")
+                    constructor_ {
+                        parameter("lhsPropertyName", "net.akehurst.language.typemodel.api.PropertyName", false)
+                        parameter("rhs", "net.akehurst.language.api.language.expressions.Expression", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "lhsPropertyName", "net.akehurst.language.typemodel.api.PropertyName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "rhs", "net.akehurst.language.api.language.expressions.Expression", false)
+                }
+            }
+        }
+        serialiser.configureFromTypeModel(tm)
     }
 
+    /*
+    api.language.reference --> api.language.expressions
+    agl.language.reference.asm --> api.language.reference, api.language.expressions
+     */
     private fun initialiseCrossReferencesAsm() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("CrossReferencesAsm", false) {
-            namespace("net.akehurst.language.agl.language.reference", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                dataType("ReferencesGrammar") {
-                    supertypes("GrammarAbstract")
+        val tm = typeModel("Test", true, emptyList()) {
+            namespace("net.akehurst.language.api.language.reference", listOf("std", "net.akehurst.language.api.language.base", "net.akehurst.language.api.language.expressions")) {
+                interfaceType("ScopeDefinition") {
+                    supertypes("std.Any")
+                }
+                interfaceType("Scope") {
+                    typeParameters("ItemType")
+                    supertypes("std.Any")
+                }
+                interfaceType("ReferenceExpression") {
+                    supertypes("std.Any")
+                }
+                interfaceType("ReferenceDefinition") {
+                    supertypes("std.Any")
+                }
+                interfaceType("Identifiable") {
+                    supertypes("std.Any")
+                }
+                interfaceType("DeclarationsForNamespace") {
+                    supertypes("std.Any")
+                }
+                interfaceType("CrossReferenceModel") {
+                    supertypes("std.Any")
+                }
+                dataType("ScopedItem") {
+                    supertypes("std.Any")
+                    constructor_ {
+                        parameter("referableName", "String", false)
+                        parameter("qualifiedTypeName", "QualifiedName", false)
+                        parameter("item", "ItemType", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "item", "ItemType", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "qualifiedTypeName", "QualifiedName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "referableName", "String", false)
                 }
             }
-            namespace(
-                "net.akehurst.language.agl.language.reference.asm",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.language.expressions")
-            ) {
-                dataType("CrossReferenceModelDefault") {
-                    propertyOf(setOf(MEMBER, COMPOSITE), "declarationsForNamespace", "Map") {
-                        typeArgument("String")
-                        typeArgument("DeclarationsForNamespaceDefault")
-                    }
-                }
-                dataType("DeclarationsForNamespaceDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "qualifiedName", "String")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "scopeDefinition", "Map") {
-                        typeArgument("String")
-                        typeArgument("ScopeDefinitionDefault")
-                    }
-                    propertyOf(setOf(MEMBER, COMPOSITE), "references", "List", listOf("ReferenceDefinitionDefault"))
-                }
+            namespace("net.akehurst.language.agl.language.reference.asm", listOf("net.akehurst.language.api.language.reference", "std", "net.akehurst.language.api.language.base", "net.akehurst.language.api.language.expressions")) {
                 dataType("ScopeDefinitionDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scopeForTypeName", "String")
-
-                    propertyOf(setOf(MEMBER, COMPOSITE), "identifiables", "List", listOf("IdentifiableDefault"))
-                }
-                dataType("IdentifiableDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "typeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "identifiedBy", "String")
-                }
-                dataType("ReferenceDefinitionDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "inTypeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referenceExpressionList", "List") { typeArgument("ReferenceExpressionAbstract") }
+                    supertypes("net.akehurst.language.api.language.reference.ScopeDefinition", "std.Any")
+                    constructor_ {
+                        parameter("scopeForTypeName", "SimpleName", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "identifiables", "List", false){
+                        typeArgument("net.akehurst.language.api.language.reference.Identifiable")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "scopeForTypeName", "SimpleName", false)
                 }
                 dataType("ReferenceExpressionAbstract") {
-
+                    supertypes("net.akehurst.language.api.language.reference.ReferenceExpression", "std.Any")
+                    constructor_ {}
+                }
+                dataType("ReferenceDefinitionDefault") {
+                    supertypes("net.akehurst.language.api.language.reference.ReferenceDefinition", "std.Any")
+                    constructor_ {
+                        parameter("inTypeName", "SimpleName", false)
+                        parameter("referenceExpressionList", "List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "inTypeName", "SimpleName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "referenceExpressionList", "List", false){
+                        typeArgument("net.akehurst.language.api.language.reference.ReferenceExpression")
+                    }
                 }
                 dataType("PropertyReferenceExpressionDefault") {
                     supertypes("ReferenceExpressionAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referringPropertyNavigation", "Navigation")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "refersToTypeName", "List", listOf("String"))
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "fromNavigation", "Navigation", emptyList(), true)
+                    constructor_ {
+                        parameter("referringPropertyNavigation", "NavigationExpression", false)
+                        parameter("refersToTypeName", "List", false)
+                        parameter("fromNavigation", "NavigationExpression", true)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "fromNavigation", "NavigationExpression", true)
+                    propertyOf(setOf(READ_ONLY, STORED), "referringPropertyNavigation", "NavigationExpression", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "refersToTypeName", "List", false){
+                        typeArgument("net.akehurst.language.api.language.base.PossiblyQualifiedName")
+                    }
+                }
+                dataType("IdentifiableDefault") {
+                    supertypes("net.akehurst.language.api.language.reference.Identifiable", "std.Any")
+                    constructor_ {
+                        parameter("typeName", "SimpleName", false)
+                        parameter("identifiedBy", "Expression", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "identifiedBy", "Expression", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "typeName", "SimpleName", false)
+                }
+                dataType("DeclarationsForNamespaceDefault") {
+                    supertypes("net.akehurst.language.api.language.reference.DeclarationsForNamespace", "std.Any")
+                    constructor_ {
+                        parameter("qualifiedName", "QualifiedName", false)
+                        parameter("importedNamespaces", "List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "importedNamespaces", "List", false){
+                        typeArgument("net.akehurst.language.api.language.base.Import")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "qualifiedName", "QualifiedName", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "references", "List", false){
+                        typeArgument("net.akehurst.language.api.language.reference.ReferenceDefinition")
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "scopeDefinition", "Map", false){
+                        typeArgument("net.akehurst.language.api.language.base.SimpleName")
+                        typeArgument("net.akehurst.language.api.language.reference.ScopeDefinition")
+                    }
+                }
+                dataType("CrossReferenceModelDefault") {
+                    supertypes("net.akehurst.language.api.language.reference.CrossReferenceModel", "std.Any")
+                    constructor_ {}
+                    propertyOf(setOf(READ_ONLY, STORED), "declarationsForNamespace", "Map", false){
+                        typeArgument("net.akehurst.language.api.language.base.QualifiedName")
+                        typeArgument("net.akehurst.language.api.language.reference.DeclarationsForNamespace")
+                    }
                 }
                 dataType("CollectionReferenceExpressionDefault") {
                     supertypes("ReferenceExpressionAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "navigation", "Navigation")
-                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "referenceExpressionList", "List") { typeArgument("ReferenceExpression") }
+                    constructor_ {
+                        parameter("expression", "Expression", false)
+                        parameter("ofType", "PossiblyQualifiedName", true)
+                        parameter("referenceExpressionList", "List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, STORED), "expression", "Expression", false)
+                    propertyOf(setOf(READ_ONLY, STORED), "ofType", "PossiblyQualifiedName", true)
+                    propertyOf(setOf(READ_ONLY, STORED), "referenceExpressionList", "List", false){
+                        typeArgument("net.akehurst.language.agl.language.reference.asm.ReferenceExpressionAbstract")
+                    }
                 }
-
             }
-        })
+        }
+        serialiser.configureFromTypeModel(tm)
     }
 
     private fun initialiseMessages() {
@@ -1971,6 +1885,84 @@ object AglWorkerSerialisation {
         })
     }
 
+
+    /*
+    api.parser -->
+     */
+    private fun initialiseApiTypes() {
+        //classes registered with KotlinxReflect via gradle plugin
+        serialiser.configureFromTypeModel(typeModel("ApiType", false) {
+            namespace("net.akehurst.language.api.parser", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                dataType("InputLocation") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "position", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "column", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "line", "Int")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "length", "Int")
+                }
+            }
+            namespace("net.akehurst.language.api.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                enumType("LanguageIssueKind", emptyList())
+                enumType("CompletionItemKind", emptyList())
+                enumType("LanguageProcessorPhase", emptyList())
+                dataType("LanguageIssue") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "LanguageIssueKind")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "phase", "LanguageProcessorPhase")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "location", "InputLocation")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "message", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "data", "Any")
+                }
+                dataType("CompletionItem") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "kind", "CompletionItemKind")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "text", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "name", "String")
+                    propertyOf(setOf(READ_WRITE, COMPOSITE), "description", "String")
+                }
+            }
+            namespace("net.akehurst.language.agl.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                dataType("ScanOptionsDefault") {
+
+                }
+                dataType("ParseOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "goalRuleName", "String")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reportErrors", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "reportGrammarAmbiguities", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "cacheSkip", "Boolean")
+                }
+                dataType("SyntaxAnalysisOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "active", "Boolean")
+                }
+                dataType("SemanticAnalysisOptionsDefault") {
+                    typeParameters("AsmType","ContextType")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "active", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "locationMap", "Map") {
+                        typeArgument("Any")
+                        typeArgument("InputLocation")
+                    }
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "ContextType")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "checkReferences", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "resolveReferences", "Boolean")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "other", "Map") {
+                        typeArgument("String")
+                        typeArgument("Any")
+                    }
+                }
+                dataType("CompletionProviderOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "context", "ContextType")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "other", "Map") {
+                        typeArgument("String")
+                        typeArgument("Any")
+                    }
+                }
+                dataType("ProcessOptionsDefault") {
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "scan", "ScanOptionsDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "parse", "ParseOptionsDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "syntaxAnalysis", "SyntaxAnalysisOptionsDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "semanticAnalysis", "SemanticAnalysisOptionsDefault")
+                    propertyOf(setOf(CONSTRUCTOR, COMPOSITE), "completionProvider", "CompletionProviderOptionsDefault")
+                }
+            }
+        })
+    }
 
     fun check() {
         val issues = serialiser.registry.checkPublicAndReflectable()
