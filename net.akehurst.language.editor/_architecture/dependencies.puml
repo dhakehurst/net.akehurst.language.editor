@@ -1,21 +1,42 @@
 @startuml
 !pragma layout smetana
 
+artifact "agl-editor-api" as ed_api
+artifact "agl-editor-common" as ed_com
+artifact "agl-lang-svc" as lang_svc
+artifact "agl-editor-compose" as ed_compose
+
+artifact "agl-editor-browser-wrkr" as brws_wrkr
+
+artifact "agl-processor" as agl_proc
 artifact "ake.hjson" as hjson
 artifact "ake.json" as json
-artifact "ake.agl-processor" as agl
-artifact "ake.agl-editor" as agl_editor
 
 artifact "ake.kserialisation" as kserialisation
 artifact "ake.komposite" as komposite
 artifact "ake.kotlinx" as kotlinx
 
-agl_editor -[dashed]-> kserialisation
+
+ed_api -[dotted]-> agl_proc
+ed_com -[dotted]-> ed_api
+
+lang_svc -[dotted]-> ed_api
+lang_svc -[dotted]-> ed_com
+lang_svc -[dashed]-> kotlinx
+lang_svc -[dashed]-> kserialisation
+
+ed_compose -[dotted]-> ed_api
+ed_compose -[dotted]-> ed_com
+ed_compose -[dotted]-> lang_svc
+
+brws_wrkr -[dotted]-> lang_svc
+
+
 kserialisation -[dashed]-> komposite
 kserialisation -[dashed]-> hjson
 kserialisation -[dashed]-> json
 komposite -[dashed]-> kotlinx
-komposite -[dashed]-> agl
-hjson -[dashed]-> agl
+komposite -[dashed]-> agl_proc
+hjson -[dashed]-> agl_proc
 
 @enduml

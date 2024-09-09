@@ -19,22 +19,17 @@ import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.api.runtime.Rule
 import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
 import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
-import net.akehurst.language.agl.regex.RegexEngine
 import net.akehurst.language.agl.regex.RegexEngineAgl
 import net.akehurst.language.agl.regex.RegexEnginePlatform
 import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.scanner.ScannerAbstract
-import net.akehurst.language.agl.scanner.ScannerClassic
-import net.akehurst.language.agl.scanner.ScannerOnDemand
 import net.akehurst.language.agl.sppt.CompleteTreeDataNode
 import net.akehurst.language.api.language.base.QualifiedName
 import net.akehurst.language.api.language.grammar.GrammarRuleName
-import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.api.processor.RegexEngineKind
 import net.akehurst.language.api.processor.ScannerKind
 import net.akehurst.language.api.scanner.Scanner
 import net.akehurst.language.api.sppt.Sentence
-import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.AglEditorLogger
 
 class AglComponents<AsmType : Any, ContextType : Any>(

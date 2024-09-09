@@ -9,7 +9,7 @@ val version_coroutines:String by project
 
 dependencies {
 
-    "jsMainApi"(project(":agl-language-service-serialisation"))
+//    "jsMainApi"(project(":agl-language-service-serialisation"))
 
 }
 

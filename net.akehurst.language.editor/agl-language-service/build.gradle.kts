@@ -9,7 +9,9 @@ dependencies {
     //jsMainImplementation(project(":agl-language-service-serialisation"))
     commonMainImplementation(libs.nak.kotlinx.collections)
     commonMainImplementation(libs.nak.kotlinx.reflect)
-    commonMainImplementation(libs.nak.serialisation.json)
+    commonMainImplementation(libs.nak.kserialisation.json)
+
+    jvm8TestImplementation(libs.nal.agl.generators)
 }
 
 kotlinxReflect {
