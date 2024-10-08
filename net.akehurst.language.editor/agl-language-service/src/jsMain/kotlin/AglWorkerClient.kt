@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.language.service
 
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
@@ -120,19 +121,19 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         }
     }
 
-    fun createProcessor(languageId: String, editorId: String, sessionId: String, grammarStr: String, scopeModelStr:String?, editorOptions: EditorOptions) {
+    fun createProcessor(languageId: LanguageIdentity, editorId: String, sessionId: String, grammarStr: String, scopeModelStr:String?, editorOptions: EditorOptions) {
         this.sendToWorker(MessageProcessorCreate(EndPointIdentity(editorId, sessionId), languageId, grammarStr, scopeModelStr, editorOptions))
     }
 
-    fun interrupt(languageId: String, editorId: String, sessionId: String) {
+    fun interrupt(languageId: LanguageIdentity, editorId: String, sessionId: String) {
         this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(editorId, sessionId), languageId,"New parse request"))
     }
 
-    fun processSentence(languageId: String, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
+    fun processSentence(languageId: LanguageIdentity, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
         this.sendToWorker(MessageProcessRequest(EndPointIdentity(editorId, sessionId), languageId, sentence, processOptions))
     }
 
-    fun setStyle(languageId: String, editorId: String, sessionId: String, css: String) {
+    fun setStyle(languageId: LanguageIdentity, editorId: String, sessionId: String, css: String) {
         this.sendToWorker(MessageSetStyle(EndPointIdentity(editorId, sessionId), languageId,css))
     }
 

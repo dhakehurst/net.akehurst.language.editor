@@ -20,13 +20,14 @@ package net.akehurst.language.editor.browser.codemirror
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.api.parser.InputLocation
-import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.processor.LanguageIssueKind
-import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.style.AglStyle
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.issues.api.LanguageIssueKind
+import net.akehurst.language.issues.api.LanguageProcessorPhase
+import net.akehurst.language.sentence.api.InputLocation
+import net.akehurst.language.style.api.AglStyleDeclaration
 import org.w3c.dom.Element
 import kotlin.js.Promise
 import kotlin.math.min
@@ -50,7 +51,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
     languageService: LanguageService,
     containerElement: Element,
     cmEditor: codemirror.view.IEditorView,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
     codemirror: codemirror.ICodeMirror
@@ -72,7 +73,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val cmEditorView: codemirror.view.IEditorView,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
     val codemirrorFunctions: codemirror.ICodeMirror,
@@ -165,7 +166,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     }
 
-    override fun updateLanguage(oldId: String?) {
+    override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
             val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
             this.containerElement.removeClass(oldAglStyleClass)
@@ -176,16 +177,17 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     override fun updateEditorStyles() {
         val aglStyleClass = this.agl.styleHandler.aglStyleClass
         val theme = objectJS {}
-        for (r in this.agl.styleHandler.styleModel.rules) {
+        for (ss in this.agl.styleHandler.styleModel.allDefinitions) {
+            for (r in ss.rules) {
             val sel = r.selector.joinToString(separator = ", ") { ".${this.agl.styleHandler.mapClass(it.value)}" }
             val css = objectJS {}
-            for (oldStyle in r.styles.values) {
+            for (oldStyle in r.declaration.values) {
                 val style = when (oldStyle.name) {
-                    "foreground" -> AglStyle("color", oldStyle.value)
-                    "background" -> AglStyle("background-color", oldStyle.value)
+                    "foreground" -> AglStyleDeclaration("color", oldStyle.value)
+                    "background" -> AglStyleDeclaration("background-color", oldStyle.value)
                     "font-style" -> when (oldStyle.value) {
-                        "bold" -> AglStyle("font-weight", oldStyle.value)
-                        "italic" -> AglStyle("font-style", oldStyle.value)
+                        "bold" -> AglStyleDeclaration("font-weight", oldStyle.value)
+                        "italic" -> AglStyleDeclaration("font-style", oldStyle.value)
                         else -> oldStyle
                     }
 
@@ -194,6 +196,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                 (css as Any).set(style.name, style.value)
             }
             (theme as Any).set(sel, css)
+        }
         }
         //TODO: use computed facet instead of reconfiguring!
         this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {

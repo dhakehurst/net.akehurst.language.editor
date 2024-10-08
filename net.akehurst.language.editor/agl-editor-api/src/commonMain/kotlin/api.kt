@@ -16,12 +16,12 @@
 
 package net.akehurst.language.editor.api
 
-import net.akehurst.language.api.language.base.QualifiedName
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
-import net.akehurst.language.api.sppt.Sentence
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.sentence.api.Sentence
 
 enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, All }
 
@@ -41,7 +41,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     /**
      * the language identity for this editor
      */
-    var languageIdentity: QualifiedName
+    var languageIdentity: LanguageIdentity
 
     /**
      * The language definition for the editor, found or created using the languageId

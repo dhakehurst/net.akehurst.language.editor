@@ -16,13 +16,14 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.api.language.base.QualifiedName
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.AglToken
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-internal class test_AglTokenizer {
+class test_AglTokenizer {
 
     companion object {
         val logger = AglEditorLogger { l, m, t -> println("$l: $m") }
@@ -38,15 +39,21 @@ internal class test_AglTokenizer {
             }
         """.trimIndent()
         val styleStr = """
-            WORD { }
-            WS { }
-            S {}
+            namespace test
+            styles Test {
+              WORD { }
+              WS { }
+              S {}
+            }
         """.trimIndent()
 
-        val styleMdl = Agl.registry.agl.style.processor!!.process(styleStr).asm!!
+        val styleMdl = Agl.registry.agl.style.processor!!.process(styleStr).let {
+            assertTrue(it.issues.errors.isEmpty(), it.issues.toString())
+            it.asm!!
+        }
 
         val langDef = Agl.registry.register(
-            identity = QualifiedName(testLangId),
+            identity = LanguageIdentity(testLangId),
             grammarStr = grammarStr,
             aglOptions = null,
             buildForDefaultGoal = false,
@@ -54,7 +61,7 @@ internal class test_AglTokenizer {
         )
 
         fun test_getLineTokensByScan(lineText: String, previousLineState: AglLineState, expected: Pair<AglLineState, List<AglToken>>) {
-            val agl = AglComponents<Any, Any>(QualifiedName(testLangId), testEditorId, logger)
+            val agl = AglComponents<Any, Any>(LanguageIdentity(testLangId), testEditorId, logger)
             agl.styleHandler.updateStyleModel(styleMdl)
             agl.scannerMatchables = agl.languageDefinition.processor!!.scanner!!.matchables
             val sut = AglTokenizer<Any, Any>(agl)
@@ -68,7 +75,7 @@ internal class test_AglTokenizer {
         }
 
         fun test_getLineTokensByParse(fullText: String, row: Int, state: AglLineState, expected: Pair<AglLineState, List<AglToken>>) {
-            val agl = AglComponents<Any, Any>(QualifiedName(testLangId), testEditorId, logger)
+            val agl = AglComponents<Any, Any>(LanguageIdentity(testLangId), testEditorId, logger)
             agl.styleHandler.updateStyleModel(styleMdl)
             val sut = AglTokenizer<Any, Any>(agl)
             //sut.acceptingTokens = true

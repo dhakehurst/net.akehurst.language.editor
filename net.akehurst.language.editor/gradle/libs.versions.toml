@@ -1,4 +1,6 @@
 [versions]
+project = "2.0.20"
+
 kotlin = "2.0.20"
 dokka = "1.9.10"
 exportPublic = "2.0.20"
@@ -22,6 +24,7 @@ kotlinx-coroutines = "1.8.1"
 [libraries]
 nal-agl-processor = { module = "net.akehurst.language:agl-processor", version.ref = "nal-agl" }
 nal-agl-generators = { module = "net.akehurst.language:agl-generators", version.ref = "nal-agl" }
+nal-kotlinx-komposite = { module = "net.akehurst.language:kotlinx-komposite", version.ref = "nal-agl" }
 
 nak-compose-code-editor-api = { module = "net.akehurst.kotlin.compose:code-editor-api", version.ref = "nak-compose-code-editor-api" }
 

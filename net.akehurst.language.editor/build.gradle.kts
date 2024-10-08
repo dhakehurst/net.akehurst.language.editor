@@ -38,11 +38,8 @@ allprojects {
         mavenCentral()
     }
 
-    val version_project: String by project
-    val group_project = rootProject.name
-
-    group = group_project
-    version = version_project
+    group = rootProject.name
+    version = rootProject.libs.versions.project.get()
 
     project.layout.buildDirectory = File(rootProject.projectDir, ".gradle-build/${project.name}")
 

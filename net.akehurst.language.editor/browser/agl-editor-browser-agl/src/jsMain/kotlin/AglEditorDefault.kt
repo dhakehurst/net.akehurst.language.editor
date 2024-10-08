@@ -22,10 +22,11 @@ import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
 import net.akehurst.kotlin.html5.elUpdate
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
+import net.akehurst.language.issues.api.LanguageIssue
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLTextAreaElement
@@ -36,7 +37,7 @@ import org.w3c.dom.events.KeyboardEvent
 fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     languageService: LanguageService,
     containerElement: Element,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
 ): AglEditor<AsmType, ContextType> {
@@ -52,7 +53,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
 class AglEditorDefault<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
 ) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"session"), logFunction) {
@@ -77,7 +78,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
     override val isConnected: Boolean get() = this.containerElement.isConnected
 
-    override fun updateLanguage(oldId: String?) {
+    override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
             val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
             this.containerElement.removeClass(oldAglStyleClass)

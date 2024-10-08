@@ -15,27 +15,27 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.language.style.asm.AglStyleModelDefault
-import net.akehurst.language.api.language.base.QualifiedName
-import net.akehurst.language.api.language.style.AglStyleModel
-import net.akehurst.language.api.language.style.AglStyleRule
-import net.akehurst.language.api.sppt.LeafData
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.base.api.SimpleName
+import net.akehurst.language.sppt.api.LeafData
+import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleRule
+import net.akehurst.language.style.asm.AglStyleModelDefault
 
 open class AglStyleHandler(
-    languageId: QualifiedName,
+    languageId: LanguageIdentity,
     val cssClassPrefixStart: String = "agl"
 ) {
 
     companion object {
         const val EDITOR_NO_STYLE = "nostyle"
-
-        fun languageIdToStyleClass(cssClassPrefixStart: String, languageId: QualifiedName): String {
+        fun languageIdToStyleClass(cssClassPrefixStart: String, languageId: LanguageIdentity): String {
             val cssLangId = languageId.value.replace(Regex("[^a-z0-9A-Z_-]"), "_")
             return "${cssClassPrefixStart}_${cssLangId}"
         }
     }
 
-    private var _styleModel: AglStyleModel = AglStyleModelDefault(languageId.last,emptyList())
+    private var _styleModel: AglStyleModel = AglStyleModelDefault(SimpleName( languageId.last),emptyList())
 
     val styleModel get() = _styleModel
 
@@ -90,11 +90,13 @@ open class AglStyleHandler(
 
     fun updateStyleModel(styleModel: AglStyleModel) {
         _styleModel = styleModel // TODO: should not need to store this , need to modify 'updateEditorStyles' in editor specific code!
-        styleModel.allDefinitions.forEach { sr ->
-            val edStyle = convert<Any>(sr)
-            sr.selector.forEach { sel ->
-                val sn = mapClass(sel.value)
-                _editorStyles[sn] = edStyle
+        styleModel.allDefinitions.forEach { ss ->
+            ss.rules.forEach { sr ->
+                val edStyle = convert<Any>(sr)
+                sr.selector.forEach { sel ->
+                    val sn = mapClass(sel.value)
+                    _editorStyles[sn] = edStyle
+                }
             }
         }
     }

@@ -1,4 +1,8 @@
 
+repositories {
+    google()
+}
+
 dependencies {
     commonMainApi(project(":agl-editor-api"))
     commonMainApi(project(":agl-editor-common"))

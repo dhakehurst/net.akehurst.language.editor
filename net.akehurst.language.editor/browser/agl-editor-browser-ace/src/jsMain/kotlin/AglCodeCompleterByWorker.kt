@@ -68,7 +68,7 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
             }
             val result = proc.expectedItemsAt(editor.getValue(), pos, 1,
                 Agl.options {
-                    parse { goalRuleName(goalRule) }
+                    parse { goalRuleName(goalRule?.value) }
                     completionProvider { context(context) }
                 }
             )

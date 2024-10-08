@@ -16,15 +16,14 @@
 
 package net.akehurst.language.editor.worker
 
-import net.akehurst.language.api.sppt.SharedPackedParseTree
-import net.akehurst.language.api.sppt.SpptDataNode
-import net.akehurst.language.api.sppt.SpptDataNodeInfo
-import net.akehurst.language.api.sppt.SpptWalker
 import net.akehurst.language.collections.mutableStackOf
-
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.language.service.AglWorkerSerialisation
-import net.akehurst.language.editor.language.service.messages.*
+import net.akehurst.language.editor.language.service.messages.AglWorkerMessage
+import net.akehurst.language.sppt.api.PathFunction
+import net.akehurst.language.sppt.api.SharedPackedParseTree
+import net.akehurst.language.sppt.api.SpptDataNodeInfo
+import net.akehurst.language.sppt.api.SpptWalker
 import org.w3c.dom.MessageEvent
 
 abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract() {
@@ -134,7 +133,7 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                         this.endBranch(nodeInfo)
                     }
 
-                    override fun error(msg: String, path: () -> List<SpptDataNode>) {
+                    override fun error(msg: String, path: PathFunction) {
                         val parent = stack.peek()
                         val node = objectJS {
                             isBranch = false
@@ -194,7 +193,7 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                         this.endBranch(nodeInfo)
                     }
 
-                    override fun error(msg: String, path: () -> List<SpptDataNode>) {
+                    override fun error(msg: String, path: PathFunction) {
                         sb.append("<ERROR>:'${escapeCtrlCodes(msg)}'")
                     }
                 }

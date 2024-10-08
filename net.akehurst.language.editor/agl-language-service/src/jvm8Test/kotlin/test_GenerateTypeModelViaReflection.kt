@@ -4,11 +4,11 @@ import net.akehurst.language.agl.generators.FormatTypeModelAsKotlinTypeModelBuil
 import net.akehurst.language.agl.generators.GenerateTypeModelViaReflection
 import net.akehurst.language.agl.generators.PropertiesTypeModelFormatConfiguration
 import net.akehurst.language.agl.generators.TypeModelFormatConfiguration
-import net.akehurst.language.api.language.base.Indent
-import net.akehurst.language.api.language.base.QualifiedName
-import net.akehurst.language.api.language.base.SimpleName
+import net.akehurst.language.base.api.Indent
+import net.akehurst.language.base.api.QualifiedName
+import net.akehurst.language.base.api.SimpleName
 import net.akehurst.language.typemodel.api.TypeModel
-import net.akehurst.language.typemodel.simple.SimpleTypeModelStdLib
+import net.akehurst.language.typemodel.asm.SimpleTypeModelStdLib
 import kotlin.test.Test
 
 class test_GenerateTypeModelViaReflection {
@@ -19,7 +19,8 @@ class test_GenerateTypeModelViaReflection {
         val gen = GenerateTypeModelViaReflection(
             SimpleName("Test"),
             listOf(SimpleTypeModelStdLib),
-            GenerateTypeModelViaReflection.KOTLIN_TO_AGL
+            GenerateTypeModelViaReflection.KOTLIN_TO_AGL,
+            emptyList()
         )
         gen.addPackage("net.akehurst.language.api.language.base")
         gen.addPackage("net.akehurst.language.agl.language.base")
@@ -69,13 +70,13 @@ class test_GenerateTypeModelViaReflection {
         val fmrtr = FormatTypeModelAsKotlinTypeModelBuilder(
             TypeModelFormatConfiguration(
             exludedNamespaces = added,
-            includeInterfaces = false,
+            includeInterfaces = true,
             properties = PropertiesTypeModelFormatConfiguration(
                 includeDerived = false
             )
         )
         )
-        println(fmrtr.formatTypeModel(Indent(), tm, true, listOf()))
+        println(fmrtr.formatTypeModel(Indent(), tm, true, listOf("SimpleTypeModelStdLib")))
     }
 
 }

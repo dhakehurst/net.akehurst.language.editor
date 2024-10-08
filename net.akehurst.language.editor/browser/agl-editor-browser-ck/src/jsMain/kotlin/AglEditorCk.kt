@@ -16,25 +16,81 @@
 
 package net.akehurst.language.editor.browser.ck
 
+import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.base.api.QualifiedName
+import net.akehurst.language.editor.api.*
+import net.akehurst.language.editor.common.AglEditorAbstract
+import net.akehurst.language.editor.common.AglTokenizerByWorker
+import net.akehurst.language.issues.api.LanguageIssue
+import org.w3c.dom.Element
+
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     languageService: LanguageService,
     containerElement: Element,
-    ckEditor: ck.IEditor,
-    languageId: String,
+    ckEditor: ck.Editor,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
-    ace: IAce
+    ck: ck.Editor
 ): AglEditor<AsmType, ContextType> {
-    val aglEditor = AglEditorAce<AsmType, ContextType>(
+    val aglEditor = AglEditorCk<AsmType, ContextType>(
         languageServiceRequest = languageService.request,
         containerElement = containerElement,
-        aceEditor = aceEditor,
+        ckEditor = ckEditor,
         languageId = languageId,
         editorId = editorId,
-        logFunction = logFunction,
-        ace = ace
+        logFunction = logFunction
     )
     languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
     return aglEditor
+}
+
+private class AglEditorCk<AsmType : Any, ContextType : Any>(
+    languageServiceRequest: LanguageServiceRequest,
+    val containerElement: Element,
+    ckEditor: ck.Editor,
+    languageId: LanguageIdentity,
+    editorId: String,
+    logFunction: LogFunction?
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId, "none"), logFunction) {
+
+    override val baseEditor: Any
+        get() = TODO("not implemented")
+    override var text: String
+        get() = TODO("not implemented")
+        set(value) {}
+
+    override val isConnected: Boolean
+        get() = TODO("not implemented")
+    override val workerTokenizer: AglTokenizerByWorker
+        get() = TODO("not implemented")
+    override val completionProvider: AglEditorCompletionProvider
+        get() = TODO("not implemented")
+
+    override fun resetTokenization(fromLine: Int) {
+        TODO("not implemented")
+    }
+
+    override fun createIssueMarkers(issues: List<LanguageIssue>) {
+        TODO("not implemented")
+    }
+
+    override fun updateLanguage(oldId: LanguageIdentity?) {
+        TODO("not implemented")
+    }
+
+    override fun updateEditorStyles() {
+        TODO("not implemented")
+    }
+
+    override fun clearErrorMarkers() {
+        TODO("not implemented")
+    }
+
+    override fun destroy() {
+        TODO("not implemented")
+    }
+
 }

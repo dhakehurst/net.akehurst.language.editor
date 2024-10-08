@@ -23,18 +23,20 @@ import kotlinx.browser.window
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.processor.LanguageIssueKind
-import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.style.AglStyle
-import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.api.style.AglStyleSelector
-import net.akehurst.language.api.style.AglStyleSelectorKind
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.AglTokenizerByWorker
 import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.issues.api.LanguageIssueKind
+import net.akehurst.language.issues.api.LanguageProcessorPhase
+import net.akehurst.language.style.api.AglStyleDeclaration
+import net.akehurst.language.style.api.AglStyleSelector
+import net.akehurst.language.style.api.AglStyleSelectorKind
+import net.akehurst.language.style.api.StyleNamespace
+import net.akehurst.language.style.asm.AglStyleRuleDefault
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -60,7 +62,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     languageService: LanguageService,
     containerElement: Element,
     aceEditor: ace.IEditor,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
     ace: IAce
@@ -82,7 +84,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val aceEditor: ace.IEditor,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
     val ace: IAce,
@@ -153,7 +155,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun updateLanguage(oldId: String?) {
+    override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
             val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
             this.containerElement.removeClass(oldAglStyleClass)
@@ -165,28 +167,30 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         // style requires that the element is part of the dom
         val aglStyleClass = this.agl.styleHandler.aglStyleClass
         var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
-        this.agl.styleHandler.styleModel.rules.forEach { rule ->
-            val ruleClasses = rule.selector.map {
-                val mappedSelName = this.agl.styleHandler.mapClass(it.value)
-                AglStyleSelector(".ace_$mappedSelName", it.kind)
-            }
-            val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
-            val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
-            mappedRule.styles = rule.styles.values.associate { oldStyle ->
-                val style = when (oldStyle.name) {
-                    "foreground" -> AglStyle("color", oldStyle.value)
-                    "background" -> AglStyle("background-color", oldStyle.value)
-                    "font-style" -> when (oldStyle.value) {
-                        "bold" -> AglStyle("font-weight", oldStyle.value)
-                        "italic" -> AglStyle("font-style", oldStyle.value)
+        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss ->
+            ss.rules.forEach { rule ->
+                val ruleClasses = rule.selector.map {
+                    val mappedSelName = this.agl.styleHandler.mapClass(it.value)
+                    AglStyleSelector(".ace_$mappedSelName", it.kind)
+                }
+                val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
+                val mappedRule = AglStyleRuleDefault(cssClasses) // just used to map to css string
+                mappedRule.declaration = LinkedHashMap(rule.declaration.values.associate { oldStyle ->
+                    val style = when (oldStyle.name) {
+                        "foreground" -> AglStyleDeclaration("color", oldStyle.value)
+                        "background" -> AglStyleDeclaration("background-color", oldStyle.value)
+                        "font-style" -> when (oldStyle.value) {
+                            "bold" -> AglStyleDeclaration("font-weight", oldStyle.value)
+                            "italic" -> AglStyleDeclaration("font-style", oldStyle.value)
+                            else -> oldStyle
+                        }
+
                         else -> oldStyle
                     }
-
-                    else -> oldStyle
-                }
-                Pair(style.name, style)
-            }.toMutableMap()
-            mappedCss = mappedCss + "\n" + mappedRule.toCss()
+                    Pair(style.name, style)
+                })
+                mappedCss = mappedCss + "\n" + mappedRule.toCss()
+            }
         }
 
         val root = this.containerElement.getRootNode() as ParentNode?

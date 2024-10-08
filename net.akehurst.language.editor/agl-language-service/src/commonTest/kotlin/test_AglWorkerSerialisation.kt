@@ -16,31 +16,32 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.language.asmTransform.TransformModelDefault
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.GrammarString
-import net.akehurst.language.agl.default.ContextAsmDefault
-import net.akehurst.language.agl.default.contextSimple
-import net.akehurst.language.agl.language.grammar.ContextFromGrammar
-import net.akehurst.language.agl.scanner.Matchable
-import net.akehurst.language.agl.scanner.MatchableKind
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.sppt.TreeDataComplete
-import net.akehurst.language.api.asm.Asm
-import net.akehurst.language.api.asm.asmSimple
-import net.akehurst.language.api.language.grammar.Grammar
-import net.akehurst.language.api.parser.InputLocation
-import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.processor.LanguageIssueKind
-import net.akehurst.language.api.processor.LanguageProcessorPhase
+import net.akehurst.language.agl.simple.ContextAsmSimple
+import net.akehurst.language.agl.simple.contextAsmSimple
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.asm.api.Asm
+import net.akehurst.language.asm.simple.asmSimple
 import net.akehurst.language.editor.api.EditorOptionsDefault
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.language.service.AglWorkerSerialisation
 import net.akehurst.language.editor.language.service.messages.*
+import net.akehurst.language.grammar.api.Grammar
+import net.akehurst.language.grammar.processor.ContextFromGrammar
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.issues.api.LanguageIssueKind
+import net.akehurst.language.issues.api.LanguageProcessorPhase
+import net.akehurst.language.scanner.api.Matchable
+import net.akehurst.language.scanner.api.MatchableKind
+import net.akehurst.language.sentence.api.InputLocation
+import net.akehurst.language.sppt.treedata.TreeDataComplete
+import net.akehurst.language.transform.asm.TransformModelDefault
 import net.akehurst.language.typemodel.api.TypeModel
-import net.akehurst.language.typemodel.simple.SimpleTypeModelStdLib
-import net.akehurst.language.agl.language.typemodel.typeModel
+import net.akehurst.language.typemodel.asm.SimpleTypeModelStdLib
+import net.akehurst.language.typemodel.asm.typeModel
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -49,7 +50,7 @@ import kotlin.test.assertTrue
 class test_AglWorkerSerialisation {
 
     companion object {
-        val languageId = "test-languageId"
+        val languageId = LanguageIdentity("test-languageId")
         val editorId = "test-editorId"
         val sessionId = "test-sessionId"
 
@@ -84,7 +85,9 @@ class test_AglWorkerSerialisation {
             """.trimIndent()
         ).asm!!.primary!!
 
-        test(input)
+        test(input.namespace){ expected, actual ->
+            assertEquals(expected.asString(), actual.asString())
+        }
     }
 
     @Test
@@ -100,11 +103,11 @@ class test_AglWorkerSerialisation {
                     propertyPrimitiveType("propPrim", "String", false, 0)
                     propertyListTypeOf("propList", "String", false, 1)
                     propertyUnnamedSuperType("propUnnamedType", false, 2) {
-                        primitiveRef("String")
-                        elementRef("ADatType")
+                        typeRef("String")
+                        typeRef("ADatType")
                     }
                     propertyTupleType("tt", false, 3) {
-                        propertyPrimitiveType("a", "String", false, 0)
+                        typeRef("a", "String", false)
                     }
                 }
             }
@@ -138,7 +141,7 @@ class test_AglWorkerSerialisation {
                 }
             }
         }
-        val context = ContextAsmDefault()
+        val context = ContextAsmSimple()
         val input: Asm = asmSimple(typeModel = tm, crossReferenceModel = result.asm!!, context = context) {
             element("Root") {
                 propertyElementExplicitType("content", "Elem1") {
@@ -191,7 +194,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun ContextSimple_serialise_deserialise() {
-        val input = contextSimple {
+        val input = contextAsmSimple {
             scope("a1", "A", "/a1")
             item("b1", "B", "/a1/b1")
             scopedItem("c1", "C", "/c1") {
@@ -274,7 +277,7 @@ class test_AglWorkerSerialisation {
         val expected = MessageProcessorCreateResponse(
             EndPointIdentity(editorId, sessionId),
             MessageStatus.SUCCESS, "OK", emptyList(), listOf(
-                Matchable("tag","expr",MatchableKind.LITERAL)
+                Matchable("tag", "expr", MatchableKind.LITERAL)
             )
         )
 
@@ -290,7 +293,7 @@ class test_AglWorkerSerialisation {
     // --- MessageProcessRequest ---
     @Test
     fun MessageProcessRequest_com_empty_ContextSimple() {
-        val context = ContextAsmDefault()
+        val context = ContextAsmSimple()
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), languageId,
             "",
@@ -303,7 +306,7 @@ class test_AglWorkerSerialisation {
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmDefault>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmSimple>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
@@ -349,7 +352,7 @@ class test_AglWorkerSerialisation {
               S = 'a' ;
             }
         """
-        val proc = Agl.processorFromStringDefault(GrammarString(grammarStr)).processor!!
+        val proc = Agl.processorFromStringSimple(GrammarString(grammarStr)).processor!!
         val context = ContextFromTypeModel(proc.typeModel)
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), languageId,
@@ -384,13 +387,13 @@ class test_AglWorkerSerialisation {
                 }
             """.trimIndent()
         val expected = MessageProcessRequest(
-            EndPointIdentity(editorId, sessionId), Agl.registry.agl.grammarLanguageIdentity.value,
+            EndPointIdentity(editorId, sessionId), Agl.registry.agl.grammarLanguageIdentity,
             userGrammar,
             Agl.options { }
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmDefault>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmSimple>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
@@ -469,13 +472,15 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun test_TreeDataComplete_a() {
-        val p = Agl.processorFromStringDefault(
-           GrammarString( """
+        val p = Agl.processorFromStringSimple(
+            GrammarString(
+                """
             namespace test
             grammar Test {
                 S = 'a' ;
             }
-        """.trimIndent())
+        """.trimIndent()
+            )
         ).processor!!
         val treeData = p.parse("a").sppt?.treeData!!
 
@@ -604,7 +609,7 @@ class test_AglWorkerSerialisation {
               S = 'a' ;
             }
         """
-        val proc = Agl.processorFromStringDefault(GrammarString(grammarStr)).processor!!
+        val proc = Agl.processorFromStringSimple(GrammarString(grammarStr)).processor!!
         val expected = MessageSyntaxAnalysisResult(
             EndPointIdentity(editorId, sessionId),
             MessageStatus.SUCCESS,
@@ -736,7 +741,7 @@ class test_AglWorkerSerialisation {
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmDefault>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmSimple>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)

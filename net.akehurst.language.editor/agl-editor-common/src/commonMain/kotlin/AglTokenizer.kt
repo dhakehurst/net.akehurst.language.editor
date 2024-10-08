@@ -15,9 +15,9 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.agl.parser.SentenceDefault
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.sentence.common.SentenceDefault
 import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
 

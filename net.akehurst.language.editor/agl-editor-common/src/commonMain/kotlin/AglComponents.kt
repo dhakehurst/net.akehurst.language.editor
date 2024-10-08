@@ -16,24 +16,24 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.api.runtime.Rule
-import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
-import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
-import net.akehurst.language.agl.regex.RegexEngineAgl
-import net.akehurst.language.agl.regex.RegexEnginePlatform
-import net.akehurst.language.agl.scanner.Matchable
-import net.akehurst.language.agl.scanner.ScannerAbstract
-import net.akehurst.language.agl.sppt.CompleteTreeDataNode
-import net.akehurst.language.api.language.base.QualifiedName
-import net.akehurst.language.api.language.grammar.GrammarRuleName
-import net.akehurst.language.api.processor.RegexEngineKind
-import net.akehurst.language.api.processor.ScannerKind
-import net.akehurst.language.api.scanner.Scanner
-import net.akehurst.language.api.sppt.Sentence
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.scanner.api.Scanner
+import net.akehurst.language.scanner.api.ScannerKind
 import net.akehurst.language.editor.api.AglEditorLogger
+import net.akehurst.language.grammar.api.GrammarRuleName
+import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
+import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
+import net.akehurst.language.parser.api.Rule
+import net.akehurst.language.regex.agl.RegexEngineAgl
+import net.akehurst.language.regex.agl.RegexEnginePlatform
+import net.akehurst.language.regex.api.RegexEngineKind
+import net.akehurst.language.scanner.api.Matchable
+import net.akehurst.language.scanner.common.ScannerAbstract
+import net.akehurst.language.sentence.api.Sentence
+import net.akehurst.language.sppt.treedata.CompleteTreeDataNode
 
 class AglComponents<AsmType : Any, ContextType : Any>(
-    languageId: QualifiedName,
+    languageId: LanguageIdentity,
     val editorId: String,
     val logger: AglEditorLogger
 ) {
@@ -62,7 +62,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
     //var sppt: SharedPackedParseTree? = null
 
     // provided by worker when processor created
-    private var _scannerMatchables= listOf<Matchable>()
+    private var _scannerMatchables = listOf<Matchable>()
     var scannerMatchables
         get() = _scannerMatchables
         set(value) {
@@ -73,7 +73,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
             _scannerMatchables = value.map { it.using(regexEngine) }
         }
 
-    var languageIdentity: QualifiedName
+    var languageIdentity: LanguageIdentity
         get() = languageDefinition.identity
         set(value) {
             if (languageDefinition.identity == value) {

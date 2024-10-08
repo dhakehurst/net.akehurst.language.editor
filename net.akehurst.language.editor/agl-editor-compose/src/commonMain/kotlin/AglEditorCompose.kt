@@ -18,14 +18,15 @@ package net.akehurst.language.editor.common.compose
 
 import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglTokenizerByWorker
+import net.akehurst.language.issues.api.LanguageIssue
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     languageService: LanguageService,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
     composeEditor: ComposeCodeEditor
@@ -44,7 +45,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
 
 class AglEditorCompose<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
     val composeEditor: ComposeCodeEditor
@@ -69,7 +70,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         composeEditor.destroy()
     }
 
-    override fun updateLanguage(oldId: String?) {
+    override fun updateLanguage(oldId: LanguageIdentity?) {
         TODO("not implemented")
     }
 

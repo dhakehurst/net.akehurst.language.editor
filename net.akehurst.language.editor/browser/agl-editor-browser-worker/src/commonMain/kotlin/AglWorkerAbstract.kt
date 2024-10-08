@@ -18,34 +18,37 @@ package net.akehurst.language.editor.worker
 
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.agl.parser.SentenceDefault
-import net.akehurst.language.agl.default.TypeModelFromGrammar
-import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
-import net.akehurst.language.agl.language.grammar.ContextFromGrammarRegistry
-import net.akehurst.language.agl.language.reference.asm.CrossReferenceModelDefault
-import net.akehurst.language.agl.processor.IssueHolder
-import net.akehurst.language.agl.processor.ParseResultDefault
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
-import net.akehurst.language.api.parser.InputLocation
 import net.akehurst.language.api.processor.*
-import net.akehurst.language.api.sppt.Sentence
-import net.akehurst.language.api.sppt.SharedPackedParseTree
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.language.service.messages.*
+import net.akehurst.language.grammar.asm.asGrammarModel
+import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
+import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
+import net.akehurst.language.issues.api.LanguageProcessorPhase
+import net.akehurst.language.issues.ram.IssueHolder
+import net.akehurst.language.parser.api.ParseResult
+import net.akehurst.language.parser.leftcorner.ParseResultDefault
+import net.akehurst.language.reference.asm.CrossReferenceModelDefault
+import net.akehurst.language.sentence.api.InputLocation
+import net.akehurst.language.sentence.api.Sentence
+import net.akehurst.language.sentence.common.SentenceDefault
+import net.akehurst.language.sppt.api.SharedPackedParseTree
+import net.akehurst.language.transform.asm.TransformModelDefault
 
 
 abstract class AglWorkerAbstract {
 
     // languageId -> def
-    private var _languageDefinition: MutableMap<String, LanguageDefinition<Any, Any>> = mutableMapOf()
+    private var _languageDefinition: MutableMap<LanguageIdentity, LanguageDefinition<Any, Any>> = mutableMapOf()
 
     // languageId -> sh
-    private var _styleHandler: MutableMap<String, AglStyleHandler> = mutableMapOf()
+    private var _styleHandler: MutableMap<LanguageIdentity, AglStyleHandler> = mutableMapOf()
 
     // editorId -> options
     private var _editorOptions: MutableMap<String, EditorOptions> = mutableMapOf()
@@ -57,15 +60,15 @@ abstract class AglWorkerAbstract {
         //style and format not handled here, handled separately
         // TODO: could be an argument
         ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>
-        ld.configuration = Agl.configuration(base = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any> ) {
+        ld.configuration = Agl.configuration(base = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>) {
             if (null != crossReferenceModelStr) {
                 crossReferenceModelResolver { p -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typeModel), crossReferenceModelStr) }
             }
         }
-        ld.update(grammarStr = grammarStr,crossReferenceModelStr,null)
+        ld.update(grammarStr = grammarStr, crossReferenceModelStr, null)
     }
 
-    protected open fun createLanguageDefinition(languageId: String, grammarStr: String?, crossReferenceModelStr: String?): LanguageDefinition<Any, Any> {
+    protected open fun createLanguageDefinition(languageId: LanguageIdentity, grammarStr: String?, crossReferenceModelStr: String?): LanguageDefinition<Any, Any> {
         val ld = Agl.registry.findOrPlaceholder<Any, Any>(
             identity = languageId,
             aglOptions = Agl.options {
@@ -89,7 +92,7 @@ abstract class AglWorkerAbstract {
             is MessageParserInterruptRequest -> this.interrupt(port, msg)
             is MessageProcessRequest<*, *> -> this.process(port, msg as MessageProcessRequest<Any, Any>)
             is MessageSetStyle -> this.setStyle(port, msg)
-            is MessageCodeCompleteRequest<*,*> -> this.getCodeCompletions(port, msg as MessageCodeCompleteRequest<Any, Any>)
+            is MessageCodeCompleteRequest<*, *> -> this.getCodeCompletions(port, msg as MessageCodeCompleteRequest<Any, Any>)
             else -> error("Unknown Message type")
         }
     }
@@ -106,7 +109,7 @@ abstract class AglWorkerAbstract {
 
                 val proc = ld.processor // should throw exception if there are problems
                 if (null == proc) {
-                    sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "Error",  ld.issues.all.toList(),emptyList()))
+                    sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "Error", ld.issues.all.toList(), emptyList()))
                 } else {
                     sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.SUCCESS, "OK", ld.issues.all.toList(), proc.scanner!!.matchables))
                 }
@@ -133,8 +136,10 @@ abstract class AglWorkerAbstract {
             val result = Agl.registry.agl.style.processor!!.process(message.styleStr)
             val styleMdl = result.asm
             if (null != styleMdl) {
-                styleMdl.rules.forEach { rule ->
-                    rule.selector.forEach { sel -> style.mapClass(sel.value) }
+                styleMdl.allDefinitions.forEach { ss ->
+                    ss.rules.forEach { rule ->
+                        rule.selector.forEach { sel -> style.mapClass(sel.value) }
+                    }
                 }
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl))
             } else {
@@ -176,7 +181,7 @@ abstract class AglWorkerAbstract {
     protected fun parse(
         port: Any,
         endPoint: EndPointIdentity,
-        languageId: String,
+        languageId: LanguageIdentity,
         proc: LanguageProcessor<Any, Any>,
         processOptions: ProcessOptions<Any, Any>,
         sentence: String
@@ -254,7 +259,7 @@ abstract class AglWorkerAbstract {
     private fun semanticAnalysis(
         port: Any,
         endPoint: EndPointIdentity,
-        languageId: String,
+        languageId: LanguageIdentity,
         proc: LanguageProcessor<Any, Any>,
         options: ProcessOptions<Any, Any>,
         asm: Any,
@@ -264,7 +269,7 @@ abstract class AglWorkerAbstract {
             sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.START, "Start", emptyList(), null))
             val editorOptions = _editorOptions[endPoint.editorId]
             when {
-                true!=editorOptions?.semanticAnalysis -> {
+                true != editorOptions?.semanticAnalysis -> {
                     sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.FAILURE, "SemanticAnalysis Interest not registered during Processor Creation", emptyList(), null))
                 }
 
@@ -280,7 +285,13 @@ abstract class AglWorkerAbstract {
                             is ContextFromTypeModelReference -> {
                                 val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId
                                 val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                                val tm = TypeModelFromGrammar.createFromGrammarList(ld.grammarList)
+                                val res = TransformModelDefault.fromGrammarModel(ld.grammarList)
+                                val trfm = when {
+                                    res.issues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
+                                    else -> TODO()
+                                }
+                                val tm = trfm.typeModel ?: error("No TypeModel found in TransformModel")
+                                //val tm = TypeModelFromGrammar.createFromGrammarList(ld.grammarList)
                                 ContextFromTypeModel(tm)
                             }
 
@@ -297,7 +308,7 @@ abstract class AglWorkerAbstract {
                         }
                     }
                     val result = proc.semanticAnalysis(asm, opts)
-                    val issues =  result.issues.all
+                    val issues = result.issues.all
                     if (editorOptions.semanticAnalysisAsm) {
                         sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.SUCCESS, "Success", issues.toList(), asm))
                     } else {
@@ -315,7 +326,7 @@ abstract class AglWorkerAbstract {
         }
     }
 
-    private fun sendLineTokens(port: Any, endPoint: EndPointIdentity, languageId: String, sentence: Sentence, sppt: SharedPackedParseTree, lineTokensChunkSize: Int) {
+    private fun sendLineTokens(port: Any, endPoint: EndPointIdentity, languageId: LanguageIdentity, sentence: Sentence, sppt: SharedPackedParseTree, lineTokensChunkSize: Int) {
         try {
             val editorOptions = _editorOptions[endPoint.editorId]
             if (true == editorOptions?.parseLineTokens) {
@@ -352,7 +363,8 @@ abstract class AglWorkerAbstract {
             sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.endPoint, MessageStatus.START, null, emptyList()))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
-            val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(listOf(proc.grammar!!), Agl.options {
+
+            val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(proc.grammar!!.asGrammarModel(), Agl.options {
                 semanticAnalysis {
                     context(ContextFromGrammarRegistry(Agl.registry))
                     locationMap(proc.syntaxAnalyser!!.locationMap)

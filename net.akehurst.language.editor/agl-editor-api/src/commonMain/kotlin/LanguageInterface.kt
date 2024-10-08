@@ -1,10 +1,11 @@
 package net.akehurst.language.editor.api
 
-import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
-import net.akehurst.language.api.language.style.AglStyleModel
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.scanner.api.Matchable
+import net.akehurst.language.style.api.AglStyleModel
 
 interface LanguageService {
     val request: LanguageServiceRequest
@@ -12,13 +13,13 @@ interface LanguageService {
 }
 
 interface LanguageServiceRequest {
-    fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId:String, grammarStr:String, crossReferenceModelStr:String?, editorOptions: EditorOptions)
+    fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, grammarStr:String, crossReferenceModelStr:String?, editorOptions: EditorOptions)
     fun processorDeleteRequest(endPointIdentity: EndPointIdentity)
-    fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId:String, styleStr:String)
+    fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, styleStr:String)
 
-    fun interruptRequest(endPointIdentity: EndPointIdentity, languageId:String, reason:String)
-    fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(endPointIdentity: EndPointIdentity, languageId:String, text: String, processOptions: ProcessOptions<AsmType, ContextType>)
-    fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity, languageId: String, text:String, position:Int, processOptions: ProcessOptions<AsmType, ContextType>)
+    fun interruptRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, reason:String)
+    fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, text: String, processOptions: ProcessOptions<AsmType, ContextType>)
+    fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, text:String, position:Int, processOptions: ProcessOptions<AsmType, ContextType>)
 }
 
 interface LanguageServiceResponse {

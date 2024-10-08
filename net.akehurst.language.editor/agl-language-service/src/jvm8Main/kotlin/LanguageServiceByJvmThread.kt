@@ -16,11 +16,14 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.scanner.Matchable
-import net.akehurst.language.api.processor.*
-import net.akehurst.language.api.language.style.AglStyleModel
+import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.scanner.api.Matchable
+import net.akehurst.language.style.api.AglStyleModel
 import java.util.concurrent.ExecutorService
 
 open class LanguageServiceByJvmThread(
@@ -29,7 +32,7 @@ open class LanguageServiceByJvmThread(
 
     // --- LanguageService ---
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
-        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: String, grammarStr: String, crossReferenceModelStr: String?, editorOptions: EditorOptions) {
+        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, grammarStr: String, crossReferenceModelStr: String?, editorOptions: EditorOptions) {
             submit { direct.processorCreateRequest(endPointIdentity, languageId, grammarStr, crossReferenceModelStr, editorOptions) }
         }
 
@@ -37,17 +40,17 @@ open class LanguageServiceByJvmThread(
             submit { direct.processorDeleteRequest(endPointIdentity) }
         }
 
-        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: String, styleStr: String) {
+        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: String) {
             submit { direct.processorSetStyleRequest(endPointIdentity, languageId, styleStr) }
         }
 
-        override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: String, reason: String) {
+        override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, reason: String) {
             submit { direct.interruptRequest(endPointIdentity, languageId, "New parse request") }
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
             endPointIdentity: EndPointIdentity,
-            languageId: String,
+            languageId: LanguageIdentity,
             text: String,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
@@ -56,7 +59,7 @@ open class LanguageServiceByJvmThread(
 
         override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
             endPointIdentity: EndPointIdentity,
-            languageId: String,
+            languageId: LanguageIdentity,
             text: String,
             position: Int,
             processOptions: ProcessOptions<AsmType, ContextType>

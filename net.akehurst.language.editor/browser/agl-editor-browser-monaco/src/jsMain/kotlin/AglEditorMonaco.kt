@@ -31,17 +31,19 @@ import monaco.languages.ILanguageExtensionPoint
 import monaco.languages.TokensProvider
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.style.AglStyle
-import net.akehurst.language.api.style.AglStyleRule
-import net.akehurst.language.api.style.AglStyleSelector
-import net.akehurst.language.api.style.AglStyleSelectorKind
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.common.AglTokenizerByWorker
 import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.issues.api.LanguageProcessorPhase
+import net.akehurst.language.style.api.AglStyleDeclaration
+import net.akehurst.language.style.api.AglStyleSelector
+import net.akehurst.language.style.api.AglStyleSelectorKind
+import net.akehurst.language.style.api.StyleNamespace
+import net.akehurst.language.style.asm.AglStyleRuleDefault
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -49,7 +51,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
     languageService: LanguageService,
     containerElement: Element,
     monacoEditor: IStandaloneCodeEditor,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
     monaco: Monaco
@@ -89,11 +91,11 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val monacoEditor: IStandaloneCodeEditor,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?,
     val monaco: Monaco,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"none"), logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId, "none"), logFunction) {
 
     companion object {
         private val init = js(
@@ -114,7 +116,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         val allAglGlobalThemeRules = mutableMapOf<String, ITokenThemeRule>()
     }
 
-    val languageThemePrefix = this.languageIdentity + "-"
+    val languageThemePrefix = this.languageIdentity.value + "-"
 
     override val baseEditor: Any get() = this.monacoEditor
 
@@ -141,6 +143,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     override var workerTokenizer: AglTokenizerByWorker = AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl)
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
+
     init {
         try {
             val themeData = objectJSTyped<IStandaloneThemeData> {
@@ -159,20 +162,20 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
             monaco.defineTheme(aglGlobalTheme, themeData);
 
             monaco.register(objectJSTyped<monaco.languages.ILanguageExtensionPoint> {
-                id = languageIdentity
+                id = languageIdentity.value
             })
             //val languageId = this.languageId
             //val editorOptions = js("{language: languageId, value: initialContent, theme: theme, wordBasedSuggestions:false}")
 
-            monaco.setModelLanguage(this.monacoEditor.getModel(), languageIdentity)
+            monaco.setModelLanguage(this.monacoEditor.getModel(), languageIdentity.value)
             monaco.setTheme(aglGlobalTheme)
 
             monaco.setTokensProvider(
-                this.languageIdentity,
+                this.languageIdentity.value,
                 this.workerTokenizer as monaco.languages.TokensProvider
             )
             monaco.registerCompletionItemProvider(
-                this.languageIdentity,
+                this.languageIdentity.value,
                 AglCompletionProviderMonaco(monaco, this.agl)
             )
 
@@ -194,7 +197,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         //this.monacoEditor.destroy()
     }
 
-    override fun updateLanguage(oldId: String?) {
+    override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
             val oldAglStyleClass =
                 AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
@@ -206,28 +209,30 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     override fun updateEditorStyles() {
         val aglStyleClass = this.agl.styleHandler.aglStyleClass
         var mappedCss = ""
-        this.agl.styleHandler.styleModel.rules.forEach { rule ->
-            val ruleClasses = rule.selector.map {
-                val mappedSelName = this.agl.styleHandler.mapClass(it.value)
-                AglStyleSelector(".monaco_$mappedSelName", it.kind)
-            }
-            val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
-            val mappedRule = AglStyleRule(cssClasses) // just used to map to css string
-            mappedRule.styles = rule.styles.values.associate { oldStyle ->
-                val style = when (oldStyle.name) {
-                    "foreground" -> AglStyle("color", oldStyle.value)
-                    "background" -> AglStyle("background-color", oldStyle.value)
-                    "font-style" -> when (oldStyle.value) {
-                        "bold" -> AglStyle("font-weight", oldStyle.value)
-                        "italic" -> AglStyle("font-style", oldStyle.value)
+        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss ->
+            ss.rules.forEach { rule ->
+                val ruleClasses = rule.selector.map {
+                    val mappedSelName = this.agl.styleHandler.mapClass(it.value)
+                    AglStyleSelector(".monaco_$mappedSelName", it.kind)
+                }
+                val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
+                val mappedRule = AglStyleRuleDefault(cssClasses) // just used to map to css string
+                mappedRule.declaration = LinkedHashMap(rule.declaration.values.associate { oldStyle ->
+                    val style = when (oldStyle.name) {
+                        "foreground" -> AglStyleDeclaration("color", oldStyle.value)
+                        "background" -> AglStyleDeclaration("background-color", oldStyle.value)
+                        "font-style" -> when (oldStyle.value) {
+                            "bold" -> AglStyleDeclaration("font-weight", oldStyle.value)
+                            "italic" -> AglStyleDeclaration("font-style", oldStyle.value)
+                            else -> oldStyle
+                        }
+
                         else -> oldStyle
                     }
-
-                    else -> oldStyle
-                }
-                Pair(style.name, style)
-            }.toMutableMap()
-            mappedCss = mappedCss + "\n" + mappedRule.toCss()
+                    Pair(style.name, style)
+                })
+                mappedCss = mappedCss + "\n" + mappedRule.toCss()
+            }
         }
         val cssText: String = mappedCss
         // remove the current style element for 'languageId' (which is used as the theme name) from the container
@@ -238,7 +243,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
         //add style element
         val styleElement = this.containerElement.ownerDocument?.createElement("style")!!
-        styleElement.setAttribute("id", this.languageIdentity)
+        styleElement.setAttribute("id", this.languageIdentity.value)
         styleElement.textContent = cssText
         this.containerElement.ownerDocument?.querySelector("head")?.appendChild(
             styleElement
