@@ -41,7 +41,7 @@ import net.akehurst.language.sppt.treedata.TreeDataComplete
 import net.akehurst.language.transform.asm.TransformModelDefault
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.asm.SimpleTypeModelStdLib
-import net.akehurst.language.typemodel.asm.typeModel
+import net.akehurst.language.typemodel.builder.typeModel
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
