@@ -30,6 +30,50 @@ import net.akehurst.language.sppt.api.TreeData
 import net.akehurst.language.style.api.AglStyleModel
 import kotlin.math.min
 
+object EditorMessage {
+    const val komposite = """namespace net.akehurst.language.editor.language.service.messages
+class AglWorkerMessage {
+    cmp endPoint
+}
+class AglWorkerMessageResponse {
+    cmp issues
+}
+class MessageSyntaxAnalysisResult {
+    cmp asm
+}
+class MessageLineTokens {
+    cmp lineTokens
+}
+class MessageProcessorCreateResponse {
+    cmp scannerMatchables
+}
+class MessageSemanticAnalysisResult {
+    cmp asm
+}
+class MessageCodeCompleteResult {
+    cmp completionItems
+}
+class MessageProcessorCreate {
+    cmp editorOptions
+}
+class MessageCodeCompleteRequest {
+    cmp options
+}
+class MessageProcessRequest {
+    cmp options
+}
+class MessageParseResult2 {
+    cmp treeData
+}
+class MessageSetStyleResponse {
+    cmp styleModel
+}
+class MessageScanResult {
+    cmp lineTokens
+}
+"""
+}
+
 abstract class AglWorkerMessage(
     val action: String
 ) {
@@ -38,6 +82,7 @@ abstract class AglWorkerMessage(
 
 abstract class AglWorkerMessageResponse(action: String) : AglWorkerMessage(action) {
     abstract val status: MessageStatus
+    abstract val issues: List<LanguageIssue>
 }
 
 data class MessageProcessorCreate(
@@ -66,7 +111,7 @@ data class MessageProcessorCreateResponse(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>,
+    override val issues: List<LanguageIssue>,
     val scannerMatchables: List<Matchable>
 ) : AglWorkerMessageResponse("MessageProcessorCreateResponse")
 
@@ -80,7 +125,9 @@ data class MessageProcessorDeleteResponse(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String
-) : AglWorkerMessageResponse("MessageProcessorDeleteResponse")
+) : AglWorkerMessageResponse("MessageProcessorDeleteResponse") {
+    override val issues: List<LanguageIssue> = mutableListOf()
+}
 
 data class MessageProcessRequest<AsmType : Any, ContextType : Any>(
     override val endPoint: EndPointIdentity,
@@ -98,11 +145,11 @@ data class MessageProcessRequest<AsmType : Any, ContextType : Any>(
 
 data class MessageScanResult(
     override val endPoint: EndPointIdentity,
-    val status: MessageStatus,
+    override val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>,
+    override val issues: List<LanguageIssue>,
     val lineTokens: List<AglTokenDefault>
-) : AglWorkerMessage("MessageScanResult") {
+) : AglWorkerMessageResponse("MessageScanResult") {
     override fun toString(): String =
         "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, lineTokens='...')"
 }
@@ -111,7 +158,7 @@ data class MessageParseResult(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>,
+    override val issues: List<LanguageIssue>,
     val treeSerialised: String? // custom serialisation because auto serialisation of SPPT impl classes is too complex
 ) : AglWorkerMessageResponse("MessageParseResult") {
     override fun toString(): String =
@@ -122,7 +169,7 @@ data class MessageParseResult2(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>,
+    override val issues: List<LanguageIssue>,
     val treeData: TreeData
 ) : AglWorkerMessageResponse("MessageParseResult") {
     override fun toString(): String =
@@ -133,7 +180,7 @@ data class MessageSyntaxAnalysisResult(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>,
+    override  val issues: List<LanguageIssue>,
     val asm: Any?
 ) : AglWorkerMessageResponse("MessageSyntaxAnalysisResult") {
     override fun toString(): String =
@@ -144,7 +191,7 @@ data class MessageSemanticAnalysisResult(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>,
+    override val issues: List<LanguageIssue>,
     val asm: Any?
 ) : AglWorkerMessageResponse("MessageSemanticAnalysisResult") {
     override fun toString(): String =
@@ -164,6 +211,8 @@ data class MessageLineTokens(
     val startLine:Int,
     val lineTokens: List<List<AglToken>>,
 ) : AglWorkerMessageResponse("MessageLineTokens") {
+    override val issues: List<LanguageIssue> = mutableListOf()
+
     override fun toString(): String = "${super.action}(endPoint=$endPoint, status=$status, message=$message, lineTokens='...'))"
 }
 
@@ -179,7 +228,7 @@ data class MessageSetStyleResponse(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>,
+    override val issues: List<LanguageIssue>,
     val styleModel: AglStyleModel?
 ) : AglWorkerMessageResponse("MessageSetStyleResult")
 
@@ -195,7 +244,7 @@ data class MessageCodeCompleteResult(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String,
-    val issues: List<LanguageIssue>,
+    override val issues: List<LanguageIssue>,
     val completionItems: List<CompletionItem>
 ) : AglWorkerMessageResponse("MessageCodeCompleteResult")
 
@@ -210,5 +259,5 @@ data class MessageGrammarAmbiguityAnalysisResult(
     override val endPoint: EndPointIdentity,
     override val status: MessageStatus,
     val message: String?,
-    val issues: List<LanguageIssue>
+    override val issues: List<LanguageIssue>
 ) : AglWorkerMessageResponse("MessageGrammarAmbiguityAnalysisResult")

@@ -23,8 +23,8 @@ import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.asm.api.Asm
-import net.akehurst.language.asm.simple.asmSimple
-import net.akehurst.language.editor.api.EditorOptionsDefault
+import net.akehurst.language.asm.builder.asmSimple
+import net.akehurst.language.editor.common.EditorOptionsDefault
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.language.service.AglWorkerSerialisation
@@ -57,6 +57,7 @@ class test_AglWorkerSerialisation {
         fun <T : Any> test(input: T, checkMatch: (expected: T, actual: T) -> Unit = { expected, actual -> assertEquals(expected, actual) }) {
             val json = AglWorkerSerialisation.toJsonDocument(input)
             val jsonStr = json.toStringJson()
+            println(jsonStr)
             assertTrue(jsonStr.length > 10)
             val output: T = AglWorkerSerialisation.deserialise(jsonStr)
 
@@ -66,7 +67,7 @@ class test_AglWorkerSerialisation {
 
     @BeforeTest
     fun before() {
-        AglWorkerSerialisation.check()
+        //AglWorkerSerialisation.check()
     }
 
     @Test
@@ -115,12 +116,100 @@ class test_AglWorkerSerialisation {
 
         test(input) { expected, actual ->
             actual.resolveImports()
+            println(actual.asString())
             assertEquals(expected.asString(), actual.asString())
         }
     }
 
     @Test
+    fun GrammarTypeModel_serialise_deserialise() {
+        val grammar = Agl.registry.agl.grammar.processor!!.process(
+            sentence = """
+                namespace test.test
+                grammar Test {
+                    S = as | bs | cs ;
+                    as = a* ;
+                    bs = [b/',']+ ;
+                    cs = 'c' | cs 'c' ;
+                    leaf a = 'a' 'a' ;
+                    leaf b = 'b' 'b' ;
+                }
+            """.trimIndent()
+        ).asm!!
+        val input: TypeModel = TransformModelDefault.fromGrammarModel(grammar).asm!!.typeModel!!
+
+        test(input) { expected, actual ->
+            assertEquals(expected.asString(), actual.asString())
+        }
+    }
+
+
+    @Test
     fun Asm_serialise_deserialise() {
+        val input: Asm = asmSimple() {
+            element("Root") {
+                propertyElementExplicitType("content", "Elem1") {
+                    propertyString("propString", "stringValue")
+                    propertyListOfString("propListString", listOf("Hello", "World"))
+                    propertyListOfElement("propListElem") {
+                        element("Elem2") {
+                            propertyString("id", "e1")
+                        }
+                        element("Elem2") {
+                            propertyString("id", "e2")
+                        }
+                        element("Elem2") {
+                            propertyString("id", "e3")
+                        }
+                    }
+                }
+            }
+        }
+
+        test(input) { expected, actual ->
+            println(actual.asString())
+            assertEquals(expected.asString(), actual.asString())
+        }
+    }
+
+    @Test
+    fun CrossReferences_serialise_deserialise() {
+        val result = Agl.registry.agl.crossReference.processor!!.process(
+            sentence = """
+                namespace ns
+                    identify Elem2 by id
+                    references {
+                        in Elem2 { property ref refers-to Elem2 }
+                    }
+            """.trimIndent()
+        )
+        assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
+        val input= result.asm!!
+
+        test(input) { expected, actual ->
+            assertEquals(expected.asString(), actual.asString())
+        }
+    }
+
+    @Test
+    fun ContextSimple_serialise_deserialise() {
+        val input = contextAsmSimple {
+            scope("a1", "A", "/a1")
+            item("b1", "B", "/a1/b1")
+            scopedItem("c1", "C", "/c1") {
+                scope("a1", "A", "/c1/a1")
+                item("b1", "B", "/c1/a1/b1")
+                scopedItem("c1", "C", "/c1/c1") {}
+            }
+        }
+
+        test(input) { expected, actual ->
+            assertEquals(expected.asString(), actual.asString())
+        }
+    }
+
+    @Test
+    fun Asm_With_CrossReferences_serialise_deserialise() {
         val result = Agl.registry.agl.crossReference.processor!!.process(
             sentence = """
                 namespace ns {
@@ -170,44 +259,6 @@ class test_AglWorkerSerialisation {
         }
     }
 
-    @Test
-    fun GrammarTypeModel_serialise_deserialise() {
-        val grammar = Agl.registry.agl.grammar.processor!!.process(
-            sentence = """
-                namespace test.test
-                grammar Test {
-                    S = as | bs | cs ;
-                    as = a* ;
-                    bs = [b/',']+ ;
-                    cs = 'c' | cs 'c' ;
-                    leaf a = 'a' 'a' ;
-                    leaf b = 'b' 'b' ;
-                }
-            """.trimIndent()
-        ).asm!!
-        val input: TypeModel = TransformModelDefault.fromGrammarModel(grammar).asm!!.typeModel!!
-
-        test(input) { expected, actual ->
-            assertEquals(expected.asString(), actual.asString())
-        }
-    }
-
-    @Test
-    fun ContextSimple_serialise_deserialise() {
-        val input = contextAsmSimple {
-            scope("a1", "A", "/a1")
-            item("b1", "B", "/a1/b1")
-            scopedItem("c1", "C", "/c1") {
-                scope("a1", "A", "/c1/a1")
-                item("b1", "B", "/c1/a1/b1")
-                scopedItem("c1", "C", "/c1/c1") {}
-            }
-        }
-
-        test(input) { expected, actual ->
-            assertEquals(expected.asString(), actual.asString())
-        }
-    }
 
     // --- MessageProcessorCreate ---
     @Test

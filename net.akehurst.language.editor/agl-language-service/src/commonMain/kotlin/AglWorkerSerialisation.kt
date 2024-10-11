@@ -18,9 +18,13 @@ package net.akehurst.language.editor.language.service
 
 import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
+import net.akehurst.language.asm.simple.AglAsm
 import net.akehurst.language.base.processor.AglBase
 import net.akehurst.language.grammar.processor.AglGrammar
 import net.akehurst.language.typemodel.processor.AglTypemodel
+import net.akehurst.language.expressions.processor.AglExpressions
+import net.akehurst.language.reference.processor.AglCrossReference
+import net.akehurst.language.style.processor.AglStyle
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.builder.typeModel
 
@@ -39,6 +43,7 @@ object AglWorkerSerialisation {
 
     private fun initialise() {
         if (!initialised) {
+            agl_parser_commonMain.KotlinxReflectForModule.registerUsedClasses()
             agl_processor_commonMain.KotlinxReflectForModule.registerUsedClasses()
             agl_editor_api_commonMain.KotlinxReflectForModule.registerUsedClasses()
             agl_editor_common_commonMain.KotlinxReflectForModule.registerUsedClasses()
@@ -96,537 +101,336 @@ object AglWorkerSerialisation {
         val namesapces = (
                 AglBase.typeModel.namespace +
                         AglGrammar.typeModel.namespace +
-                        AglTypemodel.typeModel.namespace
+                        AglTypemodel.typeModel.namespace +
+                        AglAsm.typeModel.namespace +
+                        AglExpressions.typeModel.namespace +
+                        AglCrossReference.typeModel.namespace +
+                        AglStyle.typeModel.namespace
                 ).toSet().toList()
         println(namesapces)
-        val tm = typeModel("Test", true, namesapces) {
-            namespace("net.akehurst.language.api.language.expressions", listOf("std", "net.akehurst.language.typemodel.api", "net.akehurst.language.base.api")) {
-                interfaceType("WithExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("WhenOption") {
-                    supertypes("std.Any")
-                }
-                interfaceType("WhenExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("RootExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("PropertyCall") {
-                    supertypes("NavigationPart", "std.Any")
-                }
-                interfaceType("OnExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("NavigationPart") {
-                    supertypes("std.Any")
-                }
-                interfaceType("NavigationExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("MethodCall") {
-                    supertypes("NavigationPart", "std.Any")
-                }
-                interfaceType("LiteralExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("InfixExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("IndexOperation") {
-                    supertypes("NavigationPart", "std.Any")
-                }
-                interfaceType("Expression") {
-                    supertypes("std.Any")
-                }
-                interfaceType("CreateTupleExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("CreateObjectExpression") {
-                    supertypes("Expression", "std.Any")
-                }
-                interfaceType("AssignmentStatement") {
-                    supertypes("std.Any")
-                }
-            }
+        val tm = typeModel("Messages", true, namesapces) {
             namespace(
-                "net.akehurst.language.agl.language.expressions.asm",
-                listOf("net.akehurst.language.api.language.expressions", "std", "net.akehurst.language.typemodel.api", "net.akehurst.language.base.api")
-            ) {
-                dataType("WithExpressionSimple") {
-                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.WithExpression")
-                    constructor_ {
-                        parameter("withContext", "Expression", false)
-                        parameter("expression", "Expression", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "expression", "Expression", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "withContext", "Expression", false)
-                }
-                dataType("WhenOptionSimple") {
-                    supertypes("net.akehurst.language.api.language.expressions.WhenOption", "std.Any")
-                    constructor_ {
-                        parameter("condition", "Expression", false)
-                        parameter("expression", "Expression", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "condition", "Expression", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "expression", "Expression", false)
-                }
-                dataType("WhenExpressionSimple") {
-                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.WhenExpression")
-                    constructor_ {
-                        parameter("options", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "options", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.WhenOption")
-                    }
-                }
-                dataType("RootExpressionSimple") {
-                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.RootExpression")
-                    constructor_ {
-                        parameter("name", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "name", "String", false)
-                }
-                dataType("PropertyCallSimple") {
-                    supertypes("net.akehurst.language.api.language.expressions.PropertyCall", "std.Any")
-                    constructor_ {
-                        parameter("propertyName", "PropertyName", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "propertyName", "PropertyName", false)
-                }
-                dataType("OnExpressionSimple") {
-                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.OnExpression")
-                    constructor_ {
-                        parameter("expression", "Expression", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "expression", "Expression", false)
-                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "propertyAssignments", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.AssignmentStatement")
-                    }
-                }
-                dataType("NavigationSimple") {
-                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.NavigationExpression")
-                    constructor_ {
-                        parameter("start", "Expression", false)
-                        parameter("parts", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "parts", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.NavigationPart")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "start", "Expression", false)
-                }
-                dataType("MethodCallSimple") {
-                    supertypes("net.akehurst.language.api.language.expressions.MethodCall", "std.Any")
-                    constructor_ {
-                        parameter("methodName", "MethodName", false)
-                        parameter("arguments", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "arguments", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.Expression")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "methodName", "MethodName", false)
-                }
-                dataType("LiteralExpressionSimple") {
-                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.LiteralExpression")
-                    constructor_ {
-                        parameter("qualifiedTypeName", "QualifiedName", false)
-                        parameter("value", "Any", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "qualifiedTypeName", "QualifiedName", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "value", "Any", false)
-                }
-                dataType("InfixExpressionSimple") {
-                    supertypes("net.akehurst.language.api.language.expressions.InfixExpression", "std.Any")
-                    constructor_ {
-                        parameter("expressions", "List", false)
-                        parameter("operators", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "expressions", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.Expression")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "operators", "List", false) {
-                        typeArgument("std.String")
-                    }
-                }
-                dataType("IndexOperationSimple") {
-                    supertypes("net.akehurst.language.api.language.expressions.IndexOperation", "std.Any")
-                    constructor_ {
-                        parameter("indices", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "indices", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.Expression")
-                    }
-                }
-                dataType("ExpressionAbstract") {
-                    supertypes("net.akehurst.language.api.language.expressions.Expression", "std.Any")
-                    constructor_ {}
-                }
-                dataType("CreateTupleExpressionSimple") {
-                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.CreateTupleExpression")
-                    constructor_ {
-                        parameter("propertyAssignments", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "propertyAssignments", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.AssignmentStatement")
-                    }
-                }
-                dataType("CreateObjectExpressionSimple") {
-                    supertypes("ExpressionAbstract", "net.akehurst.language.api.language.expressions.CreateObjectExpression")
-                    constructor_ {
-                        parameter("possiblyQualifiedTypeName", "PossiblyQualifiedName", false)
-                        parameter("arguments", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "arguments", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.Expression")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "possiblyQualifiedTypeName", "PossiblyQualifiedName", false)
-                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "propertyAssignments", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.expressions.AssignmentStatement")
-                    }
-                }
-                dataType("AssignmentStatementSimple") {
-                    supertypes("net.akehurst.language.api.language.expressions.AssignmentStatement", "std.Any")
-                    constructor_ {
-                        parameter("lhsPropertyName", "PropertyName", false)
-                        parameter("rhs", "Expression", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "lhsPropertyName", "PropertyName", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "rhs", "Expression", false)
-                }
-            }
-            namespace("net.akehurst.language.api.language.reference", listOf("std", "net.akehurst.language.base.api", "net.akehurst.language.api.language.expressions")) {
-                interfaceType("ScopeDefinition") {
-                    supertypes("std.Any")
-                }
-                interfaceType("ReferenceExpression") {
-                    supertypes("std.Any")
-                }
-                interfaceType("ReferenceDefinition") {
-                    supertypes("std.Any")
-                }
-                interfaceType("Identifiable") {
-                    supertypes("std.Any")
-                }
-                interfaceType("DeclarationsForNamespace") {
-                    supertypes("std.Any")
-                }
-                interfaceType("CrossReferenceModel") {
-                    supertypes("std.Any")
-                }
-            }
-            namespace(
-                "net.akehurst.language.agl.language.reference.asm",
-                listOf("net.akehurst.language.api.language.reference", "std", "net.akehurst.language.base.api", "net.akehurst.language.api.language.expressions")
-            ) {
-                dataType("ScopeDefinitionDefault") {
-                    supertypes("net.akehurst.language.api.language.reference.ScopeDefinition", "std.Any")
-                    constructor_ {
-                        parameter("scopeForTypeName", "SimpleName", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "identifiables", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.reference.Identifiable")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "scopeForTypeName", "SimpleName", false)
-                }
-                dataType("ReferenceExpressionAbstract") {
-                    supertypes("net.akehurst.language.api.language.reference.ReferenceExpression", "std.Any")
-                    constructor_ {}
-                }
-                dataType("ReferenceDefinitionDefault") {
-                    supertypes("net.akehurst.language.api.language.reference.ReferenceDefinition", "std.Any")
-                    constructor_ {
-                        parameter("inTypeName", "SimpleName", false)
-                        parameter("referenceExpressionList", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "inTypeName", "SimpleName", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "referenceExpressionList", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.reference.ReferenceExpression")
-                    }
-                }
-                dataType("PropertyReferenceExpressionDefault") {
-                    supertypes("ReferenceExpressionAbstract")
-                    constructor_ {
-                        parameter("referringPropertyNavigation", "NavigationExpression", false)
-                        parameter("refersToTypeName", "List", false)
-                        parameter("fromNavigation", "NavigationExpression", true)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "fromNavigation", "NavigationExpression", true)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "referringPropertyNavigation", "NavigationExpression", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "refersToTypeName", "List", false) {
-                        typeArgument("net.akehurst.language.base.api.PossiblyQualifiedName")
-                    }
-                }
-                dataType("IdentifiableDefault") {
-                    supertypes("net.akehurst.language.api.language.reference.Identifiable", "std.Any")
-                    constructor_ {
-                        parameter("typeName", "SimpleName", false)
-                        parameter("identifiedBy", "Expression", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "identifiedBy", "Expression", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "typeName", "SimpleName", false)
-                }
-                dataType("DeclarationsForNamespaceDefault") {
-                    supertypes("net.akehurst.language.api.language.reference.DeclarationsForNamespace", "std.Any")
-                    constructor_ {
-                        parameter("qualifiedName", "QualifiedName", false)
-                        parameter("importedNamespaces", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "importedNamespaces", "List", false) {
-                        typeArgument("net.akehurst.language.base.api.Import")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "qualifiedName", "QualifiedName", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "references", "List", false) {
-                        typeArgument("net.akehurst.language.api.language.reference.ReferenceDefinition")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "scopeDefinition", "Map", false) {
-                        typeArgument("net.akehurst.language.base.api.SimpleName")
-                        typeArgument("net.akehurst.language.api.language.reference.ScopeDefinition")
-                    }
-                }
-                dataType("CrossReferenceModelDefault") {
-                    supertypes("net.akehurst.language.api.language.reference.CrossReferenceModel", "std.Any")
-                    constructor_ {}
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "declarationsForNamespace", "Map", false) {
-                        typeArgument("net.akehurst.language.base.api.QualifiedName")
-                        typeArgument("net.akehurst.language.api.language.reference.DeclarationsForNamespace")
-                    }
-                }
-                dataType("CollectionReferenceExpressionDefault") {
-                    supertypes("ReferenceExpressionAbstract")
-                    constructor_ {
-                        parameter("expression", "Expression", false)
-                        parameter("ofType", "PossiblyQualifiedName", true)
-                        parameter("referenceExpressionList", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "expression", "Expression", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "ofType", "PossiblyQualifiedName", true)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "referenceExpressionList", "List", false) {
-                        typeArgument("net.akehurst.language.agl.language.reference.asm.ReferenceExpressionAbstract")
-                    }
-                }
-            }
-            namespace("net.akehurst.language.api.scope", listOf("std", "net.akehurst.language.base.api", "net.akehurst.language.agl.scope")) {
-                interfaceType("Scope") {
-                    typeParameters("ItemType")
-                    supertypes("std.Any")
-                }
-                dataType("ScopedItem") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("referableName", "String", false)
-                        parameter("qualifiedTypeName", "QualifiedName", false)
-                        parameter("item", "ItemType", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "item", "ItemType", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "qualifiedTypeName", "QualifiedName", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "referableName", "String", false)
-                }
-            }
-            namespace("net.akehurst.language.agl.scope", listOf("net.akehurst.language.api.scope", "std", "net.akehurst.language.base.api")) {
-                dataType("ScopeSimple") {
-                    supertypes("net.akehurst.language.api.scope.Scope", "std.Any")
-                    constructor_ {
-                        parameter("parent", "ScopeSimple", true)
-                        parameter("scopeIdentityInParent", "String", false)
-                        parameter("forTypeName", "QualifiedName", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "childScopes", "Map", false) {
-                        typeArgument("std.String")
-                        typeArgument("net.akehurst.language.agl.scope.ScopeSimple")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "forTypeName", "QualifiedName", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "parent", "ScopeSimple", true) {
-                        typeArgument("ItemType")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "scopeIdentity", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "scopeIdentityInParent", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "scopeMap", "Map", false) {
-                        typeArgument("ItemType")
-                        typeArgument("net.akehurst.language.agl.scope.ScopeSimple")
-                    }
-                }
-            }
-            namespace(
-                "net.akehurst.language.api.asm",
+                "net.akehurst.language.editor.language.service.messages",
                 listOf(
+                    "net.akehurst.language.editor.api",
+                    "net.akehurst.language.api.processor",
                     "std",
-                    "net.akehurst.language.typemodel.api",
-                    "net.akehurst.language.api.language.reference",
-                    "net.akehurst.language.agl.scope",
-                    "net.akehurst.language.agl.asm",
-                    "net.akehurst.language.base.api",
-                    "net.akehurst.language.collections"
+                    "net.akehurst.language.issues.api",
+                    "net.akehurst.language.scanner.api",
+                    "net.akehurst.language.sppt.api",
+                    "net.akehurst.language.style.api",
+                    "net.akehurst.language.editor.common"
                 )
             ) {
-                valueType("PropertyValueName") {
-                    supertypes("std.Any")
+                singleton("EditorMessage")
+                dataType("MessageProcessorDelete") {
+                    supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("value", "String", false)
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("languageId", "LanguageIdentity", false)
                     }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "value", "String", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageId", "LanguageIdentity", false)
                 }
-                interfaceType("AsmValue") {
-                    supertypes("std.Any")
-                }
-                interfaceType("AsmTreeWalker") {
-                    supertypes("std.Any")
-                }
-                interfaceType("AsmStructureProperty") {
-                    supertypes("std.Any")
-                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "name", "PropertyValueName", false)
-                }
-                interfaceType("AsmStructure") {
-                    supertypes("AsmValue", "std.Any")
-                }
-                interfaceType("AsmReference") {
-                    supertypes("std.Any")
-                }
-                interfaceType("AsmPrimitive") {
-                    supertypes("AsmValue", "std.Any")
-                }
-                interfaceType("AsmPath") {
-                    supertypes("std.Any")
-                }
-                interfaceType("AsmNothing") {
-                    supertypes("AsmValue", "std.Any")
-                }
-                interfaceType("AsmListSeparated") {
-                    supertypes("AsmList", "std.Any")
-                }
-                interfaceType("AsmList") {
-                    supertypes("AsmValue", "std.Any")
-                }
-                interfaceType("Asm") {
-                    supertypes("std.Any")
-                }
-                dataType("ListAsmElementSimpleBuilder") {
-                    supertypes("std.Any")
+                dataType("MessageGrammarAmbiguityAnalysisResult") {
+                    supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("_typeModel", "TypeModel", false)
-                        parameter("_scopeModel", "CrossReferenceModel", false)
-                        parameter("_scopeMap", "Map", false)
-                        parameter("_asm", "AsmSimple", false)
-                        parameter("_asmPath", "AsmPath", false)
-                        parameter("_parentScope", "ScopeSimple", true)
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
                     }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
                 }
-                dataType("AsmSimpleBuilderKt") {
-                    supertypes("std.Any")
-                }
-                dataType("AsmElementSimpleBuilder") {
-                    supertypes("std.Any")
+                dataType("MessageGrammarAmbiguityAnalysisRequest") {
+                    supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("_typeModel", "TypeModel", false)
-                        parameter("_crossReferenceModel", "CrossReferenceModel", false)
-                        parameter("_scopeMap", "Map", false)
-                        parameter("_asm", "AsmSimple", false)
-                        parameter("_asmPath", "AsmPath", false)
-                        parameter("_typeName", "String", false)
-                        parameter("_isRoot", "Boolean", false)
-                        parameter("_parentScope", "ScopeSimple", true)
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("languageId", "LanguageIdentity", false)
                     }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageId", "LanguageIdentity", false)
+                }
+                dataType("MessageSyntaxAnalysisResult") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
+                        parameter("asm", "Any", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "asm", "Any", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                }
+                dataType("MessageLineTokens") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("startLine", "Integer", false)
+                        parameter("lineTokens", "List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "lineTokens", "List", false) {
+                        typeArgument("List")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "startLine", "Integer", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                }
+                dataType("MessageParseResult") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
+                        parameter("treeSerialised", "String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "treeSerialised", "String", false)
+                }
+                dataType("MessageSetStyle") {
+                    supertype("AglWorkerMessage")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("languageId", "LanguageIdentity", false)
+                        parameter("styleStr", "String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "styleStr", "String", false)
+                }
+                dataType("MessageProcessorDeleteResponse") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                }
+                dataType("MessageProcessorCreateResponse") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
+                        parameter("scannerMatchables", "List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "scannerMatchables", "List", false) {
+                        typeArgument("Matchable")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                }
+                dataType("MessageSemanticAnalysisResult") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
+                        parameter("asm", "Any", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "asm", "Any", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                }
+                dataType("AglWorkerMessageResponse") {
+                    supertype("AglWorkerMessage")
+                    constructor_ {
+                        parameter("action", "String", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                }
+                dataType("MessageParserInterruptRequest") {
+                    supertype("AglWorkerMessage")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("languageId", "LanguageIdentity", false)
+                        parameter("reason", "String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "reason", "String", false)
+                }
+                dataType("MessageCodeCompleteResult") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
+                        parameter("completionItems", "List", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "completionItems", "List", false) {
+                        typeArgument("CompletionItem")
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                }
+                dataType("MessageProcessorCreate") {
+                    supertype("AglWorkerMessage")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("languageId", "LanguageIdentity", false)
+                        parameter("grammarStr", "String", false)
+                        parameter("crossReferenceModelStr", "String", false)
+                        parameter("editorOptions", "EditorOptions", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "crossReferenceModelStr", "String", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "editorOptions", "EditorOptions", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "grammarStr", "String", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageId", "LanguageIdentity", false)
+                }
+                dataType("MessageCodeCompleteRequest") {
+                    typeParameters("AsmType", "ContextType")
+                    supertype("AglWorkerMessage")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("languageId", "LanguageIdentity", false)
+                        parameter("text", "String", false)
+                        parameter("position", "Integer", false)
+                        parameter("options", "ProcessOptions", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "options", "ProcessOptions", false) {
+                        typeArgument("AsmType")
+                        typeArgument("ContextType")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "position", "Integer", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "text", "String", false)
+                }
+                dataType("MessageProcessRequest") {
+                    typeParameters("AsmType", "ContextType")
+                    supertype("AglWorkerMessage")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("languageId", "LanguageIdentity", false)
+                        parameter("text", "String", false)
+                        parameter("options", "ProcessOptions", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "options", "ProcessOptions", false) {
+                        typeArgument("AsmType")
+                        typeArgument("ContextType")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "text", "String", false)
+                }
+                dataType("MessageParseResult2") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
+                        parameter("treeData", "TreeData", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "treeData", "TreeData", false)
+                }
+                dataType("MessageSetStyleResponse") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
+                        parameter("styleModel", "AglStyleModel", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "styleModel", "AglStyleModel", false)
+                }
+                dataType("AglWorkerMessage") {
+
+                    constructor_ {
+                        parameter("action", "String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "action", "String", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                }
+                dataType("MessageScanResult") {
+                    supertype("AglWorkerMessageResponse")
+                    constructor_ {
+                        parameter("endPoint", "EndPointIdentity", false)
+                        parameter("status", "MessageStatus", false)
+                        parameter("message", "String", false)
+                        parameter("issues", "List", false)
+                        parameter("lineTokens", "List", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "issues", "List", false) {
+                        typeArgument("LanguageIssue")
+                    }
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "lineTokens", "List", false) {
+                        typeArgument("AglTokenDefault")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
                 }
             }
-            namespace("net.akehurst.language.agl.asm", listOf("net.akehurst.language.api.asm", "std", "net.akehurst.language.base.api", "net.akehurst.language.collections")) {
-                singleton("AsmNothingSimple")
-                dataType("AsmValueAbstract") {
-                    supertypes("net.akehurst.language.api.asm.AsmValue", "std.Any")
-                    constructor_ {}
-                }
-                dataType("AsmStructureSimple") {
-                    supertypes("AsmValueAbstract", "net.akehurst.language.api.asm.AsmStructure")
-                    constructor_ {
-                        parameter("path", "AsmPath", false)
-                        parameter("qualifiedTypeName", "QualifiedName", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "path", "AsmPath", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "property", "Map", false) {
-                        typeArgument("net.akehurst.language.api.asm.PropertyValueName")
-                        typeArgument("net.akehurst.language.api.asm.AsmStructureProperty")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "qualifiedTypeName", "QualifiedName", false)
-                }
-                dataType("AsmStructurePropertySimple") {
-                    supertypes("net.akehurst.language.api.asm.AsmStructureProperty", "std.Any")
-                    constructor_ {
-                        parameter("name", "PropertyValueName", false)
-                        parameter("index", "Integer", false)
-                        parameter("value", "AsmValue", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "index", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "name", "PropertyValueName", false)
-                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "value", "AsmValue", false)
-                }
-                dataType("AsmSimpleKt") {
-                    supertypes("std.Any")
-                }
-                dataType("AsmSimple") {
-                    supertypes("net.akehurst.language.api.asm.Asm", "std.Any")
-                    constructor_ {}
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "elementIndex", "Map", false) {
-                        typeArgument("net.akehurst.language.api.asm.AsmPath")
-                        typeArgument("net.akehurst.language.api.asm.AsmStructure")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "root", "List", false) {
-                        typeArgument("net.akehurst.language.api.asm.AsmValue")
-                    }
-                }
-                dataType("AsmReferenceSimple") {
-                    supertypes("AsmValueAbstract", "net.akehurst.language.api.asm.AsmReference")
-                    constructor_ {
-                        parameter("reference", "String", false)
-                        parameter("value", "AsmStructure", true)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "reference", "String", false)
-                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "value", "AsmStructure", true)
-                }
-                dataType("AsmPrimitiveSimple") {
-                    supertypes("AsmValueAbstract", "net.akehurst.language.api.asm.AsmPrimitive")
-                    constructor_ {
-                        parameter("qualifiedTypeName", "QualifiedName", false)
-                        parameter("value", "Any", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "qualifiedTypeName", "QualifiedName", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "value", "Any", false)
-                }
-                dataType("AsmPathSimple") {
-                    supertypes("net.akehurst.language.api.asm.AsmPath", "std.Any")
-                    constructor_ {
-                        parameter("value", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "value", "String", false)
-                }
-                dataType("AsmListSimple") {
-                    supertypes("AsmValueAbstract", "net.akehurst.language.api.asm.AsmList")
-                    constructor_ {
-                        parameter("elements", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "elements", "List", false) {
-                        typeArgument("net.akehurst.language.api.asm.AsmValue")
-                    }
-                }
-                dataType("AsmListSeparatedSimple") {
-                    supertypes("AsmValueAbstract", "net.akehurst.language.api.asm.AsmListSeparated")
-                    constructor_ {
-                        parameter("elements", "ListSeparated", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "elements", "ListSeparated", false) {
-                        typeArgument("net.akehurst.language.api.asm.AsmValue")
-                        typeArgument("net.akehurst.language.api.asm.AsmValue")
-                        typeArgument("net.akehurst.language.api.asm.AsmValue")
-                    }
+            namespace("net.akehurst.language.sppt.api", listOf("std")) {
+                interfaceType("TreeData") {
+
                 }
             }
-            namespace("net.akehurst.language.api.parser", listOf("std", "net.akehurst.language.agl.api.runtime")) {
-                interfaceType("RuntimeSpine") {
-                    supertypes("std.Any")
-                }
-                interfaceType("Parser") {
-                    supertypes("std.Any")
-                }
+            namespace("net.akehurst.language.sentence.api", listOf("std")) {
                 dataType("InputLocation") {
-                    supertypes("std.Any")
+
                     constructor_ {
                         parameter("position", "Integer", false)
                         parameter("column", "Integer", false)
@@ -639,529 +443,26 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "position", "Integer", false)
                 }
             }
-            namespace("net.akehurst.language.api.sppt", listOf("std", "net.akehurst.language.agl.api.runtime", "net.akehurst.language.api.parser")) {
-                interfaceType("TreeData") {
-                    supertypes("std.Any")
-                }
-                interfaceType("SpptWalker") {
-                    supertypes("std.Any")
-                }
-                interfaceType("SpptDataNodeInfo") {
-                    supertypes("std.Any")
-                }
-                interfaceType("SpptDataNode") {
-                    supertypes("std.Any")
-                }
-                interfaceType("SharedPackedParseTreeVisitor") {
-                    typeParameters("T", "A")
-                    supertypes("std.Any")
-                }
-                interfaceType("SharedPackedParseTree") {
-                    supertypes("std.Any")
-                }
-                interfaceType("Sentence") {
-                    supertypes("std.Any")
-                }
-                interfaceType("SPPTParser") {
-                    supertypes("std.Any")
-                }
-                interfaceType("SPPTNodeIdentity") {
-                    supertypes("std.Any")
-                }
-                interfaceType("SPPTNode") {
-                    supertypes("std.Any")
-                }
-                interfaceType("SPPTLeaf") {
-                    supertypes("SPPTNode", "std.Any")
-                }
-                interfaceType("SPPTBranch") {
-                    supertypes("SPPTNode", "std.Any")
-                }
-                dataType("SPPTException") {
-                    supertypes("std.Exception")
+            namespace("net.akehurst.language.issues.api", listOf("std", "net.akehurst.language.sentence.api")) {
+                dataType("LanguageIssue") {
+
                     constructor_ {
+                        parameter("kind", "LanguageIssueKind", false)
+                        parameter("phase", "LanguageProcessorPhase", false)
+                        parameter("location", "InputLocation", false)
                         parameter("message", "String", false)
-                        parameter("cause", "Exception", true)
+                        parameter("data", "Any", false)
                     }
-                }
-                dataType("LeafData") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("name", "String", false)
-                        parameter("isPattern", "Boolean", false)
-                        parameter("position", "Integer", false)
-                        parameter("length", "Integer", false)
-                        parameter("tagList", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "isPattern", "Boolean", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "length", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "name", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "position", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "tagList", "List", false) {
-                        typeArgument("std.String")
-                    }
-                }
-                dataType("ChildInfo") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("propertyIndex", "Integer", false)
-                        parameter("index", "Integer", false)
-                        parameter("total", "Integer", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "index", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "propertyIndex", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "total", "Integer", false)
-                }
-                dataType("AltInfo") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("option", "Integer", false)
-                        parameter("index", "Integer", false)
-                        parameter("totalMatched", "Integer", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "index", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "option", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "totalMatched", "Integer", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "data", "Any", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "kind", "LanguageIssueKind", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "location", "InputLocation", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "phase", "LanguageProcessorPhase", false)
                 }
             }
-            namespace("net.akehurst.language.agl.sppt", listOf("std", "net.akehurst.language.api.sppt", "net.akehurst.language.agl.api.runtime")) {
-                dataType("TreeDataCompleteKt") {
-                    supertypes("std.Any")
-                }
-                dataType("TreeDataComplete2") {
-                    supertypes("net.akehurst.language.api.sppt.TreeData", "std.Any")
-                    constructor_ {
-                        parameter("forStateSetNumber", "Integer", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "forStateSetNumber", "Integer", false)
-                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "initialSkip", "TreeData", true)
-                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "root", "SpptDataNode", true)
-                }
-                dataType("TreeDataComplete") {
-                    supertypes("net.akehurst.language.api.sppt.TreeData", "std.Any")
-                    constructor_ {
-                        parameter("forStateSetNumber", "Integer", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "forStateSetNumber", "Integer", false)
-                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "initialSkip", "TreeData", true)
-                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "root", "SpptDataNode", true)
-                }
-                dataType("CompleteTreeDataNode") {
-                    supertypes("net.akehurst.language.api.sppt.SpptDataNode", "std.Any")
-                    constructor_ {
-                        parameter("rule", "Rule", false)
-                        parameter("startPosition", "Integer", false)
-                        parameter("nextInputPosition", "Integer", false)
-                        parameter("nextInputNoSkip", "Integer", false)
-                        parameter("option", "Integer", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "nextInputNoSkip", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "nextInputPosition", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "option", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "rule", "Rule", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "startPosition", "Integer", false)
-                }
-                dataType("CompleteKey") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("rule", "Rule", false)
-                        parameter("startPosition", "Integer", false)
-                        parameter("nextInputPosition", "Integer", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "nextInputPosition", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "rule", "Rule", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "startPosition", "Integer", false)
-                }
-            }
-            namespace("net.akehurst.language.agl.api.runtime", listOf("std")) {
-                interfaceType("RuleSetBuilder") {
-                    supertypes("std.Any")
-                }
-                interfaceType("RuleSet") {
-                    supertypes("std.Any")
-                }
-                interfaceType("Rule") {
-                    supertypes("std.Any")
-                }
-                interfaceType("ConcatenationBuilder") {
-                    supertypes("std.Any")
-                }
-                interfaceType("ChoiceBuilder") {
-                    supertypes("std.Any")
-                }
-            }
-            namespace("net.akehurst.language.api.language.style", listOf("net.akehurst.language.base.api", "std")) {
-                enumType("AglStyleSelectorKind", listOf("LITERAL", "PATTERN", "RULE_NAME", "META"))
-                interfaceType("StyleNamespace") {
-                    supertypes("net.akehurst.language.base.api.Namespace", "std.Any")
-                }
-                interfaceType("AglStyleRule") {
-                    supertypes("net.akehurst.language.base.api.Definition", "std.Any")
-                }
-                interfaceType("AglStyleModel") {
-                    supertypes("net.akehurst.language.base.api.Model", "std.Any")
-                }
-                dataType("AglStyleSelector") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("value", "String", false)
-                        parameter("kind", "AglStyleSelectorKind", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "kind", "AglStyleSelectorKind", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "value", "String", false)
-                }
-                dataType("AglStyleDeclaration") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("name", "String", false)
-                        parameter("value", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "name", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "value", "String", false)
-                }
-            }
-            namespace(
-                "net.akehurst.language.editor.language.service.messages",
-                listOf(
-                    "net.akehurst.language.editor.api",
-                    "std",
-                    "net.akehurst.language.api.processor",
-                    "net.akehurst.language.agl.scanner",
-                    "net.akehurst.language.api.sppt",
-                    "net.akehurst.language.api.language.style",
-                    "net.akehurst.language.editor.common"
-                )
-            ) {
-                dataType("MessageProcessorDelete") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("languageId", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "languageId", "String", false)
-                }
-                dataType("MessageGrammarAmbiguityAnalysisResult") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", true)
-                        parameter("issues", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", true)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                }
-                dataType("MessageGrammarAmbiguityAnalysisRequest") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("languageId", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "languageId", "String", false)
-                }
-                dataType("MessageSyntaxAnalysisResult") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("asm", "Any", true)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "asm", "Any", true)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                }
-                dataType("MessageLineTokens") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("startLine", "Integer", false)
-                        parameter("lineTokens", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "lineTokens", "List", false) {
-                        typeArgument("std.List")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "startLine", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                }
-                dataType("MessageParseResult") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("treeSerialised", "String", true)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "treeSerialised", "String", true)
-                }
-                dataType("MessageSetStyle") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("languageId", "String", false)
-                        parameter("styleStr", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "languageId", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "styleStr", "String", false)
-                }
-                dataType("MessageProcessorDeleteResponse") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                }
-                dataType("MessageProcessorCreateResponse") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("scannerMatchables", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "scannerMatchables", "List", false) {
-                        typeArgument("net.akehurst.language.agl.scanner.Matchable")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                }
-                dataType("MessageSemanticAnalysisResult") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("asm", "Any", true)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "asm", "Any", true)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                }
-                dataType("AglWorkerMessageResponse") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("action", "String", false)
-                    }
-                }
-                dataType("MessageParserInterruptRequest") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("languageId", "String", false)
-                        parameter("reason", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "languageId", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "reason", "String", false)
-                }
-                dataType("MessageCodeCompleteResult") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("completionItems", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "completionItems", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.CompletionItem")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                }
-                dataType("MessageProcessorCreate") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("languageId", "String", false)
-                        parameter("grammarStr", "String", false)
-                        parameter("crossReferenceModelStr", "String", true)
-                        parameter("editorOptions", "EditorOptions", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "crossReferenceModelStr", "String", true)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "editorOptions", "EditorOptions", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "grammarStr", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "languageId", "String", false)
-                }
-                dataType("MessageCodeCompleteRequest") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("languageId", "String", false)
-                        parameter("text", "String", false)
-                        parameter("position", "Integer", false)
-                        parameter("options", "ProcessOptions", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "languageId", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "options", "ProcessOptions", false) {
-                        typeArgument("AsmType")
-                        typeArgument("ContextType")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "position", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "text", "String", false)
-                }
-                dataType("MessageProcessRequest") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("languageId", "String", false)
-                        parameter("text", "String", false)
-                        parameter("options", "ProcessOptions", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "languageId", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "options", "ProcessOptions", false) {
-                        typeArgument("AsmType")
-                        typeArgument("ContextType")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "text", "String", false)
-                }
-                dataType("MessageParseResult2") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("treeData", "TreeData", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "treeData", "TreeData", false)
-                }
-                dataType("MessageSetStyleResponse") {
-                    supertypes("AglWorkerMessageResponse")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("styleModel", "AglStyleModel", true)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "styleModel", "AglStyleModel", true)
-                }
-                dataType("AglWorkerMessage") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("action", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "action", "String", false)
-                }
-                dataType("MessageScanResult") {
-                    supertypes("AglWorkerMessage")
-                    constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("lineTokens", "List", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "issues", "List", false) {
-                        typeArgument("net.akehurst.language.api.processor.LanguageIssue")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "lineTokens", "List", false) {
-                        typeArgument("net.akehurst.language.editor.common.AglTokenDefault")
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
-                }
-            }
-            namespace("net.akehurst.language.collections", listOf("std")) {
-                interfaceType("ListSeparated") {
-                    typeParameters("E", "I", "S")
-                    supertypes("std.List", "std.Any")
-                }
-            }
-            namespace("net.akehurst.language.editor.api", listOf("std")) {
-                enumType("MessageStatus", listOf("START", "FAILURE", "SUCCESS"))
-                interfaceType("EditorOptions") {
-                    supertypes("std.Any")
-                }
-                interfaceType("AglToken") {
-                    supertypes("std.Any")
-                }
-                dataType("EndPointIdentity") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("editorId", "String", false)
-                        parameter("sessionId", "String", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "editorId", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "sessionId", "String", false)
-                }
-            }
-            namespace("net.akehurst.language.editor.common", listOf("net.akehurst.language.editor.api", "std")) {
-                dataType("AglTokenDefault") {
-                    supertypes("net.akehurst.language.editor.api.AglToken", "std.Any")
-                    constructor_ {
-                        parameter("styles", "List", false)
-                        parameter("position", "Integer", false)
-                        parameter("length", "Integer", false)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "length", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "position", "Integer", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "styles", "List", false) {
-                        typeArgument("std.String")
-                    }
-                }
-            }
-            namespace("net.akehurst.language.agl.scanner", listOf("std")) {
+            namespace("net.akehurst.language.scanner.api", listOf("std")) {
                 dataType("Matchable") {
-                    supertypes("std.Any")
+
                     constructor_ {
                         parameter("tag", "String", false)
                         parameter("expression", "String", false)
@@ -1172,28 +473,25 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "tag", "String", false)
                 }
             }
-            namespace("net.akehurst.language.api.processor", listOf("std", "net.akehurst.language.api.parser")) {
+            namespace("net.akehurst.language.parser.api", listOf("std")) {
+                interfaceType("ParseOptions") {
+
+                }
+            }
+            namespace("net.akehurst.language.api.processor", listOf("net.akehurst.language.base.api", "std", "net.akehurst.language.parser.api")) {
+                valueType("LanguageIdentity") {
+                    supertype("PublicValueType")
+                    constructor_ {
+                        parameter("value", "String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "value", "String", false)
+                }
                 interfaceType("ProcessOptions") {
                     typeParameters("AsmType", "ContextType")
-                    supertypes("std.Any")
-                }
-                dataType("LanguageIssue") {
-                    supertypes("std.Any")
-                    constructor_ {
-                        parameter("kind", "LanguageIssueKind", false)
-                        parameter("phase", "LanguageProcessorPhase", false)
-                        parameter("location", "InputLocation", true)
-                        parameter("message", "String", false)
-                        parameter("data", "Any", true)
-                    }
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "data", "Any", true)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "kind", "LanguageIssueKind", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "location", "InputLocation", true)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "phase", "LanguageProcessorPhase", false)
+
                 }
                 dataType("CompletionItem") {
-                    supertypes("std.Any")
+
                     constructor_ {
                         parameter("kind", "CompletionItemKind", false)
                         parameter("text", "String", false)
@@ -1203,6 +501,60 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "kind", "CompletionItemKind", false)
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "name", "String", false)
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "text", "String", false)
+                }
+            }
+            namespace("net.akehurst.language.editor.api", listOf("std")) {
+                enumType("MessageStatus", listOf("START", "FAILURE", "SUCCESS"))
+                interfaceType("EditorOptions") {
+
+                }
+                interfaceType("AglToken") {
+
+                }
+                dataType("EndPointIdentity") {
+
+                    constructor_ {
+                        parameter("editorId", "String", false)
+                        parameter("sessionId", "String", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "editorId", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "sessionId", "String", false)
+                }
+            }
+            namespace("net.akehurst.language.editor.common", listOf("net.akehurst.language.editor.api", "std")) {
+                dataType("AglTokenDefault") {
+                    supertype("AglToken")
+                    constructor_ {
+                        parameter("styles", "List", false)
+                        parameter("position", "Integer", false)
+                        parameter("length", "Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "length", "Integer", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "position", "Integer", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "styles", "List", false) {
+                        typeArgument("String")
+                    }
+                }
+                dataType("EditorOptionsDefault") {
+                    supertype("EditorOptions")
+                    constructor_ {
+                        parameter("parse", "Boolean", false)
+                        parameter("parseLineTokens", "Boolean", false)
+                        parameter("lineTokensChunkSize", "Integer", false)
+                        parameter("parseTree", "Boolean", false)
+                        parameter("syntaxAnalysis", "Boolean", false)
+                        parameter("syntaxAnalysisAsm", "Boolean", false)
+                        parameter("semanticAnalysis", "Boolean", false)
+                        parameter("semanticAnalysisAsm", "Boolean", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "lineTokensChunkSize", "Integer", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "parse", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "parseLineTokens", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "parseTree", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "semanticAnalysis", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "semanticAnalysisAsm", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "syntaxAnalysis", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "syntaxAnalysisAsm", "Boolean", false)
                 }
             }
         }

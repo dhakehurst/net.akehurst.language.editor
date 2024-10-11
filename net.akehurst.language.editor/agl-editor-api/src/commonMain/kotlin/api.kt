@@ -104,9 +104,6 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun destroy()
 
-    companion object {
-        fun options(base: EditorOptions = EditorOptionsDefault(), init: EditorOptionsBuilder.() -> Unit): EditorOptions = AglEditorOptions(base, init)
-    }
 }
 
 interface EditorOptions {
