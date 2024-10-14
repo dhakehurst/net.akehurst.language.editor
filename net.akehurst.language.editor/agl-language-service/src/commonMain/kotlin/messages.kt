@@ -77,7 +77,7 @@ namespace net.akehurst.language.issues.api
         cmp location
     }
 
-namespace net.akehurst.language.api.processor.ProcessOptions
+namespace net.akehurst.language.api.processor
     interface ProcessOptions {
         cmp scan
         cmp parse
@@ -103,6 +103,18 @@ namespace net.akehurst.language.agl.semanticAnalyser
     interface ContextFromTypeModel {
         cmp typeModel
     }
+    
+namespace net.akehurst.language.sppt.treedata
+interface TreeDataComplete2 {
+    cmp initialSkip
+    cmp _complete
+    cmp _preferred
+    cmp _skipDataAfter
+    cmp _embeddedFor
+}
+interface SpptDataNode {
+    cmp rule
+}
 """
 }
 

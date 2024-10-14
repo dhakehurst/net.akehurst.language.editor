@@ -425,9 +425,93 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "status", "MessageStatus", false)
                 }
             }
-            namespace("net.akehurst.language.sppt.api", listOf("std")) {
+            namespace("net.akehurst.language.sppt.api", listOf("std", "net.akehurst.language.parser.api")) {
                 interfaceType("TreeData") {
 
+                }
+                interfaceType("SpptDataNode") {
+
+                }
+            }
+            namespace("net.akehurst.language.sppt.treedata", listOf("net.akehurst.language.sppt.api", "std", "net.akehurst.language.parser.api")) {
+                dataType("TreeDataComplete2") {
+                    supertype("TreeData")
+                    constructor_ {
+                        parameter("forStateSetNumber", "Integer", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "_complete", "Map", false) {
+                        typeArgument("SpptDataNode")
+                        typeArgument("Map") {
+                            typeArgument("Integer")
+                            typeArgument("List") {
+                                typeArgument("SpptDataNode")
+                            }
+                        }
+                    }
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "_embeddedFor", "Map", false) {
+                        typeArgument("SpptDataNode")
+                        typeArgument("TreeData")
+                    }
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "_preferred", "Map", false) {
+                        typeArgument("PreferredNode")
+                        typeArgument("SpptDataNode")
+                    }
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "_skipDataAfter", "Map", false) {
+                        typeArgument("SpptDataNode")
+                        typeArgument("TreeData")
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "forStateSetNumber", "Integer", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "initialSkip", "TreeData", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "root", "SpptDataNode", false)
+                }
+                dataType("CompleteTreeDataNode") {
+                    supertype("SpptDataNode")
+                    constructor_ {
+                        parameter("rule", "Rule", false)
+                        parameter("startPosition", "Integer", false)
+                        parameter("nextInputPosition", "Integer", false)
+                        parameter("nextInputNoSkip", "Integer", false)
+                        parameter("option", "Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "nextInputNoSkip", "Integer", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "nextInputPosition", "Integer", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "option", "Integer", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "rule", "Rule", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "startPosition", "Integer", false)
+                }
+                dataType("PreferredNode") {
+
+                    constructor_ {
+                        parameter("rule", "Rule", false)
+                        parameter("startPosition", "Integer", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "rule", "Rule", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "startPosition", "Integer", false)
+                }
+            }
+            namespace("net.akehurst.language.parser.api", listOf("std")) {
+                interfaceType("Rule") {
+
+                }
+                interfaceType("ParseOptions") {
+
+                }
+            }
+            namespace("net.akehurst.language.agl.runtime.structure", listOf("net.akehurst.language.parser.api", "std")) {
+                dataType("RuntimeRule") {
+                    supertype("Rule")
+                    constructor_ {
+                        parameter("runtimeRuleSetNumber", "Integer", false)
+                        parameter("ruleNumber", "Integer", false)
+                        parameter("name", "String", false)
+                        parameter("isSkip", "Boolean", false)
+                        parameter("isPseudo", "Boolean", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "isPseudo", "Boolean", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "isSkip", "Boolean", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "name", "String", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "ruleNumber", "Integer", false)
+                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "runtimeRuleSetNumber", "Integer", false)
                 }
             }
             namespace("net.akehurst.language.sentence.api", listOf("std")) {
@@ -481,11 +565,6 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "tag", "String", false)
                 }
             }
-            namespace("net.akehurst.language.parser.api", listOf("std")) {
-                interfaceType("ParseOptions") {
-
-                }
-            }
             namespace(
                 "net.akehurst.language.api.processor",
                 listOf("net.akehurst.language.base.api", "std", "net.akehurst.language.parser.api", "net.akehurst.language.scanner.api", "net.akehurst.language.sentence.api")
@@ -500,6 +579,19 @@ object AglWorkerSerialisation {
                 interfaceType("ProcessOptions") {
                     typeParameters("AsmType", "ContextType")
 
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "completionProvider", "CompletionProviderOptions", false){
+                        typeArgument("AsmType")
+                        typeArgument("ContextType")
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "parse", "ParseOptions", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "scan", "ScanOptions", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "semanticAnalysis", "SemanticAnalysisOptions", false){
+                        typeArgument("AsmType")
+                        typeArgument("ContextType")
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "syntaxAnalysis", "SyntaxAnalysisOptions", false){
+                        typeArgument("AsmType")
+                    }
                 }
                 interfaceType("SyntaxAnalysisOptions") {
                     typeParameters("AsmType")
@@ -507,7 +599,7 @@ object AglWorkerSerialisation {
                 }
                 interfaceType("SemanticAnalysisOptions") {
                     typeParameters("AsmType", "ContextType")
-
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "context", "ContextType", false)
                 }
                 interfaceType("CompletionProviderOptions") {
                     typeParameters("AsmType", "ContextType")
@@ -638,23 +730,26 @@ object AglWorkerSerialisation {
             }
             namespace("net.akehurst.language.grammar.processor", listOf("std", "net.akehurst.language.api.semanticAnalyser", "net.akehurst.language.scope.asm")) {
                 dataType("ContextFromGrammar") {
-                    supertype("SentenceContext"){ ref("std.String") }
+                    supertype("SentenceContext") { ref("std.String") }
                     constructor_ {}
-                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "rootScope", "ScopeSimple", false){
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "rootScope", "ScopeSimple", false) {
                         typeArgument("String")
                     }
                 }
             }
-            namespace("net.akehurst.language.agl.semanticAnalyser", listOf("std", "net.akehurst.language.api.semanticAnalyser", "net.akehurst.language.api.processor", "net.akehurst.language.typemodel.api")) {
+            namespace(
+                "net.akehurst.language.agl.semanticAnalyser",
+                listOf("std", "net.akehurst.language.api.semanticAnalyser", "net.akehurst.language.api.processor", "net.akehurst.language.typemodel.api")
+            ) {
                 dataType("ContextFromTypeModelReference") {
-                    supertype("SentenceContext"){ ref("std.String") }
+                    supertype("SentenceContext") { ref("std.String") }
                     constructor_ {
                         parameter("languageDefinitionId", "LanguageIdentity", false)
                     }
                     propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageDefinitionId", "LanguageIdentity", false)
                 }
                 dataType("ContextFromTypeModel") {
-                    supertype("SentenceContext"){ ref("std.String") }
+                    supertype("SentenceContext") { ref("std.String") }
                     constructor_ {
                         parameter("typeModel", "TypeModel", false)
                     }
@@ -716,8 +811,6 @@ object AglWorkerSerialisation {
                 }
             }
         }
-
-
         serialiser.configureFromTypeModel(tm)
     }
 

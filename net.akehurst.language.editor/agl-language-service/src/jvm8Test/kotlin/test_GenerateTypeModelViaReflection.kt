@@ -41,7 +41,13 @@ class test_GenerateTypeModelViaReflection {
 //        gen.addPackage("net.akehurst.language.agl.api.runtime")
 
         gen.include("net.akehurst.language.sppt.api.TreeData")
-        gen.include("net.akehurst.language.sppt.treedata.TreeDataComplete")
+        gen.include("net.akehurst.language.sppt.api.SpptDataNode")
+        gen.include("net.akehurst.language.sppt.treedata.TreeDataComplete2")
+        gen.include("net.akehurst.language.sppt.treedata.CompleteTreeDataNode")
+        gen.include("net.akehurst.language.sppt.treedata.PreferredNode")
+
+        gen.include("net.akehurst.language.parser.api.Rule")
+        gen.include("net.akehurst.language.agl.runtime.structure.RuntimeRule")
 
         gen.include("net.akehurst.language.sentence.api.InputLocation")
         gen.include("net.akehurst.language.issues.api.LanguageIssueKind")
