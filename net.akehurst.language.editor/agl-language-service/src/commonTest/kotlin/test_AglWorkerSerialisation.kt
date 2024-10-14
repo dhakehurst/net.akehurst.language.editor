@@ -125,7 +125,7 @@ class test_AglWorkerSerialisation {
     fun GrammarTypeModel_serialise_deserialise() {
         val grammar = Agl.registry.agl.grammar.processor!!.process(
             sentence = """
-                namespace test.test
+                namespace test
                 grammar Test {
                     S = as | bs | cs ;
                     as = a* ;
