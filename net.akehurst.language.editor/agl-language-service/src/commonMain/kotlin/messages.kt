@@ -32,45 +32,77 @@ import kotlin.math.min
 
 object EditorMessage {
     const val komposite = """namespace net.akehurst.language.editor.language.service.messages
-class AglWorkerMessage {
-    cmp endPoint
-}
-class AglWorkerMessageResponse {
-    cmp issues
-}
-class MessageSyntaxAnalysisResult {
-    cmp asm
-}
-class MessageLineTokens {
-    cmp lineTokens
-}
-class MessageProcessorCreateResponse {
-    cmp scannerMatchables
-}
-class MessageSemanticAnalysisResult {
-    cmp asm
-}
-class MessageCodeCompleteResult {
-    cmp completionItems
-}
-class MessageProcessorCreate {
-    cmp editorOptions
-}
-class MessageCodeCompleteRequest {
-    cmp options
-}
-class MessageProcessRequest {
-    cmp options
-}
-class MessageParseResult2 {
-    cmp treeData
-}
-class MessageSetStyleResponse {
-    cmp styleModel
-}
-class MessageScanResult {
-    cmp lineTokens
-}
+    class AglWorkerMessage {
+        cmp endPoint
+    }
+    class AglWorkerMessageResponse {
+        cmp issues
+    }
+    class MessageSyntaxAnalysisResult {
+        cmp asm
+    }
+    class MessageLineTokens {
+        cmp lineTokens
+    }
+    class MessageProcessorCreateResponse {
+        cmp scannerMatchables
+    }
+    class MessageSemanticAnalysisResult {
+        cmp asm
+    }
+    class MessageCodeCompleteResult {
+        cmp completionItems
+    }
+    class MessageProcessorCreate {
+        cmp editorOptions
+    }
+    class MessageCodeCompleteRequest {
+        cmp options
+    }
+    class MessageProcessRequest {
+        cmp options
+    }
+    class MessageParseResult2 {
+        cmp treeData
+    }
+    class MessageSetStyleResponse {
+        cmp styleModel
+    }
+    class MessageScanResult {
+        cmp lineTokens
+    }
+
+namespace net.akehurst.language.issues.api
+    class LanguageIssue {
+        cmp location
+    }
+
+namespace net.akehurst.language.api.processor.ProcessOptions
+    interface ProcessOptions {
+        cmp scan
+        cmp parse
+        cmp syntaxAnalysis
+        cmp semanticAnalysis
+        cmp completionProvider
+    }
+    interface SemanticAnalysisOptions {
+        cmp context
+    }
+
+namespace net.akehurst.language.agl.simple
+    interface ContextAsmSimple {
+        cmp rootScope
+    }
+
+namespace net.akehurst.language.grammar.processor
+    interface ContextFromGrammar {
+        cmp rootScope
+    }
+
+namespace net.akehurst.language.agl.semanticAnalyser
+    interface ContextFromTypeModel {
+        cmp typeModel
+    }
 """
 }
 

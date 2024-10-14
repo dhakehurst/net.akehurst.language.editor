@@ -143,7 +143,6 @@ class test_AglWorkerSerialisation {
         }
     }
 
-
     @Test
     fun Asm_serialise_deserialise() {
         val input: Asm = asmSimple() {
@@ -212,12 +211,11 @@ class test_AglWorkerSerialisation {
     fun Asm_With_CrossReferences_serialise_deserialise() {
         val result = Agl.registry.agl.crossReference.processor!!.process(
             sentence = """
-                namespace ns {
+                namespace ns
                     identify Elem2 by id
                     references {
                         in Elem2 { property ref refers-to Elem2 }
                     }
-                }
             """.trimIndent()
         )
         assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
@@ -357,6 +355,7 @@ class test_AglWorkerSerialisation {
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
+        println(jsonStr)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmSimple>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
@@ -417,6 +416,7 @@ class test_AglWorkerSerialisation {
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
+        println(jsonStr)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextFromTypeModel>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)

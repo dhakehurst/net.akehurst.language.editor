@@ -25,6 +25,7 @@ import net.akehurst.language.typemodel.processor.AglTypemodel
 import net.akehurst.language.expressions.processor.AglExpressions
 import net.akehurst.language.reference.processor.AglCrossReference
 import net.akehurst.language.style.processor.AglStyle
+import net.akehurst.language.scope.processor.AglScope
 import net.akehurst.language.typemodel.api.TypeModel
 import net.akehurst.language.typemodel.builder.typeModel
 
@@ -105,7 +106,8 @@ object AglWorkerSerialisation {
                         AglAsm.typeModel.namespace +
                         AglExpressions.typeModel.namespace +
                         AglCrossReference.typeModel.namespace +
-                        AglStyle.typeModel.namespace
+                        AglStyle.typeModel.namespace +
+                        AglScope.typeModel.namespace
                 ).toSet().toList()
         println(namesapces)
         val tm = typeModel("Messages", true, namesapces) {
@@ -444,6 +446,8 @@ object AglWorkerSerialisation {
                 }
             }
             namespace("net.akehurst.language.issues.api", listOf("std", "net.akehurst.language.sentence.api")) {
+                enumType("LanguageIssueKind", listOf("ERROR", "WARNING", "INFORMATION"))
+                enumType("LanguageProcessorPhase", listOf("GRAMMAR", "SCAN", "PARSE", "SYNTAX_ANALYSIS", "SEMANTIC_ANALYSIS", "INTERPRET", "GENERATE", "FORMAT", "ALL"))
                 dataType("LanguageIssue") {
 
                     constructor_ {
@@ -455,12 +459,16 @@ object AglWorkerSerialisation {
                     }
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "data", "Any", false)
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "kind", "LanguageIssueKind", false)
-                    propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "location", "InputLocation", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "location", "InputLocation", false)
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "message", "String", false)
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "phase", "LanguageProcessorPhase", false)
                 }
             }
             namespace("net.akehurst.language.scanner.api", listOf("std")) {
+                enumType("MatchableKind", listOf("EOT", "LITERAL", "REGEX"))
+                interfaceType("ScanOptions") {
+
+                }
                 dataType("Matchable") {
 
                     constructor_ {
@@ -478,7 +486,10 @@ object AglWorkerSerialisation {
 
                 }
             }
-            namespace("net.akehurst.language.api.processor", listOf("net.akehurst.language.base.api", "std", "net.akehurst.language.parser.api")) {
+            namespace(
+                "net.akehurst.language.api.processor",
+                listOf("net.akehurst.language.base.api", "std", "net.akehurst.language.parser.api", "net.akehurst.language.scanner.api", "net.akehurst.language.sentence.api")
+            ) {
                 valueType("LanguageIdentity") {
                     supertype("PublicValueType")
                     constructor_ {
@@ -487,6 +498,18 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "value", "String", false)
                 }
                 interfaceType("ProcessOptions") {
+                    typeParameters("AsmType", "ContextType")
+
+                }
+                interfaceType("SyntaxAnalysisOptions") {
+                    typeParameters("AsmType")
+
+                }
+                interfaceType("SemanticAnalysisOptions") {
+                    typeParameters("AsmType", "ContextType")
+
+                }
+                interfaceType("CompletionProviderOptions") {
                     typeParameters("AsmType", "ContextType")
 
                 }
@@ -501,6 +524,141 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "kind", "CompletionItemKind", false)
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "name", "String", false)
                     propertyOf(setOf(READ_ONLY, REFERENCE, STORED), "text", "String", false)
+                }
+            }
+            namespace("net.akehurst.language.api.semanticAnalyser", listOf("std")) {
+                interfaceType("SentenceContext") {
+                    typeParameters("E")
+
+                }
+            }
+            namespace("net.akehurst.language.scanner.common", listOf("net.akehurst.language.scanner.api", "std")) {
+                dataType("ScanOptionsDefault") {
+                    supertype("ScanOptions")
+                    constructor_ {}
+                }
+            }
+            namespace("net.akehurst.language.parser.leftcorner", listOf("net.akehurst.language.parser.api", "std")) {
+                dataType("ParseOptionsDefault") {
+                    supertype("ParseOptions")
+                    constructor_ {
+                        parameter("goalRuleName", "String", false)
+                        parameter("reportErrors", "Boolean", false)
+                        parameter("reportGrammarAmbiguities", "Boolean", false)
+                        parameter("cacheSkip", "Boolean", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "cacheSkip", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "goalRuleName", "String", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "reportErrors", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "reportGrammarAmbiguities", "Boolean", false)
+                }
+            }
+            namespace(
+                "net.akehurst.language.agl.processor",
+                listOf("net.akehurst.language.api.processor", "std", "net.akehurst.language.sentence.api", "net.akehurst.language.scanner.api", "net.akehurst.language.parser.api")
+            ) {
+                dataType("SyntaxAnalysisOptionsDefault") {
+                    typeParameters("AsmType")
+                    supertype("SyntaxAnalysisOptions") { ref("AsmType") }
+                    constructor_ {
+                        parameter("active", "Boolean", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "active", "Boolean", false)
+                }
+                dataType("SemanticAnalysisOptionsDefault") {
+                    typeParameters("AsmType", "ContextType")
+                    supertype("SemanticAnalysisOptions") { ref("AsmType"); ref("ContextType") }
+                    constructor_ {
+                        parameter("active", "Boolean", false)
+                        parameter("locationMap", "Map", false)
+                        parameter("context", "ContextType", false)
+                        parameter("checkReferences", "Boolean", false)
+                        parameter("resolveReferences", "Boolean", false)
+                        parameter("other", "Map", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "active", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "checkReferences", "Boolean", false)
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "context", "ContextType", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "locationMap", "Map", false) {
+                        typeArgument("Any")
+                        typeArgument("InputLocation")
+                    }
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "other", "Map", false) {
+                        typeArgument("String")
+                        typeArgument("Any")
+                    }
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "resolveReferences", "Boolean", false)
+                }
+                dataType("CompletionProviderOptionsDefault") {
+                    typeParameters("AsmType", "ContextType")
+                    supertype("CompletionProviderOptions") { ref("AsmType"); ref("ContextType") }
+                    constructor_ {
+                        parameter("context", "ContextType", false)
+                        parameter("other", "Map", false)
+                    }
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "context", "ContextType", false)
+                    propertyOf(setOf(READ_WRITE, REFERENCE, STORED), "other", "Map", false) {
+                        typeArgument("String")
+                        typeArgument("Any")
+                    }
+                }
+                dataType("ProcessOptionsDefault") {
+                    typeParameters("AsmType", "ContextType")
+                    supertype("ProcessOptions") { ref("AsmType"); ref("ContextType") }
+                    constructor_ {
+                        parameter("scan", "ScanOptions", false)
+                        parameter("parse", "ParseOptions", false)
+                        parameter("syntaxAnalysis", "SyntaxAnalysisOptions", false)
+                        parameter("semanticAnalysis", "SemanticAnalysisOptions", false)
+                        parameter("completionProvider", "CompletionProviderOptions", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "completionProvider", "CompletionProviderOptions", false) {
+                        typeArgument("AsmType")
+                        typeArgument("ContextType")
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "parse", "ParseOptions", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "scan", "ScanOptions", false)
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "semanticAnalysis", "SemanticAnalysisOptions", false) {
+                        typeArgument("AsmType")
+                        typeArgument("ContextType")
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "syntaxAnalysis", "SyntaxAnalysisOptions", false) {
+                        typeArgument("AsmType")
+                    }
+                }
+            }
+            namespace("net.akehurst.language.agl.simple", listOf("net.akehurst.language.asm.api", "net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.scope.asm")) {
+                dataType("ContextAsmSimple") {
+                    supertype("SentenceContext") { ref("net.akehurst.language.asm.api.AsmPath") }
+                    constructor_ {}
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "rootScope", "ScopeSimple", false) {
+                        typeArgument("AsmPath")
+                    }
+                }
+            }
+            namespace("net.akehurst.language.grammar.processor", listOf("std", "net.akehurst.language.api.semanticAnalyser", "net.akehurst.language.scope.asm")) {
+                dataType("ContextFromGrammar") {
+                    supertype("SentenceContext"){ ref("std.String") }
+                    constructor_ {}
+                    propertyOf(setOf(READ_WRITE, COMPOSITE, STORED), "rootScope", "ScopeSimple", false){
+                        typeArgument("String")
+                    }
+                }
+            }
+            namespace("net.akehurst.language.agl.semanticAnalyser", listOf("std", "net.akehurst.language.api.semanticAnalyser", "net.akehurst.language.api.processor", "net.akehurst.language.typemodel.api")) {
+                dataType("ContextFromTypeModelReference") {
+                    supertype("SentenceContext"){ ref("std.String") }
+                    constructor_ {
+                        parameter("languageDefinitionId", "LanguageIdentity", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "languageDefinitionId", "LanguageIdentity", false)
+                }
+                dataType("ContextFromTypeModel") {
+                    supertype("SentenceContext"){ ref("std.String") }
+                    constructor_ {
+                        parameter("typeModel", "TypeModel", false)
+                    }
+                    propertyOf(setOf(READ_ONLY, COMPOSITE, STORED), "typeModel", "TypeModel", false)
                 }
             }
             namespace("net.akehurst.language.editor.api", listOf("std")) {
@@ -558,6 +716,8 @@ object AglWorkerSerialisation {
                 }
             }
         }
+
+
         serialiser.configureFromTypeModel(tm)
     }
 
