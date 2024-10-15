@@ -106,15 +106,19 @@ abstract class AglWorkerAbstract {
                 _languageDefinition[message.languageId] = ld
                 _editorOptions[message.endPoint.editorId] = message.editorOptions
                 //if there is a grammar check that grammar is well-defined and a processor can be created from it
+                var proc: LanguageProcessor<Any, Any>? = null
+                try {
+                    proc = ld.processor // should throw exception if there are problems
+                } catch (t: Throwable) {
 
-                val proc = ld.processor // should throw exception if there are problems
+                }
                 if (null == proc) {
                     sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "Error", ld.issues.all.toList(), emptyList()))
                 } else {
                     sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.SUCCESS, "OK", ld.issues.all.toList(), proc.scanner!!.matchables))
                 }
             } catch (t: Throwable) {
-                sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, t.message!!, emptyList(), emptyList()))
+                sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "${t::class.simpleName}: ${t.message?:"<no exception message>"}", emptyList(), emptyList()))
             }
         }
     }
@@ -143,7 +147,7 @@ abstract class AglWorkerAbstract {
                 }
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl))
             } else {
-                //TODO: handle issues!
+                sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.FAILURE, "Invalid Style",result.issues.all.toList(), null))
             }
         } catch (t: Throwable) {
             sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.FAILURE, t.message!!, emptyList(), null))

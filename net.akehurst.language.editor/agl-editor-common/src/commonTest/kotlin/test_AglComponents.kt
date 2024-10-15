@@ -5,6 +5,7 @@ import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.LogLevel
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -12,6 +13,12 @@ class test_AglComponents {
 
     val logger = AglEditorLogger { logLevel: LogLevel, msg: String, throwable: Throwable? ->
         println("$logLevel: $msg")
+    }
+
+    @BeforeTest
+    fun before() {
+        // ensure grammar language is registered
+        Agl.registry.agl.grammar
     }
 
     @Test

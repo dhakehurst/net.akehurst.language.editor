@@ -14,8 +14,8 @@ dependencies {
     "runtimeOnly"( project(path=":application-editor-desktop", configuration="jvm8RuntimeElements") )
 
     commonMainImplementation(project(":information-editor"))
-    commonMainImplementation("net.akehurst.language.editor:agl-editor-common:$version_agl_editor")
-    commonMainImplementation("net.akehurst.language.editor:agl-language-service:$version_agl_editor")
+    commonMainImplementation(libs.nale.agl.editor.common)
+    commonMainImplementation(libs.nale.agl.language.service)
 
     //jsMainImplementation(project(":technology-gui-widgets"))
     //jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-ace:$version_agl_editor")

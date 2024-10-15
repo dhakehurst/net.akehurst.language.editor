@@ -1,29 +1,27 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
-val version_agl_editor: String by project
-val version_html_builder: String by project
-val version_ace: String by project
-val version_monaco:String by project
-val version_codemirror:String by project
-val version_compose_editor:String by project
+val version_monaco = "0.45.0"
+val version_ace = "1.32.3"
+val version_ck = "43.0.0"
+val version_codemirror = libs.versions.nak.codemirror.editor.get()
 
 dependencies {
 
     jsMainImplementation(project(":information-editor"))
     jsMainImplementation(project(":technology-gui-widgets"))
 
-    jsMainImplementation("net.akehurst.language.editor:agl-language-service:$version_agl_editor")
+    jsMainImplementation(libs.nale.agl.language.service)
 
-    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-agl:$version_agl_editor")
-    jsMainImplementation("net.akehurst.kotlin.html5:html-builder:$version_html_builder")
+    jsMainImplementation(libs.nale.agl.editor.browser.agl)
+    jsMainImplementation(libs.nak.html.builder)
 
     // Ace
-    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-ace:$version_agl_editor")
-    jsMainImplementation(npm("ace-builds", version_ace))
+    jsMainImplementation(libs.nale.agl.editor.browser.ace)
+    jsMainImplementation(npm("ace-builds", "1.32.3"))
     jsMainImplementation(npm("net.akehurst.language.editor-kotlin-ace-loader", "1.5.1"))
 
     // Monaco
-    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-monaco:$version_agl_editor")
+    jsMainImplementation(libs.nale.agl.editor.browser.monaco)
     jsMainImplementation(npm("monaco-editor", version_monaco))
     jsMainImplementation(npm("monaco-editor-webpack-plugin", "7.1.0"))
     jsMainImplementation(npm("css-loader", "6.8.1"))
@@ -32,14 +30,18 @@ dependencies {
     jsMainImplementation(npm("file-loader", "6.2.0"))
 
     // Codemirror
-    jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-codemirror:$version_agl_editor")
-    jsMainImplementation("net.akehurst.kotlin:codemirror-api-realisation:$version_codemirror")
+    jsMainImplementation(libs.nak.codemirror.api.realisation)
+    jsMainImplementation(libs.nale.agl.editor.browser.codemirror)
 
     // ComposeEditor
-    jsMainImplementation("net.akehurst.kotlin.compose:code-editor:$version_compose_editor")
-    jsMainImplementation("net.akehurst.language.editor:agl-editor-compose:$version_agl_editor")
+    jsMainImplementation(libs.nak.compose.code.editor)
+    jsMainImplementation(libs.nale.agl.editor.compose)
 
-    jsMainImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.7.3")
+    // CK-Editor
+    jsMainImplementation(libs.nale.agl.editor.browser.ck)
+    jsMainImplementation( npm("ckeditor5",version_ck))
+
+    jsMainImplementation(libs.kotlinx.coroutines)
 }
 
 kotlin {

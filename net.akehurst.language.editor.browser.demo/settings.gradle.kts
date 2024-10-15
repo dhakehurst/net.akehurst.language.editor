@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
+println("===============================================")
+println("Gradle: ${GradleVersion.current()}")
+println("JVM: ${org.gradle.internal.jvm.Jvm.current()} '${org.gradle.internal.jvm.Jvm.current().javaHome}'")
+println("===============================================")
+
 pluginManagement {
     repositories {
-        mavenLocal()
-        gradlePluginPortal()
-        maven {
-            url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
+        mavenLocal {
+            content{
+                includeGroupByRegex("net\\.akehurst.+")
+            }
         }
+        gradlePluginPortal()
     }
 }
 rootProject.name = file(".").name

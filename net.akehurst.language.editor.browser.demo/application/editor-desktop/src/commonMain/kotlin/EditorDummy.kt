@@ -1,15 +1,16 @@
 package demo
-import net.akehurst.language.api.processor.LanguageIssue
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.AglEditorCompletionProvider
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.LanguageServiceRequest
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglTokenizerByWorker
+import net.akehurst.language.issues.api.LanguageIssue
 
 class EditorDummy<AsmType : Any, ContextType : Any>(
     languageServiceRequest:LanguageServiceRequest,
-    languageId: String,
+    languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction
 ) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"none"), logFunction) {
@@ -51,7 +52,7 @@ class EditorDummy<AsmType : Any, ContextType : Any>(
         TODO("not implemented")
     }
 
-    override fun updateLanguage(oldId: String?) {
+    override fun updateLanguage(oldId: LanguageIdentity?) {
         TODO("not implemented")
     }
 

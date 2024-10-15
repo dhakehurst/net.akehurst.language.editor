@@ -17,20 +17,18 @@
 package net.akehurst.language.editor.information
 
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.asm.AsmPathSimple
-import net.akehurst.language.agl.processor.IssueHolder
 import net.akehurst.language.agl.processor.ProcessResultDefault
-import net.akehurst.language.agl.semanticAnalyser.ContextSimple
+import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserByMethodRegistrationAbstract
-import net.akehurst.language.api.asm.AsmList
-import net.akehurst.language.api.asm.AsmPath
-import net.akehurst.language.api.language.grammar.Grammar
-import net.akehurst.language.api.language.reference.Scope
 import net.akehurst.language.api.processor.LanguageProcessor
-import net.akehurst.language.api.processor.LanguageProcessorPhase
-import net.akehurst.language.api.sppt.Sentence
-import net.akehurst.language.api.sppt.SpptDataNodeInfo
-import net.akehurst.language.collections.toSeparatedList
+import net.akehurst.language.asm.api.AsmPath
+import net.akehurst.language.asm.simple.AsmPathSimple
+import net.akehurst.language.base.api.QualifiedName
+import net.akehurst.language.issues.api.LanguageProcessorPhase
+import net.akehurst.language.issues.ram.IssueHolder
+import net.akehurst.language.scope.api.Scope
+import net.akehurst.language.sentence.api.Sentence
+import net.akehurst.language.sppt.api.SpptDataNodeInfo
 
 object ExternalContextLanguage {
     val grammarStr = """
@@ -49,8 +47,8 @@ object ExternalContextLanguage {
         }
     """.trimIndent()
 
-    val processor: LanguageProcessor<ContextSimple, Unit> by lazy {
-        val result = Agl.processorFromString<ContextSimple, Unit>(
+    val processor: LanguageProcessor<ContextAsmSimple, Unit> by lazy {
+        val result = Agl.processorFromString<ContextAsmSimple, Unit>(
             grammarDefinitionStr = grammarStr,
             configuration = Agl.configuration {
                 syntaxAnalyserResolver { ProcessResultDefault(ExternalContextSyntaxAnalyser(), IssueHolder(LanguageProcessorPhase.ALL)) }
@@ -60,7 +58,7 @@ object ExternalContextLanguage {
     }
 }
 
-class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract<ContextSimple>() {
+class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract<ContextAsmSimple>() {
     override fun registerHandlers() {
         register(this::context)
         register(this::item)
@@ -71,8 +69,8 @@ class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract
     }
 
     // context = item* ;
-    private fun context(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): ContextSimple {
-        val ctx = ContextSimple()
+    private fun context(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): ContextAsmSimple {
+        val ctx = ContextAsmSimple()
         val itemList = children as List<(Scope<AsmPath>) -> Unit>
         itemList.forEach { it.invoke(ctx.rootScope) }
         return ctx
@@ -81,7 +79,7 @@ class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract
     // item = referableName ':' typeReference scope? ;
     private fun item(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): (Scope<AsmPath>) -> Unit {
         val referableName = children[0] as String
-        val typeReference = children[2] as String
+        val typeReference = children[2] as QualifiedName
         val item = AsmPathSimple.EXTERNAL
         val itemScope = children[3] as ((Scope<AsmPath>) -> Unit)?
         return { scope: Scope<AsmPath> ->
@@ -106,11 +104,11 @@ class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract
         (children[0] as String).removeSurrounding("'")
 
     // typeReference = qualifiedName ;
-    private fun typeReference(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): String =
-        children[0] as String
+    private fun typeReference(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): QualifiedName =
+        children[0] as QualifiedName
 
     // qualifiedName = [NAME / '.']+ ;
-    private fun qualifiedName(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): String =
-        (children as List<String>).joinToString(separator = "")
+    private fun qualifiedName(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): QualifiedName =
+        QualifiedName( (children as List<String>).joinToString(separator = "") )
 
 }

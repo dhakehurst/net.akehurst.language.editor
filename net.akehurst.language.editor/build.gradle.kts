@@ -16,7 +16,6 @@
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.buildconfig.BuildConfigExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 
 plugins {
     alias(libs.plugins.kotlin) apply false
@@ -81,17 +80,21 @@ subprojects {
         jvm("jvm8") {
             compilations {
                 val main by getting {
-                    compilerOptions.configure {
-                        languageVersion.set(kotlin_languageVersion)
-                        apiVersion.set(kotlin_apiVersion)
-                        jvmTarget.set(jvmTargetVersion)
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            languageVersion.set(kotlin_languageVersion)
+                            apiVersion.set(kotlin_apiVersion)
+                            jvmTarget.set(jvmTargetVersion)
+                        }
                     }
                 }
                 val test by getting {
-                    compilerOptions.configure {
-                        languageVersion.set(kotlin_languageVersion)
-                        apiVersion.set(kotlin_apiVersion)
-                        jvmTarget.set(jvmTargetVersion)
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            languageVersion.set(kotlin_languageVersion)
+                            apiVersion.set(kotlin_apiVersion)
+                            jvmTarget.set(jvmTargetVersion)
+                        }
                     }
                 }
             }
@@ -100,11 +103,8 @@ subprojects {
         js("js", IR) {
             binaries.library()
             generateTypeScriptDefinitions()
-            useEsModules()
-            tasks.withType<KotlinJsCompile>().configureEach {
-                kotlinOptions {
-                    useEsClasses = true
-                }
+            compilerOptions {
+                target.set("es2015")
             }
             nodejs()
             browser {
@@ -113,15 +113,6 @@ subprojects {
                 }
             }
         }
-
-//        if (project.name != "agl-language-service-serialisation") {
-//            macosArm64()
-//        }
-        //        @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
-//        wasmJs() {
-//            binaries.library()
-//            browser()
-//        }
 
         sourceSets {
             val commonMain by getting {

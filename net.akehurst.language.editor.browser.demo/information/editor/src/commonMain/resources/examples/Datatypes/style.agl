@@ -1,19 +1,22 @@
-'primitive', 'collection', 'class' {
-  foreground: purple;
-  font-style: bold;
-}
-ID {
-  foreground: blue;
-  font-style: italic;
-}
-'{', '}' {
-  foreground: darkgreen;
-  font-style: bold;
-}
-property {
-  background: lightgray;
-}
-typeReference {
-  foreground: green;
-  background: lightblue;
+namespace test
+styles Test {
+    'primitive', 'collection', 'class' {
+      foreground: purple;
+      font-style: bold;
+    }
+    ID {
+      foreground: blue;
+      font-style: italic;
+    }
+    '{', '}' {
+      foreground: darkgreen;
+      font-style: bold;
+    }
+    property {
+      background: lightgray;
+    }
+    typeReference {
+      foreground: green;
+      background: lightblue;
+    }
 }

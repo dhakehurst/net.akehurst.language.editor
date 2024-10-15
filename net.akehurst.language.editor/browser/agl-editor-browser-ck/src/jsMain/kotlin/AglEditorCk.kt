@@ -32,8 +32,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     ckEditor: ck.Editor,
     languageId: LanguageIdentity,
     editorId: String,
-    logFunction: LogFunction?,
-    ck: ck.Editor
+    logFunction: LogFunction?
 ): AglEditor<AsmType, ContextType> {
     val aglEditor = AglEditorCk<AsmType, ContextType>(
         languageServiceRequest = languageService.request,
@@ -56,8 +55,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     logFunction: LogFunction?
 ) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId, "none"), logFunction) {
 
-    override val baseEditor: Any
-        get() = TODO("not implemented")
+    override val baseEditor: Any = ckEditor
     override var text: String
         get() = TODO("not implemented")
         set(value) {}

@@ -86,8 +86,7 @@ grammar BasicTutorial {
 // Scopes and references for a language are defined in the context of the type-model,
 // they are resolved as part of the semantic analysis phase, modifying the ASM as a result.
 
-namespace net.akehurst.language.example.BasicTutorial {
-
+namespace net.akehurst.language.example.BasicTutorial
     // target definitions are identified by their name
     identify TargetDef by name
     
@@ -99,27 +98,28 @@ namespace net.akehurst.language.example.BasicTutorial {
             }
         }
     }
-}
 """.trimIndent()
 
     val style = """
 // use this editor to enter the styles, syntax highlighting rules, for your language
 // the name of any terminal or non-terminal from the grammar can be used
-
-targetDef {
-    background: yellow;
-}
-targetRef {
-  foreground: red;
-  font-style: italic;  
-}
-${"$"}keyword {
-  foreground: blue;
-  font-style: bold;
-}
-hello {
-  foreground: green;
-  font-style: bold;
+namespace net.akehurst.language.example.BasicTutorial
+styles {
+    targetDef {
+        background: yellow;
+    }
+    targetRef {
+      foreground: red;
+      font-style: italic;  
+    }
+    ${"$"}keyword {
+      foreground: blue;
+      font-style: bold;
+    }
+    hello {
+      foreground: green;
+      font-style: bold;
+    }
 }
 """.trimIndent()
 

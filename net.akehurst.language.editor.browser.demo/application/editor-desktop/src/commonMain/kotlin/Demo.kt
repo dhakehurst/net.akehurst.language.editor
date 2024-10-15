@@ -20,20 +20,21 @@ import korlibs.io.async.asyncImmediately
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.default.TypeModelFromGrammar
-import net.akehurst.language.agl.language.grammar.AglGrammarSemanticAnalyser
-import net.akehurst.language.agl.language.grammar.ContextFromGrammar
-import net.akehurst.language.agl.scanner.Matchable
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.semanticAnalyser.ContextSimple
-import net.akehurst.language.api.asm.Asm
-import net.akehurst.language.api.language.grammar.Grammar
-import net.akehurst.language.api.language.reference.CrossReferenceModel
+import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.LanguageIssue
-import net.akehurst.language.api.style.AglStyleModel
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.asm.api.Asm
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
+import net.akehurst.language.grammar.api.GrammarModel
+import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
+import net.akehurst.language.grammar.processor.ContextFromGrammar
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.reference.api.CrossReferenceModel
+import net.akehurst.language.scanner.api.Matchable
+import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.transform.asm.TransformModelDefault
 
 
 //external var aglScriptBasePath: dynamic = definedExternally
@@ -78,7 +79,7 @@ object Constants {
     const val styleEditorId = "editor-style"
     const val formatEditorId = "editor-format"
 
-    const val sentenceLanguageId = "language-user"
+    val sentenceLanguageId = LanguageIdentity("language-user")
     val grammarLanguageId = Agl.registry.agl.grammarLanguageIdentity
     val referencesLanguageId = Agl.registry.agl.crossReferenceLanguageIdentity
     val styleLanguageId = Agl.registry.agl.styleLanguageIdentity
@@ -305,7 +306,7 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
     demo!!.configure()
 }
 
-fun createDummyEditor(editorId: String, languageId: String): AglEditor<Any, Any> {
+fun createDummyEditor(editorId: String, languageId: LanguageIdentity): AglEditor<Any, Any> {
     val logFunction: LogFunction = { _,_,_ -> }
     val langServer = LanguageServiceDirectExecution(object :LanguageServiceResponse {
         override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
@@ -357,7 +358,7 @@ class Demo(
     //val trees = TreeView.initialise(document)
 
     //val exampleSelect = document.querySelector("select#example") as HTMLElement
-    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Asm, ContextSimple>
+    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Asm, ContextAsmSimple>
     val grammarEditor = editors[Constants.grammarEditorId]!!
     val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
     val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModel>
@@ -405,10 +406,12 @@ class Demo(
                 }
 
                 EventStatus.SUCCESS -> {
-                    val grammars = event.asm as List<Grammar>? ?: error("should always be a List<Grammar> if success")
-                    val firstGrammar = grammars.first()
+                    val grammars = event.asm as GrammarModel? ?: error("should always be a List<Grammar> if success")
                     val styleContext = ContextFromGrammar()
-                    val scopeContext = ContextFromTypeModel(TypeModelFromGrammar.create(firstGrammar))
+                    val trm = TransformModelDefault.fromGrammarModel(grammars).let {
+                        it.asm!!
+                    }
+                    val scopeContext = ContextFromTypeModel(trm.typeModel!!)
                     referencesEditor.processOptions.semanticAnalysis.context = scopeContext
                     styleEditor.processOptions.semanticAnalysis.context = styleContext
                     try {

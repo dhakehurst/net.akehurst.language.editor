@@ -1,0 +1,58 @@
+[versions]
+project = "2.0.20"
+
+kotlin = "2.0.20"
+dokka = "1.9.10"
+exportPublic = "2.0.20"
+buildconfig = "5.4.0"
+credentials = "3.0"
+
+nal-agl = "4.2.0.20"
+nal-editor = "2.0.20"
+
+nak-compose-code-editor = "2.0.20"
+nak-codemirror-editor = "6.0.1"
+
+nak-html-builder = "2.0.20"
+
+kotlinx-coroutines = "1.8.1"
+
+ktor = "3.0.0-beta-1"
+slf4j="1.7.29"
+
+korlibs = "6.0.1"
+
+[libraries]
+nal-agl-processor = { module = "net.akehurst.language:agl-processor", version.ref = "nal-agl" }
+
+nak-html-builder = { module = "net.akehurst.kotlin.html5:html-builder", version.ref = "nak-html-builder" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+
+nale-agl-editor-browser-worker = {module="net.akehurst.language.editor:agl-editor-browser-worker",version.ref = "nal-editor" }
+nale-agl-language-service = {module="net.akehurst.language.editor:agl-language-service",version.ref = "nal-editor" }
+nale-agl-editor-browser-agl = {module="net.akehurst.language.editor:agl-editor-browser-agl",version.ref = "nal-editor" }
+nale-agl-editor-browser-ace = {module="net.akehurst.language.editor:agl-editor-browser-ace",version.ref = "nal-editor" }
+nale-agl-editor-browser-monaco = {module="net.akehurst.language.editor:agl-editor-browser-monaco",version.ref = "nal-editor" }
+nale-agl-editor-browser-codemirror = {module="net.akehurst.language.editor:agl-editor-browser-codemirror",version.ref = "nal-editor" }
+nale-agl-editor-browser-ck = {module="net.akehurst.language.editor:agl-editor-browser-ck",version.ref = "nal-editor" }
+nale-agl-editor-compose = {module="net.akehurst.language.editor:agl-editor-compose",version.ref = "nal-editor" }
+nale-agl-editor-common = {module="net.akehurst.language.editor:agl-editor-common",version.ref = "nal-editor" }
+
+nak-codemirror-api-realisation = {module="net.akehurst.kotlin:codemirror-api-realisation",version.ref = "nak-codemirror-editor" }
+nak-compose-code-editor = {module="net.akehurst.kotlin.compose:code-editor",version.ref = "nak-compose-code-editor" }
+
+ktor-websockets = { module="io.ktor:ktor-websockets", version.ref = "ktor" }
+ktor-server = { module="io.ktor:ktor-server", version.ref = "ktor" }
+ktor-server-core = { module="io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-jetty = { module="io.ktor:ktor-server-jetty", version.ref = "ktor" }
+
+slf4j-simple = {module="org.slf4j:slf4j-simple", version.ref="slf4j"}
+
+korlibs-io = {module="com.soywiz:korlibs-io", version.ref="korlibs"}
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+exportPublic =  { id = "net.akehurst.kotlin.gradle.plugin.exportPublic", version.ref = "exportPublic" }
+buildconfig =  { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
+credentials =  { id = "nu.studer.credentials", version.ref = "credentials" }

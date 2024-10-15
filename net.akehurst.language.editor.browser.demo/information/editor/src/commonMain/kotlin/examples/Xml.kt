@@ -88,26 +88,29 @@ grammar Xml {
     """.trimIndent()
 
     val style = """
-        comment {
-          foreground: gray;
-          font-style: italic;
-        }
-        NAME {
-          foreground: red;
-          font-style: bold; 
-        }
-        
-        CHARDATA {
-          foreground: green;
-        }
-        attribute {
-          foreground: blue;
-        }
-        VALUE {
-        foreground: green;
-        }
-        '<','/>','=' {
-          foreground: purple;
+        namespace net.akehurst.language.xml
+        styles {
+            comment {
+              foreground: gray;
+              font-style: italic;
+            }
+            NAME {
+              foreground: red;
+              font-style: bold; 
+            }
+            
+            CHARDATA {
+              foreground: green;
+            }
+            attribute {
+              foreground: blue;
+            }
+            VALUE {
+            foreground: green;
+            }
+            '<','/>','=' {
+              foreground: purple;
+            }
         }
     """.trimIndent()
     val format = """

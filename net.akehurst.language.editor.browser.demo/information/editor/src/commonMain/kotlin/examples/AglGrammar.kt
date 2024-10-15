@@ -52,7 +52,7 @@ grammar Test extends Common {
     val grammar = Agl.registry.agl.grammar.grammarStr!!
 
     val references = """
-namespace net.akehurst.language.agl.AglGrammar {
+namespace net.akehurst.language.agl.AglGrammar
     identify Namespace by qualifiedName
     identify Grammar by qualifiedName
     scope Namespace {
@@ -68,7 +68,6 @@ namespace net.akehurst.language.agl.AglGrammar {
             property qualifiedName.last refers-to GrammarRule from qualifiedName.front
         }
     }
-}
 """.trimIndent()
 
     val style = Agl.registry.agl.grammar.styleStr!!

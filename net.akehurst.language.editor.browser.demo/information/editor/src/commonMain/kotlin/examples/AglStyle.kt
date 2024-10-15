@@ -23,17 +23,20 @@ object AglStyle {
     val id = "AglStyle"
     val label = "Agl Style"
     val sentence = """
-${'$'}keyword {
-  foreground: purple;
-  font-style: bold;
-}
-'xyz','abc' {
-  foreground: blue;
-  font-style: bold;
-}
-"'([^'\\]|\\.)*'" {
-  foreground: green;
-  font-style: italic;
+namespace test
+styles {
+    ${'$'}keyword {
+      foreground: purple;
+      font-style: bold;
+    }
+    'xyz','abc' {
+      foreground: blue;
+      font-style: bold;
+    }
+    "'([^'\\]|\\.)*'" {
+      foreground: green;
+      font-style: italic;
+    }
 }
     """.trimIndent()
     val grammar = Agl.registry.agl.style.grammarStr!!
