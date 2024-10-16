@@ -31,7 +31,7 @@ class EditorModelIndex() {
                         //is ck.Text -> {
                         ch.is_("\$text") -> {
                             val txt = (ch as ck.Text).data
-                            console.log("child text: '$txt'")
+                            //console.log("child text: '$txt'")
                             txt
                         }
                         //is ck.Element -> {
@@ -43,7 +43,7 @@ class EditorModelIndex() {
                             }
                         }
                         else -> {
-                            console.log("child '${ch::class.simpleName}'")
+                            //console.log("child '${ch::class.simpleName}'")
                             "\n"
                         }
                     }

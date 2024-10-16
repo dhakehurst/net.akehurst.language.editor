@@ -71,13 +71,14 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     override val isConnected: Boolean get() = this.containerElement.isConnected
 
-    override val workerTokenizer: AglTokenizerByWorkerCk<AsmType, ContextType> get() = AglTokenizerByWorkerCk(this.agl, this.emi)
 
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
 
     private var parseTimeout: dynamic = null
     private var emi:EditorModelIndex = EditorModelIndex()
+
+    override val workerTokenizer: AglTokenizerByWorkerCk<AsmType, ContextType> = AglTokenizerByWorkerCk(this.agl, this.emi)
 
     init {
         val resizeObserver = ResizeObserver { entries -> onResize(entries) }
@@ -170,17 +171,17 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     // --- AglEditorAbstract ---
     override fun onEditorTextChangeInternal() {
-        console.log("onEditorTextChangeInternal, editor '${this.editorId}' text is '${this.text}'")
+        //console.log("onEditorTextChangeInternal, editor '${this.editorId}' text is '${this.text}'")
         if (doUpdate) {
-            console.log("doUpdate")
+            //console.log("doUpdate")
             super.onEditorTextChangeInternal()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
-                console.log("new timeout")
+                //console.log("new timeout")
                 val oldText = this.text
                 emi.update(ckEditor.model)
                 if (emi.rawText != oldText) {
-                    console.log("rawtext changed")
+                    //console.log("rawtext changed")
                     this.processSentence()
                 }
             }, 500)

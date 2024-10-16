@@ -29,11 +29,13 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
 ) : AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
+    private var count = 0
     private var styleMap:Map<String,Map<String,Any>> = emptyMap()
 
     fun updateStyleMap(value:Map<String,Map<String,Any>>) {
+        //count= count+1
         this.styleMap = value
-        console.log("Updated Styles '${aglTokenizer.agl.editorId}': ${this.styleMap}")
+        //console.log("Updated Styles ${count} '${aglTokenizer.agl.editorId}': ${this.styleMap}")
     }
 
     override fun reset() {
@@ -41,7 +43,7 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     }
 
     override fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
-        console.log("Received tokens: $startLine, $tokensForLines")
+        //console.log("Received tokens: $startLine, $tokensForLines")
         this.aglTokenizer.receiveTokens(startLine, tokensForLines)
         for (line in tokensForLines) {
             for (token in line) {
@@ -52,7 +54,7 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
 
 
     private fun updateCkModel(token: AglToken) {
-        console.log("Current Styles '${aglTokenizer.agl.editorId}': ${this.styleMap}")
+        //console.log("Current Styles $count '${aglTokenizer.agl.editorId}': ${this.styleMap}")
         val firstPosition = token.position
         val lastPosition = firstPosition + token.length
         emi.model?.enqueueChange { writer ->
@@ -61,9 +63,9 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
             val rng = writer.createRange(fp, lp)
             for(style in token.styles) {
                 val atts = this.styleMap[style] ?: emptyMap()
-                console.log("In editor '${aglTokenizer.agl.editorId}' styles for '$style': $atts")
+                //console.log("In editor '${aglTokenizer.agl.editorId}' styles for '$style': $atts")
                 for(att in atts.entries) {
-                    console.log("Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]")
+                    //console.log("Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]")
                     writer.setAttribute(att.key, att.value, rng)
                 }
             }
