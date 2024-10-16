@@ -47,6 +47,14 @@ dependencies {
 kotlin {
     js("js", IR) {
         binaries.executable()
+        browser {
+            commonWebpackConfig {
+                cssSupport {
+                   // enabled.set(true)
+                   // mode.set("import")
+                }
+            }
+        }
     }
     sourceSets {
         val jsMain by getting {

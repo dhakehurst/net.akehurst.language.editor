@@ -33,6 +33,7 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
             val str = AglWorkerSerialisation.serialise(msg)
             port.postMessage(str, transferables)
         } catch (t: Throwable) {
+            console.error(t.stackTraceToString())
             val str = "Error: Worker cannot sendMessage: ${t.message}"
             port.postMessage(str, transferables)
         }
@@ -53,6 +54,7 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                 port.postMessage("Error: Worker error in receiveMessage: data content should be a String, got - '${ev.data}'")
             }
         } catch (t: Throwable) {
+            console.error(t.stackTraceToString())
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Error: Worker error in receiveMessage: ${t::class.simpleName} - ${t.message!!}\n$st"
             port.postMessage(msg)
@@ -151,6 +153,7 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                 JSON.stringify(obj)
             }
         } catch (t: Throwable) {
+            console.error(t.stackTraceToString())
             error("Error trying to serialise SPPT to JSON: ${t.message}")
         }
     }
@@ -202,6 +205,7 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                 sb.toString()
             }
         } catch (t: Throwable) {
+            console.error(t.stackTraceToString())
             error("Error trying to serialise SPPT to JSON: ${t.message}")
         }
     }

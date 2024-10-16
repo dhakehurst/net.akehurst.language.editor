@@ -1,4 +1,4 @@
-namespace test.Test
+namespace net.akehurst.language.example.Datatypes
     identify Primitive by id
     identify Datatype by id
     identify Collection by id

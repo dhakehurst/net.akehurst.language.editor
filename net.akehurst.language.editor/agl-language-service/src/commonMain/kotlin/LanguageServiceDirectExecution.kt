@@ -58,6 +58,7 @@ open class LanguageServiceDirectExecution(
                 }
             }
         } catch (t: Throwable) {
+            println(t.stackTraceToString())
             response.processorCreateResponse(endPointIdentity, MessageStatus.FAILURE, t.message!!, emptyList(), emptyList())
         }
     }

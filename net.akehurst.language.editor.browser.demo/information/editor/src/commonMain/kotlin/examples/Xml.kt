@@ -89,7 +89,7 @@ grammar Xml {
 
     val style = """
         namespace net.akehurst.language.xml
-        styles {
+        styles Xml {
             comment {
               foreground: gray;
               font-style: italic;

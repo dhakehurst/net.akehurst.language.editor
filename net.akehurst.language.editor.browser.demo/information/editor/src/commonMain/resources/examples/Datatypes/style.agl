@@ -1,5 +1,5 @@
-namespace test
-styles Test {
+namespace net.akehurst.language.example
+styles Datatypes {
     'primitive', 'collection', 'class' {
       foreground: purple;
       font-style: bold;

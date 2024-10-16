@@ -35,11 +35,8 @@ import monaco.languages.TokensProvider
 import net.akehurst.kotlin.compose.editor.ComposeCodeEditorJs
 import net.akehurst.kotlin.html5.elCreate
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
-import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.asm.api.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.browser.ace.IAce
 import net.akehurst.language.editor.browser.ace.attachToAce
@@ -52,26 +49,17 @@ import net.akehurst.language.editor.browser.monaco.attachToMonaco
 import net.akehurst.language.editor.common.compose.attachToComposeEditor
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
-import net.akehurst.language.editor.information.Example
 import net.akehurst.language.editor.information.Examples
-import net.akehurst.language.editor.information.ExternalContextLanguage
 import net.akehurst.language.editor.information.examples.AglGrammar
 import net.akehurst.language.editor.information.examples.AglStyle
 import net.akehurst.language.editor.information.examples.BasicTutorial
 import net.akehurst.language.editor.language.service.AglLanguageServiceByWorker
 import net.akehurst.language.editor.technology.gui.widgets.TabView
-import net.akehurst.language.editor.technology.gui.widgets.TreeView
-import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
-import net.akehurst.language.grammar.api.GrammarModel
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
-import net.akehurst.language.grammar.processor.ContextFromGrammar
 import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
-import net.akehurst.language.grammarTypemodel.api.GrammarTypeNamespace
-import net.akehurst.language.reference.api.CrossReferenceModel
-import net.akehurst.language.style.api.AglStyleModel
-import net.akehurst.language.transform.asm.TransformModelDefault
-import net.akehurst.language.typemodel.api.*
 import org.w3c.dom.*
+
+external fun import(moduleName:String, options:dynamic = definedExternally  ):dynamic
 
 external var aglScriptBasePath: String = definedExternally
 external var resourcesPath: String = definedExternally
@@ -84,7 +72,7 @@ enum class EditorKind {
 
 object Constants {
     val initialLogLevel = LogLevel.All
-    val initialEditorKind = EditorKind.ACE
+    val initialEditorKind = EditorKind.CK
 
     const val sentenceEditorId = "editor-sentence"
     const val grammarEditorId = "editor-grammar"
@@ -108,7 +96,7 @@ interface DemoInterface {
     fun analyseGrammar()
 }
 
-fun main() {
+suspend fun main() {
     try {
         val logger = DemoLogger(Constants.initialLogLevel)
 
@@ -156,7 +144,11 @@ fun main() {
         editorChoice.addEventListener("change", {
             val optionStr = editorChoice.value
             val edKind = EditorKind.valueOf(optionStr)
-            createDemo(edKind, logger)
+            CoroutineScope(SupervisorJob()).asyncImmediately {
+                createDemo(edKind, logger)
+            }.invokeOnCompletion {
+                console.info("Reset Demo to use '$optionStr'")
+            }
         })
 
         TabView.initialise(document)
@@ -356,6 +348,7 @@ fun createBaseDom(appDivSelector: String, demo: DemoInterface) {
                                     select {
                                         attribute.id = "agl-options-editor"
                                         //attribute.name = "editor-choice"
+                                        option(value = EditorKind.CK.name) { content = "CK-Editor" }
                                         option(value = EditorKind.ACE.name) { content = "Ace" }
                                         option(value = EditorKind.MONACO.name) { content = "Monaco" }
                                         option(value = EditorKind.CODEMIRROR.name) { content = "CodeMirror" }
@@ -424,7 +417,7 @@ fun initialiseExamples() {
     }
 }
 
-fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
+suspend fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
     if (null != demo) {
         demo!!.finalize()
     }
@@ -536,21 +529,36 @@ fun createMonaco(editorElement: Element, logFunction: LogFunction, languageServi
     )
 }
 
-fun createCk(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
+suspend fun createCk(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = LanguageIdentity(editorElement.getAttribute("agl-language")!!)
-    val config = objectJS {
 
+    val innerDiv = document.createElement("div")
+    editorElement.appendChild(innerDiv)
+
+    import("ckeditor5/ckeditor5.css")
+    val toolbarItems =  arrayOf(
+            "undo", "redo", "|", "bold", "italic", "|",
+            "fontSize", "fontFamily", "fontColor", "fontBackgroundColor"
+        )
+    val plgs = arrayOf(ck.Essentials, ck.Bold, ck.Italic, ck.Font, ck.Paragraph)//, ck.Mention)
+    val config = objectJS {
+        plugins = plgs
+        toolbar = objectJSTyped<ck.CkConfigToolbar> { items = toolbarItems }
+//        mention = objectJSTyped {
+//            feeds = arrayOf<dynamic>(
+//                objectJSTyped {
+//                    marker = "'"
+//                    feed = ::getAutocompleteItems
+//                }
+//            )
+//        }
     }
     var ed:ck.Editor? = null
-    val edPromise = ck.ClassicEditor.create(editorElement, config).then {
-        ed = it
-    }
-    CoroutineScope(SupervisorJob()).asyncImmediately {
-        edPromise.await()
-    }.invokeOnCompletion {
-        println("CK editor '$editorId' created")
-    }
+    val edPromise = ck.ClassicEditor.create(innerDiv, config).then { ed = it }
+    edPromise.await()
+    println("CK editor '$editorId' created")
+
     return Agl.attachToCk(
         languageService = languageService,
         containerElement = editorElement,

@@ -16,15 +16,16 @@
 
 package net.akehurst.language.editor.browser.ck
 
+import ResizeObserver
+import kotlinx.browser.window
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
-import net.akehurst.language.editor.common.AglTokenizerByWorker
+import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.issues.api.LanguageIssue
 import org.w3c.dom.Element
-
+import org.w3c.dom.HTMLDivElement
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     languageService: LanguageService,
@@ -49,7 +50,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
 private class AglEditorCk<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
-    ckEditor: ck.Editor,
+    val ckEditor: ck.Editor,
     languageId: LanguageIdentity,
     editorId: String,
     logFunction: LogFunction?
@@ -57,38 +58,132 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     override val baseEditor: Any = ckEditor
     override var text: String
-        get() = TODO("not implemented")
-        set(value) {}
+        get() = emi.rawText
+        set(value) {
+            console.log("Editor '${this.editorId}' text set to '$value'")
+            val data = value.split("\n")
+                .map {
+                    "<p>$it</p>"
+                }
+                .joinToString(separator = "\n")
+            ckEditor.setData(data)
+        }
 
-    override val isConnected: Boolean
-        get() = TODO("not implemented")
-    override val workerTokenizer: AglTokenizerByWorker
-        get() = TODO("not implemented")
+    override val isConnected: Boolean get() = this.containerElement.isConnected
+
+    override val workerTokenizer: AglTokenizerByWorkerCk<AsmType, ContextType> get() = AglTokenizerByWorkerCk(this.agl, this.emi)
+
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
 
+    private var parseTimeout: dynamic = null
+    private var emi:EditorModelIndex = EditorModelIndex()
+
+    init {
+        val resizeObserver = ResizeObserver { entries -> onResize(entries) }
+        resizeObserver.observe(this.containerElement)
+
+        // create style for underlining errors
+        ckEditor.model.schema.extend("\$text", objectJSTyped { allowAttributes = "error" })
+        val underlineStyle = objectJSTyped<dynamic> {  }
+        underlineStyle["text-decoration-line"] = "underline"
+        underlineStyle["text-decoration-style"] = "wavy"
+        underlineStyle["text-decoration-color"] = "red"
+        ckEditor.conversion.attributeToElement(objectJSTyped {
+            model = "error"
+            view = objectJSTyped {
+                name = "error"
+                styles = underlineStyle
+            }
+        })
+
+        ckEditor.model.document.on("change:data") {
+            onEditorTextChangeInternal()
+        }
+
+        this.updateLanguage(null)
+        this.updateProcessor()
+        this.requestUpdateStyleModel()
+    }
+
+    @JsName("onResize")
+    private fun onResize(entries: Array<dynamic>) {
+        entries.forEach { entry ->
+            if (entry.target == this.containerElement) {
+                val toolbarHeight = this.containerElement.querySelector(".ck-editor__top")!!.clientHeight
+                val h = this.containerElement.parentElement!!.clientHeight - toolbarHeight
+                val el = this.containerElement.querySelector(".ck-editor__editable_inline") as HTMLDivElement
+                el.style.height = "${h}px"
+            }
+        }
+    }
+
     override fun resetTokenization(fromLine: Int) {
-        TODO("not implemented")
+        workerTokenizer.reset()
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        TODO("not implemented")
+        //TODO("not implemented")
     }
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
-        TODO("not implemented")
+        //TODO("not implemented")
     }
 
     override fun updateEditorStyles() {
-        TODO("not implemented")
+        val styleToAttrMap = mutableMapOf<String,Map<String,Any>>()
+
+        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss ->
+            ss.rules.forEach { rule ->
+                val ruleClasses = rule.selector.map {
+                    this.agl.styleHandler.mapClass(it.value)
+                }
+                val attribs = rule.declaration.values.associate { oldStyle ->
+                    when (oldStyle.name) {
+                        "foreground" -> Pair("fontColor", oldStyle.value)
+                        "background" -> Pair("fontBackgroundColor", oldStyle.value)
+                        "font-style" -> when (oldStyle.value) {
+                            "bold" -> Pair("bold", true)
+                            "italic" -> Pair("italic", true)
+                            else -> Pair(oldStyle.name, oldStyle.value)
+                        }
+
+                        else -> Pair(oldStyle.name, oldStyle.value)
+                    }
+                }
+                ruleClasses.forEach {
+                    styleToAttrMap[it] = attribs
+                }
+            }
+        }
+
+        this.workerTokenizer.updateStyleMap(styleToAttrMap)
     }
 
     override fun clearErrorMarkers() {
-        TODO("not implemented")
+        //TODO("not implemented")
     }
 
     override fun destroy() {
-        TODO("not implemented")
+        //TODO("not implemented")
     }
 
+    // --- AglEditorAbstract ---
+    override fun onEditorTextChangeInternal() {
+        console.log("onEditorTextChangeInternal, editor '${this.editorId}' text is '${this.text}'")
+        if (doUpdate) {
+            console.log("doUpdate")
+            super.onEditorTextChangeInternal()
+            window.clearTimeout(parseTimeout)
+            this.parseTimeout = window.setTimeout({
+                console.log("new timeout")
+                val oldText = this.text
+                emi.update(ckEditor.model)
+                if (emi.rawText != oldText) {
+                    console.log("rawtext changed")
+                    this.processSentence()
+                }
+            }, 500)
+        }
+    }
 }

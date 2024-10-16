@@ -104,7 +104,7 @@ namespace net.akehurst.language.example.BasicTutorial
 // use this editor to enter the styles, syntax highlighting rules, for your language
 // the name of any terminal or non-terminal from the grammar can be used
 namespace net.akehurst.language.example.BasicTutorial
-styles {
+styles BasicTutorial {
     targetDef {
         background: yellow;
     }

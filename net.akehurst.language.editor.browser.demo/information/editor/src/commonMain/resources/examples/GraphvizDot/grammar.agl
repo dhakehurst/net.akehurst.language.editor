@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-namespace net.akehurst.language.example.dot
+namespace net.akehurst.language.example
 
 grammar Xml {
 

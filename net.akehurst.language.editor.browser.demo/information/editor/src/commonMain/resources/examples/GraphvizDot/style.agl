@@ -1,4 +1,4 @@
-namespace net.akehurst.language.example.dot
+namespace net.akehurst.language.example
 styles Xml {
     NAME {
         foreground: green;

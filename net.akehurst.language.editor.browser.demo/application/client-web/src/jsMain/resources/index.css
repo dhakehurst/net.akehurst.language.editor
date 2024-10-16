@@ -24,3 +24,11 @@ main {
     grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
 }
 
+/* hide the annoying bit CK puts at the bottom of body*/
+.ck-body-wrapper {
+    display:none;
+}
+/* set line height fr ck editor */
+.ck.ck-content p {
+    margin: 0;
+}

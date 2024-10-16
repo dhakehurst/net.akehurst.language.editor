@@ -1,6 +1,6 @@
-namespace test
+namespace net.akehurst.language.example
 
-grammar Test {
+grammar Datatypes {
     skip leaf WS = "\s+" ;
     skip leaf COMMENT_SINGLE_LINE = "//[^\r\n]*" ;
     skip leaf COMMENT_MULTI_LINE = "/\*[^*]*\*+([^*/][^*]*\*+)*/" ;

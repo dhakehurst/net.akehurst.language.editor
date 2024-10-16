@@ -1,44 +1,11 @@
-ID {
-  foreground: blue;
-  font-style: italic;
-}
-CREATE {
-  foreground: chocolate;
-  font-style: bold;
-}
-TABLE {
-  foreground: chocolate;
-  font-style: bold;
-}
-SELECT {
-  foreground: chocolate;
-  font-style: bold;
-}
-UPDATE {
-  foreground: chocolate;
-  font-style: bold;
-}
-DELETE {
-  foreground: chocolate;
-  font-style: bold;
-}
-INSERT {
-  foreground: chocolate;
-  font-style: bold;
-}
-INTO {
-  foreground: chocolate;
-  font-style: bold;
-}
-FROM {
-  foreground: chocolate;
-  font-style: bold;
-}
-VALUES {
-  foreground: chocolate;
-  font-style: bold;
-}
-SET {
-  foreground: chocolate;
-  font-style: bold;
+namespace net.akehurst.language.example
+styles SQL {
+    ID {
+      foreground: blue;
+      font-style: italic;
+    }
+    CREATE,TABLE,SELECT,UPDATE,DELETE,INSERT,INTO,FROM,VALUES,SET {
+      foreground: chocolate;
+      font-style: bold;
+    }
 }

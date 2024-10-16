@@ -162,12 +162,14 @@ external interface Writer {
 }
 
 external interface Range {
+    val start:Position
     val end:Position
     fun getItems(): JsIterator<Item>
 }
 
 
 external interface Position {
+    val path:Array<Number>
     val nodeAfter: Node
 
     fun getShiftedBy(shift:Number): Position
@@ -190,6 +192,7 @@ external interface Text : Node {
     val data:String
 }
 external interface Element : Node {
+    val name:String
     fun getChildren() : JsIterator<Node>
 }
 

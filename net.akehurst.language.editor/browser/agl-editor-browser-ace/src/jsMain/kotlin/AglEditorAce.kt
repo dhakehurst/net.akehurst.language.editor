@@ -114,14 +114,13 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             }
         }
 
-    var parseTimeout: dynamic = null
+    private var parseTimeout: dynamic = null
 
     override var workerTokenizer: AglTokenizerByWorker = AglTokenizerByWorkerAce(this.agl)
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
     init {
         //TODO: set session and mouseHandler options
-
         this.aceEditor.getSession()?.bgTokenizer?.setTokenizer(this.workerTokenizer as ace.Tokenizer)
         this.aceEditor.getSession()?.bgTokenizer?.setDocument(this.aceEditor.getSession()?.getDocument())
         //this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)

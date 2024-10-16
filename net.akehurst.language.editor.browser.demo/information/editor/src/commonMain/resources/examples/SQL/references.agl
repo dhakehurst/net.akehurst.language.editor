@@ -1,4 +1,4 @@
-namespace net.akehurst.language.SQL {
+namespace net.akehurst.language.example.SQL
     identify TableDefinition by table-id
     scope TableDefinition {
         identify ColumnDefinition by column-id
@@ -23,4 +23,3 @@ namespace net.akehurst.language.SQL {
             }
         }
     }
-}

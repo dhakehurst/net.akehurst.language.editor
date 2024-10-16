@@ -1,4 +1,4 @@
-namespace net.akehurst.language
+namespace net.akehurst.language.example
 
 grammar SQL {
     skip WS = "\s+" ;
