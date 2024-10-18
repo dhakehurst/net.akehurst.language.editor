@@ -94,8 +94,12 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         //TODO("not implemented")
     }
 
-    override fun destroy() {
-        //TODO("not implemented")
+    override fun destroyBaseEditor() {
+
+    }
+
+    override fun destroyAglEditor() {
+
     }
 
     // --- implementation ---

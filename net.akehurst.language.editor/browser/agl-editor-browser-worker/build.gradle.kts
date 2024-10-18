@@ -6,6 +6,11 @@ kotlin {
             webpackTask {
                 output.libraryTarget = KotlinWebpackOutput.Target.SELF
             }
+            binaries.library()
+            generateTypeScriptDefinitions()
+            compilerOptions {
+                target.set("es2015")
+            }
         }
     }
 }

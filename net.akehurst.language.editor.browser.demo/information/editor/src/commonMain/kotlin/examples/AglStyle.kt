@@ -49,6 +49,6 @@ styles {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, references, style, format,"")
+    val example = Example(id, label, sentence, grammar.value, references, style.value, format,"")
 
 }

@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.information.examples
 
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.editor.information.Example
 
 object AglGrammar {
@@ -75,6 +76,6 @@ namespace net.akehurst.language.agl.AglGrammar
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, references, style, format,"")
+    val example = Example(id, label, sentence, grammar.value, references, style.value, format,"")
 
 }

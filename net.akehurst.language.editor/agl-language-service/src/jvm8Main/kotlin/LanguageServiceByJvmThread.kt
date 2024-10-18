@@ -16,11 +16,14 @@
 
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.CrossReferenceString
+import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.agl.StyleString
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
+import net.akehurst.language.editor.language.service.LanguageServiceRequestDirectExecution
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.style.api.AglStyleModel
@@ -32,7 +35,7 @@ open class LanguageServiceByJvmThread(
 
     // --- LanguageService ---
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
-        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, grammarStr: String, crossReferenceModelStr: String?, editorOptions: EditorOptions) {
+        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, grammarStr: GrammarString, crossReferenceModelStr: CrossReferenceString?, editorOptions: EditorOptions) {
             submit { direct.processorCreateRequest(endPointIdentity, languageId, grammarStr, crossReferenceModelStr, editorOptions) }
         }
 
@@ -40,7 +43,7 @@ open class LanguageServiceByJvmThread(
             submit { direct.processorDeleteRequest(endPointIdentity) }
         }
 
-        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: String) {
+        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
             submit { direct.processorSetStyleRequest(endPointIdentity, languageId, styleStr) }
         }
 
@@ -51,20 +54,20 @@ open class LanguageServiceByJvmThread(
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
             endPointIdentity: EndPointIdentity,
             languageId: LanguageIdentity,
-            text: String,
+            sentence: String,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            submit { direct.sentenceProcessRequest(endPointIdentity, languageId, text, processOptions) }
+            submit { direct.sentenceProcessRequest(endPointIdentity, languageId, sentence, processOptions) }
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
             endPointIdentity: EndPointIdentity,
             languageId: LanguageIdentity,
-            text: String,
+            sentence: String,
             position: Int,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            submit { direct.sentenceCodeCompleteRequest(endPointIdentity, languageId, text, position, processOptions) }
+            submit { direct.sentenceCodeCompleteRequest(endPointIdentity, languageId, sentence, position, processOptions) }
         }
     }
 
@@ -76,7 +79,7 @@ open class LanguageServiceByJvmThread(
     private val responseObjects = mutableMapOf<EndPointIdentity, LanguageServiceResponse>()
 
     // languageId -> def
-    private val direct = LanguageServiceDirectExecution(
+    private val direct = LanguageServiceRequestDirectExecution(
         object : LanguageServiceResponse {
             override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
                 responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, status, message, issues, scannerMatchables)

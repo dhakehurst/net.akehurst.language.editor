@@ -16,7 +16,6 @@
 
 package net.akehurst.language.editor.browser.ck
 
-import ResizeObserver
 import kotlinx.browser.window
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -25,7 +24,6 @@ import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.issues.api.LanguageIssue
 import org.w3c.dom.Element
-import org.w3c.dom.HTMLDivElement
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     languageService: LanguageService,
@@ -71,18 +69,15 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     override val isConnected: Boolean get() = this.containerElement.isConnected
 
-
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
 
     private var parseTimeout: dynamic = null
     private var emi:EditorModelIndex = EditorModelIndex()
 
-    override val workerTokenizer: AglTokenizerByWorkerCk<AsmType, ContextType> = AglTokenizerByWorkerCk(this.agl, this.emi)
+    override val workerTokenizer: AglTokenizerByWorkerCk<AsmType, ContextType> = AglTokenizerByWorkerCk(this.agl, this.emi, logger)
 
     init {
-        val resizeObserver = ResizeObserver { entries -> onResize(entries) }
-        resizeObserver.observe(this.containerElement)
 
         // create style for underlining errors
         ckEditor.model.schema.extend("\$text", objectJSTyped { allowAttributes = "error" })
@@ -107,20 +102,9 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         this.requestUpdateStyleModel()
     }
 
-    @JsName("onResize")
-    private fun onResize(entries: Array<dynamic>) {
-        entries.forEach { entry ->
-            if (entry.target == this.containerElement) {
-                val toolbarHeight = this.containerElement.querySelector(".ck-editor__top")!!.clientHeight
-                val h = this.containerElement.parentElement!!.clientHeight - toolbarHeight
-                val el = this.containerElement.querySelector(".ck-editor__editable_inline") as HTMLDivElement
-                el.style.height = "${h}px"
-            }
-        }
-    }
-
     override fun resetTokenization(fromLine: Int) {
         workerTokenizer.reset()
+        workerTokenizer.refresh()
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
@@ -165,8 +149,11 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         //TODO("not implemented")
     }
 
-    override fun destroy() {
-        //TODO("not implemented")
+    override fun destroyAglEditor() {
+    }
+
+    override fun destroyBaseEditor() {
+        this.ckEditor.destroy()
     }
 
     // --- AglEditorAbstract ---

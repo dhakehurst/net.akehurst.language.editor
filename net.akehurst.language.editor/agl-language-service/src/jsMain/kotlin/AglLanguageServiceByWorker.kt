@@ -17,6 +17,9 @@
 package net.akehurst.language.editor.language.service
 
 import net.akehurst.kotlin.json.JsonString
+import net.akehurst.language.agl.CrossReferenceString
+import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.agl.StyleString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
@@ -38,16 +41,16 @@ class AglLanguageServiceByWorker(
 ) : LanguageService {
 
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
-        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, grammarStr: String, crossReferenceModelStr: String?, editorOptions: EditorOptions) {
-            sendToWorker(MessageProcessorCreate(endPointIdentity, languageId, grammarStr, crossReferenceModelStr, editorOptions))
+        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, grammarStr: GrammarString, crossReferenceModelStr: CrossReferenceString?, editorOptions: EditorOptions) {
+            sendToWorker(MessageProcessorCreate(endPointIdentity, languageId, grammarStr.value, crossReferenceModelStr?.value, editorOptions))
         }
 
         override fun processorDeleteRequest(endPointIdentity: EndPointIdentity) {
             TODO("not implemented")
         }
 
-        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: String) {
-            sendToWorker(MessageSetStyle(endPointIdentity, languageId, styleStr))
+        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
+            sendToWorker(MessageSetStyle(endPointIdentity, languageId, styleStr.value))
         }
 
         override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, reason: String) {

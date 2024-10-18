@@ -181,9 +181,6 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
             this.onChange { this.onEditorTextChangeInternal() }
 
-            val resizeObserver = ResizeObserver { entries -> onResize(entries) }
-            resizeObserver.observe(this.containerElement)
-
             this.updateLanguage(null)
             this.updateProcessor()
             this.requestUpdateStyleModel()
@@ -192,9 +189,13 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun destroy() {
-        //this.aglWorker.worker.terminate()
-        //this.monacoEditor.destroy()
+    override fun destroyBaseEditor() {
+        this.monacoEditor.getModel().dispose()
+        this.monacoEditor.dispose()
+    }
+
+    override fun destroyAglEditor() {
+
     }
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
@@ -263,15 +264,6 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 //                this.workerTokenizer.acceptingTokens = true
                 this.processSentence()
             }, 500)
-        }
-    }
-
-    @JsName("onResize")
-    private fun onResize(entries: Array<dynamic>) {
-        entries.forEach { entry ->
-            if (entry.target == this.containerElement) {
-                this.monacoEditor.layout()
-            }
         }
     }
 

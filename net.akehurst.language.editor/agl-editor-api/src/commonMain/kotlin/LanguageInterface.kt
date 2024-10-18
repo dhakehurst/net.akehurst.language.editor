@@ -1,5 +1,8 @@
 package net.akehurst.language.editor.api
 
+import net.akehurst.language.agl.CrossReferenceString
+import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.agl.StyleString
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
@@ -13,13 +16,13 @@ interface LanguageService {
 }
 
 interface LanguageServiceRequest {
-    fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, grammarStr:String, crossReferenceModelStr:String?, editorOptions: EditorOptions)
+    fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, grammarStr:GrammarString, crossReferenceModelStr:CrossReferenceString?, editorOptions: EditorOptions)
     fun processorDeleteRequest(endPointIdentity: EndPointIdentity)
-    fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, styleStr:String)
+    fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, styleStr:StyleString)
 
     fun interruptRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, reason:String)
-    fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, text: String, processOptions: ProcessOptions<AsmType, ContextType>)
-    fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, text:String, position:Int, processOptions: ProcessOptions<AsmType, ContextType>)
+    fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>)
+    fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, sentence:String, position:Int, processOptions: ProcessOptions<AsmType, ContextType>)
 }
 
 interface LanguageServiceResponse {

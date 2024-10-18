@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.api
 
+import net.akehurst.language.agl.StyleString
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -58,7 +59,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
      * Set style specific to this editor (rather than using the one from LanguageDefinition associated with the languageId).
      * If null, then the style from the LanguageDefinition is used. (default is null)
      */
-    var editorSpecificStyleStr: String?
+    var editorSpecificStyleStr: StyleString?
 
 //    /**
 //     * The context for syntax and semantic analysis of the sentence (text) in the editor
@@ -92,6 +93,11 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     //fun configureSyntaxAnalyser(configuration: Map<String, Any>)
 
+    /**
+     * trigger processing the text of the editor
+     */
+    fun processSentence()
+
     fun onTextChange(handler: (String) -> Unit)
 
     fun onParse(handler: (ParseEvent) -> Unit)
@@ -102,7 +108,8 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun clearErrorMarkers()
 
-    fun destroy()
+    fun destroyAglEditor()
+    fun destroyBaseEditor()
 
 }
 

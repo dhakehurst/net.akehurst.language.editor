@@ -2,12 +2,16 @@ package net.akehurst.language.editor.application.client.web
 
 import kotlinx.browser.document
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.CrossReferenceString
+import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.agl.StyleString
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.asm.api.*
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
 import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.common.ConsoleLogger
 import net.akehurst.language.editor.information.Example
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.ExternalContextLanguage
@@ -26,7 +30,7 @@ import org.w3c.dom.HTMLSelectElement
 
 class Demo(
     val editors: Map<String, AglEditor<*, *>>,
-    val logger: DemoLogger
+    val logger: ConsoleLogger
 ) {
     var doUpdate = true
     val trees = TreeView.initialise(document)
@@ -64,7 +68,7 @@ class Demo(
                     styleEditor.processOptions.semanticAnalysis.context?.clear()
                     //referencesEditor.sentenceContext?.clear()
                     logger.logError(grammarEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.grammarStr = ""
+                    sentenceEditor.languageDefinition.grammarStr = GrammarString("")
                 }
 
                 EventStatus.SUCCESS -> {
@@ -75,11 +79,11 @@ class Demo(
                     try {
                         if (doUpdate) {
                             logger.logDebug("Send set sentenceEditor grammarStr")
-                            sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
+                            sentenceEditor.languageDefinition.grammarStr = GrammarString(grammarEditor.text)
                         }
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, grammarEditor.endPointIdentity.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.grammarStr = ""
+                        sentenceEditor.languageDefinition.grammarStr = GrammarString("")
                     }
                 }
             }
@@ -90,7 +94,7 @@ class Demo(
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
                     logger.logError(styleEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.styleStr = ""
+                    sentenceEditor.languageDefinition.styleStr = StyleString("")
                 }
 
                 EventStatus.SUCCESS -> {
@@ -98,11 +102,11 @@ class Demo(
                         logger.logDebug("Style parse success")
                         if (doUpdate) {
                             logger.logDebug("resetting sentence style")
-                            sentenceEditor.languageDefinition.styleStr = styleEditor.text
+                            sentenceEditor.languageDefinition.styleStr = StyleString(styleEditor.text)
                         }
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, styleEditor.endPointIdentity.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.styleStr = ""
+                        sentenceEditor.languageDefinition.styleStr = StyleString("")
                     }
                 }
             }
@@ -112,6 +116,7 @@ class Demo(
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
                     logger.logError(referencesEditor.endPointIdentity.editorId + ": " + event.message)
+                    sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString("")
                 }
 
                 EventStatus.SUCCESS -> {
@@ -120,10 +125,11 @@ class Demo(
                         logger.logDebug("CrossReferences SyntaxAnalysis success")
                         if (doUpdate) {
                             logger.logDebug("Setting cross-reference model for sentenceEditor")
-                            sentenceEditor.languageDefinition.crossReferenceModelStr = referencesEditor.text
+                            sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString( referencesEditor.text)
                         }
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, referencesEditor.endPointIdentity.editorId + ": " + t.message, t)
+                        sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString("")
                     }
                 }
             }
@@ -409,7 +415,7 @@ class Demo(
         sentenceEditor.doUpdate = false
         sentenceEditor.processOptions.semanticAnalysis.context = ExternalContextLanguage.processor.process(eg.context).asm
         logger.log(LogLevel.Trace, "Update sentenceEditor with grammar, refs, style", null)
-        sentenceEditor.languageDefinition.update(grammarEditor.text, referencesEditor.text, styleEditor.text)
+        sentenceEditor.languageDefinition.update(GrammarString(grammarEditor.text), CrossReferenceString(referencesEditor.text), StyleString(styleEditor.text))
         sentenceEditor.text = eg.sentence
         sentenceEditor.doUpdate = true
         this.doUpdate = true
@@ -417,8 +423,9 @@ class Demo(
     }
 
     fun finalize() {
-        editors.values.forEach {
-            it.destroy()
+        editors.values.forEach { aglEd ->
+            aglEd.destroyAglEditor()
+            aglEd.destroyBaseEditor()
         }
     }
 }

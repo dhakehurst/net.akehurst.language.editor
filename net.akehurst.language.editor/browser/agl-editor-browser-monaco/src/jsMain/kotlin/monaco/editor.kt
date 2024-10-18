@@ -61,6 +61,7 @@ external interface ICodeEditor : IEditor {
     fun onDidChangeModelContent(listener: (IModelContentChangedEvent) -> Unit): IDisposable
     fun deltaDecorations(oldDecorations: Array<String>, newDecorations: Array<IModelDeltaDecoration>): Array<String>
     fun getLineDecorations(lineNum: Int): dynamic
+    fun dispose()
 }
 
 external interface IStandaloneCodeEditor : ICodeEditor
@@ -93,7 +94,7 @@ external interface ITextModel {
     fun setValue(newValue: String)
 
     fun getOffsetAt(position: IPosition): Int
-
+    fun dispose()
 }
 
 external interface ITokenThemeRule {

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2023 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ * Copyright (C) 2024 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.application.client.web
+package net.akehurst.language.editor.common
 
-import korlibs.time.DateTime
 import net.akehurst.language.editor.api.LogLevel
-import kotlin.js.Date
-import kotlin.time.Duration
 import kotlin.time.DurationUnit
-import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-class DemoLogger(
-    var level: LogLevel
+class ConsoleLogger(
+    var outputLevel: LogLevel
 ) {
 
     fun logFatal(msg: String?) = log(LogLevel.Fatal, msg, null)
@@ -37,7 +33,7 @@ class DemoLogger(
 
     fun log(lvl: LogLevel, msg: String?, t: Throwable?) {
         when {
-            lvl <= level -> logAll(lvl, msg, t)
+            lvl <= outputLevel -> logAll(lvl, msg, t)
             else -> Unit
         }
     }
@@ -77,7 +73,7 @@ class DemoLogger(
                 val dur = now - it
                 dur.toString(DurationUnit.MILLISECONDS)
             } ?: "0"
-             "$lev ($durStr): $msg"
+            "$lev ($durStr): $msg"
         } else {
             "$lev: $msg"
         }

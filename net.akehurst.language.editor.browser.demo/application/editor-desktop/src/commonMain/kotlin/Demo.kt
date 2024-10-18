@@ -20,6 +20,9 @@ import korlibs.io.async.asyncImmediately
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.CrossReferenceString
+import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.agl.StyleString
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.api.processor.CompletionItem
@@ -308,41 +311,8 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
 
 fun createDummyEditor(editorId: String, languageId: LanguageIdentity): AglEditor<Any, Any> {
     val logFunction: LogFunction = { _,_,_ -> }
-    val langServer = LanguageServiceDirectExecution(object :LanguageServiceResponse {
-        override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
-            TODO("not implemented")
-        }
-
-        override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String) {
-            TODO("not implemented")
-        }
-
-        override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
-            TODO("not implemented")
-        }
-
-        override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
-            TODO("not implemented")
-        }
-
-        override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
-            TODO("not implemented")
-        }
-
-        override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
-            TODO("not implemented")
-        }
-
-        override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
-            TODO("not implemented")
-        }
-
-        override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
-            TODO("not implemented")
-        }
-
-    })
-    return EditorDummy<Any, Any>(langServer,languageId,  editorId, logFunction)
+    val langServer = LanguageServiceDirectExecution()
+    return EditorDummy<Any, Any>(langServer.request,languageId,  editorId, logFunction)
 }
 
 
@@ -377,7 +347,7 @@ class Demo(
         Agl.registry.unregister(Constants.sentenceLanguageId)
         sentenceEditor.languageIdentity = Agl.registry.register(
             identity = Constants.sentenceLanguageId,
-            grammarStr = "",
+            grammarStr = GrammarString(""),
             buildForDefaultGoal = false,
             aglOptions = Agl.options {
                 semanticAnalysis {
@@ -402,7 +372,7 @@ class Demo(
                     referencesEditor.processOptions.semanticAnalysis.context = null
                     styleEditor.processOptions.semanticAnalysis.context = null
                     logger.logError(grammarEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.grammarStr = ""
+                    sentenceEditor.languageDefinition.grammarStr = GrammarString("")
                 }
 
                 EventStatus.SUCCESS -> {
@@ -416,10 +386,10 @@ class Demo(
                     styleEditor.processOptions.semanticAnalysis.context = styleContext
                     try {
                         logger.logDebug("Debug: Grammar parse success, resetting sentence processor")
-                        sentenceEditor.languageDefinition.grammarStr = grammarEditor.text
+                        sentenceEditor.languageDefinition.grammarStr = GrammarString(grammarEditor.text)
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, grammarEditor.endPointIdentity.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.grammarStr = ""
+                        sentenceEditor.languageDefinition.grammarStr = GrammarString("")
                     }
                 }
             }
@@ -431,16 +401,16 @@ class Demo(
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
                     logger.logError(styleEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.styleStr = ""
+                    sentenceEditor.languageDefinition.styleStr = StyleString("")
                 }
 
                 EventStatus.SUCCESS -> {
                     try {
                         logger.logDebug("Debug: Style parse success, resetting sentence style")
-                        sentenceEditor.languageDefinition.styleStr = styleEditor.text
+                        sentenceEditor.languageDefinition.styleStr = StyleString( styleEditor.text)
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, styleEditor.endPointIdentity.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.styleStr = ""
+                        sentenceEditor.languageDefinition.styleStr = StyleString("")
                     }
                 }
             }
@@ -450,15 +420,17 @@ class Demo(
                 EventStatus.START -> Unit
                 EventStatus.FAILURE -> {
                     logger.logError(referencesEditor.endPointIdentity.editorId + ": " + event.message)
+                    sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString( "")
                 }
 
                 EventStatus.SUCCESS -> {
                     try {
                         //sentenceScopeModel = event.asm as ScopeModel?
                         logger.logDebug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
-                        sentenceEditor.languageDefinition.crossReferenceModelStr = referencesEditor.text
+                        sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString( referencesEditor.text)
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, referencesEditor.endPointIdentity.editorId + ": " + t.message, t)
+                        sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString( "")
                     }
                 }
             }

@@ -119,6 +119,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     override var workerTokenizer: AglTokenizerByWorker = AglTokenizerByWorkerAce(this.agl)
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
+
     init {
         //TODO: set session and mouseHandler options
         this.aceEditor.getSession()?.bgTokenizer?.setTokenizer(this.workerTokenizer as ace.Tokenizer)
@@ -128,16 +129,14 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
         this.aceEditor.on("change") { _ -> this.onEditorTextChangeInternal() }
 
-        val resizeObserver = ResizeObserver { entries -> onResize(entries) }
-        resizeObserver.observe(this.containerElement)
-
         this.updateLanguage(null)
         this.updateProcessor()
         this.requestUpdateStyleModel()
     }
 
-    override fun destroy() {
-        //this.aglWorker.worker.terminate()
+    override fun destroyAglEditor() {
+    }
+    override fun destroyBaseEditor() {
         this.aceEditor.destroy()
     }
 
@@ -222,15 +221,6 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 //                this.workerTokenizer.acceptingTokens = true
                 this.processSentence()
             }, 500)
-        }
-    }
-
-    @JsName("onResize")
-    private fun onResize(entries: Array<dynamic>) {
-        entries.forEach { entry ->
-            if (entry.target == this.containerElement) {
-                this.aceEditor.resize(true)
-            }
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.StyleString
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -67,7 +68,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
     private val _onSyntaxAnalysisHandler = mutableListOf<(SyntaxAnalysisEvent) -> Unit>()
     private val _onSemanticAnalysisHandler = mutableListOf<(SemanticAnalysisEvent) -> Unit>()
-    private var _editorSpecificStyleStr: String? = null
+    private var _editorSpecificStyleStr: StyleString? = null
 
     override var sentence = SentenceFromEditor(this)
 
@@ -88,7 +89,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     override val languageDefinition: LanguageDefinition<AsmType, ContextType>
         get() = agl.languageDefinition
 
-    override var editorSpecificStyleStr: String?
+    override var editorSpecificStyleStr: StyleString?
         get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.styleStr
         set(value) {
             this._editorSpecificStyleStr = value
@@ -161,11 +162,11 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
 
      fun updateProcessor() {
         val grammarStr = this.agl.languageDefinition.grammarStr
-        if (grammarStr.isNullOrBlank()) {
+        if (grammarStr?.value.isNullOrBlank()) {
             //do nothing
         } else {
             this.clearErrorMarkers()
-            this.languageServiceRequest.processorCreateRequest(this.endPointIdentity, this.languageIdentity, grammarStr, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
+            this.languageServiceRequest.processorCreateRequest(this.endPointIdentity, this.languageIdentity, grammarStr!!, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
             this.workerTokenizer.reset()
             this.resetTokenization(0) //new processor so find new tokens, first by scan
         }
@@ -174,14 +175,14 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     fun requestUpdateStyleModel() {
         if (this.isConnected) {
             val styleStr = this.editorSpecificStyleStr
-            if (!styleStr.isNullOrEmpty()) {
+            if (!styleStr?.value.isNullOrEmpty()) {
                 this.agl.styleHandler.reset()
-                this.languageServiceRequest.processorSetStyleRequest(this.endPointIdentity, this.languageIdentity, styleStr)
+                this.languageServiceRequest.processorSetStyleRequest(this.endPointIdentity, this.languageIdentity, styleStr!!)
             }
         }
     }
 
-    fun processSentence() {
+    override fun processSentence() {
         if (doUpdate) {
             this.clearErrorMarkers()
             this.languageServiceRequest.interruptRequest(this.endPointIdentity, this.languageIdentity, "process Sentence")

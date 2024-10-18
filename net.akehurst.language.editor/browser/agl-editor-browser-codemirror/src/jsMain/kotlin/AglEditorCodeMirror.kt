@@ -157,9 +157,12 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         this.requestUpdateStyleModel()
     }
 
-    override fun destroy() {
-        //this.aglWorker.worker.terminate()
-        //this.aceEditor.destroy()
+    override fun destroyAglEditor() {
+
+    }
+
+    override fun destroyBaseEditor() {
+
     }
 
     fun format() {

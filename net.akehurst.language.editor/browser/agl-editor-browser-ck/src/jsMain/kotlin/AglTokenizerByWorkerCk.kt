@@ -17,7 +17,9 @@
 package net.akehurst.language.editor.browser.ck
 
 
+import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.AglToken
+import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.browser.ck.EditorModelIndex
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglTokenizer
@@ -25,7 +27,8 @@ import net.akehurst.language.editor.common.AglTokenizerByWorker
 
 class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>,
-    val emi: EditorModelIndex
+    val emi: EditorModelIndex,
+    val logger: AglEditorLogger
 ) : AglTokenizerByWorker {
 
     val aglTokenizer = AglTokenizer(agl)
@@ -33,9 +36,9 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     private var styleMap:Map<String,Map<String,Any>> = emptyMap()
 
     fun updateStyleMap(value:Map<String,Map<String,Any>>) {
-        //count= count+1
+        count += 1
         this.styleMap = value
-        //console.log("Updated Styles ${count} '${aglTokenizer.agl.editorId}': ${this.styleMap}")
+        logger.log(LogLevel.Trace,"Updated Styles $count '${aglTokenizer.agl.editorId}': ${this.styleMap}", null)
     }
 
     override fun reset() {
@@ -52,9 +55,8 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
         }
     }
 
-
     private fun updateCkModel(token: AglToken) {
-        //console.log("Current Styles $count '${aglTokenizer.agl.editorId}': ${this.styleMap}")
+        logger.log(LogLevel.Trace,"Current Styles $count '${aglTokenizer.agl.editorId}': ${this.styleMap}", null)
         val firstPosition = token.position
         val lastPosition = firstPosition + token.length
         emi.model?.enqueueChange { writer ->
@@ -65,7 +67,7 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
                 val atts = this.styleMap[style] ?: emptyMap()
                 //console.log("In editor '${aglTokenizer.agl.editorId}' styles for '$style': $atts")
                 for(att in atts.entries) {
-                    //console.log("Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]")
+                    logger.log(LogLevel.Trace,"Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]", null)
                     writer.setAttribute(att.key, att.value, rng)
                 }
             }
@@ -78,6 +80,17 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
                     val after = writer.createPositionAt(n, 0)
                     writer.setSelection(after)
                 }
+            }
+        }
+    }
+
+    /*
+     * refresh the style of each cached token
+     */
+    fun refresh() {
+        for(line in aglTokenizer.tokensByLine.values) {
+            for (token in line) {
+                updateCkModel(token)
             }
         }
     }

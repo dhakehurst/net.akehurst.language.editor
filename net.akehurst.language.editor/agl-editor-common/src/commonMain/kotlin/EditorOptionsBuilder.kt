@@ -21,7 +21,7 @@ import net.akehurst.language.editor.api.EditorOptions
 @DslMarker
 annotation class EditorOptionsDslMarker
 
-fun aglEditorOptions(base: EditorOptions, init: EditorOptionsBuilder.() -> Unit): EditorOptions {
+fun aglEditorOptions(base: EditorOptions = EditorOptionsDefault(), init: EditorOptionsBuilder.() -> Unit = {}): EditorOptions {
     val b = EditorOptionsBuilder(base)
     b.init()
     return b.build()

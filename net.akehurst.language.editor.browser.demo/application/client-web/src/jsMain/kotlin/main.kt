@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.application.client.web
 
+import ResizeObserver
 import ace.IRange
 import korlibs.io.async.asyncImmediately
 import korlibs.io.file.std.localVfs
@@ -35,6 +36,7 @@ import monaco.languages.TokensProvider
 import net.akehurst.kotlin.compose.editor.ComposeCodeEditorJs
 import net.akehurst.kotlin.html5.elCreate
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
@@ -46,6 +48,7 @@ import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
 import net.akehurst.language.editor.browser.demo.BuildConfig
 import net.akehurst.language.editor.browser.monaco.Monaco
 import net.akehurst.language.editor.browser.monaco.attachToMonaco
+import net.akehurst.language.editor.common.ConsoleLogger
 import net.akehurst.language.editor.common.compose.attachToComposeEditor
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
@@ -72,7 +75,7 @@ enum class EditorKind {
 
 object Constants {
     val initialLogLevel = LogLevel.All
-    val initialEditorKind = EditorKind.CK
+    val initialEditorKind = EditorKind.ACE
 
     const val sentenceEditorId = "editor-sentence"
     const val grammarEditorId = "editor-grammar"
@@ -98,13 +101,13 @@ interface DemoInterface {
 
 suspend fun main() {
     try {
-        val logger = DemoLogger(Constants.initialLogLevel)
+        val logger = ConsoleLogger(Constants.initialLogLevel)
 
         //define this before editors are created
         // need to register this so that we can set the configuration and get the default completion-provider
         Agl.registry.register(
             identity = Constants.sentenceLanguageId,
-            grammarStr = "",
+            grammarStr = GrammarString(""),
             buildForDefaultGoal = false,
             aglOptions = Agl.options {
                 semanticAnalysis {
@@ -116,9 +119,9 @@ suspend fun main() {
         )
 
         val demoIf = object : DemoInterface {
-            override val logLevel: LogLevel get() = logger.level
+            override val logLevel: LogLevel get() = logger.outputLevel
             override fun changeLoggingLevel(level: LogLevel) {
-                logger.level = level
+                logger.outputLevel = level
             }
 
             override fun changeEditor() {
@@ -417,7 +420,7 @@ fun initialiseExamples() {
     }
 }
 
-suspend fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
+suspend fun createDemo(editorChoice: EditorKind, logger: ConsoleLogger) {
     if (null != demo) {
         demo!!.finalize()
     }
@@ -453,6 +456,7 @@ suspend fun createDemo(editorChoice: EditorKind, logger: DemoLogger) {
 fun createAce(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = LanguageIdentity(editorElement.getAttribute("agl-language")!!)
+
     val ed: ace.Editor = ace.Editor(
         ace.VirtualRenderer(editorElement, null),
         ace.Ace.createEditSession(""),
@@ -471,6 +475,17 @@ fun createAce(editorElement: Element, logFunction: LogFunction, languageService:
     //ed.commands.addCommand(ace.ext.Autocomplete.startCommand)
     ed.setOptions(aceOptions.editor)
     ed.renderer.setOptions(aceOptions.renderer)
+
+    // make sure ace editor gets resized
+    val resizeObserver = ResizeObserver { entries ->
+        entries.forEach { entry ->
+            if (entry.target == editorElement) {
+               ed.resize(true)
+            }
+        }
+    }
+    resizeObserver.observe(editorElement)
+
     val ace = object : IAce {
         override fun createRange(startRow: Int, startColumn: Int, endRow: Int, endColumn: Int): IRange {
             return ace.Range(startRow, startColumn, endRow, endColumn)
@@ -490,11 +505,22 @@ fun createAce(editorElement: Element, logFunction: LogFunction, languageService:
 fun createMonaco(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
     val editorId = editorElement.id
     val languageId = LanguageIdentity(editorElement.getAttribute("agl-language")!!)
+
     val editorOptions = objectJSTyped<IStandaloneEditorConstructionOptions> {
         value = ""
         wordBasedSuggestions = "off"
     }
     val ed = monaco.editor.create(editorElement, editorOptions, null)
+    // ensure editor is resized
+    val resizeObserver = ResizeObserver { entries ->
+        entries.forEach { entry ->
+            if (entry.target == editorElement) {
+                ed.layout()
+            }
+        }
+    }
+    resizeObserver.observe(editorElement)
+
     val monaco = object : Monaco {
         override fun defineTheme(themeName: String, themeData: IStandaloneThemeData) = monaco.editor.defineTheme(themeName, themeData)
         override fun setModelMarkers(model: ITextModel, owner: String, markers: Array<IMarkerData>) = monaco.editor.setModelMarkers(model, owner, markers)
@@ -533,8 +559,22 @@ suspend fun createCk(editorElement: Element, logFunction: LogFunction, languageS
     val editorId = editorElement.id
     val languageId = LanguageIdentity(editorElement.getAttribute("agl-language")!!)
 
-    val innerDiv = document.createElement("div")
+    // CK creats it editor next to the element passed in.
+    // so create this dummy div so that the editor is under the editorElement
+    val innerDiv = document.createElement("div") as HTMLDivElement
     editorElement.appendChild(innerDiv)
+    // resize CK to fit editorElement
+    val resizeObserver = ResizeObserver { entries ->
+        entries.forEach { entry ->
+            if (entry.target == editorElement) {
+                val toolbarHeight = editorElement.querySelector(".ck-editor__top")!!.clientHeight
+                val h = editorElement.parentElement!!.clientHeight - toolbarHeight
+                val el = editorElement.querySelector(".ck-editor__editable_inline") as HTMLDivElement
+                el.style.height = "${h}px"
+            }
+        }
+    }
+    resizeObserver.observe(editorElement)
 
     import("ckeditor5/ckeditor5.css")
     val toolbarItems =  arrayOf(

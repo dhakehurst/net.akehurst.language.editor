@@ -66,10 +66,13 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
 
-    override fun destroy() {
+    override fun destroyBaseEditor() {
         composeEditor.destroy()
     }
 
+    override fun destroyAglEditor() {
+        TODO("not implemented")
+    }
     override fun updateLanguage(oldId: LanguageIdentity?) {
         TODO("not implemented")
     }
