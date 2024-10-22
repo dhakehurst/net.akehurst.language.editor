@@ -17,7 +17,7 @@ interface LanguageService {
 
 interface LanguageServiceRequest {
     fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, grammarStr:GrammarString, crossReferenceModelStr:CrossReferenceString?, editorOptions: EditorOptions)
-    fun processorDeleteRequest(endPointIdentity: EndPointIdentity)
+    fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity)
     fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, styleStr:StyleString)
 
     fun interruptRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, reason:String)

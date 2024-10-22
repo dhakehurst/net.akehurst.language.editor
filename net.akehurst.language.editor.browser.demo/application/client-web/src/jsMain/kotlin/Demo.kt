@@ -209,7 +209,7 @@ class Demo(
                 when (it) {
                     is String -> emptyArray<Any>()
                     is List<*> -> it.toArray()
-                    is TypeModel -> it.allNamespace.toTypedArray()
+                    is TypeModel -> it.namespace.toTypedArray()
                     is GrammarTypeNamespace -> it.allTypesByRuleName.toTypedArray()
                     is TypeNamespace -> it.ownedTypesByName.entries.toTypedArray()
                     is Pair<String, TypeInstance> -> {

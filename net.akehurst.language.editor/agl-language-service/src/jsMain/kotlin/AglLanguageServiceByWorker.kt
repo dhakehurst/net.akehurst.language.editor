@@ -45,7 +45,7 @@ class AglLanguageServiceByWorker(
             sendToWorker(MessageProcessorCreate(endPointIdentity, languageId, grammarStr.value, crossReferenceModelStr?.value, editorOptions))
         }
 
-        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity) {
+        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity) {
             TODO("not implemented")
         }
 

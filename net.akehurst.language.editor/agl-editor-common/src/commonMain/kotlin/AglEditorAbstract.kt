@@ -23,7 +23,6 @@ import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
-import net.akehurst.language.scanner.common.ScannerOnDemand
 import net.akehurst.language.sentence.common.SentenceAbstract
 import net.akehurst.language.sentence.common.SentenceDefault
 import net.akehurst.language.style.api.AglStyleModel
@@ -43,12 +42,13 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     val languageServiceRequest: LanguageServiceRequest,
     languageId: LanguageIdentity,
     override val endPointIdentity: EndPointIdentity,
+    override var editorOptions: EditorOptions,
     logFunction: LogFunction?,
 ) : AglEditor<AsmType, ContextType>, LanguageServiceResponse {
 
     abstract val isConnected:Boolean
 
-    final override val logger = AglEditorLogger(logFunction)
+    final override val logger by lazy{ AglEditorLogger(endPointIdentity.editorId,logFunction)}
 
     val editorId get() = endPointIdentity.editorId
     protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger)
@@ -101,8 +101,6 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         set(value) {
             this.agl.options = value
         }
-
-    override var editorOptions: EditorOptions = EditorOptionsDefault()
 
     override var doUpdate: Boolean = true
 
@@ -161,11 +159,12 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     protected abstract fun updateEditorStyles()
 
      fun updateProcessor() {
+         logger.log(LogLevel.Trace, "updateProcessor")
         val grammarStr = this.agl.languageDefinition.grammarStr
         if (grammarStr?.value.isNullOrBlank()) {
             //do nothing
         } else {
-            this.clearErrorMarkers()
+            this.clearIssueMarkers()
             this.languageServiceRequest.processorCreateRequest(this.endPointIdentity, this.languageIdentity, grammarStr!!, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
             this.workerTokenizer.reset()
             this.resetTokenization(0) //new processor so find new tokens, first by scan
@@ -173,6 +172,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     fun requestUpdateStyleModel() {
+        logger.log(LogLevel.Trace, "requestUpdateStyleModel")
         if (this.isConnected) {
             val styleStr = this.editorSpecificStyleStr
             if (!styleStr?.value.isNullOrEmpty()) {
@@ -183,8 +183,9 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     override fun processSentence() {
+        logger.log(LogLevel.Trace, "processSentence")
         if (doUpdate) {
-            this.clearErrorMarkers()
+            this.clearIssueMarkers()
             this.languageServiceRequest.interruptRequest(this.endPointIdentity, this.languageIdentity, "process Sentence")
             this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, this.languageIdentity, this.text, this.agl.options)
         }
@@ -192,6 +193,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
 
     ///
     override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
+        logger.log(LogLevel.Trace, "processorCreateResponse $endPointIdentity, $status, $message, $issues, $scannerMatchables")
         if (status == MessageStatus.SUCCESS) {
             when (message) {
                 "OK" -> {
@@ -219,10 +221,12 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String) {
+        logger.log(LogLevel.Trace, "processorDeleteResponse $endPointIdentity, $status, $message ")
         TODO("not implemented")
     }
 
     override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
+        logger.log(LogLevel.Trace, "processorSetStyleResponse")
         if (status == MessageStatus.SUCCESS && null != styleModel) {
             this.agl.styleHandler.updateStyleModel(styleModel)
             this.updateEditorStyles()
@@ -236,6 +240,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
+        logger.log(LogLevel.Trace, "sentenceLineTokensResponse $endPointIdentity, $status, $message, $startLine, $lineTokens")
         if (status == MessageStatus.SUCCESS) {
             this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}", null)
             this.workerTokenizer.receiveTokens(startLine, lineTokens)
@@ -246,6 +251,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+        logger.log(LogLevel.Trace, "sentenceParseResponse $endPointIdentity, $status, $message, $issues, <tree>")
         when (status) {
             MessageStatus.START -> {
                 this.notifyParse(ParseEvent(EventStatus.START, "Start", null, emptyList()))
@@ -257,13 +263,13 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
                 // parse failed so re-tokenize from scan
 //                this.workerTokenizer.reset()
 //                this.resetTokenization()
-                clearErrorMarkers()
+                clearIssueMarkers()
                 this.createIssueMarkers(issues.toList())
                 this.notifyParse(ParseEvent(EventStatus.FAILURE, message, null, issues.toList()))
             }
 
             MessageStatus.SUCCESS -> {
-                clearErrorMarkers()
+                clearIssueMarkers()
                 this.createIssueMarkers(issues.toList())
                 this.notifyParse(ParseEvent(EventStatus.SUCCESS, "Success", tree, issues.toList()))
             }
@@ -271,19 +277,20 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+        logger.log(LogLevel.Trace, "sentenceSyntaxAnalysisResponse $endPointIdentity, $status, $message, $issues, <asm>")
         when (status) {
             MessageStatus.START -> {
                 this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.START, "Start", null, emptyList()))
             }
 
             MessageStatus.FAILURE -> {
-                clearErrorMarkers()
+                clearIssueMarkers()
                 this.createIssueMarkers(issues.toList())
                 this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.FAILURE, message, asm, issues.toList()))
             }
 
             MessageStatus.SUCCESS -> {
-                clearErrorMarkers()
+                clearIssueMarkers()
                 this.createIssueMarkers(issues.toList())
                 this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.SUCCESS, "Success", asm, issues.toList()))
             }
@@ -291,19 +298,20 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+        logger.log(LogLevel.Trace, "sentenceSemanticAnalysisResponse $endPointIdentity, $status, $message, $issues, <asm>")
         when (status) {
             MessageStatus.START -> {
                 this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.START, "Start", null, emptyList()))
             }
 
             MessageStatus.FAILURE -> {
-                clearErrorMarkers()
+                clearIssueMarkers()
                 this.createIssueMarkers(issues.toList())
                 this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.FAILURE, message, asm, issues.toList()))
             }
 
             MessageStatus.SUCCESS -> {
-                clearErrorMarkers()
+                clearIssueMarkers()
                 this.createIssueMarkers(issues.toList())
                 this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.SUCCESS, "Success", asm, issues.toList()))
             }
@@ -311,6 +319,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     }
 
     override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
+        logger.log(LogLevel.Trace, "sentenceCodeCompleteResponse $endPointIdentity, $status, $message, $issues, $completionItems")
         when(status) {
             MessageStatus.START -> logger.log(LogLevel.Trace,"CodeCompletion START",null)
             MessageStatus.SUCCESS -> this.completionProvider.provide(completionItems)

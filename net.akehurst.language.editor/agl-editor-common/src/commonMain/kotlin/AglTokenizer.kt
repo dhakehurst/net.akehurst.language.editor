@@ -75,6 +75,41 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
         }
     }
 
+    fun getAllTokens(text: String): List<AglToken> {
+        return if (tokensByLine.isEmpty()) {
+            return getAllTokensByScan(text)
+        } else {
+            tokensByLine.values.flatten()
+        }
+    }
+
+    fun getAllTokensByScan(text: String): List<AglToken> {
+        return try {
+            val scanner = agl.simpleScanner
+            val offset = 0
+            val sentence = SentenceDefault(text)
+            val tv = measureTimedValue {
+                scanner.scan(sentence, 0, offset)
+            }
+            this.agl.logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
+            val leafs = tv.value.tokens
+            val tokens = this.agl.styleHandler.transformToTokens(leafs)
+            //val tokens = transformToTokens(leafs)
+            if (leafs.isEmpty()) {
+                emptyList()
+            } else {
+                tokens
+            }
+        } catch (t: Throwable) {
+            agl.logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
+            val tokens = when {
+                text.isEmpty() -> emptyList()
+                else -> listOf(AglTokenDefault(listOf("nostyle"), 0, text.length))
+            }
+            tokens
+        }
+    }
+
     /**
      * row - 0 indexed line number
      */

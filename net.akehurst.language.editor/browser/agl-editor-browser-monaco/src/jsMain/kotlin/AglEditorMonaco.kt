@@ -16,7 +16,6 @@
 
 package net.akehurst.language.editor.browser.monaco
 
-import ResizeObserver
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.dom.addClass
@@ -42,7 +41,6 @@ import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.style.api.AglStyleDeclaration
 import net.akehurst.language.style.api.AglStyleSelector
 import net.akehurst.language.style.api.AglStyleSelectorKind
-import net.akehurst.language.style.api.StyleNamespace
 import net.akehurst.language.style.asm.AglStyleRuleDefault
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
@@ -53,6 +51,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
     monacoEditor: IStandaloneCodeEditor,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
     monaco: Monaco
 ): AglEditor<AsmType, ContextType> {
@@ -62,6 +61,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
         monacoEditor = monacoEditor,
         languageId = languageId,
         editorId = editorId,
+        editorOptions= editorOptions,
         logFunction = logFunction,
         monaco = monaco
     )
@@ -93,9 +93,13 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     val monacoEditor: IStandaloneCodeEditor,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val monaco: Monaco,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId, "none"), logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(
+    languageServiceRequest, languageId, EndPointIdentity(editorId, "none"),
+    editorOptions,logFunction
+) {
 
     companion object {
         private val init = js(
@@ -201,7 +205,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
             val oldAglStyleClass =
-                AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
+                AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
             this.containerElement.removeClass(oldAglStyleClass)
         }
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
@@ -267,7 +271,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun clearErrorMarkers() {
+    override fun clearIssueMarkers() {
         monaco.setModelMarkers(this.monacoEditor.getModel(), "", emptyArray())
     }
 

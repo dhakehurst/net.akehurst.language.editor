@@ -16,7 +16,6 @@
 
 package net.akehurst.language.editor.browser.ace
 
-import ResizeObserver
 import ace.AceAnnotation
 import ace.IRange
 import kotlinx.browser.window
@@ -35,7 +34,6 @@ import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.style.api.AglStyleDeclaration
 import net.akehurst.language.style.api.AglStyleSelector
 import net.akehurst.language.style.api.AglStyleSelectorKind
-import net.akehurst.language.style.api.StyleNamespace
 import net.akehurst.language.style.asm.AglStyleRuleDefault
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
@@ -64,6 +62,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     aceEditor: ace.IEditor,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
     ace: IAce
 ): AglEditor<AsmType, ContextType> {
@@ -73,6 +72,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
         aceEditor = aceEditor,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = editorOptions,
         logFunction = logFunction,
         ace = ace
     )
@@ -86,9 +86,13 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     val aceEditor: ace.IEditor,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val ace: IAce,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId, aceEditor.getSession()?.id!!), logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(
+    languageServiceRequest, languageId, EndPointIdentity(editorId, aceEditor.getSession()?.id!!),
+    editorOptions, logFunction
+) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
     private val errorProcessMarkerIds = mutableListOf<Int>()
@@ -136,6 +140,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
     override fun destroyAglEditor() {
     }
+
     override fun destroyBaseEditor() {
         this.aceEditor.destroy()
     }
@@ -155,7 +160,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
-            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
+            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
             this.containerElement.removeClass(oldAglStyleClass)
         }
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
@@ -250,7 +255,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun clearErrorMarkers() {
+    override fun clearIssueMarkers() {
         this._annotations.clear()
         this.aceEditor.getSession()?.clearAnnotations(); //assume there are no parse errors or there would be no sppt!
         this.errorParseMarkerIds.forEach { id -> this.aceEditor.getSession()?.removeMarker(id) }

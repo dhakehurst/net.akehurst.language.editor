@@ -16,14 +16,22 @@
 
 package net.akehurst.language.editor.api
 
-typealias LogFunction = (level: LogLevel, message: String,t:Throwable?) -> Unit
+typealias LogFunction = (level: LogLevel, prefix:String, message: String,t:Throwable?) -> Unit
 
 class AglEditorLogger(
+    val prefix: String,
     var bind: LogFunction?
 ) {
 
-    fun log(level: LogLevel, message: String, t:Throwable?) = this.bind?.also {
-        it.invoke(level, message,t)
+    fun log(level: LogLevel, message: String, t:Throwable? = null) = this.bind?.also {
+        it.invoke(level, prefix, message, t)
     }
+
+    fun logFatal(message: String, t:Throwable? = null) = log(LogLevel.Fatal, message, t)
+    fun logError(message: String, t:Throwable? = null) = log(LogLevel.Error, message, t)
+    fun logWarning(message: String, t:Throwable? = null) = log(LogLevel.Warning, message, t)
+    fun logInformation(message: String, t:Throwable? = null) = log(LogLevel.Information, message, t)
+    fun logDebug(message: String, t:Throwable? = null) = log(LogLevel.Debug, message, t)
+    fun logTrace(message: String, t:Throwable? = null) = log(LogLevel.Trace, message, t)
 
 }

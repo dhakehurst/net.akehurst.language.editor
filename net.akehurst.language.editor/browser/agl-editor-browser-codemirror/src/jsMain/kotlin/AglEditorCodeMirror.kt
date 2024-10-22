@@ -53,6 +53,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
     cmEditor: codemirror.view.IEditorView,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
     codemirror: codemirror.ICodeMirror
 ): AglEditor<AsmType, ContextType> {
@@ -62,6 +63,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
         cmEditorView = cmEditor,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = editorOptions,
         logFunction = logFunction,
         codemirrorFunctions = codemirror
     )
@@ -75,9 +77,13 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     val cmEditorView: codemirror.view.IEditorView,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val codemirrorFunctions: codemirror.ICodeMirror,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"none"), logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(
+    languageServiceRequest, languageId, EndPointIdentity(editorId,"none"),
+    editorOptions,logFunction
+) {
 
     override val baseEditor: Any get() = this.cmEditorView
     private val _aglThemeCompartment = codemirrorFunctions.state.createCompartment()
@@ -171,7 +177,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
-            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
+            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
             this.containerElement.removeClass(oldAglStyleClass)
         }
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
@@ -290,7 +296,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         }
     }
 */
-    override fun clearErrorMarkers() {
+    override fun clearIssueMarkers() {
         _issueMarkers.clear()
     }
 

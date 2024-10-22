@@ -106,7 +106,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun onSemanticAnalysis(handler: (SemanticAnalysisEvent) -> Unit)
 
-    fun clearErrorMarkers()
+    fun clearIssueMarkers()
 
     fun destroyAglEditor()
     fun destroyBaseEditor()

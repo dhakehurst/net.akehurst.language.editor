@@ -16,11 +16,13 @@
 
 package net.akehurst.language.editor.browser.ck
 
+import js.iterable
 import kotlinx.browser.window
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
+import net.akehurst.language.editor.common.EditorOptionsDefault
 import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.issues.api.LanguageIssue
 import org.w3c.dom.Element
@@ -31,6 +33,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     ckEditor: ck.Editor,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?
 ): AglEditor<AsmType, ContextType> {
     val aglEditor = AglEditorCk<AsmType, ContextType>(
@@ -39,9 +42,11 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
         ckEditor = ckEditor,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = editorOptions,
         logFunction = logFunction
     )
     languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
+    aglEditor.initialise()
     return aglEditor
 }
 
@@ -51,8 +56,12 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     val ckEditor: ck.Editor,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId, "none"), logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(
+    languageServiceRequest, languageId, EndPointIdentity(editorId, "none"),
+    editorOptions, logFunction
+) {
 
     override val baseEditor: Any = ckEditor
     override var text: String
@@ -73,22 +82,21 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         get() = TODO("not implemented")
 
     private var parseTimeout: dynamic = null
-    private var emi:EditorModelIndex = EditorModelIndex()
+    private var emi: EditorModelIndex = EditorModelIndex()
 
     override val workerTokenizer: AglTokenizerByWorkerCk<AsmType, ContextType> = AglTokenizerByWorkerCk(this.agl, this.emi, logger)
 
-    init {
-
+    fun initialise() {
         // create style for underlining errors
         ckEditor.model.schema.extend("\$text", objectJSTyped { allowAttributes = "error" })
-        val underlineStyle = objectJSTyped<dynamic> {  }
+        val underlineStyle = objectJSTyped<dynamic> { }
         underlineStyle["text-decoration-line"] = "underline"
         underlineStyle["text-decoration-style"] = "wavy"
         underlineStyle["text-decoration-color"] = "red"
         ckEditor.conversion.attributeToElement(objectJSTyped {
-            model = "error"
+            model = CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME
             view = objectJSTyped {
-                name = "error"
+                name = CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME
                 styles = underlineStyle
             }
         })
@@ -100,24 +108,24 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         this.updateLanguage(null)
         this.updateProcessor()
         this.requestUpdateStyleModel()
+
+        // trigger first sentence process
+        onEditorTextChangeInternal()
     }
 
     override fun resetTokenization(fromLine: Int) {
-        workerTokenizer.reset()
+        logger.log(LogLevel.Trace, "resetTokenization $fromLine")
         workerTokenizer.refresh()
     }
 
-    override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        //TODO("not implemented")
-    }
-
     override fun updateLanguage(oldId: LanguageIdentity?) {
-        //TODO("not implemented")
+        logger.log(LogLevel.Trace, "updateLanguage $oldId")
     }
 
     override fun updateEditorStyles() {
-        val styleToAttrMap = mutableMapOf<String,Map<String,Any>>()
-
+        logger.log(LogLevel.Trace, "updateEditorStyles")
+        val styleToAttrMap = mutableMapOf<String, Map<String, Any>>()
+//TODO: clear current styles!
         this.agl.styleHandler.styleModel.allDefinitions.forEach { ss ->
             ss.rules.forEach { rule ->
                 val ruleClasses = rule.selector.map {
@@ -145,8 +153,31 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         this.workerTokenizer.updateStyleMap(styleToAttrMap)
     }
 
-    override fun clearErrorMarkers() {
-        //TODO("not implemented")
+    override fun clearIssueMarkers() {
+        logger.log(LogLevel.Trace, "clearIssueMarkers")
+
+        // No need to explicitly do this as issues are added like styles
+        // and styles are cleared before calling this method
+
+        /*
+        ckEditor.model.enqueueChange { writer ->
+            val rootRange = writer.model.createRangeIn(writer.model.document.getRoot())
+            val items = rootRange.getItems().iterable()
+            for (item in items) {
+                //val itemRng = writer.createRangeOn(item)
+                for (attributeName in CkEditorHelper.getFormattingAttributeNames(item, writer.model.schema)) {
+                    if (CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME==attributeName) {
+                        writer.removeAttribute(attributeName, item)
+                    }
+                }
+            }
+        }
+         */
+    }
+
+    override fun createIssueMarkers(issues: List<LanguageIssue>) {
+        logger.log(LogLevel.Trace, "createIssueMarkers $issues")
+
     }
 
     override fun destroyAglEditor() {
@@ -158,6 +189,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     // --- AglEditorAbstract ---
     override fun onEditorTextChangeInternal() {
+        logger.log(LogLevel.Trace, "onEditorTextChangeInternal")
         //console.log("onEditorTextChangeInternal, editor '${this.editorId}' text is '${this.text}'")
         if (doUpdate) {
             //console.log("doUpdate")
@@ -172,6 +204,14 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
                     this.processSentence()
                 }
             }, 500)
+        }
+    }
+
+    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+        super.sentenceParseResponse(endPointIdentity, status, message, issues, tree)
+        when (status) {
+            MessageStatus.FAILURE -> this.resetTokenization(0) // reset to trigger use of scan tokens
+            else -> Unit
         }
     }
 }

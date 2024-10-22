@@ -83,6 +83,12 @@ external interface Schema {
      * def : string | Node | DocumentFragment
      */
     fun checkChild(context: dynamic, def: String): Boolean
+
+    fun getAttributeProperties(attributeName:String) :  AttributeProperties
+}
+
+external interface  AttributeProperties {
+    val isFormatting:Boolean
 }
 
 external interface Conversion {
@@ -156,7 +162,9 @@ external interface Writer {
     // makes no sense to pass a Position, as it a copy of that position
     fun createPositionAt(itemOrPosition: Item, offset: dynamic): Position
     fun createRange(start: Position, end: Position): Range
+    fun createRangeOn(item:Item): Range
     fun setAttribute(key: String, value: dynamic, range: Range)
+    fun removeAttribute(key: String, item: Item)
     fun setSelection(pos: Position)
     fun addMarker(name: String, options: dynamic)
 }
@@ -184,6 +192,12 @@ external interface JsIterable<T> {
 external interface Item {
     @JsName("is")
     fun is_(type:String) : Boolean
+
+    /**
+     * CK defines this separately on Node and Text
+     * returns Array of two items [key,value]
+     */
+    fun getAttributes(): JsIterator<Array<Any>>
 }
 external interface TextProxy : Item
 

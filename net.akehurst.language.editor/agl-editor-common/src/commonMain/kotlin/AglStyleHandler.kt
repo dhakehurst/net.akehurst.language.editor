@@ -24,10 +24,11 @@ import net.akehurst.language.style.asm.AglStyleModelDefault
 
 open class AglStyleHandler(
     languageId: LanguageIdentity,
-    val cssClassPrefixStart: String = "agl"
+    val styleNamePrefixStart: String = STYLE_PREFIX
 ) {
 
     companion object {
+        const val STYLE_PREFIX = "agl"
         const val EDITOR_NO_STYLE = "nostyle"
         fun languageIdToStyleClass(cssClassPrefixStart: String, languageId: LanguageIdentity): String {
             val cssLangId = languageId.value.replace(Regex("[^a-z0-9A-Z_-]"), "_")
@@ -43,7 +44,7 @@ open class AglStyleHandler(
 
     // AglStyleHandler is recreated if languageId changes for the editor
     //val cssLanguageId = languageId.value.replace(Regex("[^a-z0-9A-Z_-]"), "_")
-    val aglStyleClass = languageIdToStyleClass(cssClassPrefixStart, languageId)
+    val aglStyleClass = languageIdToStyleClass(styleNamePrefixStart, languageId)
 
     private var nextCssClassNum = 1
     private val cssClassPrefix: String = "${aglStyleClass}-"
@@ -67,7 +68,11 @@ open class AglStyleHandler(
         return if (classes.isEmpty()) {
             listOf(EDITOR_NO_STYLE)
         } else {
-            classes.toSet().toList()
+            // The order of the styles matters, last style should take precedence
+            // the agl-style names are mapped to a css compatible name starting with a prefix + a number
+            // the numbers provide a way to order the styles, due to the way they are created.
+            // (also need to remove duplicates)
+            classes.toSet().sortedBy { it }
         }
     }
 
@@ -104,6 +109,7 @@ open class AglStyleHandler(
     fun mapClass(aglSelector: String): String {
         var cssClass = this.tokenToClassMap[aglSelector]
         if (null == cssClass) {
+            // the number help preserve the precedence ordering of the styles
             cssClass = this.cssClassPrefix + this.nextCssClassNum++
             this.tokenToClassMap[aglSelector] = cssClass
         }

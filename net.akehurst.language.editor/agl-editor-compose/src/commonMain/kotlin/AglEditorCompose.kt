@@ -28,6 +28,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     languageService: LanguageService,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
     composeEditor: ComposeCodeEditor
 ): AglEditor<AsmType, ContextType> {
@@ -35,6 +36,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
         languageServiceRequest = languageService.request,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = editorOptions,
         logFunction = logFunction,
         composeEditor = composeEditor
     )
@@ -47,9 +49,13 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val composeEditor: ComposeCodeEditor
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"none"), logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(
+    languageServiceRequest, languageId, EndPointIdentity(editorId,"none"),
+   editorOptions, logFunction
+) {
 
     override val baseEditor: Any get() = composeEditor
     override val isConnected: Boolean get() = true
@@ -89,7 +95,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         TODO("not implemented")
     }
 
-    override fun clearErrorMarkers() {
+    override fun clearIssueMarkers() {
         TODO("not implemented")
     }
 

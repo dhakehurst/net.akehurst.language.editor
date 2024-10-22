@@ -39,12 +39,14 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     containerElement: Element,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
 ): AglEditor<AsmType, ContextType> {
     return AglEditorDefault<AsmType, ContextType>(
         containerElement = containerElement,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = editorOptions,
         logFunction = logFunction,
         languageServiceRequest = languageService.request
     )
@@ -55,8 +57,12 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     languageId: LanguageIdentity,
     editorId: String,
+    editorOptions: EditorOptions,
     logFunction: LogFunction?,
-) : AglEditorAbstract<AsmType, ContextType>(languageServiceRequest, languageId, EndPointIdentity(editorId,"session"), logFunction) {
+) : AglEditorAbstract<AsmType, ContextType>(
+    languageServiceRequest, languageId, EndPointIdentity(editorId,"session"),
+    editorOptions, logFunction
+) {
 
     override val baseEditor: Any get() = this
     override var text: String
@@ -80,7 +86,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
-            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.cssClassPrefixStart, oldId)
+            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
             this.containerElement.removeClass(oldAglStyleClass)
         }
         this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
@@ -90,7 +96,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         TODO("not implemented")
     }
 
-    override fun clearErrorMarkers() {
+    override fun clearIssueMarkers() {
         //TODO("not implemented")
     }
 

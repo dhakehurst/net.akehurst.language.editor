@@ -428,8 +428,8 @@ suspend fun createDemo(editorChoice: EditorKind, logger: ConsoleLogger) {
     val w = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
     w.port.close()
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    val logFunction: LogFunction = { lvl, msg, t -> logger.log(lvl, msg, t) }
-    val languageService = AglLanguageServiceByWorker(worker, AglEditorLogger(logFunction))
+    val logFunction: LogFunction = { lvl, prefix, msg, t -> logger.log(lvl, "$prefix - $msg", t) }
+    val languageService = AglLanguageServiceByWorker(worker, AglEditorLogger("AglLanguageServiceByWorker", logFunction))
 
     val editorEls = document.querySelectorAll("agl-editor")
     val editors = editorEls.asList().associate { node ->
@@ -608,7 +608,6 @@ suspend fun createCk(editorElement: Element, logFunction: LogFunction, languageS
         ckEditor = ed!!
     )
 }
-
 
 fun createCodeMirror(editorElement: Element, logFunction: LogFunction, languageService: LanguageService): AglEditor<Any, Any> {
     val editorId = editorElement.id
