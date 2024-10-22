@@ -84,6 +84,7 @@ external interface Schema {
      */
     fun checkChild(context: dynamic, def: String): Boolean
 
+    fun setAttributeProperties(attributeName:String, properties:dynamic)
     fun getAttributeProperties(attributeName:String) :  AttributeProperties
 }
 

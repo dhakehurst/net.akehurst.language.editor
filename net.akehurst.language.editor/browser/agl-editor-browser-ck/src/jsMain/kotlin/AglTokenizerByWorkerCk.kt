@@ -59,30 +59,7 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     }
 
     private fun updateCkModel(ckTokens: List<CkAttributeData>) {
-        CkEditorHelper.addAttributes(logger, emi.model, ckTokens, styleMap.keys)
-        emi.model?.enqueueChange { writer ->
-            removeStyles(writer)
-            for (tok in ckTokens) {
-                val rng = writer.createRange(tok.firstPosition, tok.lastPosition)
-                for(att in tok.attributes) {
-                    logger.log(LogLevel.Trace, "Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]", null)
-                    writer.setAttribute(att.key, att.value, rng)
-                }
-            }
-        }
-    }
-
-    private fun removeStyles(writer: ck.Writer) {
-        val rootRange = writer.model.createRangeIn(writer.model.document.getRoot())
-        val items = rootRange.getItems().iterable()
-        for (item in items) {
-            //val itemRng = writer.createRangeOn(item)
-            for (attributeName in CkEditorHelper.getFormattingAttributeNames(item, writer.model.schema)) {
-                if (styleMap.keys.contains(attributeName)) {
-                    writer.removeAttribute(attributeName, item)
-                }
-            }
-        }
+        emi.model?.let { CkEditorHelper.addAttributes(logger, it, ckTokens, styleMap.keys) }
     }
 
     /*

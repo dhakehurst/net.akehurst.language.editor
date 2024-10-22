@@ -21,10 +21,9 @@ import kotlinx.browser.window
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.AglEditorAbstract
-import net.akehurst.language.editor.common.EditorOptionsDefault
-import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.editor.common.*
 import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.issues.api.LanguageIssueKind
 import org.w3c.dom.Element
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
@@ -88,7 +87,10 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     fun initialise() {
         // create style for underlining errors
-        ckEditor.model.schema.extend("\$text", objectJSTyped { allowAttributes = "error" })
+        ckEditor.model.schema.extend("\$text", objectJSTyped { allowAttributes = CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME })
+        ckEditor.model.schema.setAttributeProperties(CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME, objectJS {
+            isFormatting = true
+        })
         val underlineStyle = objectJSTyped<dynamic> { }
         underlineStyle["text-decoration-line"] = "underline"
         underlineStyle["text-decoration-style"] = "wavy"
@@ -155,29 +157,33 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     override fun clearIssueMarkers() {
         logger.log(LogLevel.Trace, "clearIssueMarkers")
-
-        // No need to explicitly do this as issues are added like styles
-        // and styles are cleared before calling this method
-
-        /*
         ckEditor.model.enqueueChange { writer ->
-            val rootRange = writer.model.createRangeIn(writer.model.document.getRoot())
-            val items = rootRange.getItems().iterable()
-            for (item in items) {
-                //val itemRng = writer.createRangeOn(item)
-                for (attributeName in CkEditorHelper.getFormattingAttributeNames(item, writer.model.schema)) {
-                    if (CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME==attributeName) {
-                        writer.removeAttribute(attributeName, item)
-                    }
-                }
+            try {
+                CkEditorHelper.removeAttributes(writer, setOf(CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME))
+            } catch (t: Throwable) {
+                logger.logError("exception during clearIssueMarkers: ", t)
             }
         }
-         */
+
+        //TODO: Maybe not explicitly do this, rather remove issues when removing styles
+        // as issues are added to ck like styles
+        // styles are cleared before calling this method
+
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
         logger.log(LogLevel.Trace, "createIssueMarkers $issues")
-
+        val atts = issues.map { iss ->
+            val fp = emi.toModelPosition(iss.location?.position ?: 0)
+            val lp = emi.toModelPosition(iss.location?.endPosition ?: 1)
+            val attName = when (iss.kind) {
+                LanguageIssueKind.ERROR -> CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME
+                LanguageIssueKind.WARNING -> CkEditorHelper.WARN_MARKER_ATTRIBUTE_NAME
+                LanguageIssueKind.INFORMATION -> CkEditorHelper.INFO_MARKER_ATTRIBUTE_NAME
+            }
+            CkAttributeData(fp, lp, mapOf(attName to "true"))
+        }
+        CkEditorHelper.addAttributes(logger, ckEditor.model, atts, emptySet())
     }
 
     override fun destroyAglEditor() {
