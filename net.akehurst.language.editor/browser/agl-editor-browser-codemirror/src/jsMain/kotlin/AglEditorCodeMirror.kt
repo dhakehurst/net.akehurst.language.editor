@@ -28,6 +28,8 @@ import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.style.api.AglStyleDeclaration
+import net.akehurst.language.style.api.AglStyleMetaRule
+import net.akehurst.language.style.api.AglStyleTagRule
 import org.w3c.dom.Element
 import kotlin.js.Promise
 import kotlin.math.min
@@ -188,21 +190,31 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         val theme = objectJS {}
         for (ss in this.agl.styleHandler.styleModel.allDefinitions) {
             for (r in ss.rules) {
-            val sel = r.selector.joinToString(separator = ", ") { ".${this.agl.styleHandler.mapClass(it.value)}" }
+            val sel:String = when(r) {
+                is AglStyleTagRule ->r.selector.joinToString(separator = ", ") {
+                    val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass(it.value)
+                    ".$mappedSelName"
+                }
+                is AglStyleMetaRule -> {
+                    val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + r.pattern.pattern)
+                    ".$mappedSelName"
+                }
+                else -> error("Subtype not handled")
+            }
             val css = objectJS {}
             for (oldStyle in r.declaration.values) {
                 val style = when (oldStyle.name) {
-                    "foreground" -> AglStyleDeclaration("color", oldStyle.value)
-                    "background" -> AglStyleDeclaration("background-color", oldStyle.value)
+                    "foreground" -> Pair("color", oldStyle.value)
+                    "background" -> Pair("background-color", oldStyle.value)
                     "font-style" -> when (oldStyle.value) {
-                        "bold" -> AglStyleDeclaration("font-weight", oldStyle.value)
-                        "italic" -> AglStyleDeclaration("font-style", oldStyle.value)
-                        else -> oldStyle
+                        "bold" -> Pair("font-weight", oldStyle.value)
+                        "italic" -> Pair("font-style", oldStyle.value)
+                        else -> Pair(oldStyle.name, oldStyle.value)
                     }
 
-                    else -> oldStyle
+                    else -> Pair(oldStyle.name, oldStyle.value)
                 }
-                (css as Any).set(style.name, style.value)
+                (css as Any).set(style.first, style.second)
             }
             (theme as Any).set(sel, css)
         }

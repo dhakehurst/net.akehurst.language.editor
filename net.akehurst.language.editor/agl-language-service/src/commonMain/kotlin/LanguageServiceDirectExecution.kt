@@ -117,11 +117,16 @@ open class LanguageServiceRequestDirectExecution(
                 _editorOptions[endPointIdentity.editorId] = editorOptions
                 //if there is a grammar check that grammar is well-defined and a processor can be created from it
 
-                val proc = ld.processor // should throw exception if there are problems
-                if (null == proc) {
-                    response.processorCreateResponse(endPointIdentity, MessageStatus.FAILURE, "Error", ld.issues.all.toList(), emptyList())
-                } else {
-                    response.processorCreateResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", ld.issues.all.toList(), proc.scanner!!.matchables)
+                try {
+                    val proc = ld.processor // should throw exception if there are problems
+                    if (null == proc) {
+                        response.processorCreateResponse(endPointIdentity, MessageStatus.FAILURE, "Error", ld.issues.all.toList(), emptyList())
+                    } else {
+                        response.processorCreateResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", ld.issues.all.toList(), proc.scanner!!.matchables)
+                    }
+                }catch (t: Throwable) {
+                    println(t.stackTraceToString())
+                    response.processorCreateResponse(endPointIdentity, MessageStatus.FAILURE, t.message?:"", ld.issues.all.toList(), emptyList())
                 }
             }
         } catch (t: Throwable) {
@@ -138,16 +143,12 @@ open class LanguageServiceRequestDirectExecution(
     override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
         logger.logTrace("processorSetStyleRequest $endPointIdentity, $languageId")
         try {
-            val style = AglStyleHandler(languageId)
-            this._styleHandler[languageId] = style
+            val styleHndlr = AglStyleHandler(languageId)
+            this._styleHandler[languageId] = styleHndlr
             val result = Agl.registry.agl.style.processor!!.process(styleStr.value)
             val styleMdl = result.asm
             if (null != styleMdl) {
-                styleMdl.allDefinitions.forEach { ss ->
-                    ss.rules.forEach { rule ->
-                        rule.selector.forEach { sel -> style.mapClass(sel.value) }
-                    }
-                }
+                styleHndlr.updateStyleModel(styleMdl)
                 response.processorSetStyleResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl)
             } else {
                 response.processorSetStyleResponse(endPointIdentity, MessageStatus.FAILURE, "Error in style string", result.issues.all.toList(), null)
@@ -194,8 +195,7 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace("configureLanguageDefinition ${ld.identity}")
         // TODO: could be an argument
         ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>
-        ld.grammarStr = grammarStr
-        ld.crossReferenceModelStr = crossReferenceModelStr
+        ld.update(grammarStr, crossReferenceModelStr, ld.styleStr)
     }
 
     protected open fun createLanguageDefinition(languageId: LanguageIdentity, grammarStr: GrammarString?, crossReferenceModelStr: CrossReferenceString?): LanguageDefinition<Any, Any> {

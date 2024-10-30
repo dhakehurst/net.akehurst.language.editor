@@ -1,6 +1,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.editor.api.AglEditorLogger
@@ -11,7 +12,7 @@ import kotlin.test.assertEquals
 
 class test_AglComponents {
 
-    val logger = AglEditorLogger { logLevel: LogLevel, msg: String, throwable: Throwable? ->
+    val logger = AglEditorLogger("Log") { logLevel: LogLevel, prefix:String, msg: String, throwable: Throwable? ->
         println("$logLevel: $msg")
     }
 
@@ -23,7 +24,7 @@ class test_AglComponents {
 
     @Test
     fun modifyObserver() {
-        var modified = null as String?
+        var modified = null as GrammarString?
         val langId = "test"
         val def = Agl.registry.register(
             identity = LanguageIdentity(langId),
@@ -32,14 +33,14 @@ class test_AglComponents {
             buildForDefaultGoal = false,
             configuration = Agl.configurationDefault(),
         )
-        def.grammarStrObservers.add { s1: String?, s2: String? ->
+        def.grammarStrObservers.add { s1: GrammarString?, s2: GrammarString? ->
             println("Grammar changed: $s1, $s2")
             modified = s2
         }
 
-        def.grammarStr = "something new"
+        def.grammarStr =GrammarString( "something new")
 
-        assertEquals("something new", modified)
+        assertEquals("something new", modified?.value)
     }
 
     @Test

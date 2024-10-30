@@ -137,16 +137,12 @@ abstract class AglWorkerAbstract {
 
     protected fun setStyle(port: Any, message: MessageSetStyle) {
         try {
-            val style = AglStyleHandler(message.languageId)
-            this._styleHandler[message.languageId] = style
+            val styleHndlr = AglStyleHandler(message.languageId)
+            this._styleHandler[message.languageId] = styleHndlr
             val result = Agl.registry.agl.style.processor!!.process(message.styleStr)
             val styleMdl = result.asm
             if (null != styleMdl) {
-                styleMdl.allDefinitions.forEach { ss ->
-                    ss.rules.forEach { rule ->
-                        rule.selector.forEach { sel -> style.mapClass(sel.value) }
-                    }
-                }
+                styleHndlr.updateStyleModel(styleMdl)
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl))
             } else {
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.FAILURE, "Invalid Style",result.issues.all.toList(), null))

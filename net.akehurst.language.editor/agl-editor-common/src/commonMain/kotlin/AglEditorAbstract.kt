@@ -260,9 +260,9 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             MessageStatus.FAILURE -> {
                 // a failure to parse is not an 'error' in the editor - we expect some parse failures
                 this.log(LogLevel.Debug, "Cannot parse text in ${this.editorId} for language ${this.languageIdentity}: ${message}", null)
-                // parse failed so re-tokenize from scan
-//                this.workerTokenizer.reset()
-//                this.resetTokenization()
+                // parse failed so clear tokens, forcing re-tokenize from scan
+                this.workerTokenizer.reset()
+                this.resetTokenization(0)
                 clearIssueMarkers()
                 this.createIssueMarkers(issues.toList())
                 this.notifyParse(ParseEvent(EventStatus.FAILURE, message, null, issues.toList()))

@@ -16,7 +16,6 @@
 
 package net.akehurst.language.editor.browser.ck
 
-import js.iterable
 import kotlinx.browser.window
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -24,6 +23,8 @@ import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
+import net.akehurst.language.style.api.AglStyleMetaRule
+import net.akehurst.language.style.api.AglStyleTagRule
 import org.w3c.dom.Element
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
@@ -86,22 +87,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     override val workerTokenizer: AglTokenizerByWorkerCk<AsmType, ContextType> = AglTokenizerByWorkerCk(this.agl, this.emi, logger)
 
     fun initialise() {
-        // create style for underlining errors
-        ckEditor.model.schema.extend("\$text", objectJSTyped { allowAttributes = CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME })
-        ckEditor.model.schema.setAttributeProperties(CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME, objectJS {
-            isFormatting = true
-        })
-        val underlineStyle = objectJSTyped<dynamic> { }
-        underlineStyle["text-decoration-line"] = "underline"
-        underlineStyle["text-decoration-style"] = "wavy"
-        underlineStyle["text-decoration-color"] = "red"
-        ckEditor.conversion.attributeToElement(objectJSTyped {
-            model = CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME
-            view = objectJSTyped {
-                name = CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME
-                styles = underlineStyle
-            }
-        })
+        CkEditorHelper.createAglAttributes(ckEditor)
 
         ckEditor.model.document.on("change:data") {
             onEditorTextChangeInternal()
@@ -130,16 +116,27 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 //TODO: clear current styles!
         this.agl.styleHandler.styleModel.allDefinitions.forEach { ss ->
             ss.rules.forEach { rule ->
-                val ruleClasses = rule.selector.map {
-                    this.agl.styleHandler.mapClass(it.value)
+                val ruleClasses = when (rule) {
+                    is AglStyleTagRule -> rule.selector.map {
+                        this.agl.styleHandler.mapSelectorToCssClass(it.value)
+                    }
+                    is AglStyleMetaRule -> {
+                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + rule.pattern.pattern)
+                        listOf(mappedSelName)
+                    }
+                    else -> error("Subtype not handled")
                 }
                 val attribs = rule.declaration.values.associate { oldStyle ->
                     when (oldStyle.name) {
-                        "foreground" -> Pair("fontColor", oldStyle.value)
-                        "background" -> Pair("fontBackgroundColor", oldStyle.value)
+                        "foreground" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_FORE_COLOUR, oldStyle.value)
+                        "background" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_BACK_COLOUR, oldStyle.value)
+                        "text-decoration" -> when(oldStyle.value) {
+                            "underline" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_UNDERLINE, true)
+                            else -> Pair(oldStyle.name, oldStyle.value)
+                        }
                         "font-style" -> when (oldStyle.value) {
-                            "bold" -> Pair("bold", true)
-                            "italic" -> Pair("italic", true)
+                            "bold" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_BOLD, true)
+                            "italic" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_ITALIC, true)
                             else -> Pair(oldStyle.name, oldStyle.value)
                         }
 
@@ -159,7 +156,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         logger.log(LogLevel.Trace, "clearIssueMarkers")
         ckEditor.model.enqueueChange { writer ->
             try {
-                CkEditorHelper.removeAttributes(writer, setOf(CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME))
+                CkEditorHelper.removeAttributes(writer, setOf(CkEditorHelper.ATTRIBUTE_NAME_ERROR_MARKER))
             } catch (t: Throwable) {
                 logger.logError("exception during clearIssueMarkers: ", t)
             }
@@ -177,13 +174,13 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
             val fp = emi.toModelPosition(iss.location?.position ?: 0)
             val lp = emi.toModelPosition(iss.location?.endPosition ?: 1)
             val attName = when (iss.kind) {
-                LanguageIssueKind.ERROR -> CkEditorHelper.ERROR_MARKER_ATTRIBUTE_NAME
-                LanguageIssueKind.WARNING -> CkEditorHelper.WARN_MARKER_ATTRIBUTE_NAME
-                LanguageIssueKind.INFORMATION -> CkEditorHelper.INFO_MARKER_ATTRIBUTE_NAME
+                LanguageIssueKind.ERROR -> CkEditorHelper.ATTRIBUTE_NAME_ERROR_MARKER
+                LanguageIssueKind.WARNING -> CkEditorHelper.ATTRIBUTE_NAME_WARN_MARKER
+                LanguageIssueKind.INFORMATION -> CkEditorHelper.ATTRIBUTE_NAME_INFO_MARKER
             }
             CkAttributeData(fp, lp, mapOf(attName to "true"))
         }
-        CkEditorHelper.addAttributes(logger, ckEditor.model, atts, emptySet())
+        CkEditorHelper.addAttributes(logger, ckEditor.model, atts, CkEditorHelper.ATTRIBUTE_SET_ISSUE_MARKERS)
     }
 
     override fun destroyAglEditor() {

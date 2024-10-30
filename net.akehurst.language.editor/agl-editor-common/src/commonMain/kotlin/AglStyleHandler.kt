@@ -18,8 +18,7 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.base.api.SimpleName
 import net.akehurst.language.sppt.api.LeafData
-import net.akehurst.language.style.api.AglStyleModel
-import net.akehurst.language.style.api.AglStyleRule
+import net.akehurst.language.style.api.*
 import net.akehurst.language.style.asm.AglStyleModelDefault
 
 open class AglStyleHandler(
@@ -34,32 +33,47 @@ open class AglStyleHandler(
             val cssLangId = languageId.value.replace(Regex("[^a-z0-9A-Z_-]"), "_")
             return "${cssClassPrefixStart}_${cssLangId}"
         }
+
+       fun toCss(selectors:List<String>, declarations:LinkedHashMap<String,String>): String {
+            return """
+            ${selectors.joinToString(separator = ", ")} {
+                ${declarations.entries.joinToString(separator = "\n") { "${it.key} : ${it.value} ;" }}
+            }
+         """.trimIndent()
+        }
     }
 
-    private var _styleModel: AglStyleModel = AglStyleModelDefault(SimpleName( languageId.last),emptyList())
+    private var _styleModel: AglStyleModel = AglStyleModelDefault(SimpleName(languageId.last), emptyList())
 
     val styleModel get() = _styleModel
 
-    private var _editorStyles = mutableMapOf<String, Any>()
 
     // AglStyleHandler is recreated if languageId changes for the editor
     //val cssLanguageId = languageId.value.replace(Regex("[^a-z0-9A-Z_-]"), "_")
     val aglStyleClass = languageIdToStyleClass(styleNamePrefixStart, languageId)
 
+    private var _editorStyles = mutableMapOf<String, Any>()
+    private var _metaStyles = mutableMapOf<String, AglStyleMetaRule>()
     private var nextCssClassNum = 1
+    private var nextMetaNum = 1
     private val cssClassPrefix: String = "${aglStyleClass}-"
-    private val tokenToClassMap = mutableMapOf<String, String>(
-        AglStyleModelDefault.NO_STYLE_ID to EDITOR_NO_STYLE
-    )
+    private val selectorToCssClassMap = mutableMapOf<String, String>(AglStyleModelDefault.NO_STYLE_ID to EDITOR_NO_STYLE)
 
     private fun mapTokenTypeToClass(tokenType: String): String? {
-        val cssClass = this.tokenToClassMap.get(tokenType)
+        val cssClass = this.selectorToCssClassMap.get(tokenType)
         return cssClass
     }
 
-    private fun mapToCssClasses(leaf: LeafData): List<String> {
-        val metaTagClasses = leaf.metaTags.mapNotNull { this.mapTokenTypeToClass(it) }
-        val otherClasses = if (!leaf.tagList.isEmpty()) {
+    internal fun mapToCssClasses(leaf: LeafData): List<String> {
+        //val metaTagClasses = leaf.metaTags.mapNotNull { this.mapTokenTypeToClass(it) }
+        val metaTagClasses =this._metaStyles.mapNotNull { (k,v) ->
+            when {
+                v.pattern.matches(leaf.name) -> k
+                leaf.tagList.any { v.pattern.matches(it) } -> k
+                else -> null
+            }
+        }
+        val otherClasses = if (leaf.tagList.isNotEmpty()) {
             leaf.tagList.mapNotNull { this.mapTokenTypeToClass(it) }
         } else {
             listOf(this.mapTokenTypeToClass(leaf.name)).mapNotNull { it }
@@ -88,30 +102,44 @@ open class AglStyleHandler(
     }
 
     fun reset() {
-        this.tokenToClassMap.clear()
+        _editorStyles.clear()
+        _metaStyles.clear()
+        nextMetaNum = 1
         nextCssClassNum = 1
-        this.tokenToClassMap[AglStyleModelDefault.NO_STYLE_ID] = EDITOR_NO_STYLE
+        this.selectorToCssClassMap.clear()
+        this.selectorToCssClassMap[AglStyleModelDefault.NO_STYLE_ID] = EDITOR_NO_STYLE
     }
 
     fun updateStyleModel(styleModel: AglStyleModel) {
         _styleModel = styleModel // TODO: should not need to store this , need to modify 'updateEditorStyles' in editor specific code!
         styleModel.allDefinitions.forEach { ss ->
             ss.rules.forEach { sr ->
-                val edStyle = convert<Any>(sr)
-                sr.selector.forEach { sel ->
-                    val sn = mapClass(sel.value)
-                    _editorStyles[sn] = edStyle
+
+                when (sr) {
+                    is AglStyleTagRule -> {
+                        val edStyle = convert<Any>(sr)
+                        sr.selector.forEach { sel ->
+                            val sn = mapSelectorToCssClass(sel.value)
+                            _editorStyles[sn] = edStyle
+                        }
+                    }
+
+                    is AglStyleMetaRule -> {
+                        val n = "\$\$"+sr.pattern.pattern
+                        val sn = mapSelectorToCssClass(n)
+                        _metaStyles[sn] = sr
+                    }
                 }
             }
         }
     }
 
-    fun mapClass(aglSelector: String): String {
-        var cssClass = this.tokenToClassMap[aglSelector]
+    fun mapSelectorToCssClass(aglSelector: String): String {
+        var cssClass = this.selectorToCssClassMap[aglSelector]
         if (null == cssClass) {
             // the number help preserve the precedence ordering of the styles
             cssClass = this.cssClassPrefix + this.nextCssClassNum++
-            this.tokenToClassMap[aglSelector] = cssClass
+            this.selectorToCssClassMap[aglSelector] = cssClass
         }
         return cssClass
     }

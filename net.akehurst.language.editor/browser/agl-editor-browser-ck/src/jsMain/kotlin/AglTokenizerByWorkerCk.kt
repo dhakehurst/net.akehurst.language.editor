@@ -59,7 +59,11 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     }
 
     private fun updateCkModel(ckTokens: List<CkAttributeData>) {
-        emi.model?.let { CkEditorHelper.addAttributes(logger, it, ckTokens, styleMap.keys) }
+        try {
+            emi.model?.let { CkEditorHelper.addAttributes(logger, it, ckTokens, CkEditorHelper.ATTRIBUTE_SET_SYNTAX_STYLE) }
+        } catch (t: Throwable) {
+            logger.logError("Failed to add CK attribute (could be because the model has changed)", t)
+        }
     }
 
     /*

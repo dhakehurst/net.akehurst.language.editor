@@ -16,6 +16,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.AglToken
@@ -26,18 +27,18 @@ import kotlin.test.assertTrue
 class test_AglTokenizer {
 
     companion object {
-        val logger = AglEditorLogger { l, m, t -> println("$l: $m") }
+        val logger = AglEditorLogger("Log") { l, p, m, t -> println("$l: $m") }
         const val testLangId = "testLangId"
         const val testEditorId = "testEditorId"
 
-        val grammarStr = """
+        val grammarStr = GrammarString("""
             namespace test
             grammar Test {
                 skip leaf WS = "\s+" ;
                 S = WORD* ;
                 leaf WORD = "[a-z]+" ;  
             }
-        """.trimIndent()
+        """.trimIndent())
         val styleStr = """
             namespace test
             styles Test {

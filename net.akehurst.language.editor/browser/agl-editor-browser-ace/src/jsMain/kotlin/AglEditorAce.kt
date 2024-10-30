@@ -31,10 +31,10 @@ import net.akehurst.language.editor.common.objectJSTyped
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.issues.api.LanguageProcessorPhase
-import net.akehurst.language.style.api.AglStyleDeclaration
-import net.akehurst.language.style.api.AglStyleSelector
-import net.akehurst.language.style.api.AglStyleSelectorKind
-import net.akehurst.language.style.asm.AglStyleRuleDefault
+import net.akehurst.language.style.api.AglStyleMetaRule
+import net.akehurst.language.style.api.AglStyleRule
+import net.akehurst.language.style.api.AglStyleTagRule
+import net.akehurst.language.style.api.StyleSet
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -170,29 +170,34 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         // style requires that the element is part of the dom
         val aglStyleClass = this.agl.styleHandler.aglStyleClass
         var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
-        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss ->
-            ss.rules.forEach { rule ->
-                val ruleClasses = rule.selector.map {
-                    val mappedSelName = this.agl.styleHandler.mapClass(it.value)
-                    AglStyleSelector(".ace_$mappedSelName", it.kind)
+        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss: StyleSet ->
+            ss.rules.forEach { rule: AglStyleRule ->
+                val ruleClasses = when (rule) {
+                    is AglStyleTagRule -> rule.selector.map {
+                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass(it.value)
+                        ".ace_$mappedSelName"
+                    }
+                    is AglStyleMetaRule -> {
+                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + rule.pattern.pattern)
+                        listOf(".ace_$mappedSelName")
+                    }
+                    else -> error("Subtype not handled")
                 }
-                val cssClasses = listOf(AglStyleSelector(".$aglStyleClass", AglStyleSelectorKind.LITERAL)) + ruleClasses
-                val mappedRule = AglStyleRuleDefault(cssClasses) // just used to map to css string
-                mappedRule.declaration = LinkedHashMap(rule.declaration.values.associate { oldStyle ->
-                    val style = when (oldStyle.name) {
-                        "foreground" -> AglStyleDeclaration("color", oldStyle.value)
-                        "background" -> AglStyleDeclaration("background-color", oldStyle.value)
+                val cssClasses = listOf(".$aglStyleClass") + ruleClasses
+                val declarations = LinkedHashMap(rule.declaration.values.associate { oldStyle ->
+                    when (oldStyle.name) {
+                        "foreground" -> Pair("color", oldStyle.value)
+                        "background" -> Pair("background-color", oldStyle.value)
                         "font-style" -> when (oldStyle.value) {
-                            "bold" -> AglStyleDeclaration("font-weight", oldStyle.value)
-                            "italic" -> AglStyleDeclaration("font-style", oldStyle.value)
-                            else -> oldStyle
+                            "bold" -> Pair("font-weight", oldStyle.value)
+                            "italic" -> Pair("font-style", oldStyle.value)
+                            else -> Pair(oldStyle.name, oldStyle.value)
                         }
 
-                        else -> oldStyle
+                        else -> Pair(oldStyle.name, oldStyle.value)
                     }
-                    Pair(style.name, style)
                 })
-                mappedCss = mappedCss + "\n" + mappedRule.toCss()
+                mappedCss = mappedCss + "\n" + AglStyleHandler.toCss(cssClasses, declarations)
             }
         }
 

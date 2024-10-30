@@ -96,67 +96,6 @@ external interface Conversion {
     fun attributeToElement(definition: dynamic)
 }
 
-/**
- * Clipboard
- * Enter
- * SelectAll
- * Typing
- * Undo
- */
-external class Essentials {
-    companion object {
-        fun pluginName(): String = definedExternally
-    }
-}
-
-/**
- * from basic-styles
- */
-external class Bold {
-    companion object {
-        fun pluginName(): String = definedExternally
-    }
-}
-
-/**
- * from basic-styles
- */
-external class Italic {
-    companion object {
-        fun pluginName(): String = definedExternally
-    }
-}
-
-/*
- * font size,
- * font family,
- * font color,
- * font background color.
- */
-external class Font {
-    companion object {
-        fun pluginName(): String = definedExternally
-    }
-}
-
-/**
- * paragraph support
- */
-external class Paragraph {
-    companion object {
-        fun pluginName(): String = definedExternally
-    }
-}
-
-/**
- * mentions support, from mentions
- */
-external class Mention {
-    companion object {
-        fun pluginName(): String = definedExternally
-    }
-}
-
 external interface Writer {
     val model: Model
 

@@ -49,6 +49,7 @@ import net.akehurst.language.editor.browser.demo.BuildConfig
 import net.akehurst.language.editor.browser.monaco.Monaco
 import net.akehurst.language.editor.browser.monaco.attachToMonaco
 import net.akehurst.language.editor.common.ConsoleLogger
+import net.akehurst.language.editor.common.EditorOptionsDefault
 import net.akehurst.language.editor.common.compose.attachToComposeEditor
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
@@ -496,6 +497,7 @@ fun createAce(editorElement: Element, logFunction: LogFunction, languageService:
         containerElement = editorElement,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = EditorOptionsDefault(),
         logFunction = logFunction,
         aceEditor = ed,
         ace = ace
@@ -549,6 +551,7 @@ fun createMonaco(editorElement: Element, logFunction: LogFunction, languageServi
         containerElement = editorElement,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = EditorOptionsDefault(),
         logFunction = logFunction,
         monacoEditor = ed,
         monaco = monaco
@@ -604,6 +607,7 @@ suspend fun createCk(editorElement: Element, logFunction: LogFunction, languageS
         containerElement = editorElement,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = EditorOptionsDefault(),
         logFunction = logFunction,
         ckEditor = ed!!
     )
@@ -629,6 +633,7 @@ fun createCodeMirror(editorElement: Element, logFunction: LogFunction, languageS
         containerElement = editorElement,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = EditorOptionsDefault(),
         logFunction = logFunction,
         cmEditor = ed,
         codemirror = codemirror.CodeMirror
@@ -643,6 +648,7 @@ fun createAgl(editorElement: Element, logFunction: LogFunction, languageService:
         containerElement = editorElement,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = EditorOptionsDefault(),
         logFunction = logFunction,
     )
 }
@@ -660,6 +666,7 @@ fun createCompose(editorElement: Element, logFunction: LogFunction, languageServ
         languageService = languageService,
         languageId = languageId,
         editorId = editorId,
+        editorOptions = EditorOptionsDefault(),
         logFunction = logFunction,
         composeEditor = editor
     )
