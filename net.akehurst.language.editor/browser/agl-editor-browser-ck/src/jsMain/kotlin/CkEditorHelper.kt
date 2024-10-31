@@ -39,7 +39,7 @@ object CkEditorHelper {
         boldViewStyle["font-style"] = "bold"
         attributeToElement(ckEditor, ATTRIBUTE_NAME_STYLE_BOLD,objectJS {
             model = ATTRIBUTE_NAME_STYLE_BOLD
-            view = "strong"
+            view = "b"
             classes = ATTRIBUTE_NAME_STYLE_BOLD
             styles = boldViewStyle
         })
