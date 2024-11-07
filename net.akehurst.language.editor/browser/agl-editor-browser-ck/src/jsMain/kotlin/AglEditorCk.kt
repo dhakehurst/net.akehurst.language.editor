@@ -20,6 +20,8 @@ import kotlinx.browser.window
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
+import net.akehurst.language.editor.browser.ck.autocomplete.AutoCompleteItem
+import net.akehurst.language.editor.browser.ck.autocomplete.Autocomplete
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
@@ -30,7 +32,7 @@ import org.w3c.dom.Element
 fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     languageService: LanguageService,
     containerElement: Element,
-    ckEditor: ck.Editor,
+    ckEditor: ck.core.editor.Editor,
     languageId: LanguageIdentity,
     editorId: String,
     editorOptions: EditorOptions,
@@ -53,7 +55,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
 private class AglEditorCk<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
-    val ckEditor: ck.Editor,
+    val ckEditor: ck.core.editor.Editor,
     languageId: LanguageIdentity,
     editorId: String,
     editorOptions: EditorOptions,
@@ -86,8 +88,18 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     override val workerTokenizer: AglTokenizerByWorkerCk<AsmType, ContextType> = AglTokenizerByWorkerCk(this.agl, this.emi, logger)
 
+    private lateinit var _contextualBalloon:ck.ui.panel.balloon.ContextualBalloon
+    private lateinit var _autocompleteView:Autocomplete
+
     fun initialise() {
         CkEditorHelper.createAglAttributes(ckEditor)
+
+        // CTRL+SPACE
+        ckEditor.keystrokes.set(arrayOf("ctrl!", 32), { invokeAutocomplete() })
+        _contextualBalloon = ckEditor.plugins.get( ck.ui.panel.balloon.ContextualBalloon::class.js )
+        _autocompleteView = Autocomplete()
+
+
 
         ckEditor.model.document.on("change:data") {
             onEditorTextChangeInternal()
@@ -120,20 +132,23 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
                     is AglStyleTagRule -> rule.selector.map {
                         this.agl.styleHandler.mapSelectorToCssClass(it.value)
                     }
+
                     is AglStyleMetaRule -> {
                         val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + rule.pattern.pattern)
                         listOf(mappedSelName)
                     }
+
                     else -> error("Subtype not handled")
                 }
                 val attribs = rule.declaration.values.associate { oldStyle ->
                     when (oldStyle.name) {
                         "foreground" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_FORE_COLOUR, oldStyle.value)
                         "background" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_BACK_COLOUR, oldStyle.value)
-                        "text-decoration" -> when(oldStyle.value) {
+                        "text-decoration" -> when (oldStyle.value) {
                             "underline" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_UNDERLINE, true)
                             else -> Pair(oldStyle.name, oldStyle.value)
                         }
+
                         "font-style" -> when (oldStyle.value) {
                             "bold" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_BOLD, true)
                             "italic" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_ITALIC, true)
@@ -216,5 +231,23 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
             MessageStatus.FAILURE -> this.resetTokenization(0) // reset to trigger use of scan tokens
             else -> Unit
         }
+    }
+
+    // ---
+    fun invokeAutocomplete() {
+        logger.logTrace("Autocomplete Invoked")
+        val items = listOf(
+            AutoCompleteItem("A", "", ""),
+            AutoCompleteItem("B", "", ""),
+            AutoCompleteItem("C", "", ""),
+            AutoCompleteItem("D", "", ""),
+            AutoCompleteItem("E", "", ""),
+        )
+        val ac = Autocomplete()
+        val cursorRng = ckEditor.model.document.selection.getFirstRange() ?: error("Should always be non-null!")
+        val cursorViewRng = ckEditor.editing.mapper.toViewRange(cursorRng)
+        val domRng = ckEditor.editing.view.domConverter.viewRangeToDom(cursorViewRng)
+        val targetRect = ck.utils.dom.Rect.getDomRangeRects(domRng).first()
+        ac.show(_contextualBalloon, targetRect, items)
     }
 }

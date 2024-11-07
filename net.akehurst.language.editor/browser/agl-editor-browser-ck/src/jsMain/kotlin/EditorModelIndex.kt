@@ -5,13 +5,13 @@ import js.iterable
 
 class EditorModelIndex() {
 
-    var model: ck.Model? = null
+    var model: ck.engine.model.Model? = null
     var rawText: String = "" ; private set
     // preserves insertion order, which should be a 'sorted' order by key
-    private val _reverseIndex = linkedMapOf<Int, ck.Position>()
-    val reverseIndex : Map<Int, ck.Position> = _reverseIndex
+    private val _reverseIndex = linkedMapOf<Int, ck.engine.model.Position>()
+    val reverseIndex : Map<Int, ck.engine.model.Position> = _reverseIndex
 
-    fun update(model: ck.Model): EditorModelIndex {
+    fun update(model: ck.engine.model.Model): EditorModelIndex {
         this.model = model
         rawText = ""
         _reverseIndex.clear()
@@ -21,7 +21,7 @@ class EditorModelIndex() {
         val items =  rootRange.getItems().iterable()
         for (item in items) {
             if ( item.is_( "element" ) && model.schema.checkChild( item, "\$text" ) ) {
-                val el = item as ck.Element
+                val el = item as ck.engine.model.Element
 
                 // Get the whole text from block.
                 // Inline elements (like softBreak or imageInline) are replaced
@@ -30,13 +30,13 @@ class EditorModelIndex() {
                     when {
                         //is ck.Text -> {
                         ch.is_("\$text") -> {
-                            val txt = (ch as ck.Text).data
+                            val txt = (ch as ck.engine.model.Text).data
                             //console.log("child text: '$txt'")
                             txt
                         }
                         //is ck.Element -> {
                         ch.is_("element") -> {
-                            ch as ck.Element
+                            ch as ck.engine.model.Element
                             when {
                                 "br"==ch.name -> "\n"
                                 else -> ""
@@ -76,7 +76,7 @@ class EditorModelIndex() {
         return this
     }
 
-    fun toModelPosition(characterIndex: Int): ck.Position {
+    fun toModelPosition(characterIndex: Int): ck.engine.model.Position {
         //console.log(reverseIndex.entries.joinToString { "${it.key}:${it.value}" })
         val x = reverseIndex.entries.last { characterIndex >= it.key }
         val offset = characterIndex-x.key

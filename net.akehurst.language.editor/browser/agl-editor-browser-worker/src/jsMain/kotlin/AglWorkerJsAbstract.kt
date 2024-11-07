@@ -135,7 +135,7 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                         this.endBranch(nodeInfo)
                     }
 
-                    override fun error(msg: String, path: PathFunction) {
+                    override fun treeError(msg: String, path: PathFunction) {
                         val parent = stack.peek()
                         val node = objectJS {
                             isBranch = false
@@ -196,7 +196,7 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                         this.endBranch(nodeInfo)
                     }
 
-                    override fun error(msg: String, path: PathFunction) {
+                    override fun treeError(msg: String, path: PathFunction) {
                         sb.append("<ERROR>:'${escapeCtrlCodes(msg)}'")
                     }
                 }

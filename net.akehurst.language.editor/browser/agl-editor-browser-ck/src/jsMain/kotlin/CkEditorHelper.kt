@@ -28,7 +28,7 @@ object CkEditorHelper {
     /**
      * create own styles so we can remove them, leaving user styles
      */
-    fun createAglAttributes(ckEditor: ck.Editor) {
+    fun createAglAttributes(ckEditor: ck.core.editor.Editor) {
         //create style for foreground colour //TODO
         //create style for background colour //TODO
 
@@ -93,7 +93,7 @@ object CkEditorHelper {
         })
     }
 
-    fun attributeToElement(ckEditor: ck.Editor, attributeName:String, a2e:dynamic) {
+    fun attributeToElement(ckEditor: ck.core.editor.Editor, attributeName:String, a2e:dynamic) {
         ckEditor.model.schema.extend("\$text", objectJSTyped { allowAttributes = attributeName })
         ckEditor.model.schema.setAttributeProperties(attributeName, objectJS {
             isFormatting = true
@@ -102,7 +102,7 @@ object CkEditorHelper {
         ckEditor.conversion.attributeToElement(a2e)
     }
 
-    fun getFormattingAttributeNames(item: ck.Item, schema: ck.Schema): List<String> {
+    fun getFormattingAttributeNames(item: ck.engine.model.Item, schema: ck.engine.model.Schema): List<String> {
         val result = mutableListOf<String>()
         for (att in item.getAttributes().iterable()) {
             val attName = att[0] as String
@@ -114,7 +114,7 @@ object CkEditorHelper {
         return result
     }
 
-    fun addAttributes(logger: AglEditorLogger, model:ck.Model, newAttributes: List<CkAttributeData>, allAttributeNames:Set<String>) {
+    fun addAttributes(logger: AglEditorLogger, model:ck.engine.model.Model, newAttributes: List<CkAttributeData>, allAttributeNames:Set<String>) {
         model.enqueueChange { writer ->
             try {
                 removeAttributes(writer, allAttributeNames)
@@ -131,7 +131,7 @@ object CkEditorHelper {
         }
     }
 
-    fun removeAttributes(writer: ck.Writer, attributeNames:Set<String>) {
+    fun removeAttributes(writer: ck.engine.model.Writer, attributeNames:Set<String>) {
         val rootRange = writer.model.createRangeIn(writer.model.document.getRoot())
         val items = rootRange.getItems().iterable()
         for (item in items) {
