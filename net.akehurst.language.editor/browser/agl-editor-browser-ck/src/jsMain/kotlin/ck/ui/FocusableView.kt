@@ -4,6 +4,6 @@ package ck.ui
 
 import org.w3c.dom.HTMLElement
 
-external interface FocusableView : View<HTMLElement> {
-    fun focus()
+open external class FocusableView : View<HTMLElement> {
+    open fun focus()
 }

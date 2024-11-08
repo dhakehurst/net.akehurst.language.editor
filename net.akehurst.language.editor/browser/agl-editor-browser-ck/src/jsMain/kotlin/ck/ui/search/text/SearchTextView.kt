@@ -4,7 +4,17 @@ package ck.ui.search.text
 
 import org.w3c.dom.HTMLElement
 
-open external class SearchTextView<TQueryFieldView> : ck.ui.View<HTMLElement>
+open external class SearchTextView<TQueryFieldView> : ck.ui.View<HTMLElement> {
+
+    val keystrokes: ck.utils.KeystrokeHandler
+
+    var queryView: SearchTextQueryViewConfig<TQueryFieldView>
+    val filteredView: ck.ui.search.FilteredView
+    val resultsView:ck.ui.search.SearchResultsView
+
+    fun render()
+
+}
 
 external interface SearchTextQueryViewConfig<TConfigSearchField> {
     /**

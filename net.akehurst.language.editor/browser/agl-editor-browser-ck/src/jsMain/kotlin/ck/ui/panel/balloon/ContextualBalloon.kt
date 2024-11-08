@@ -47,7 +47,15 @@ external class ContextualBalloon {
         fun pluginName(): String = definedExternally
     }
 
+    val view : BalloonPanelView
+
     var visibleView: ck.ui.View<HTMLElement>
 
+    fun hasView(view:ck.ui.View<HTMLElement>) : Boolean
     fun add(data:ViewConfiguration)
+    fun remove(view:ck.ui.View<HTMLElement>)
+}
+
+external class BalloonPanelView : ck.ui.View<HTMLElement> {
+
 }

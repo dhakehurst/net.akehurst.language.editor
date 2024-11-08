@@ -4,4 +4,6 @@ package ck.ui
 
 import org.w3c.dom.HTMLElement
 
-external class ViewCollection<TView:View<HTMLElement>> : ck.utils.Collection<TView>
+external class ViewCollection<TView:View<HTMLElement>> : ck.utils.Collection<TView> {
+
+}

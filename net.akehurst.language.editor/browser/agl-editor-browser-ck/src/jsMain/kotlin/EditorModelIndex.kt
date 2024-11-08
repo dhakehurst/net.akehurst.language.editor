@@ -1,5 +1,20 @@
-package net.akehurst.language.editor.browser.ck
+/**
+ * Copyright (C) 2024 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package net.akehurst.language.editor.browser.ck
 
 import js.iterable
 
@@ -48,20 +63,6 @@ class EditorModelIndex() {
                         }
                     }
                 }
-
-                // Find all words.
-                //not sure we need to do this
-                /*
-                val mrs = Regex("\\S+").findAll(blockText)
-                for ( mr  in mrs ) {
-                    // The position in a text node is always parented by the block element.
-                    val sp = model.createPositionAt( item, mr.range.first )
-                    val ep = model.createPositionAt( item, mr.range.last )
-                    reverseIndex[]
-
-                    wordRanges.push( model.createRange( startPosition, endPosition ) );
-                }
-                 */
                 val start = rawText.length
                 val startPos = model.createPositionAt(item, 0)
                 //console.log("'$blockText' $start : $startPos")
@@ -81,6 +82,12 @@ class EditorModelIndex() {
         val x = reverseIndex.entries.last { characterIndex >= it.key }
         val offset = characterIndex-x.key
         val pos = x.value.getShiftedBy(offset)
+        return pos
+    }
+
+    fun toSentencePosition(cursorPos: ck.engine.model.Position ): Int {
+        val lst = reverseIndex.entries.last { cursorPos.isAfter(it.value) }
+        val pos = lst.key + cursorPos.offset.toInt()
         return pos
     }
 }

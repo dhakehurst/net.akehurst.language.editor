@@ -130,3 +130,7 @@ external interface PositioningFunctionResult {
      */
     var config: Any?
 }
+
+external interface DomEmitter {
+
+}

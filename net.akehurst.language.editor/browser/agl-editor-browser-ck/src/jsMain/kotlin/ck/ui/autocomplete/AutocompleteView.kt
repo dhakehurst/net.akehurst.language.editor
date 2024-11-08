@@ -23,7 +23,7 @@ external interface AutocompleteViewConfig<TConfigSearchField> : ck.ui.search.tex
     var queryMinChars: Number?
 }
 
-external interface AutocompleteResultsView : ck.ui.search.SearchResultsView {
+external class AutocompleteResultsView : ck.ui.search.SearchResultsView {
 
     /**
      * Controls the visibility of the results view.

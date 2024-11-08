@@ -4,4 +4,7 @@ package ck.ui
 
 import org.w3c.dom.HTMLElement
 
-external interface View<TElement : HTMLElement>
+ open external class View<TElement : HTMLElement> : ck.utils.dom.DomEmitter {
+    val element: HTMLElement
+    val isRendered: Boolean
+}

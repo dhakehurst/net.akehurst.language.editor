@@ -2,6 +2,8 @@
 @file:JsNonModule
 package ck.ui.search
 
-external interface SearchResultsView {
+import org.w3c.dom.HTMLElement
+
+open external class SearchResultsView : ck.ui.View<HTMLElement> {
 
 }

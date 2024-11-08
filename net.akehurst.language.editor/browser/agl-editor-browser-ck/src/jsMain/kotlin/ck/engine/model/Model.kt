@@ -5,6 +5,7 @@ package ck.engine.model
 external interface Model {
     val document: Document
     val schema: Schema
+    fun <TReturn> change(func: (Writer) -> TReturn): TReturn
     fun enqueueChange(func: (Writer) -> Unit)
     fun createPositionAt(itemOrPosition: dynamic, offset: Number = definedExternally): Position
     fun createRangeIn(element: Element) : Range
@@ -39,6 +40,7 @@ external interface Writer {
     fun removeAttribute(key: String, item: Item)
     fun setSelection(pos: Position)
     fun addMarker(name: String, options: dynamic)
+    fun insertText(text:String, position: Position )
 }
 
 external class TreeWalker(options: dynamic) {
