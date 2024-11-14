@@ -4,7 +4,7 @@ package ck.utils.dom
 
 import org.w3c.dom.HTMLElement
 
-external class Rect() {
+external class Rect(element:HTMLElement) {
     companion object {
         @JsStatic
         fun getDomRangeRects(range:org.w3c.dom.Range): Array<Rect>
@@ -51,6 +51,8 @@ external class Rect() {
      * @readonly
      */
     var height: Number
+
+    fun contains(other:Rect):Boolean
 }
 
 external interface Options {

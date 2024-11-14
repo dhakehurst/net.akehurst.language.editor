@@ -117,7 +117,7 @@ object CkEditorHelper {
     fun addAttributes(logger: AglEditorLogger, model:ck.engine.model.Model, newAttributes: List<CkAttributeData>, allAttributeNames:Set<String>) {
         model.enqueueChange { writer ->
             try {
-                removeAttributes(writer, allAttributeNames)
+                removeAttributes(logger,writer, allAttributeNames)
                 for (tok in newAttributes) {
                     val rng = writer.createRange(tok.firstPosition, tok.lastPosition)
                     for (att in tok.attributes) {
@@ -131,14 +131,18 @@ object CkEditorHelper {
         }
     }
 
-    fun removeAttributes(writer: ck.engine.model.Writer, attributeNames:Set<String>) {
+    fun removeAttributes(logger: AglEditorLogger, writer: ck.engine.model.Writer, attributeNames:Set<String>) {
         val rootRange = writer.model.createRangeIn(writer.model.document.getRoot())
         val items = rootRange.getItems().iterable()
         for (item in items) {
             //TODO: maybe use getAttributesWithProperty( node, propertyName, propertyValue )
             for (attributeName in CkEditorHelper.getFormattingAttributeNames(item, writer.model.schema)) {
                 if (attributeNames.contains(attributeName)) {
-                    writer.removeAttribute(attributeName, item)
+                    try {
+                        writer.removeAttribute(attributeName, item)
+                    } catch (t: Throwable) {
+                        logger.logError("exception during removeAttributes: ",t)
+                    }
                 }
             }
         }

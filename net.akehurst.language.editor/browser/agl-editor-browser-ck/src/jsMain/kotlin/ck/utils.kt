@@ -13,14 +13,14 @@ open external class Collection<T> {
 
     fun clear()
 
-    fun get(index:Int):T
+    fun get(index:Int):T?
     fun add( item: T, index: Int? = definedExternally)
 
     fun getIndex(item:T) : Int
 }
 
-external interface FocusTracker {
-    fun on(event: String, callback: () -> Unit)
+external interface FocusTracker : Emitter {
+    //fun on(event: String, callback: () -> Unit)
 }
 
 external interface BaseEvent<TArg> {

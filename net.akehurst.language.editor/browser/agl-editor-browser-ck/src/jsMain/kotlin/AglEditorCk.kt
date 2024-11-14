@@ -169,7 +169,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         logger.log(LogLevel.Trace, "clearIssueMarkers")
         ckEditor.model.enqueueChange { writer ->
             try {
-                CkEditorHelper.removeAttributes(writer, setOf(CkEditorHelper.ATTRIBUTE_NAME_ERROR_MARKER))
+                CkEditorHelper.removeAttributes(logger, writer, setOf(CkEditorHelper.ATTRIBUTE_NAME_ERROR_MARKER))
             } catch (t: Throwable) {
                 logger.logError("exception during clearIssueMarkers: ", t)
             }

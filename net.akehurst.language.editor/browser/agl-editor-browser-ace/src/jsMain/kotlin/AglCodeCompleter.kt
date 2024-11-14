@@ -40,9 +40,9 @@ class AglCodeCompleter<AsmType : Any, ContextType : Any>(
         val aceCi = wordList.map { ci ->
             val m = when (ci.kind) {
                 CompletionItemKind.LITERAL -> ""
-                CompletionItemKind.PATTERN -> "(${ci.name})"
-                CompletionItemKind.SEGMENT -> "(${ci.name})"
-                CompletionItemKind.REFERRED -> "(${ci.name})"
+                CompletionItemKind.PATTERN -> "(${ci.label})"
+                CompletionItemKind.SEGMENT -> "(${ci.label})"
+                CompletionItemKind.REFERRED -> "(${ci.label})"
             }
             val s = when (ci.kind) {
                 CompletionItemKind.REFERRED -> 4

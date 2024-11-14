@@ -39,6 +39,7 @@ external interface Writer {
     fun setAttribute(key: String, value: dynamic, range: Range)
     fun removeAttribute(key: String, item: Item)
     fun setSelection(pos: Position)
+    fun setSelection(rng:Range)
     fun addMarker(name: String, options: dynamic)
     fun insertText(text:String, position: Position )
 }

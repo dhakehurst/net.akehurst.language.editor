@@ -33,6 +33,10 @@ class EditorModelIndex() {
 
         val rootRange = model.createRangeIn( model.document.getRoot() )
         // Iterate items based on [https://ckeditor.com/docs/ckeditor5/latest/framework/how-tos.html#how-to-find-words-in-a-document-and-get-their-ranges]
+
+        //create first position at beginning of text
+        _reverseIndex[0] = model.createPositionAt(rootRange.start,0)
+
         val items =  rootRange.getItems().iterable()
         for (item in items) {
             if ( item.is_( "element" ) && model.schema.checkChild( item, "\$text" ) ) {
@@ -70,10 +74,10 @@ class EditorModelIndex() {
                 rawText += blockText + "\n"
             }
         }
+
         //add a last position which is the end of the text
-        val last = rawText.length
-        val lastPos = model.createPositionAt(rootRange.end, 0)
-        _reverseIndex[last] = lastPos
+        _reverseIndex[rawText.length] = model.createPositionAt(rootRange.end, 0)
+
         return this
     }
 
@@ -86,7 +90,7 @@ class EditorModelIndex() {
     }
 
     fun toSentencePosition(cursorPos: ck.engine.model.Position ): Int {
-        val lst = reverseIndex.entries.last { cursorPos.isAfter(it.value) }
+        val lst = reverseIndex.entries.last { cursorPos.isAfter(it.value) || cursorPos.isEqual(it.value) }
         val pos = lst.key + cursorPos.offset.toInt()
         return pos
     }

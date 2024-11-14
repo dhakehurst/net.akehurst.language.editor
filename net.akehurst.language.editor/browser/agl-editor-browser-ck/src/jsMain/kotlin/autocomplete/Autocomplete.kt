@@ -3,6 +3,7 @@ package net.akehurst.language.editor.browser.ck.autocomplete
 
 import kotlinx.browser.document
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.editor.api.AglEditorCompletionProvider
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
@@ -24,12 +25,28 @@ data class AutoCompleteItem(
 )
 
 class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView() {
+
+    val itemView = ck.ui.button.ButtonView(ck.utils.Locale())
+
+    init {
+        itemView.label = when(item.kind) {
+            CompletionItemKind.LITERAL -> item.text
+            CompletionItemKind.PATTERN -> item.text
+            CompletionItemKind.SEGMENT -> item.label
+            CompletionItemKind.REFERRED -> item.text
+        }
+        itemView.withText = true
+        this.children.add(itemView)
+    }
+
     fun indicateSelected() {
-        //(children.first as DomWrapperView).isOn = true
+        itemView.element.classList.add("ck-on")
+        itemView.element.classList.remove("ck-off")
     }
 
     fun indicateUnselected() {
-        //(children.first as DomWrapperView).isOn = false
+        itemView.element.classList.add("ck-off")
+        itemView.element.classList.remove("ck-on")
     }
 
 
@@ -76,7 +93,10 @@ class CkAutocomplete(
                     ck.utils.keyCodes.arrowup -> selectPrevious()
                     ck.utils.keyCodes.esc -> hide()
                     else -> when {
-                        commitKeys.contains(arg.keyCode) -> insertSelected()
+                        commitKeys.contains(arg.keyCode) -> {
+                            insertSelected()
+                            hide()
+                        }
                     }
                 }
             }
@@ -102,8 +122,17 @@ class CkAutocomplete(
             val textToInsert = sel.item.text
             ckEditor.model.change { writer ->
                 writer.insertText(textToInsert, pos)
+                when(sel.item.kind) {
+                    // select the inserted 'Pattern' text so user can replace it
+                    CompletionItemKind.PATTERN -> {
+                        val rng = writer.createRange(pos, pos.getShiftedBy(textToInsert.length))
+                        writer.setSelection(rng)
+                    }
+                    else -> Unit
+                }
             }
         }
+
     }
 
     private fun select(index: Int) {
@@ -122,11 +151,16 @@ class CkAutocomplete(
                 selected?.indicateUnselected()
                 item.indicateSelected()
                 selected = item
-                listView.element?.scrollTop = item.element.offsetTop.toDouble()
+                if (isSelectedItemVisible().not()) {
+                    acView.resultsView.element.scrollTop = item.element.offsetTop.toDouble()
+                }
             }
         }
+    }
 
-
+    private fun isSelectedItemVisible():Boolean {
+        val itemRect = ck.utils.dom.Rect(selected!!.element)
+        return ck.utils.dom.Rect(acView.resultsView.element).contains(itemRect)
     }
 
     private fun selectNext() {
@@ -166,21 +200,19 @@ class CkAutocomplete(
 
     // --- AglEditorCompletionProvider ---
     override fun provide(completionItems: List<CompletionItem>) {
-        //val items = completionItems.map {
-        //    AutoCompleteItem(it.text, it.name, it.description)
-        //}
-        for (item in completionItems) {
-            val itemView = ck.ui.button.ButtonView(ck.utils.Locale())
-            itemView.label = item.label
-            itemView.withText = true
-
+        val sorted = completionItems.sortedWith{ a,b ->
+            when {
+                a.kind > b.kind -> 1
+                a.kind < b.kind -> -1
+                else -> a.label.compareTo(b.label)
+            }
+        }
+        for (item in sorted) {
             val listItemView = AutocompleteItemView(item)
-            listItemView.children.add(itemView)
             listView.items.add(listItemView)
         }
         acView.resultsView.asDynamic().isVisible = true
         select(0)
-        listView.focusFirst()
     }
 
 }

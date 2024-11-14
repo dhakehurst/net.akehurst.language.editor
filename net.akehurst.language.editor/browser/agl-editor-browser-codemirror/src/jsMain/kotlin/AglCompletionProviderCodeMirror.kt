@@ -98,7 +98,7 @@ internal class AglCompletionProviderCodeMirror<AsmType : Any, ContextType : Any>
                 override val label: String = it.text
                 override val detail: String? = when (it.kind) {
                     CompletionItemKind.LITERAL -> null
-                    else -> "\"${it.name}\""
+                    else -> "\"${it.label}\""
                 }
                 override val displayLabel: String? = null
                 override val info: String? = null
