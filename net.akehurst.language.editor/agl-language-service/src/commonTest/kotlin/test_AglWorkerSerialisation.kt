@@ -669,7 +669,7 @@ class test_AglWorkerSerialisation {
             MessageStatus.SUCCESS,
             "OK",
             emptyList(),
-            proc.grammar!!.asGrammarModel()
+            proc.grammarModel
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)

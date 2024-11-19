@@ -4,10 +4,7 @@ import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.editor.api.AglToken
-import net.akehurst.language.editor.api.EndPointIdentity
-import net.akehurst.language.editor.api.LanguageServiceResponse
-import net.akehurst.language.editor.api.MessageStatus
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
@@ -52,16 +49,35 @@ class test_LanguageServiceDirectExecution {
             }
 
         }
+        val logFunction = {level: LogLevel, prefix: String, message: String, t: Throwable? ->  println("$level: $prefix - $message, $t") }
     }
 
     @Test
     fun construct() {
-        val sut = LanguageServiceDirectExecution()
+        val sut = LanguageServiceDirectExecution(logFunction)
     }
 
     @Test
     fun processorCreateRequest() {
-        val sut = LanguageServiceDirectExecution()
+        val sut = LanguageServiceDirectExecution(logFunction)
+
+        val epi = EndPointIdentity("test-editor","<nothing>")
+        val li = LanguageIdentity("test-lang")
+
+        sut.addResponseListener(epi, responseRecorder)
+
+        val gs = GrammarString("""
+            namespace test
+            grammar Test {
+                S = 'a' ;
+            }
+        """.trimIndent())
+        sut.request.processorCreateRequest(epi, li, gs, null, aglEditorOptions())
+    }
+
+    @Test
+    fun processorCreateRequest_alread_registered() {
+        val sut = LanguageServiceDirectExecution(logFunction)
 
         val epi = EndPointIdentity("test-editor","<nothing>")
         val li = LanguageIdentity("test-lang")

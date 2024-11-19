@@ -194,7 +194,7 @@ open class LanguageServiceRequestDirectExecution(
     protected open fun configureLanguageDefinition(ld: LanguageDefinition<Any, Any>, grammarStr: GrammarString?, crossReferenceModelStr: CrossReferenceString?) {
         logger.logTrace("configureLanguageDefinition ${ld.identity}")
         // TODO: could be an argument
-        ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>
+        ld.configuration = Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>
         ld.update(grammarStr, crossReferenceModelStr, ld.styleStr)
     }
 

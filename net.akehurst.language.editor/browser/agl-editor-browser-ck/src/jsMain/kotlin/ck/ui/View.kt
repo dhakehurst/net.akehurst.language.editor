@@ -2,9 +2,16 @@
 @file:JsNonModule
 package ck.ui
 
+import ck.utils.BaseEvent
+import ck.utils.EventInfo
 import org.w3c.dom.HTMLElement
 
- open external class View<TElement : HTMLElement> : ck.utils.dom.DomEmitter {
+ open external class View<TElement : HTMLElement> : ck.utils.Emitter, ck.utils.dom.DomEmitter {
     val element: HTMLElement
     val isRendered: Boolean
+
+     override fun <TArg, TEvent : BaseEvent<TArg>> on(eventName: String, callback: (ev: EventInfo, arg: TArg) -> Unit, options: dynamic)
+     override fun <TArg, TEvent : BaseEvent<TArg>> fire(eventInfoName: String, vararg args: TEvent)
+
+     fun render()
 }

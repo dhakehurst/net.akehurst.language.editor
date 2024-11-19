@@ -5,6 +5,7 @@ import kotlinx.browser.document
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.editor.api.AglEditorCompletionProvider
+import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import org.w3c.dom.HTMLInputElement
@@ -37,6 +38,9 @@ class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView()
         }
         itemView.withText = true
         this.children.add(itemView)
+        this.itemView.element.onclick = {
+             this.fire<Any,ck.ui.button.ButtonExecuteEvent>("execute")
+        }
     }
 
     fun indicateSelected() {
@@ -53,10 +57,12 @@ class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView()
 }
 
 class CkAutocomplete(
+    val logger: AglEditorLogger,
     val ckEditor: ck.core.editor.Editor,
     val balloon: ck.ui.panel.balloon.ContextualBalloon
 ) : AglEditorCompletionProvider {
     val listView = FilteredListView()
+
     val acView = ck.ui.autocomplete.AutocompleteView<HTMLInputElement>(ck.utils.Locale(), objectJSTyped<ck.ui.autocomplete.AutocompleteViewConfig<HTMLInputElement>> {
         filteredView = listView
         queryView = objectJSTyped<ck.ui.search.text.SearchTextQueryViewConfig<HTMLInputElement>> {
@@ -75,7 +81,7 @@ class CkAutocomplete(
 
     init {
         acView.render()
-        //document.body?.appendChild( acView.element )
+        //listView.render()
 
         ck.ui.bindings.clickOutsideHandler(objectJSTyped {
             emitter = acView
@@ -101,7 +107,6 @@ class CkAutocomplete(
                 }
             }
         }, objectJS { priority = "highest" })
-
     }
 
     private val isVisible: Boolean get() = balloon.visibleView === acView
@@ -153,6 +158,7 @@ class CkAutocomplete(
                 selected = item
                 if (isSelectedItemVisible().not()) {
                     acView.resultsView.element.scrollTop = item.element.offsetTop.toDouble()
+                    //listView.element.scrollTop = item.element.offsetTop.toDouble()
                 }
             }
         }
@@ -161,6 +167,7 @@ class CkAutocomplete(
     private fun isSelectedItemVisible():Boolean {
         val itemRect = ck.utils.dom.Rect(selected!!.element)
         return ck.utils.dom.Rect(acView.resultsView.element).contains(itemRect)
+        //return ck.utils.dom.Rect(listView.element).contains(itemRect)
     }
 
     private fun selectNext() {
@@ -200,19 +207,31 @@ class CkAutocomplete(
 
     // --- AglEditorCompletionProvider ---
     override fun provide(completionItems: List<CompletionItem>) {
-        val sorted = completionItems.sortedWith{ a,b ->
-            when {
-                a.kind > b.kind -> 1
-                a.kind < b.kind -> -1
-                else -> a.label.compareTo(b.label)
+        try {
+            logger.logTrace("Provided ${completionItems.size} items.")
+            val sorted = completionItems.sortedWith { a, b ->
+                when {
+                    a.kind > b.kind -> 1
+                    a.kind < b.kind -> -1
+                    else -> a.label.compareTo(b.label)
+                }
             }
+            for (item in sorted) {
+                val listItemView = AutocompleteItemView(item)
+                listItemView.on<Any,ck.ui.button.ButtonExecuteEvent>("execute", { evt, arg ->
+                    val idx = listView.items.getIndex(listItemView)
+                    select(idx)
+                    insertSelected()
+                    hide()
+                })
+                listView.items.add(listItemView)
+            }
+            acView.resultsView.asDynamic().isVisible = true
+            //listView.asDynamic().isVisible = true
+            select(0)
+        } catch (t:Throwable) {
+            logger.logError("Exception trying to provide items.", t)
         }
-        for (item in sorted) {
-            val listItemView = AutocompleteItemView(item)
-            listView.items.add(listItemView)
-        }
-        acView.resultsView.asDynamic().isVisible = true
-        select(0)
     }
 
 }

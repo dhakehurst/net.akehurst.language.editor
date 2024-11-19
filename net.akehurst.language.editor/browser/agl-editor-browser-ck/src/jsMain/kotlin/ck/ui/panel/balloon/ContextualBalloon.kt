@@ -15,7 +15,7 @@ external interface ViewConfiguration {
     /**
      * The content of the balloon.
      */
-    var view: ck.ui.View<HTMLElement>
+    var view: ck.ui.View<out HTMLElement>
 
     /**
      * Positioning options.
@@ -49,11 +49,11 @@ external class ContextualBalloon {
 
     val view : BalloonPanelView
 
-    var visibleView: ck.ui.View<HTMLElement>
+    var visibleView: ck.ui.View<out HTMLElement>
 
-    fun hasView(view:ck.ui.View<HTMLElement>) : Boolean
+    fun hasView(view:ck.ui.View<out HTMLElement>) : Boolean
     fun add(data:ViewConfiguration)
-    fun remove(view:ck.ui.View<HTMLElement>)
+    fun remove(view:ck.ui.View<out HTMLElement>)
 }
 
 external class BalloonPanelView : ck.ui.View<HTMLElement> {

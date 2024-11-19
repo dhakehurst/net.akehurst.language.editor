@@ -61,8 +61,7 @@ abstract class AglWorkerAbstract {
     protected open fun configureLanguageDefinition(ld: LanguageDefinition<Any, Any>, grammarStr: GrammarString?, crossReferenceModelStr: CrossReferenceString?) {
         //style and format not handled here, handled separately
         // TODO: could be an argument
-        ld.configuration = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>
-        ld.configuration = Agl.configuration(base = Agl.configurationDefault() as LanguageProcessorConfiguration<Any, Any>) {
+        ld.configuration = Agl.configuration(base = Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>) {
             if (null != crossReferenceModelStr) {
                 crossReferenceModelResolver { p -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typeModel), crossReferenceModelStr) }
             }
@@ -366,7 +365,7 @@ abstract class AglWorkerAbstract {
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
 
-            val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(proc.grammar!!.asGrammarModel(), Agl.options {
+            val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(proc.grammarModel!!, Agl.options {
                 semanticAnalysis {
                     context(ContextFromGrammarRegistry(Agl.registry))
                     locationMap(proc.syntaxAnalyser!!.locationMap)

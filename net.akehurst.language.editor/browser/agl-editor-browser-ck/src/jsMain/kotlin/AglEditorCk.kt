@@ -96,7 +96,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         // CTRL+SPACE
         ckEditor.keystrokes.set(arrayOf("ctrl!", 32), { invokeAutocomplete() })
         _contextualBalloon = ckEditor.plugins.get(ck.ui.panel.balloon.ContextualBalloon::class.js)
-        _autocomplete = CkAutocomplete(ckEditor, _contextualBalloon)
+        _autocomplete = CkAutocomplete(logger, ckEditor, _contextualBalloon)
 
 
         ckEditor.model.document.on("change:data") {
@@ -235,6 +235,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     fun invokeAutocomplete() {
         logger.logTrace("Autocomplete Invoked")
         val cursorPos = ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
+        emi.update(ckEditor.model)
         languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, agl.languageIdentity, text, emi.toSentencePosition(cursorPos), this.agl.options)
 
         _autocomplete.show()

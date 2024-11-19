@@ -5,8 +5,7 @@ package ck.ui.list
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLUListElement
 
-open external class ListView {
-    val element: HTMLUListElement?
+open external class ListView : ck.ui.View<HTMLUListElement> {
 
     /**
      * Collection of the child list views.

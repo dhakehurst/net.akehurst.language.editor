@@ -6,3 +6,7 @@ external class ButtonView(locale: ck.utils.Locale?) : ck.ui.FocusableView {
     var label: String?
     var withText: Boolean
 }
+
+external interface ButtonExecuteEvent : ck.utils.BaseEvent<Any> {
+
+}

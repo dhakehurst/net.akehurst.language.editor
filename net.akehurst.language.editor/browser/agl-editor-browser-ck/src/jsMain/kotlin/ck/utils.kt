@@ -38,6 +38,8 @@ external interface EventInfo {
 
 external interface Emitter {
     fun <TArg, TEvent : BaseEvent<TArg>> on(eventName: String, callback: (ev:EventInfo, arg:TArg) -> Unit, options: dynamic = definedExternally )
+
+    fun <TArg, TEvent : BaseEvent<TArg>> fire(eventInfoName:String, vararg args:TEvent)
 }
 
 external class Locale

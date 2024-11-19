@@ -12,8 +12,6 @@ open external class SearchTextView<TQueryFieldView> : ck.ui.View<HTMLElement> {
     val filteredView: ck.ui.search.FilteredView
     val resultsView:ck.ui.search.SearchResultsView
 
-    fun render()
-
 }
 
 external interface SearchTextQueryViewConfig<TConfigSearchField> {
