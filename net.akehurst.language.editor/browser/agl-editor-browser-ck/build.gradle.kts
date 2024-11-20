@@ -12,9 +12,9 @@ plugins {
 
 dependencies {
 
-    jsMainApi(project(":agl-editor-common"))
+    commonMainApi(project(":agl-editor-common"))
 //    jsMainApi(project(":agl-language-service-serialisation"))
-    jsMainApi(project(":agl-editor-browser-worker"))
+    commonMainApi(project(":agl-editor-browser-worker"))
 
 }
 

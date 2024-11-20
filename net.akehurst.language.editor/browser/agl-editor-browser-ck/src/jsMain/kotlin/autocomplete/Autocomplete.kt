@@ -77,7 +77,7 @@ class CkAutocomplete(
     var selected: AutocompleteItemView? = null
 
     private val commitKeys = listOf(ck.utils.keyCodes.enter, ck.utils.keyCodes.tab)
-    private val handledKeys = commitKeys + listOf(ck.utils.keyCodes.arrowdown, ck.utils.keyCodes.arrowup, ck.utils.keyCodes.esc)
+    private val handledKeys = commitKeys + listOf(ck.utils.keyCodes.arrowdown, ck.utils.keyCodes.arrowup, ck.utils.keyCodes.esc,ck.utils.keyCodes.arrowleft,ck.utils.keyCodes.arrowright)
 
     init {
         acView.render()
@@ -98,6 +98,8 @@ class CkAutocomplete(
                     ck.utils.keyCodes.arrowdown -> selectNext()
                     ck.utils.keyCodes.arrowup -> selectPrevious()
                     ck.utils.keyCodes.esc -> hide()
+                    ck.utils.keyCodes.arrowleft -> hide()
+                    ck.utils.keyCodes.arrowright -> hide()
                     else -> when {
                         commitKeys.contains(arg.keyCode) -> {
                             insertSelected()

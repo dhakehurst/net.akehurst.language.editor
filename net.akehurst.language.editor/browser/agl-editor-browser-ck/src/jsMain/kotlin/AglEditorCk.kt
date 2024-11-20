@@ -91,7 +91,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     private lateinit var _autocomplete: CkAutocomplete
 
     fun initialise() {
-        CkEditorHelper.createAglAttributes(ckEditor)
+        CkEditorHelper.createAglAttributes(logger, ckEditor)
 
         // CTRL+SPACE
         ckEditor.keystrokes.set(arrayOf("ctrl!", 32), { invokeAutocomplete() })
