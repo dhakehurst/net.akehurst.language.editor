@@ -167,12 +167,16 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     override fun clearIssueMarkers() {
         logger.log(LogLevel.Trace, "clearIssueMarkers")
-        ckEditor.model.enqueueChange { writer ->
-            try {
-                CkEditorHelper.removeAttributes(logger, writer, setOf(CkEditorHelper.ATTRIBUTE_NAME_ERROR_MARKER))
-            } catch (t: Throwable) {
-                logger.logError("exception during clearIssueMarkers: ", t)
+        try {
+            ckEditor.model.enqueueChange { writer ->
+                try {
+                    CkEditorHelper.removeAttributes(logger, writer, setOf(CkEditorHelper.ATTRIBUTE_NAME_ERROR_MARKER))
+                } catch (t: Throwable) {
+                    logger.logError("exception during clearIssueMarkers...enqueueChange : ", t)
+                }
             }
+        } catch (t: Throwable) {
+            logger.logError("exception during clearIssueMarkers: ", t)
         }
 
         //TODO: Maybe not explicitly do this, rather remove issues when removing styles

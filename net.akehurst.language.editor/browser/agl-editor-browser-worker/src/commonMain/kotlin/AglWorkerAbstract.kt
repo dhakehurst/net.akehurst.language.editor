@@ -41,7 +41,7 @@ import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sentence.common.SentenceDefault
 import net.akehurst.language.sppt.api.SharedPackedParseTree
-import net.akehurst.language.transform.asm.TransformModelDefault
+import net.akehurst.language.transform.asm.TransformDomainDefault
 
 
 abstract class AglWorkerAbstract {
@@ -286,7 +286,7 @@ abstract class AglWorkerAbstract {
                             is ContextFromTypeModelReference -> {
                                 val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId
                                 val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                                val res = TransformModelDefault.fromGrammarModel(ld.grammarModel)
+                                val res = TransformDomainDefault.fromGrammarModel(ld.grammarModel)
                                 val trfm = when {
                                     res.issues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
                                     else -> TODO()

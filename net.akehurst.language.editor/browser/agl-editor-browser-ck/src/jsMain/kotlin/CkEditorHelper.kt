@@ -133,7 +133,7 @@ object CkEditorHelper {
                         }
                     }
                 } catch (t: Throwable) {
-                    logger.logError("exception during addAttributes: ", t)
+                    logger.logError("exception during addAttributes...enqueueChange: ", t)
                 }
             }
         } catch (t: Throwable) {

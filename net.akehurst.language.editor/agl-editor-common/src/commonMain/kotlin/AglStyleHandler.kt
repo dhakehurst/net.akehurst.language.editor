@@ -43,7 +43,7 @@ open class AglStyleHandler(
         }
     }
 
-    private var _styleModel: AglStyleModel = AglStyleModelDefault(SimpleName(languageId.last), emptyList())
+    private var _styleModel: AglStyleModel = AglStyleModelDefault(SimpleName(languageId.last))
 
     val styleModel get() = _styleModel
 

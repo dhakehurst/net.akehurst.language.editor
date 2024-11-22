@@ -39,7 +39,7 @@ import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sentence.common.SentenceDefault
 import net.akehurst.language.sppt.api.SharedPackedParseTree
 import net.akehurst.language.style.api.AglStyleModel
-import net.akehurst.language.transform.asm.TransformModelDefault
+import net.akehurst.language.transform.asm.TransformDomainDefault
 
 class LanguageServiceDirectExecution(
     logFunction: LogFunction?
@@ -353,7 +353,7 @@ open class LanguageServiceRequestDirectExecution(
                         is ContextFromTypeModelReference -> {
                             val langId = LanguageIdentity((options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId.value)
                             val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                            val tm = TransformModelDefault.fromGrammarModel(ld.grammarModel).asm!!.typeModel!!
+                            val tm = TransformDomainDefault.fromGrammarModel(ld.grammarModel).asm!!.typeModel!!
                             ContextFromTypeModel(tm)
                         }
 
