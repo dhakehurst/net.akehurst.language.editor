@@ -17,9 +17,7 @@
 package net.akehurst.language.editor.language.service
 
 import net.akehurst.kotlin.json.JsonString
-import net.akehurst.language.agl.CrossReferenceString
-import net.akehurst.language.agl.GrammarString
-import net.akehurst.language.agl.StyleString
+import net.akehurst.language.agl.*
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
@@ -41,8 +39,16 @@ class AglLanguageServiceByWorker(
 ) : LanguageService {
 
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
-        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, grammarStr: GrammarString, crossReferenceModelStr: CrossReferenceString?, editorOptions: EditorOptions) {
-            sendToWorker(MessageProcessorCreate(endPointIdentity, languageId, grammarStr.value, crossReferenceModelStr?.value, editorOptions))
+        override fun processorCreateRequest(
+            endPointIdentity: EndPointIdentity,
+            languageId: LanguageIdentity,
+            grammarStr: GrammarString,
+            typeModelStr: TypeModelString?,
+            asmTransformStr: TransformString?,
+            crossReferenceModelStr: CrossReferenceString?,
+            editorOptions: EditorOptions
+        ) {
+            sendToWorker(MessageProcessorCreate(endPointIdentity, languageId, grammarStr.value, typeModelStr?.value, asmTransformStr?.value,crossReferenceModelStr?.value, editorOptions))
         }
 
         override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity) {

@@ -82,13 +82,17 @@ class AglComponents<AsmType : Any, ContextType : Any>(
             } else {
                 val old = this.languageDefinition
                 val grammarStrObservers = old.grammarStrObservers
-                val crossReferenceModelStrObservers = old.crossReferenceModelStrObservers
+                val typeModelStrObservers = old.typeModelStrObservers
+                val asmTransformStrObservers = old.asmTransformStrObservers
+                val crossReferenceStrObservers = old.crossReferenceStrObservers
                 val styleStrObservers = old.styleStrObservers
                 val formatterStrObservers = old.formatterStrObservers
                 this._languageIdentity = value
                 val new = this.languageDefinition
                 new.grammarStrObservers.addAll(grammarStrObservers)
-                new.crossReferenceModelStrObservers.addAll(crossReferenceModelStrObservers)
+                new.typeModelStrObservers.addAll(typeModelStrObservers)
+                new.asmTransformStrObservers.addAll(asmTransformStrObservers)
+                new.crossReferenceStrObservers.addAll(crossReferenceStrObservers)
                 new.styleStrObservers.addAll(styleStrObservers)
                 new.formatterStrObservers.addAll(formatterStrObservers)
                 this._styleHandler = AglStyleHandler(value)

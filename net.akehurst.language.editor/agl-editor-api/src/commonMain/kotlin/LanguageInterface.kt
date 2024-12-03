@@ -1,8 +1,6 @@
 package net.akehurst.language.editor.api
 
-import net.akehurst.language.agl.CrossReferenceString
-import net.akehurst.language.agl.GrammarString
-import net.akehurst.language.agl.StyleString
+import net.akehurst.language.agl.*
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
@@ -16,25 +14,45 @@ interface LanguageService {
 }
 
 interface LanguageServiceRequest {
-    fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, grammarStr:GrammarString, crossReferenceModelStr:CrossReferenceString?, editorOptions: EditorOptions)
-    fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity)
-    fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, styleStr:StyleString)
+    fun processorCreateRequest(
+        endPointIdentity: EndPointIdentity, languageId: LanguageIdentity,
+        grammarStr: GrammarString,
+        typeModelStr: TypeModelString?,
+        asmTransformStr: TransformString?,
+        crossReferenceModelStr: CrossReferenceString?,
+        editorOptions: EditorOptions
+    )
 
-    fun interruptRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, reason:String)
-    fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(endPointIdentity: EndPointIdentity, languageId:LanguageIdentity, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>)
-    fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, sentence:String, position:Int, processOptions: ProcessOptions<AsmType, ContextType>)
+    fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity)
+    fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: StyleString)
+
+    fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, reason: String)
+    fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
+        endPointIdentity: EndPointIdentity,
+        languageId: LanguageIdentity,
+        sentence: String,
+        processOptions: ProcessOptions<AsmType, ContextType>
+    )
+
+    fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
+        endPointIdentity: EndPointIdentity,
+        languageId: LanguageIdentity,
+        sentence: String,
+        position: Int,
+        processOptions: ProcessOptions<AsmType, ContextType>
+    )
 }
 
 interface LanguageServiceResponse {
-    fun processorCreateResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>)
-    fun processorDeleteResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String)
-    fun processorSetStyleResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel:AglStyleModel?)
+    fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>)
+    fun processorDeleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String)
+    fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?)
 
-    fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>)
-    fun sentenceParseResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?)
-    fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, asm:Any?)
-    fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity,status: MessageStatus, message: String, issues: List<LanguageIssue>, asm:Any?)
-    fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems:List<CompletionItem>)
+    fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>)
+    fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?)
+    fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?)
+    fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?)
+    fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>)
 }
 
 data class EndPointIdentity(

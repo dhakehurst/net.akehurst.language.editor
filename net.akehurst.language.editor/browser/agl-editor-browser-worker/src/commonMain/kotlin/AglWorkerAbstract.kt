@@ -17,9 +17,7 @@
 package net.akehurst.language.editor.worker
 
 import net.akehurst.kotlin.json.JsonString
-import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.CrossReferenceString
-import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
@@ -29,7 +27,6 @@ import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.common.AglStyleHandler
 import net.akehurst.language.editor.language.service.messages.*
-import net.akehurst.language.grammar.asm.asGrammarModel
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
 import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
 import net.akehurst.language.issues.api.LanguageProcessorPhase
@@ -58,7 +55,13 @@ abstract class AglWorkerAbstract {
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
     protected abstract fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String?
 
-    protected open fun configureLanguageDefinition(ld: LanguageDefinition<Any, Any>, grammarStr: GrammarString?, crossReferenceModelStr: CrossReferenceString?) {
+    protected open fun configureLanguageDefinition(
+        ld: LanguageDefinition<Any, Any>,
+        grammarStr: GrammarString?,
+        typeModelStr:TypeModelString?,
+        asmTransformStr:TransformString?,
+        crossReferenceModelStr: CrossReferenceString?
+    ) {
         //style and format not handled here, handled separately
         // TODO: could be an argument
         ld.configuration = Agl.configuration(base = Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>) {
@@ -66,10 +69,22 @@ abstract class AglWorkerAbstract {
                 crossReferenceModelResolver { p -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typeModel), crossReferenceModelStr) }
             }
         }
-        ld.update(grammarStr = grammarStr, crossReferenceModelStr, null)
+        ld.update(
+            grammarStr = grammarStr,
+            typeModelStr = typeModelStr,
+            asmTransformStr = asmTransformStr,
+            crossReferenceStr = crossReferenceModelStr,
+            null
+        )
     }
 
-    protected open fun createLanguageDefinition(languageId: LanguageIdentity, grammarStr: GrammarString?, crossReferenceModelStr: CrossReferenceString?): LanguageDefinition<Any, Any> {
+    protected open fun createLanguageDefinition(
+        languageId: LanguageIdentity,
+        grammarStr: GrammarString?,
+        typeModelStr:TypeModelString?,
+        asmTransformStr:TransformString?,
+        crossReferenceModelStr: CrossReferenceString?
+    ): LanguageDefinition<Any, Any> {
         val ld = Agl.registry.findOrPlaceholder<Any, Any>(
             identity = languageId,
             aglOptions = Agl.options {
@@ -82,7 +97,7 @@ abstract class AglWorkerAbstract {
             configuration = Agl.configurationBase() //use if placeholder created, not found
         )
         if (ld.isModifiable) {
-            configureLanguageDefinition(ld, grammarStr, crossReferenceModelStr)
+            configureLanguageDefinition(ld, grammarStr,typeModelStr, asmTransformStr, crossReferenceModelStr)
         }
         return ld
     }
@@ -103,7 +118,13 @@ abstract class AglWorkerAbstract {
             MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "Cannot createProcessor if there is no grammar", emptyList(), emptyList())
         } else {
             try {
-                val ld = createLanguageDefinition(message.languageId, GrammarString(message.grammarStr), message.crossReferenceModelStr?.let { CrossReferenceString(it) })
+                val ld = createLanguageDefinition(
+                    message.languageId,
+                    GrammarString(message.grammarStr),
+                    message.typeModelStr?.let { TypeModelString(it) },
+                    message.asmTransformStr?.let { TransformString(it) },
+                    message.crossReferenceStr?.let { CrossReferenceString(it) }
+                )
                 _languageDefinition[message.languageId] = ld
                 _editorOptions[message.endPoint.editorId] = message.editorOptions
                 //if there is a grammar check that grammar is well-defined and a processor can be created from it
@@ -119,7 +140,7 @@ abstract class AglWorkerAbstract {
                     sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.SUCCESS, "OK", ld.issues.all.toList(), proc.scanner!!.matchables))
                 }
             } catch (t: Throwable) {
-                sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "${t::class.simpleName}: ${t.message?:"<no exception message>"}", emptyList(), emptyList()))
+                sendMessage(port, MessageProcessorCreateResponse(message.endPoint, MessageStatus.FAILURE, "${t::class.simpleName}: ${t.message ?: "<no exception message>"}", emptyList(), emptyList()))
             }
         }
     }
@@ -144,10 +165,10 @@ abstract class AglWorkerAbstract {
                 styleHndlr.updateStyleModel(styleMdl)
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl))
             } else {
-                sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.FAILURE, "Invalid Style",result.issues.all.toList(), null))
+                sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.FAILURE, "Invalid Style", result.issues.all.toList(), null))
             }
         } catch (t: Throwable) {
-            sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.FAILURE, t.message?:"", emptyList(), null))
+            sendMessage(port, MessageSetStyleResponse(message.endPoint, MessageStatus.FAILURE, t.message ?: "", emptyList(), null))
         }
     }
 
@@ -213,7 +234,7 @@ abstract class AglWorkerAbstract {
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
-            val msg = "Exception during 'parse' - ${t::class.simpleName} - ${t.message?:""}\n$st"
+            val msg = "Exception during 'parse' - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
             sendMessage(port, MessageParseResult(endPoint, MessageStatus.FAILURE, msg, emptyList(), null))
             ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
         }
@@ -251,7 +272,7 @@ abstract class AglWorkerAbstract {
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
-            val msg = "Exception during syntaxAnalysis - ${t::class.simpleName} - ${t.message?:""}\n$st"
+            val msg = "Exception during syntaxAnalysis - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
             sendMessage(port, MessageSyntaxAnalysisResult(endPoint, MessageStatus.FAILURE, msg, emptyList(), null))
             SyntaxAnalysisResultDefault(null, IssueHolder(LanguageProcessorPhase.SYNTAX_ANALYSIS), emptyMap())
         }
@@ -322,7 +343,7 @@ abstract class AglWorkerAbstract {
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
-            val msg = "Exception during semanticAnalysis - ${t::class.simpleName} - ${t.message?:""}\n$st"
+            val msg = "Exception during semanticAnalysis - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
             sendMessage(port, MessageSemanticAnalysisResult(endPoint, MessageStatus.FAILURE, msg, emptyList(), null))
         }
     }
@@ -374,7 +395,7 @@ abstract class AglWorkerAbstract {
             })
             sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.endPoint, MessageStatus.SUCCESS, null, result.issues.all.toList()))
         } catch (t: Throwable) {
-            val msg = "Exception during ambiguityAnalysis - ${t::class.simpleName} - ${t.message?:""}"
+            val msg = "Exception during ambiguityAnalysis - ${t::class.simpleName} - ${t.message ?: ""}"
             sendMessage(port, MessageGrammarAmbiguityAnalysisResult(message.endPoint, MessageStatus.FAILURE, msg, emptyList()))
         }
     }
@@ -393,7 +414,7 @@ abstract class AglWorkerAbstract {
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), result.items))
             result.items
         } catch (t: Throwable) {
-            val msg = "Exception during 'getCodeCompletions' - ${t::class.simpleName} - ${t.message?:""}"
+            val msg = "Exception during 'getCodeCompletions' - ${t::class.simpleName} - ${t.message ?: ""}"
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, MessageStatus.FAILURE, msg, emptyList(), emptyList()))
         }
     }

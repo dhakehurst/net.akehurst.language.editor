@@ -59,7 +59,9 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     init {
         //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
         this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
-        this.agl.languageDefinition.crossReferenceModelStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
+        this.agl.languageDefinition.typeModelStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
+        this.agl.languageDefinition.asmTransformStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
+        this.agl.languageDefinition.crossReferenceStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
         this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.requestUpdateStyleModel() }
         //this.agl.languageDefinition.formatterStrObservers.add { _, _ -> }
     }
@@ -165,7 +167,13 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
             //do nothing
         } else {
             this.clearIssueMarkers()
-            this.languageServiceRequest.processorCreateRequest(this.endPointIdentity, this.languageIdentity, grammarStr!!, this.agl.languageDefinition.crossReferenceModelStr, this.editorOptions)
+            this.languageServiceRequest.processorCreateRequest(this.endPointIdentity, this.languageIdentity,
+                grammarStr!!,
+                this.agl.languageDefinition.typeModelStr,
+                this.agl.languageDefinition.asmTransformStr,
+                this.agl.languageDefinition.crossReferenceStr,
+                this.editorOptions
+            )
             this.workerTokenizer.reset()
             this.resetTokenization(0) //new processor so find new tokens, first by scan
         }

@@ -121,8 +121,8 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         }
     }
 
-    fun createProcessor(languageId: LanguageIdentity, editorId: String, sessionId: String, grammarStr: String, scopeModelStr:String?, editorOptions: EditorOptions) {
-        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(editorId, sessionId), languageId, grammarStr, scopeModelStr, editorOptions))
+    fun createProcessor(languageId: LanguageIdentity, editorId: String, sessionId: String, grammarStr: String, typeModelStr:String?, asmTransformStr:String?, crossReferenceStr:String?, editorOptions: EditorOptions) {
+        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(editorId, sessionId), languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceStr, editorOptions))
     }
 
     fun interrupt(languageId: LanguageIdentity, editorId: String, sessionId: String) {

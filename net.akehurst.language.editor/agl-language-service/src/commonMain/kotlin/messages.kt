@@ -133,7 +133,9 @@ data class MessageProcessorCreate(
     override val endPoint: EndPointIdentity,
     val languageId:LanguageIdentity,
     val grammarStr: String,
-    val crossReferenceModelStr: String?,
+    val typeModelStr: String?,
+    val asmTransformStr: String?,
+    val crossReferenceStr: String?,
     val editorOptions: EditorOptions
 ) : AglWorkerMessage("MessageProcessorCreate") {
     override fun toString(): String {
@@ -142,12 +144,22 @@ data class MessageProcessorCreate(
             grammarStr.isBlank() -> "''"
             else -> "'...'"
         }
-        val ss = when {
-            null == crossReferenceModelStr -> "null"
-            crossReferenceModelStr.isBlank() -> "''"
+        val tm = when {
+            null == typeModelStr -> "null"
+            typeModelStr.isBlank() -> "''"
             else -> "'...'"
         }
-        return "${super.action}(endPoint=$endPoint, grammarStr=$gs, scopeModelStr=$ss)"
+        val tr = when {
+            null == asmTransformStr -> "null"
+            asmTransformStr.isBlank() -> "''"
+            else -> "'...'"
+        }
+        val cr = when {
+            null == crossReferenceStr -> "null"
+            crossReferenceStr.isBlank() -> "''"
+            else -> "'...'"
+        }
+        return "${super.action}(endPoint=$endPoint, grammarStr=$gs, typeModelStr=$tm, asmTransformStr=$tr, crossReferenceStr=$cr)"
     }
 }
 

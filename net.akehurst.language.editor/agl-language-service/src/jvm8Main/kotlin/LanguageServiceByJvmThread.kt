@@ -16,9 +16,7 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.CrossReferenceString
-import net.akehurst.language.agl.GrammarString
-import net.akehurst.language.agl.StyleString
+import net.akehurst.language.agl.*
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
@@ -36,8 +34,16 @@ open class LanguageServiceByJvmThread(
 
     // --- LanguageService ---
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
-        override fun processorCreateRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, grammarStr: GrammarString, crossReferenceModelStr: CrossReferenceString?, editorOptions: EditorOptions) {
-            submit { direct.processorCreateRequest(endPointIdentity, languageId, grammarStr, crossReferenceModelStr, editorOptions) }
+        override fun processorCreateRequest(
+            endPointIdentity: EndPointIdentity,
+            languageId: LanguageIdentity,
+            grammarStr: GrammarString,
+            typeModelStr: TypeModelString?,
+            asmTransformStr: TransformString?,
+            crossReferenceModelStr: CrossReferenceString?,
+            editorOptions: EditorOptions
+        ) {
+            submit { direct.processorCreateRequest(endPointIdentity, languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr, editorOptions) }
         }
 
         override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity) {
