@@ -46,7 +46,7 @@ internal class AglCompletionProviderCodeMirror<AsmType : Any, ContextType : Any>
         val before = if (0 == context.pos) null else context.matchBefore(REGEX_WORD_JS)
         val from = before?.from ?: context.pos
         editor.languageServiceRequest.sentenceCodeCompleteRequest(
-            editor.endPointIdentity, editor.languageIdentity,
+            editor.endPointIdentity, editor.nextRequestId, editor.languageIdentity,
             editor.text,
             from,
             editor.processOptions

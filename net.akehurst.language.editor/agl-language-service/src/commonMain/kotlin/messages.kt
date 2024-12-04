@@ -19,10 +19,7 @@ package net.akehurst.language.editor.language.service.messages
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
-import net.akehurst.language.editor.api.AglToken
-import net.akehurst.language.editor.api.EditorOptions
-import net.akehurst.language.editor.api.EndPointIdentity
-import net.akehurst.language.editor.api.MessageStatus
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglTokenDefault
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
@@ -122,6 +119,7 @@ abstract class AglWorkerMessage(
     val action: String
 ) {
     abstract val endPoint: EndPointIdentity
+    abstract val requestId: RequestIdentity<*>
 }
 
 abstract class AglWorkerMessageResponse(action: String) : AglWorkerMessage(action) {
@@ -131,6 +129,7 @@ abstract class AglWorkerMessageResponse(action: String) : AglWorkerMessage(actio
 
 data class MessageProcessorCreate(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     val languageId:LanguageIdentity,
     val grammarStr: String,
     val typeModelStr: String?,
@@ -165,6 +164,7 @@ data class MessageProcessorCreate(
 
 data class MessageProcessorCreateResponse(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
@@ -173,12 +173,14 @@ data class MessageProcessorCreateResponse(
 
 data class MessageProcessorDelete(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     val languageId:LanguageIdentity
 ) : AglWorkerMessage("MessageProcessorDelete") {
 }
 
 data class MessageProcessorDeleteResponse(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String
 ) : AglWorkerMessageResponse("MessageProcessorDeleteResponse") {
@@ -187,6 +189,7 @@ data class MessageProcessorDeleteResponse(
 
 data class MessageProcessRequest<AsmType : Any, ContextType : Any>(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     val languageId: LanguageIdentity,
     val text: String,
     val options: ProcessOptions<AsmType,ContextType>
@@ -201,6 +204,7 @@ data class MessageProcessRequest<AsmType : Any, ContextType : Any>(
 
 data class MessageScanResult(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
@@ -212,6 +216,7 @@ data class MessageScanResult(
 
 data class MessageParseResult(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
@@ -223,6 +228,7 @@ data class MessageParseResult(
 
 data class MessageParseResult2(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
@@ -234,6 +240,7 @@ data class MessageParseResult2(
 
 data class MessageSyntaxAnalysisResult(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     override  val issues: List<LanguageIssue>,
@@ -245,6 +252,7 @@ data class MessageSyntaxAnalysisResult(
 
 data class MessageSemanticAnalysisResult(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
@@ -256,12 +264,14 @@ data class MessageSemanticAnalysisResult(
 
 data class MessageParserInterruptRequest(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     val languageId:LanguageIdentity,
     val reason: String
 ) : AglWorkerMessage("MessageParserInterruptRequest")
 
 data class MessageLineTokens(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     val startLine:Int,
@@ -274,6 +284,7 @@ data class MessageLineTokens(
 
 data class MessageSetStyle(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     val languageId:LanguageIdentity,
     val styleStr: String
 ) : AglWorkerMessage("MessageSetStyle") {
@@ -282,6 +293,7 @@ data class MessageSetStyle(
 
 data class MessageSetStyleResponse(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
@@ -290,6 +302,7 @@ data class MessageSetStyleResponse(
 
 data class MessageCodeCompleteRequest<AsmType : Any, ContextType : Any>(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     val languageId:LanguageIdentity,
     val text: String,
     val position: Int,
@@ -298,6 +311,7 @@ data class MessageCodeCompleteRequest<AsmType : Any, ContextType : Any>(
 
 data class MessageCodeCompleteResult(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
@@ -306,6 +320,7 @@ data class MessageCodeCompleteResult(
 
 data class MessageGrammarAmbiguityAnalysisRequest(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     val languageId:LanguageIdentity,
 ) : AglWorkerMessage("MessageGrammarAmbiguityAnalysisRequest") {
     override fun toString(): String = "${super.action}(endPoint=$endPoint)"
@@ -313,6 +328,7 @@ data class MessageGrammarAmbiguityAnalysisRequest(
 
 data class MessageGrammarAmbiguityAnalysisResult(
     override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity<*>,
     override val status: MessageStatus,
     val message: String?,
     override val issues: List<LanguageIssue>

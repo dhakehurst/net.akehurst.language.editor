@@ -41,6 +41,7 @@ class AglLanguageServiceByWorker(
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
         override fun processorCreateRequest(
             endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
             languageId: LanguageIdentity,
             grammarStr: GrammarString,
             typeModelStr: TypeModelString?,
@@ -48,38 +49,40 @@ class AglLanguageServiceByWorker(
             crossReferenceModelStr: CrossReferenceString?,
             editorOptions: EditorOptions
         ) {
-            sendToWorker(MessageProcessorCreate(endPointIdentity, languageId, grammarStr.value, typeModelStr?.value, asmTransformStr?.value,crossReferenceModelStr?.value, editorOptions))
+            sendToWorker(MessageProcessorCreate(endPointIdentity, requestId,languageId, grammarStr.value, typeModelStr?.value, asmTransformStr?.value, crossReferenceModelStr?.value, editorOptions))
         }
 
-        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity) {
+        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity) {
             TODO("not implemented")
         }
 
-        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
-            sendToWorker(MessageSetStyle(endPointIdentity, languageId, styleStr.value))
+        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, styleStr: StyleString) {
+            sendToWorker(MessageSetStyle(endPointIdentity, requestId,languageId, styleStr.value))
         }
 
-        override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, reason: String) {
-            sendToWorker(MessageParserInterruptRequest(endPointIdentity, languageId, reason))
+        override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, reason: String) {
+            sendToWorker(MessageParserInterruptRequest(endPointIdentity, requestId,languageId, reason))
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
             endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
             languageId: LanguageIdentity,
-            text: String,
+            sentence: String,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            sendToWorker(MessageProcessRequest(endPointIdentity, languageId, text, processOptions))
+            sendToWorker(MessageProcessRequest(endPointIdentity, requestId,languageId, sentence, processOptions))
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
             endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
             languageId: LanguageIdentity,
             text: String,
             position: Int,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            sendToWorker(MessageCodeCompleteRequest(endPointIdentity, languageId, text, position, processOptions))
+            sendToWorker(MessageCodeCompleteRequest(endPointIdentity,requestId, languageId, text, position, processOptions))
         }
 
     }
@@ -149,13 +152,13 @@ class AglLanguageServiceByWorker(
         val endPoint = responseObjects[msg.endPoint]
         if (null != endPoint) { //TODO: should  test for sessionId also
             when (msg) {
-                is MessageProcessorCreateResponse -> endPoint.processorCreateResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.scannerMatchables)
-                is MessageSetStyleResponse -> endPoint.processorSetStyleResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.styleModel)
-                is MessageLineTokens -> endPoint.sentenceLineTokensResponse(msg.endPoint, msg.status, msg.message, msg.startLine, msg.lineTokens)
-                is MessageParseResult -> endPoint.sentenceParseResponse(msg.endPoint, msg.status, msg.message, msg.issues, deserialiseParseTree(msg.treeSerialised))
-                is MessageSyntaxAnalysisResult -> endPoint.sentenceSyntaxAnalysisResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.asm)
-                is MessageSemanticAnalysisResult -> endPoint.sentenceSemanticAnalysisResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.asm)
-                is MessageCodeCompleteResult -> endPoint.sentenceCodeCompleteResponse(msg.endPoint, msg.status, msg.message, msg.issues, msg.completionItems)
+                is MessageProcessorCreateResponse -> endPoint.processorCreateResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.scannerMatchables)
+                is MessageSetStyleResponse -> endPoint.processorSetStyleResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.styleModel)
+                is MessageLineTokens -> endPoint.sentenceLineTokensResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.startLine, msg.lineTokens)
+                is MessageParseResult -> endPoint.sentenceParseResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, deserialiseParseTree(msg.treeSerialised))
+                is MessageSyntaxAnalysisResult -> endPoint.sentenceSyntaxAnalysisResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.asm)
+                is MessageSemanticAnalysisResult -> endPoint.sentenceSemanticAnalysisResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.asm)
+                is MessageCodeCompleteResult -> endPoint.sentenceCodeCompleteResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.completionItems)
                 else -> error("Unknown Message type")
             }
         } else {

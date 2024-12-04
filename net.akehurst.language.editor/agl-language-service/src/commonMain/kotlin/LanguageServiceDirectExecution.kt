@@ -20,6 +20,7 @@ import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
+import net.akehurst.language.agl.simple.ContextFromGrammarAndTypeModel
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglStyleHandler
@@ -30,6 +31,7 @@ import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
 import net.akehurst.language.parser.api.ParseResult
 import net.akehurst.language.parser.leftcorner.ParseResultDefault
+import net.akehurst.language.reference.asm.CrossReferenceModelDefault
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.sentence.api.Sentence
@@ -37,6 +39,7 @@ import net.akehurst.language.sentence.common.SentenceDefault
 import net.akehurst.language.sppt.api.SharedPackedParseTree
 import net.akehurst.language.style.api.AglStyleModel
 import net.akehurst.language.transform.asm.TransformDomainDefault
+import net.akehurst.language.typemodel.asm.TypeModelSimple
 
 class LanguageServiceDirectExecution(
     logFunction: LogFunction?
@@ -56,44 +59,72 @@ class LanguageServiceResponseDirectExecution(
     val logger = AglEditorLogger("LanguageServiceResponseDirectExecution", logFunction)
     val responseObjects = mutableMapOf<EndPointIdentity, LanguageServiceResponse>()
 
-    override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
+    override fun processorCreateResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageStatus,
+        message: String,
+        issues: List<LanguageIssue>,
+        scannerMatchables: List<Matchable>
+    ) {
         logger.logTrace("processorCreateResponse $endPointIdentity, $status, $message, $issues, $scannerMatchables")
-        responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, status, message, issues, scannerMatchables)
+        responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, requestId, status, message, issues, scannerMatchables)
     }
 
-    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String) {
+    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String) {
         logger.logTrace("processorDeleteResponse  $endPointIdentity, $status, $message")
-        responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, status, message)
+        responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, requestId,status, message)
     }
 
-    override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
+    override fun processorSetStyleResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageStatus,
+        message: String,
+        issues: List<LanguageIssue>,
+        styleModel: AglStyleModel?
+    ) {
         logger.logTrace("processorSetStyleResponse $endPointIdentity, $status, $message, $issues, ${styleModel?.asString()}")
-        responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, status, message, issues, styleModel)
+        responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, requestId,status, message, issues, styleModel)
     }
 
-    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
         logger.logTrace("sentenceParseResponse $endPointIdentity, $status, $message, $issues, <tree> ")
-        responseObjects[endPointIdentity]?.sentenceParseResponse(endPointIdentity, status, message, issues, tree)
+        responseObjects[endPointIdentity]?.sentenceParseResponse(endPointIdentity, requestId,status, message, issues, tree)
     }
 
-    override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
+    override fun sentenceLineTokensResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageStatus,
+        message: String,
+        startLine: Int,
+        lineTokens: List<List<AglToken>>
+    ) {
         logger.logTrace("sentenceLineTokensResponse $endPointIdentity, $status, $message, $startLine, $lineTokens")
-        responseObjects[endPointIdentity]?.sentenceLineTokensResponse(endPointIdentity, status, message, startLine, lineTokens)
+        responseObjects[endPointIdentity]?.sentenceLineTokensResponse(endPointIdentity, requestId,status, message, startLine, lineTokens)
     }
 
-    override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+    override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
         logger.logTrace("sentenceSyntaxAnalysisResponse $endPointIdentity, $status, $message, $issues, <asm>")
-        responseObjects[endPointIdentity]?.sentenceSyntaxAnalysisResponse(endPointIdentity, status, message, issues, asm)
+        responseObjects[endPointIdentity]?.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId,status, message, issues, asm)
     }
 
-    override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+    override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
         logger.logTrace("sentenceSemanticAnalysisResponse $endPointIdentity, $status, $message, $issues, <asm>")
-        responseObjects[endPointIdentity]?.sentenceSemanticAnalysisResponse(endPointIdentity, status, message, issues, asm)
+        responseObjects[endPointIdentity]?.sentenceSemanticAnalysisResponse(endPointIdentity, requestId,status, message, issues, asm)
     }
 
-    override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
+    override fun sentenceCodeCompleteResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageStatus,
+        message: String,
+        issues: List<LanguageIssue>,
+        completionItems: List<CompletionItem>
+    ) {
         logger.logTrace("sentenceCodeCompleteResponse $endPointIdentity, $status, $message, $issues, $completionItems")
-        responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, status, message, issues, completionItems)
+        responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, requestId,status, message, issues, completionItems)
     }
 }
 
@@ -106,6 +137,7 @@ open class LanguageServiceRequestDirectExecution(
     // --- LanguageServiceRequest ---
     override fun processorCreateRequest(
         endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
         languageId: LanguageIdentity,
         grammarStr: GrammarString,
         typeModelStr: TypeModelString?,
@@ -116,7 +148,7 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace("processorCreateResponse $endPointIdentity, $languageId")
         try {
             if (grammarStr.value.isBlank()) {
-                response.processorCreateResponse(endPointIdentity, MessageStatus.FAILURE, "Cannot createProcessor if there is no grammar", emptyList(), emptyList())
+                response.processorCreateResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "Cannot createProcessor if there is no grammar", emptyList(), emptyList())
             } else {
                 val ld = createLanguageDefinition(languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr)
                 _languageDefinition[languageId] = ld
@@ -126,27 +158,27 @@ open class LanguageServiceRequestDirectExecution(
                 try {
                     val proc = ld.processor // should throw exception if there are problems
                     if (null == proc) {
-                        response.processorCreateResponse(endPointIdentity, MessageStatus.FAILURE, "Error", ld.issues.all.toList(), emptyList())
+                        response.processorCreateResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "Error", ld.issues.all.toList(), emptyList())
                     } else {
-                        response.processorCreateResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", ld.issues.all.toList(), proc.scanner!!.matchables)
+                        response.processorCreateResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "OK", ld.issues.all.toList(), proc.scanner!!.matchables)
                     }
                 } catch (t: Throwable) {
                     println(t.stackTraceToString())
-                    response.processorCreateResponse(endPointIdentity, MessageStatus.FAILURE, t.message ?: "", ld.issues.all.toList(), emptyList())
+                    response.processorCreateResponse(endPointIdentity, requestId,MessageStatus.FAILURE, t.message ?: "", ld.issues.all.toList(), emptyList())
                 }
             }
         } catch (t: Throwable) {
             println(t.stackTraceToString())
-            response.processorCreateResponse(endPointIdentity, MessageStatus.FAILURE, t.message ?: "", emptyList(), emptyList())
+            response.processorCreateResponse(endPointIdentity, requestId,MessageStatus.FAILURE, t.message ?: "", emptyList(), emptyList())
         }
     }
 
-    override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity) {
+    override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity) {
         logger.logTrace("processorDeleteRequest $endPointIdentity, $languageId")
         //TODO("not implemented")
     }
 
-    override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
+    override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, styleStr: StyleString) {
         logger.logTrace("processorSetStyleRequest $endPointIdentity, $languageId")
         try {
             val styleHndlr = AglStyleHandler(languageId)
@@ -155,22 +187,23 @@ open class LanguageServiceRequestDirectExecution(
             val styleMdl = result.asm
             if (null != styleMdl) {
                 styleHndlr.updateStyleModel(styleMdl)
-                response.processorSetStyleResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl)
+                response.processorSetStyleResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl)
             } else {
-                response.processorSetStyleResponse(endPointIdentity, MessageStatus.FAILURE, "Error in style string", result.issues.all.toList(), null)
+                response.processorSetStyleResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "Error in style string", result.issues.all.toList(), null)
             }
         } catch (t: Throwable) {
-            response.processorSetStyleResponse(endPointIdentity, MessageStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), null)
+            response.processorSetStyleResponse(endPointIdentity, requestId,MessageStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), null)
         }
     }
 
-    override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, reason: String) {
+    override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, reason: String) {
         logger.logTrace("interruptRequest $endPointIdentity, $languageId")
         _languageDefinition[languageId]?.processor?.interrupt(reason)
     }
 
     override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
         endPointIdentity: EndPointIdentity,
+        requestId:RequestIdentity<*>,
         languageId: LanguageIdentity,
         sentence: String,
         processOptions: ProcessOptions<AsmType, ContextType>
@@ -178,13 +211,14 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace("sentenceProcessRequest $endPointIdentity, $languageId")
         val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '${languageId}' not found, was it created correctly?")
         val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
-        val parse = parse(endPointIdentity, languageId, proc, processOptions, sentence)
-        val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(endPointIdentity, languageId, proc, processOptions, it) }
-        val semanticAnalysis = syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(endPointIdentity, languageId, proc, processOptions, it, r.locationMap) } }
+        val parse = parse(endPointIdentity, requestId,languageId, proc, processOptions, sentence)
+        val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(endPointIdentity, requestId,languageId, proc, processOptions, it) }
+        val semanticAnalysis = syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(endPointIdentity,requestId, languageId, proc, processOptions, it, r.locationMap) } }
     }
 
     override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
         endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
         languageId: LanguageIdentity,
         sentence: String,
         position: Int,
@@ -195,9 +229,9 @@ open class LanguageServiceRequestDirectExecution(
             val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '${languageId}' not found, was it created correctly?")
             val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
             val result = proc.expectedItemsAt(sentence, position, -1, processOptions)
-            response.sentenceCodeCompleteResponse(endPointIdentity, MessageStatus.SUCCESS, "OK", result.issues.all.toList(), result.items)
+            response.sentenceCodeCompleteResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "OK", result.issues.all.toList(), result.items)
         } catch (t: Throwable) {
-            response.sentenceCodeCompleteResponse(endPointIdentity, MessageStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), emptyList())
+            response.sentenceCodeCompleteResponse(endPointIdentity, requestId,MessageStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), emptyList())
         }
     }
 
@@ -211,7 +245,23 @@ open class LanguageServiceRequestDirectExecution(
     ) {
         logger.logTrace("configureLanguageDefinition ${ld.identity}")
         // TODO: could be an argument
-        ld.configuration = Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>
+        ld.configuration = Agl.configuration<Any, Any>(Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>) {
+            if (null != typeModelStr) {
+                typeModelResolver { p: LanguageProcessor<Any, Any> -> TypeModelSimple.fromString(typeModelStr) }
+            }
+            if (null != asmTransformStr) {
+                asmTransformResolver { p: LanguageProcessor<Any, Any> -> TransformDomainDefault.fromString(ContextFromGrammarAndTypeModel(p.grammarModel!!, p.baseTypeModel), asmTransformStr) }
+            }
+            if (null != crossReferenceModelStr) {
+                crossReferenceModelResolver { p: LanguageProcessor<Any, Any> -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typeModel), crossReferenceModelStr) }
+            }
+            //if (null != styleStr) {
+            //     styleResolver { p:LanguageProcessor<Asm, ContextAsmSimple> -> AglStyleModelDefault.fromString(ContextFromGrammar.createContextFrom(p.grammarModel!!), styleStr) }
+            // }
+            // if (null != formatterModelStr) {
+            //     formatterResolver { p:LanguageProcessor<Asm, ContextAsmSimple> -> AglFormatterModelFromAsm.fromString(ContextFromTypeModel(p.typeModel), formatterModelStr) }
+            // }
+        }
         ld.update(grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr, ld.styleStr)
     }
 
@@ -235,13 +285,14 @@ open class LanguageServiceRequestDirectExecution(
             configuration = Agl.configurationBase() //use if placeholder created, not found
         )
         if (ld.isModifiable) {
-            configureLanguageDefinition(ld, grammarStr, typeModelStr, asmTransformStr,crossReferenceModelStr)
+            configureLanguageDefinition(ld, grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr)
         }
         return ld
     }
 
     protected fun <AsmType : Any, ContextType : Any> parse(
         endPointIdentity: EndPointIdentity,
+        requestId:RequestIdentity<*>,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<AsmType, ContextType>,
         processOptions: ProcessOptions<AsmType, ContextType>,
@@ -249,35 +300,35 @@ open class LanguageServiceRequestDirectExecution(
     ): ParseResult {
         logger.logTrace("parse $endPointIdentity, $languageId")
         return try {
-            response.sentenceParseResponse(endPointIdentity, MessageStatus.START, "Start", emptyList(), null)
+            response.sentenceParseResponse(endPointIdentity, requestId,MessageStatus.START, "Start", emptyList(), null)
             val editorOptions = _editorOptions[endPointIdentity.editorId]
             if (true == editorOptions?.parse) {
                 val result = proc.parse(sentence, processOptions.parse)
                 val sppt = result.sppt
                 if (null == sppt) {
-                    response.sentenceParseResponse(endPointIdentity, MessageStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null)
+                    response.sentenceParseResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null)
                 } else {
-                    this.sendLineTokens(endPointIdentity, languageId, SentenceDefault(sentence), sppt, editorOptions.lineTokensChunkSize)
+                    this.sendLineTokens(endPointIdentity, requestId,languageId, SentenceDefault(sentence), sppt, editorOptions.lineTokensChunkSize)
                     if (editorOptions.parseTree) {
-                        response.sentenceParseResponse(endPointIdentity, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), sppt)
+                        response.sentenceParseResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "Success", result.issues.all.toList(), sppt)
                     } else {
-                        response.sentenceParseResponse(endPointIdentity, MessageStatus.SUCCESS, "ParseTree Interest not registered during Processor Creation", result.issues.all.toList(), null)
+                        response.sentenceParseResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "ParseTree Interest not registered during Processor Creation", result.issues.all.toList(), null)
                     }
                 }
                 result
             } else {
-                response.sentenceParseResponse(endPointIdentity, MessageStatus.FAILURE, "Parse Interest not registered during Processor Creation", emptyList(), null)
+                response.sentenceParseResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "Parse Interest not registered during Processor Creation", emptyList(), null)
                 ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Exception during 'parse' - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
-            response.sentenceParseResponse(endPointIdentity, MessageStatus.FAILURE, msg, emptyList(), null)
+            response.sentenceParseResponse(endPointIdentity, requestId,MessageStatus.FAILURE, msg, emptyList(), null)
             ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
         }
     }
 
-    private fun sendLineTokens(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, sentence: Sentence, sppt: SharedPackedParseTree, lineTokensChunkSize: Int) {
+    private fun sendLineTokens(endPointIdentity: EndPointIdentity, requestId:RequestIdentity<*>, languageId: LanguageIdentity, sentence: Sentence, sppt: SharedPackedParseTree, lineTokensChunkSize: Int) {
         logger.logTrace("sendLineTokens $endPointIdentity, $languageId")
         try {
             val editorOptions = _editorOptions[endPointIdentity.editorId]
@@ -291,27 +342,28 @@ open class LanguageServiceRequestDirectExecution(
                         val lineTokens = chunk.mapIndexed { lineNum, leaves ->
                             style.transformToTokens(leaves)
                         }
-                        response.sentenceLineTokensResponse(endPointIdentity, MessageStatus.SUCCESS, "Success", chunkstart, lineTokens)
+                        response.sentenceLineTokensResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "Success", chunkstart, lineTokens)
                         chunkstart += chunk.size
                     }
                 } else {
                     val lineTokens = tokens.mapIndexed { lineNum, leaves ->
                         style.transformToTokens(leaves)
                     }
-                    response.sentenceLineTokensResponse(endPointIdentity, MessageStatus.SUCCESS, "Success", 0, lineTokens)
+                    response.sentenceLineTokensResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "Success", 0, lineTokens)
                 }
             } else {
-                response.sentenceLineTokensResponse(endPointIdentity, MessageStatus.FAILURE, "ParseLineTokens Interest not registered during Processor Creation", -1, emptyList())
+                response.sentenceLineTokensResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "ParseLineTokens Interest not registered during Processor Creation", -1, emptyList())
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "${t.message}\n$st"
-            response.sentenceLineTokensResponse(endPointIdentity, MessageStatus.FAILURE, msg, -1, emptyList())
+            response.sentenceLineTokensResponse(endPointIdentity, requestId,MessageStatus.FAILURE, msg, -1, emptyList())
         }
     }
 
     private fun <AsmType : Any, ContextType : Any> syntaxAnalysis(
         endPointIdentity: EndPointIdentity,
+        requestId:RequestIdentity<*>,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<AsmType, ContextType>,
         options: ProcessOptions<AsmType, ContextType>,
@@ -319,20 +371,20 @@ open class LanguageServiceRequestDirectExecution(
     ): SyntaxAnalysisResult<AsmType> {
         logger.logTrace("syntaxAnalysis $endPointIdentity, $languageId")
         return try {
-            response.sentenceSyntaxAnalysisResponse(endPointIdentity, MessageStatus.START, "Start", emptyList(), null)
+            response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId,MessageStatus.START, "Start", emptyList(), null)
             val editorOptions = _editorOptions[endPointIdentity.editorId]
             if (true == editorOptions?.syntaxAnalysis) {
                 val result = proc.syntaxAnalysis(sppt, options)
                 val asm = result.asm
                 if (null == asm) {
-                    response.sentenceSyntaxAnalysisResponse(endPointIdentity, MessageStatus.FAILURE, "SyntaxAnalysis Failed", result.issues.all.toList(), null)
+                    response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "SyntaxAnalysis Failed", result.issues.all.toList(), null)
                 } else {
                     if (editorOptions.syntaxAnalysisAsm) {
-                        response.sentenceSyntaxAnalysisResponse(endPointIdentity, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), asm)
+                        response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "Success", result.issues.all.toList(), asm)
                     } else {
                         response.sentenceSyntaxAnalysisResponse(
                             endPointIdentity,
-                            MessageStatus.SUCCESS,
+                            requestId,MessageStatus.SUCCESS,
                             "SyntaxAnalysis ASM Interest not registered during Processor Creation",
                             result.issues.all.toList(),
                             null
@@ -341,19 +393,20 @@ open class LanguageServiceRequestDirectExecution(
                 }
                 result
             } else {
-                response.sentenceSyntaxAnalysisResponse(endPointIdentity, MessageStatus.FAILURE, "SyntaxAnalysis Interest not registered during Processor Creation", emptyList(), null)
+                response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "SyntaxAnalysis Interest not registered during Processor Creation", emptyList(), null)
                 SyntaxAnalysisResultDefault(null, IssueHolder(LanguageProcessorPhase.SYNTAX_ANALYSIS), emptyMap())
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Exception during syntaxAnalysis - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
-            response.sentenceSyntaxAnalysisResponse(endPointIdentity, MessageStatus.FAILURE, msg, emptyList(), null)
+            response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId,MessageStatus.FAILURE, msg, emptyList(), null)
             SyntaxAnalysisResultDefault(null, IssueHolder(LanguageProcessorPhase.SYNTAX_ANALYSIS), emptyMap())
         }
     }
 
     private fun <AsmType : Any, ContextType : Any> semanticAnalysis(
         endPointIdentity: EndPointIdentity,
+        requestId:RequestIdentity<*>,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<AsmType, ContextType>,
         options: ProcessOptions<AsmType, ContextType>,
@@ -362,7 +415,7 @@ open class LanguageServiceRequestDirectExecution(
     ) {
         logger.logTrace("semanticAnalysis $endPointIdentity, $languageId")
         try {
-            response.sentenceSemanticAnalysisResponse(endPointIdentity, MessageStatus.START, "Start", emptyList(), null)
+            response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId,MessageStatus.START, "Start", emptyList(), null)
             val editorOptions = _editorOptions[endPointIdentity.editorId]
             if (true == editorOptions?.semanticAnalysis) {
                 // to save time serialisating/deserialising contexts that are based on information already in the worker
@@ -397,23 +450,23 @@ open class LanguageServiceRequestDirectExecution(
                 }
                 val result = proc.semanticAnalysis(asm, opts)
                 if (editorOptions.semanticAnalysisAsm) {
-                    response.sentenceSemanticAnalysisResponse(endPointIdentity, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), asm)
+                    response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "Success", result.issues.all.toList(), asm)
                 } else {
                     response.sentenceSemanticAnalysisResponse(
                         endPointIdentity,
-                        MessageStatus.SUCCESS,
+                        requestId,MessageStatus.SUCCESS,
                         "SemanticAnalysis ASM Interest not registered during Processor Creation",
                         result.issues.all.toList(),
                         null
                     )
                 }
             } else {
-                response.sentenceSemanticAnalysisResponse(endPointIdentity, MessageStatus.FAILURE, "SemanticAnalysis Interest not registered during Processor Creation", emptyList(), null)
+                response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "SemanticAnalysis Interest not registered during Processor Creation", emptyList(), null)
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Exception during semanticAnalysis - ${t::class.simpleName} - ${t.message ?: "null"}\n$st"
-            response.sentenceSemanticAnalysisResponse(endPointIdentity, MessageStatus.FAILURE, msg, emptyList(), null)
+            response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId,MessageStatus.FAILURE, msg, emptyList(), null)
         }
     }
 

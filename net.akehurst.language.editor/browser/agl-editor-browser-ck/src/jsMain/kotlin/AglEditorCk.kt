@@ -227,8 +227,8 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
-        super.sentenceParseResponse(endPointIdentity, status, message, issues, tree)
+    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+        super.sentenceParseResponse(endPointIdentity, requestId, status, message, issues, tree)
         when (status) {
             MessageStatus.FAILURE -> this.resetTokenization(0) // reset to trigger use of scan tokens
             else -> Unit
@@ -240,7 +240,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         logger.logTrace("Autocomplete Invoked")
         val cursorPos = ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
         emi.update(ckEditor.model)
-        languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, agl.languageIdentity, text, emi.toSentencePosition(cursorPos), this.agl.options)
+        languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, nextRequestId, agl.languageIdentity, text, emi.toSentencePosition(cursorPos), this.agl.options)
 
         _autocomplete.show()
     }

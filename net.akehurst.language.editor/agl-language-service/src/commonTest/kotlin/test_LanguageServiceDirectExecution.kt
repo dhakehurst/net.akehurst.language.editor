@@ -16,40 +16,40 @@ class test_LanguageServiceDirectExecution {
     private companion object {
         //TODO: record response (rather than print), and test expected result
         val responseRecorder = object : LanguageServiceResponse {
-            override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
-               println("processorCreateResponse: $endPointIdentity, $status, $message, $issues, $scannerMatchables")
+            override fun processorCreateResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
+                println("processorCreateResponse: $endPointIdentity, $requestId, $status, $message, $issues, $scannerMatchables")
             }
 
-            override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String) {
-                println("processorDeleteResponse: $endPointIdentity, $status, $message")
+            override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String) {
+                println("processorDeleteResponse: $endPointIdentity, $requestId, $status, $message")
             }
 
-            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
-                println("processorSetStyleResponse: $endPointIdentity, $status, $message, $issues, $styleModel")
+            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
+                println("processorSetStyleResponse: $endPointIdentity, $requestId, $status, $message, $issues, $styleModel")
             }
 
-            override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
-                println("sentenceLineTokensResponse: $endPointIdentity, $status, $message, $startLine, $lineTokens")
+            override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
+                println("sentenceLineTokensResponse: $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens")
             }
 
-            override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
-                println("sentenceParseResponse: $endPointIdentity, $status, $message, $issues, $tree")
+            override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+                println("sentenceParseResponse: $endPointIdentity, $status, $requestId, $message, $issues, $tree")
             }
 
-            override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
-                println("sentenceSyntaxAnalysisResponse: $endPointIdentity, $status, $message, $issues, $asm")
+            override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+                println("sentenceSyntaxAnalysisResponse: $endPointIdentity, $requestId, $status, $message, $issues, $asm")
             }
 
-            override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
-                println("sentenceSemanticAnalysisResponse: $endPointIdentity, $status, $message, $issues, $asm")
+            override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+                println("sentenceSemanticAnalysisResponse: $endPointIdentity, $requestId, $status, $message, $issues, $asm")
             }
 
-            override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
-                println("sentenceCodeCompleteResponse: $endPointIdentity, $status, $message, $issues, $completionItems")
+            override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
+                println("sentenceCodeCompleteResponse: $endPointIdentity, $requestId, $status, $message, $issues, $completionItems")
             }
 
         }
-        val logFunction = {level: LogLevel, prefix: String, message: String, t: Throwable? ->  println("$level: $prefix - $message, $t") }
+        val logFunction = { level: LogLevel, prefix: String, message: String, t: Throwable? -> println("$level: $prefix - $message, $t") }
     }
 
     @Test
@@ -61,36 +61,42 @@ class test_LanguageServiceDirectExecution {
     fun processorCreateRequest() {
         val sut = LanguageServiceDirectExecution(logFunction)
 
-        val epi = EndPointIdentity("test-editor","<nothing>")
+        val epi = EndPointIdentity("test-editor", "<nothing>")
+        val ri = RequestIdentity(1)
         val li = LanguageIdentity("test-lang")
 
         sut.addResponseListener(epi, responseRecorder)
 
-        val gs = GrammarString("""
+        val gs = GrammarString(
+            """
             namespace test
             grammar Test {
                 S = 'a' ;
             }
-        """.trimIndent())
-        sut.request.processorCreateRequest(epi, li, gs, null, aglEditorOptions())
+        """.trimIndent()
+        )
+        sut.request.processorCreateRequest(epi, ri, li, gs, null, null, null, aglEditorOptions())
     }
 
     @Test
     fun processorCreateRequest_alread_registered() {
         val sut = LanguageServiceDirectExecution(logFunction)
 
-        val epi = EndPointIdentity("test-editor","<nothing>")
+        val epi = EndPointIdentity("test-editor", "<nothing>")
+        val ri = RequestIdentity(1)
         val li = LanguageIdentity("test-lang")
 
         sut.addResponseListener(epi, responseRecorder)
 
-        val gs = GrammarString("""
+        val gs = GrammarString(
+            """
             namespace test
             grammar Test {
                 S = 'a' ;
             }
-        """.trimIndent())
-        sut.request.processorCreateRequest(epi, li, gs, null, aglEditorOptions())
+        """.trimIndent()
+        )
+        sut.request.processorCreateRequest(epi, ri, li, gs, null, null, null, aglEditorOptions())
     }
 
 }

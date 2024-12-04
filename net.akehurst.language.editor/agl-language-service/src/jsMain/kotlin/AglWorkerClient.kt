@@ -21,6 +21,7 @@ import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.language.service.messages.*
@@ -121,20 +122,20 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         }
     }
 
-    fun createProcessor(languageId: LanguageIdentity, editorId: String, sessionId: String, grammarStr: String, typeModelStr:String?, asmTransformStr:String?, crossReferenceStr:String?, editorOptions: EditorOptions) {
-        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(editorId, sessionId), languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceStr, editorOptions))
+    fun createProcessor(languageId: LanguageIdentity, requestId:RequestIdentity<*>, editorId: String, sessionId: String, grammarStr: String, typeModelStr:String?, asmTransformStr:String?, crossReferenceStr:String?, editorOptions: EditorOptions) {
+        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(editorId, sessionId), requestId,languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceStr, editorOptions))
     }
 
-    fun interrupt(languageId: LanguageIdentity, editorId: String, sessionId: String) {
-        this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(editorId, sessionId), languageId,"New parse request"))
+    fun interrupt(languageId: LanguageIdentity, editorId: String, requestId:RequestIdentity<*>, sessionId: String) {
+        this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(editorId, sessionId), requestId,languageId,"New parse request"))
     }
 
-    fun processSentence(languageId: LanguageIdentity, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
-        this.sendToWorker(MessageProcessRequest(EndPointIdentity(editorId, sessionId), languageId, sentence, processOptions))
+    fun processSentence(languageId: LanguageIdentity, requestId:RequestIdentity<*>, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
+        this.sendToWorker(MessageProcessRequest(EndPointIdentity(editorId, sessionId), requestId,languageId, sentence, processOptions))
     }
 
-    fun setStyle(languageId: LanguageIdentity, editorId: String, sessionId: String, css: String) {
-        this.sendToWorker(MessageSetStyle(EndPointIdentity(editorId, sessionId), languageId,css))
+    fun setStyle(languageId: LanguageIdentity, requestId:RequestIdentity<*>, editorId: String, sessionId: String, css: String) {
+        this.sendToWorker(MessageSetStyle(EndPointIdentity(editorId, sessionId), requestId,languageId,css))
     }
 
     fun getCompletionItems() {

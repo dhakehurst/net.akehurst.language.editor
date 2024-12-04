@@ -8,12 +8,10 @@ import net.akehurst.language.asm.simple.AglAsm
 import net.akehurst.language.base.api.Indent
 import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.base.api.SimpleName
-import net.akehurst.language.base.processor.AglBase
 import net.akehurst.language.editor.language.service.messages.EditorMessage
 import net.akehurst.language.scope.processor.AglScope
 import net.akehurst.language.style.processor.AglStyle
 import net.akehurst.language.typemodel.api.TypeModel
-import net.akehurst.language.typemodel.asm.SimpleTypeModelStdLib
 import net.akehurst.language.typemodel.processor.AglTypemodel
 import kotlin.test.Test
 

@@ -36,6 +36,7 @@ open class LanguageServiceByJvmThread(
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
         override fun processorCreateRequest(
             endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
             languageId: LanguageIdentity,
             grammarStr: GrammarString,
             typeModelStr: TypeModelString?,
@@ -43,38 +44,40 @@ open class LanguageServiceByJvmThread(
             crossReferenceModelStr: CrossReferenceString?,
             editorOptions: EditorOptions
         ) {
-            submit { direct.processorCreateRequest(endPointIdentity, languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr, editorOptions) }
+            submit { direct.processorCreateRequest(endPointIdentity, requestId, languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr, editorOptions) }
         }
 
-        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity) {
-            submit { direct.processorDeleteRequest(endPointIdentity, languageId) }
+        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity) {
+            submit { direct.processorDeleteRequest(endPointIdentity, requestId, languageId) }
         }
 
-        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
-            submit { direct.processorSetStyleRequest(endPointIdentity, languageId, styleStr) }
+        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, styleStr: StyleString) {
+            submit { direct.processorSetStyleRequest(endPointIdentity, requestId, languageId, styleStr) }
         }
 
-        override fun interruptRequest(endPointIdentity: EndPointIdentity, languageId: LanguageIdentity, reason: String) {
-            submit { direct.interruptRequest(endPointIdentity, languageId, "New parse request") }
+        override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, reason: String) {
+            submit { direct.interruptRequest(endPointIdentity, requestId, languageId, "New parse request") }
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
             endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
             languageId: LanguageIdentity,
             sentence: String,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            submit { direct.sentenceProcessRequest(endPointIdentity, languageId, sentence, processOptions) }
+            submit { direct.sentenceProcessRequest(endPointIdentity, requestId, languageId, sentence, processOptions) }
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
             endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
             languageId: LanguageIdentity,
             sentence: String,
             position: Int,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            submit { direct.sentenceCodeCompleteRequest(endPointIdentity, languageId, sentence, position, processOptions) }
+            submit { direct.sentenceCodeCompleteRequest(endPointIdentity, requestId, languageId, sentence, position, processOptions) }
         }
     }
 
@@ -86,36 +89,71 @@ open class LanguageServiceByJvmThread(
     private val responseObjects = mutableMapOf<EndPointIdentity, LanguageServiceResponse>()
 
     private val response = object : LanguageServiceResponse {
-        override fun processorCreateResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
-            responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, status, message, issues, scannerMatchables)
+        override fun processorCreateResponse(
+            endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
+            status: MessageStatus,
+            message: String,
+            issues: List<LanguageIssue>,
+            scannerMatchables: List<Matchable>
+        ) {
+            responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, requestId, status, message, issues, scannerMatchables)
         }
 
-        override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String) {
-            responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, status, message)
+        override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String) {
+            responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, requestId, status, message)
         }
 
-        override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
-            responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, status, message, issues, styleModel)
+        override fun processorSetStyleResponse(
+            endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
+            status: MessageStatus,
+            message: String,
+            issues: List<LanguageIssue>,
+            styleModel: AglStyleModel?
+        ) {
+            responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, requestId, status, message, issues, styleModel)
         }
 
-        override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
-            responseObjects[endPointIdentity]?.sentenceParseResponse(endPointIdentity, status, message, issues, tree)
+        override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+            responseObjects[endPointIdentity]?.sentenceParseResponse(endPointIdentity, requestId, status, message, issues, tree)
         }
 
-        override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
-            responseObjects[endPointIdentity]?.sentenceLineTokensResponse(endPointIdentity, status, message, startLine, lineTokens)
+        override fun sentenceLineTokensResponse(
+            endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
+            status: MessageStatus,
+            message: String,
+            startLine: Int,
+            lineTokens: List<List<AglToken>>
+        ) {
+            responseObjects[endPointIdentity]?.sentenceLineTokensResponse(endPointIdentity, requestId, status, message, startLine, lineTokens)
         }
 
-        override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
-            responseObjects[endPointIdentity]?.sentenceSyntaxAnalysisResponse(endPointIdentity, status, message, issues, asm)
+        override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+            responseObjects[endPointIdentity]?.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId, status, message, issues, asm)
         }
 
-        override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
-            responseObjects[endPointIdentity]?.sentenceSemanticAnalysisResponse(endPointIdentity, status, message, issues, asm)
+        override fun sentenceSemanticAnalysisResponse(
+            endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
+            status: MessageStatus,
+            message: String,
+            issues: List<LanguageIssue>,
+            asm: Any?
+        ) {
+            responseObjects[endPointIdentity]?.sentenceSemanticAnalysisResponse(endPointIdentity, requestId, status, message, issues, asm)
         }
 
-        override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
-            responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, status, message, issues, completionItems)
+        override fun sentenceCodeCompleteResponse(
+            endPointIdentity: EndPointIdentity,
+            requestId: RequestIdentity<*>,
+            status: MessageStatus,
+            message: String,
+            issues: List<LanguageIssue>,
+            completionItems: List<CompletionItem>
+        ) {
+            responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, requestId, status, message, issues, completionItems)
         }
     }
 
