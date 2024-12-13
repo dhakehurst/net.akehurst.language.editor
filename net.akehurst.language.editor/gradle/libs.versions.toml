@@ -1,24 +1,24 @@
 [versions]
-project = "2.0.20"
+project = "2.1.0"
 
-kotlin = "2.0.20"
+kotlin = "2.1.0"
+exportPublic = "2.1.0"
+reflect = "2.1.0"
 dokka = "1.9.10"
-exportPublic = "2.0.20"
-reflect = "2.0.20"
-buildconfig = "5.4.0"
+buildconfig = "5.5.0"
 credentials = "3.0"
 
-nal-agl = "4.2.0.20"
+nal-agl = "4.2.1.0"
 
-nak-compose-code-editor-api = "2.0.20"
+nak-compose-code-editor-api = "2.1.0"
 
-nak-serialisation = "2.0.20"
-nak-json = "2.0.20"
-nak-kotlinx = "2.0.20"
-nak-html-builder = "2.0.20"
+nak-serialisation = "2.1.0"
+nak-json = "2.1.0"
+nak-kotlinx = "2.1.0"
+nak-html-builder = "2.1.0"
 nak-codemirror-api = "6.0.1"
 
-kotlinx-coroutines = "1.8.1"
+kotlinx-coroutines = "1.9.0"
 
 
 [libraries]

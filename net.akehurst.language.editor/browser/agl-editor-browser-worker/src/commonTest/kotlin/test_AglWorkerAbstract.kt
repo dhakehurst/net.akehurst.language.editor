@@ -26,6 +26,7 @@ import net.akehurst.language.asm.api.Asm
 import net.akehurst.language.asm.builder.asmSimple
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
+import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.common.EditorOptionsDefault
 import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.grammar.api.GrammarModel
@@ -37,7 +38,6 @@ import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.scanner.api.MatchableKind
 import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.sppt.api.SharedPackedParseTree
-import net.akehurst.language.transform.asm.TransformModelDefault
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -62,7 +62,7 @@ class test_AglWorkerAbstract {
         override fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any>) {
             //replace stuff to make testing easier
             val rmsg = when (msg) {
-                is MessageLineTokens -> MessageLineTokens(msg.endPoint, msg.status, msg.message, 0, emptyList())
+                is MessageLineTokens -> MessageLineTokens(msg.endPoint, msg.requestId, msg.status, msg.message, 0, emptyList())
                 else -> msg
             }
             sent.add(rmsg)
@@ -86,6 +86,7 @@ class test_AglWorkerAbstract {
         val languageId = LanguageIdentity("test-languageId")
         val editorId = "test-editorId"
         val sessionId = "test-sessionId"
+        val requestId = RequestIdentity(1)
         val port = TestPort()
 
         fun checkEquals(exp: AglWorkerMessage, act: AglWorkerMessage) {
@@ -132,7 +133,7 @@ class test_AglWorkerAbstract {
                 S = 'a' ;
             }
         """.trimIndent()
-        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), languageId, grammarStr, null, EditorOptionsDefault()))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), requestId, languageId, grammarStr, null, null, null, EditorOptionsDefault()))
 
         assertEquals(
             listOf<Any>(

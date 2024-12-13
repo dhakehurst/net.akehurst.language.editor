@@ -29,10 +29,10 @@ class test_AglTokenizerByWorkerCk {
         // Given
         val languageId = LanguageIdentity("test-language")
         val editorId = "test-editor"
-        val logger = AglEditorLogger({ level, message, t -> println("${level}: $message - $t") })
+        val logger = AglEditorLogger("",{ level, prfx, message, t -> println("${level}: $message - $t") })
         val agl = AglComponents<Any, Any>(languageId, editorId, logger)
         val emi = EditorModelIndex()
-        val sut = AglTokenizerByWorkerCk<Any, Any>(agl, emi)
+        val sut = AglTokenizerByWorkerCk<Any, Any>(agl, emi, logger)
 
         // When
         val tokens = listOf(listOf(AglTokenDefault(listOf("style1"),0,5)))

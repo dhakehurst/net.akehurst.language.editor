@@ -31,7 +31,7 @@ class test_AglComponents {
             grammarStr = null,
             aglOptions = null,
             buildForDefaultGoal = false,
-            configuration = Agl.configurationDefault(),
+            configuration = Agl.configurationSimple(),
         )
         def.grammarStrObservers.add { s1: GrammarString?, s2: GrammarString? ->
             println("Grammar changed: $s1, $s2")
@@ -52,7 +52,7 @@ class test_AglComponents {
             grammarStr = null,
             aglOptions = null,
             buildForDefaultGoal = false,
-            configuration = Agl.configurationDefault(),
+            configuration = Agl.configurationSimple(),
         )
 
         val sut = AglComponents<Any, Any>(LanguageIdentity(langId1), "", logger)
