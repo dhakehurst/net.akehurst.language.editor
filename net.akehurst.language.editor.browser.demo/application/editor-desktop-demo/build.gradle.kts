@@ -11,7 +11,7 @@ val version_html_builder: String by project
 
 dependencies {
     // need this so that the gradle application-plugin can find the module built by the kotlin-plugin
-    "runtimeOnly"( project(path=":application-editor-desktop", configuration="jvm8RuntimeElements") )
+    "runtimeOnly"( project(path=":application-editor-desktop-demo", configuration="jvm8RuntimeElements") )
 
     commonMainImplementation(project(":information-editor"))
     commonMainImplementation(libs.nale.agl.editor.common)

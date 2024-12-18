@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.akehurst.language.editor.common.compose
+package net.akehurst.language.editor.compose
 
 import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
 import net.akehurst.language.agl.Agl
@@ -23,6 +23,9 @@ import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglTokenizerByWorker
 import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.issues.api.LanguageIssueKind
+import net.akehurst.language.style.api.AglStyleMetaRule
+import net.akehurst.language.style.api.AglStyleTagRule
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     languageService: LanguageService,
@@ -65,38 +68,93 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
             composeEditor.text = value
         }
 
-    override var workerTokenizer: AglTokenizerByWorker
-        get() = TODO("not implemented")
-        set(value) {}
+    override var workerTokenizer = AglTokenizerByWorkerCompose(this.agl, this.logger)
 
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
+
+    fun initialise() {
+
+    }
+
+    override fun resetTokenization(fromLine: Int) {
+        logger.log(LogLevel.Trace, "resetTokenization $fromLine")
+        workerTokenizer.refresh()
+    }
 
     override fun destroyBaseEditor() {
         composeEditor.destroy()
     }
 
     override fun destroyAglEditor() {
-        TODO("not implemented")
     }
+
     override fun updateLanguage(oldId: LanguageIdentity?) {
-        TODO("not implemented")
+        logger.log(LogLevel.Trace, "updateLanguage $oldId")
     }
 
     override fun updateEditorStyles() {
-        TODO("not implemented")
-    }
+        logger.log(LogLevel.Trace, "updateEditorStyles")
+        val styleToAttrMap = mutableMapOf<String, Map<String, Any>>()
 
-    override fun resetTokenization(fromLine: Int) {
-        TODO("not implemented")
-    }
+        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss ->
+            ss.rules.forEach { rule ->
+                val ruleClasses = when (rule) {
+                    is AglStyleTagRule -> rule.selector.map {
+                        this.agl.styleHandler.mapSelectorToCssClass(it.value)
+                    }
 
-    override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        TODO("not implemented")
+                    is AglStyleMetaRule -> {
+                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + rule.pattern.pattern)
+                        listOf(mappedSelName)
+                    }
+
+                    else -> error("Subtype not handled")
+                }
+                val attribs = rule.declaration.values.associate { oldStyle ->
+                    when (oldStyle.name) {
+                        "foreground" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_FORE_COLOUR, oldStyle.value)
+                        "background" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_BACK_COLOUR, oldStyle.value)
+                        "text-decoration" -> when (oldStyle.value) {
+                            "underline" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_UNDERLINE, true)
+                            else -> Pair(oldStyle.name, oldStyle.value)
+                        }
+
+                        "font-style" -> when (oldStyle.value) {
+                            "bold" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_BOLD, true)
+                            "italic" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_ITALIC, true)
+                            else -> Pair(oldStyle.name, oldStyle.value)
+                        }
+
+                        else -> Pair(oldStyle.name, oldStyle.value)
+                    }
+                }
+                ruleClasses.forEach {
+                    styleToAttrMap[it] = attribs
+                }
+            }
+        }
+
+        this.workerTokenizer.updateStyleMap(styleToAttrMap)
     }
 
     override fun clearIssueMarkers() {
-        TODO("not implemented")
+        logger.log(LogLevel.Trace, "clearIssueMarkers")
+        try {
+            //TODO:
+        } catch (t: Throwable) {
+            logger.logError("exception during clearIssueMarkers: ", t)
+        }
     }
+
+    override fun createIssueMarkers(issues: List<LanguageIssue>) {
+        logger.log(LogLevel.Trace, "createIssueMarkers $issues")
+        try {
+            //TODO:
+        } catch (t: Throwable) {
+            logger.logError("exception during clearIssueMarkers: ", t)
+        }
+    }
+
 
 }
