@@ -23,7 +23,7 @@ import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.agl.simple.ContextFromGrammarAndTypeModel
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.AglStyleHandler
+import net.akehurst.language.editor.common.AglStyleHandlerCssClass
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
 import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
 import net.akehurst.language.issues.api.LanguageIssue
@@ -181,7 +181,7 @@ open class LanguageServiceRequestDirectExecution(
     override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, styleStr: StyleString) {
         logger.logTrace("processorSetStyleRequest $endPointIdentity, $languageId")
         try {
-            val styleHndlr = AglStyleHandler(languageId)
+            val styleHndlr = AglStyleHandlerCssClass(languageId)
             this._styleHandler[languageId] = styleHndlr
             val result = Agl.registry.agl.style.processor!!.process(styleStr.value)
             val styleMdl = result.asm
@@ -334,23 +334,28 @@ open class LanguageServiceRequestDirectExecution(
             val editorOptions = _editorOptions[endPointIdentity.editorId]
             if (true == editorOptions?.parseLineTokens) {
                 val tokens = sppt.tokensByLineAll()
-                val style = this._styleHandler[languageId] ?: error("StyleHandler for ${languageId} not found") //TODO: send Error msg not exception
-                if (0 < lineTokensChunkSize) {
-                    val lineTokensChunked = tokens.chunked(lineTokensChunkSize)
-                    var chunkstart = 0
-                    for (chunk in lineTokensChunked) {
-                        val lineTokens = chunk.mapIndexed { lineNum, leaves ->
-                            style.transformToTokens(leaves)
+                val style = this._styleHandler[languageId]
+                    if(null == style) {
+                        val msg = "StyleHandler for ${languageId} not found"
+                        response.sentenceLineTokensResponse(endPointIdentity, requestId,MessageStatus.FAILURE, msg, -1, emptyList())
+                    } else {
+                        if (0 < lineTokensChunkSize) {
+                            val lineTokensChunked = tokens.chunked(lineTokensChunkSize)
+                            var chunkstart = 0
+                            for (chunk in lineTokensChunked) {
+                                val lineTokens = chunk.mapIndexed { lineNum, leaves ->
+                                    style.transformToTokens(leaves)
+                                }
+                                response.sentenceLineTokensResponse(endPointIdentity, requestId, MessageStatus.SUCCESS, "Success", chunkstart, lineTokens)
+                                chunkstart += chunk.size
+                            }
+                        } else {
+                            val lineTokens = tokens.mapIndexed { lineNum, leaves ->
+                                style.transformToTokens(leaves)
+                            }
+                            response.sentenceLineTokensResponse(endPointIdentity, requestId, MessageStatus.SUCCESS, "Success", 0, lineTokens)
                         }
-                        response.sentenceLineTokensResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "Success", chunkstart, lineTokens)
-                        chunkstart += chunk.size
                     }
-                } else {
-                    val lineTokens = tokens.mapIndexed { lineNum, leaves ->
-                        style.transformToTokens(leaves)
-                    }
-                    response.sentenceLineTokensResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "Success", 0, lineTokens)
-                }
             } else {
                 response.sentenceLineTokensResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "ParseLineTokens Interest not registered during Processor Creation", -1, emptyList())
             }
@@ -475,7 +480,7 @@ open class LanguageServiceRequestDirectExecution(
     private var _languageDefinition: MutableMap<LanguageIdentity, LanguageDefinition<Any, Any>> = mutableMapOf()
 
     // languageId -> sh
-    private var _styleHandler: MutableMap<LanguageIdentity, AglStyleHandler> = mutableMapOf()
+    private var _styleHandler: MutableMap<LanguageIdentity, AglStyleHandlerCssClass> = mutableMapOf()
 
     // editorId -> options
     private var _editorOptions: MutableMap<String, EditorOptions> = mutableMapOf()

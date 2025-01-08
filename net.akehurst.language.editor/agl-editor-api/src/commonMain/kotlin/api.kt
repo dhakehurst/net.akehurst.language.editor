@@ -23,6 +23,10 @@ import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.sentence.api.Sentence
+import net.akehurst.language.sppt.api.LeafData
+import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleRule
+import net.akehurst.language.style.api.AglStyleSelector
 
 enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, All }
 
@@ -178,5 +182,16 @@ interface AglEditorCompletionProvider {
     /**
      * does editor specific provision
      */
-    fun provide(completionItems:List<CompletionItem>)
+    fun provide(completionItems: List<CompletionItem>)
+}
+
+interface AglStyleHandler<EditorStyleType : Any> {
+    val styleModel: AglStyleModel
+
+    fun reset()
+    fun updateStyleModel(styleModel: AglStyleModel)
+    fun editorStyleFor(identity: EditorStyleIdentity): EditorStyleType?
+    fun convert(selector: AglStyleSelector): EditorStyleType
+
+    fun transformToTokens(leafs: List<LeafData>): List<AglToken>
 }

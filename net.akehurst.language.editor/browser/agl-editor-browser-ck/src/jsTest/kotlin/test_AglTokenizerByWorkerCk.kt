@@ -18,6 +18,7 @@ package net.akehurst.language.editor.browser.ck
 
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.AglEditorLogger
+import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglTokenDefault
 import kotlin.test.Test
@@ -30,12 +31,13 @@ class test_AglTokenizerByWorkerCk {
         val languageId = LanguageIdentity("test-language")
         val editorId = "test-editor"
         val logger = AglEditorLogger("",{ level, prfx, message, t -> println("${level}: $message - $t") })
-        val agl = AglComponents<Any, Any>(languageId, editorId, logger)
+        val styleHandler = AglStyleHandlerCkStyle(languageId)
+        val agl = AglComponents<Any, Any>(languageId, editorId, logger, styleHandler)
         val emi = EditorModelIndex()
         val sut = AglTokenizerByWorkerCk<Any, Any>(agl, emi, logger)
 
         // When
-        val tokens = listOf(listOf(AglTokenDefault(listOf("style1"),0,5)))
+        val tokens = listOf(listOf(AglTokenDefault(listOf(EditorStyleIdentity("style1")),0,5)))
         sut.receiveTokens(0, tokens)
 
 

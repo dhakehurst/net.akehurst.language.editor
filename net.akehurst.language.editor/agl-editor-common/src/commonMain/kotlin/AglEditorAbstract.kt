@@ -38,12 +38,13 @@ class SentenceFromEditor<AsmType : Any, ContextType : Any>(
     }
 }
 
-abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
+abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleType:Any>(
     val languageServiceRequest: LanguageServiceRequest,
     languageId: LanguageIdentity,
     override val endPointIdentity: EndPointIdentity,
     override var editorOptions: EditorOptions,
     logFunction: LogFunction?,
+    styleHandler: AglStyleHandler<EditorStyleType>
 ) : AglEditor<AsmType, ContextType>, LanguageServiceResponse {
 
     abstract val isConnected:Boolean
@@ -51,10 +52,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
     final override val logger by lazy{ AglEditorLogger(endPointIdentity.editorId,logFunction)}
 
     val editorId get() = endPointIdentity.editorId
-    protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger)
+    protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger, styleHandler)
     val nextRequestId get() = RequestIdentity(_nextRequestId)
 
-    abstract val workerTokenizer: AglTokenizerByWorker
+    abstract val workerTokenizer: AglTokenizerByWorker<EditorStyleType>
     abstract val completionProvider:AglEditorCompletionProvider
 
     init {
@@ -253,7 +254,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any>(
         logger.log(LogLevel.Trace, "sentenceLineTokensResponse $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens")
         if (status == MessageStatus.SUCCESS) {
             this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}", null)
-            this.workerTokenizer.receiveTokens(startLine, lineTokens)
+            this.workerTokenizer.receiveTokens(startLine, lineTokens as List<List<AglToken>>)
             this.resetTokenization(startLine)
         } else {
             this.log(LogLevel.Error, "LineTokens - ${message}", null)

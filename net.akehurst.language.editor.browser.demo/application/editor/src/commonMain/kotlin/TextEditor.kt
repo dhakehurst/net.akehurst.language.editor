@@ -22,28 +22,40 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import net.akehurst.kotlin.compose.editor.CodeEditor
 import net.akehurst.kotlin.compose.editor.EditorState
-import net.akehurst.kotlin.compose.editor.api.AutocompleteSuggestion
-import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
-import net.akehurst.kotlin.compose.editor.api.EditorLineToken
-import net.akehurst.kotlin.compose.editor.api.LineTokensFunction
+import net.akehurst.kotlin.compose.editor.api.*
+import net.akehurst.kotlin.compose.editor.api.simple.AutocompleteItemSimple
+import net.akehurst.kotlin.compose.editor.api.simple.EditorLineTokenSimple
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
+import net.akehurst.language.editor.common.aglEditorOptions
 import net.akehurst.language.editor.common.compose.attachToComposeEditor
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.style.api.AglStyleModel
 
-class TextEditor : ComposeCodeEditor {
+class TextEditor(
+
+) : ComposeCodeEditor {
+
+    var languageIdentity = LanguageIdentity("<unknown>")
+    var processOptions = Agl.options<Any, Any> { }
+    var editorOptions = aglEditorOptions { }
+
+    val editorId = "text-editor"
+    val endPointIdentity: EndPointIdentity = EndPointIdentity(editorId, "<none>")
 
     //val logger = ConsoleLogger(LogLevel.All)
-    val logFunction: LogFunction = { lvl, prefix, msg, t ->  println("$lvl: $prefix - $msg") }//logger.log(lvl, "$prefix - $msg", t) }
+    val logFunction: LogFunction = { lvl, prefix, msg, t -> println("$lvl: $prefix - $msg") }//logger.log(lvl, "$prefix - $msg", t) }
     val languageService = LanguageServiceDirectExecution(logFunction)
+
+    val lineTokenCache = mutableMapOf<Int, List<AglToken>>()
+    val requestAutocomplete = mutableMapOf<RequestIdentity<Int>, AutocompleteSuggestion>()
     val langServiceResponse = object : LanguageServiceResponse {
         override fun processorCreateResponse(
             endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,
@@ -71,14 +83,20 @@ class TextEditor : ComposeCodeEditor {
             endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,
             status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>
         ) {
-
+            val result = requestAutocomplete.remove(requestId)
+            result?.let {
+                val items = completionItems.map { AutocompleteItemSimple(it.text, it.label) }
+                it.provide(items)
+            }
         }
 
         override fun sentenceLineTokensResponse(
             endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,
             status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>
         ) {
-
+            for(ln in startLine until lineTokens.size) {
+                lineTokenCache[ln] = lineTokens[ln-startLine]
+            }
         }
 
         override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
@@ -96,7 +114,6 @@ class TextEditor : ComposeCodeEditor {
 
         }
     }
-    val endPointIdentity: EndPointIdentity = EndPointIdentity("text-editor","<none>")
 
     val editorState = remember {
         EditorState(
@@ -111,42 +128,11 @@ class TextEditor : ComposeCodeEditor {
 
     init {
         languageService.addResponseListener(endPointIdentity, langServiceResponse)
-        Agl.attachToComposeEditor(languageService, )
+        Agl.attachToComposeEditor<Any, Any>(
+            languageService, languageIdentity, editorId,
+            editorOptions, logFunction, this
+        )
     }
-
-    private fun requestAutocompleteSuggestions(position: Int, text: CharSequence, result: AutocompleteSuggestion) {
-       languageService.request.sentenceCodeCompleteRequest(endPointIdentity,)
-    }
-
-    fun getLineTokens(lineNumber: Int, lineStartPosition: Int, lineText: String): List<EditorLineToken> {
-        val t1 = Regex("[\\\\]red[{](.*)[}]\"").findAll(lineText).map {
-            it.range.first
-            object : EditorLineToken {
-                override val start: Int get() = it.range.first
-                override val finish: Int get() = it.range.last+1
-                override val style: SpanStyle get() = SpanStyle(color = Color.Red)
-            }
-        }
-        val t2 = Regex("[\\\\]blue[{](.*)[}]").findAll(lineText).map {
-            it.range.first
-            object : EditorLineToken {
-                override val start: Int get() = it.range.first
-                override val finish: Int get() = it.range.last+1
-                override val style: SpanStyle get() = SpanStyle(color = Color.Blue)
-            }
-        }
-        val t3 = Regex("else|if|[{]|[}]").findAll(lineText).map {
-            it.range.first
-            object : EditorLineToken {
-                override val start: Int get() = it.range.first
-                override val finish: Int get() = it.range.last+1
-                override val style: SpanStyle get() = SpanStyle(color = Color.Magenta)
-            }
-        }
-        return (t1 + t2 + t3).toList()
-    }
-
-
 
     @Composable
     fun content() {
@@ -163,9 +149,45 @@ class TextEditor : ComposeCodeEditor {
 
     override var text: String
         get() = editorState.inputRawText
-        set(value) { editorState.setNewText(value) }
+        set(value) {
+            editorState.setNewText(value)
+        }
 
-    override var getLineTokens: LineTokensFunction
-        get() = TODO("not implemented")
-        set(value) {}
+    override var onTextChange: (String) -> Unit = { text ->
+        val nextRequest = RequestIdentity(1)
+        languageService.request.sentenceProcessRequest(
+            endPointIdentity, nextRequest, languageIdentity,
+            text, processOptions
+        )
+    }
+
+    override var getLineTokens: LineTokensFunction = { lineNumber, lineStartPosition, lineText ->
+        lineTokenCache[lineNumber]?.map {
+            val st = it.position
+            val fn = st + it.length
+            val style = mapToSpanStyle(it.styles)
+            EditorLineTokenSimple(st,fn,style)
+        } ?: emptyList()
+    }
+
+    override var requestAutocompleteSuggestions: AutocompleteFunction = { position, text, result ->
+        val nextRequest = RequestIdentity(1)
+        requestAutocomplete[nextRequest] = result
+        languageService.request.sentenceCodeCompleteRequest(endPointIdentity, nextRequest, languageIdentity, text.toString(), position, processOptions)
+    }
+
+    override fun refreshTokens() {
+        editorState.refresh()
+    }
+
+    override fun destroy() {
+        TODO("not implemented")
+    }
+
+    private fun mapToSpanStyle(aglStyles: List<String>):SpanStyle {
+        val spanStyles = aglStyles.map {
+            editorStyles[it]
+        }
+        return spanStyle
+    }
 }

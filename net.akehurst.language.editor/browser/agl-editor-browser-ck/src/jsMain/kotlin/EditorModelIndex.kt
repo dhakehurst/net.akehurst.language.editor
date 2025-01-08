@@ -26,6 +26,12 @@ class EditorModelIndex() {
     private val _reverseIndex = linkedMapOf<Int, ck.engine.model.Position>()
     val reverseIndex : Map<Int, ck.engine.model.Position> = _reverseIndex
 
+    fun clear() {
+        this.model = null
+        this.rawText = ""
+        this._reverseIndex.clear()
+    }
+
     fun update(model: ck.engine.model.Model): EditorModelIndex {
         this.model = model
         rawText = ""

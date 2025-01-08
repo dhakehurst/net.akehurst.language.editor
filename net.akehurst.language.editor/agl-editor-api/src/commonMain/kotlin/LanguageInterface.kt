@@ -86,8 +86,23 @@ data class EndPointIdentity(
 
 enum class MessageStatus { START, FAILURE, SUCCESS }
 
+@JvmInline
+value class EditorStyleIdentity(val value: String) {
+    companion object {
+        val NO_STYLE = EditorStyleIdentity("nostyle")
+    }
+}
+
+interface EditorStyle {
+    val identity: EditorStyleIdentity
+}
+
 interface AglToken {
-    val styles: List<String>
+    /**
+     * editor specific style info is not stored in the token
+     * or we would have to serialise it.
+     */
+    val styles: List<EditorStyleIdentity>
     val position: Int
     val length: Int
 }

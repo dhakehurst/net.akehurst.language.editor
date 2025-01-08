@@ -18,14 +18,13 @@ package net.akehurst.language.editor.browser.agl
 
 import kotlinx.browser.document
 import kotlinx.browser.window
-import kotlinx.dom.addClass
-import kotlinx.dom.removeClass
 import net.akehurst.kotlin.html5.elUpdate
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
-import net.akehurst.language.editor.common.AglStyleHandler
+import net.akehurst.language.editor.common.AglStyleHandlerCssClass
+import net.akehurst.language.editor.common.CssClassStyle
 import net.akehurst.language.issues.api.LanguageIssue
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
@@ -48,7 +47,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
-        languageServiceRequest = languageService.request
+        languageServiceRequest = languageService.request,
     )
 }
 
@@ -59,9 +58,9 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
-) : AglEditorAbstract<AsmType, ContextType>(
+) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
     languageServiceRequest, languageId, EndPointIdentity(editorId,"session"),
-    editorOptions, logFunction
+    editorOptions, logFunction, AglStyleHandlerCssClass(languageId)
 ) {
 
     override val baseEditor: Any get() = this
@@ -86,10 +85,10 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
-            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
-            this.containerElement.removeClass(oldAglStyleClass)
+//            val oldAglStyleClass = AglStyleHandlerCssClass.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
+//            this.containerElement.removeClass(oldAglStyleClass)
         }
-        this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
+//        this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
     }
 
     override fun updateEditorStyles() {

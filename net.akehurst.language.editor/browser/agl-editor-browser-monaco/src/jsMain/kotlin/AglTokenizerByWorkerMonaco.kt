@@ -44,11 +44,11 @@ class ModelDecorationOptions(
 internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
     val monacoEditor: IStandaloneCodeEditor,
     agl: AglComponents<AsmType, ContextType>
-) : monaco.languages.TokensProvider, AglTokenizerByWorker {
+) : monaco.languages.TokensProvider, AglTokenizerByWorker<CssClassStyle> {
 
     val decs = mutableMapOf<Int, Array<String>>()
 
-    val aglTokenizer = AglTokenizer(agl)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType,CssClassStyle>(agl)
 //    override var acceptingTokens
 //        get() = aglTokenizer.acceptingTokens
 //        set(value) {
@@ -76,7 +76,7 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
         val lineTokens = tokens.map { aglTok ->
             val col = aglTok.position - stateAgl.nextLineStartPosition +1
             AglTokenMonaco(
-                aglTok.styles.firstOrNull() ?: "",
+                aglTok.styles.firstOrNull()?.value ?: "",
                 col
             )
         }

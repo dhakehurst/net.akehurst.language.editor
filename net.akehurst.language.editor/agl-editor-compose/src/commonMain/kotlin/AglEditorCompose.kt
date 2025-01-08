@@ -21,9 +21,7 @@ import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
-import net.akehurst.language.editor.common.AglTokenizerByWorker
 import net.akehurst.language.issues.api.LanguageIssue
-import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.style.api.AglStyleMetaRule
 import net.akehurst.language.style.api.AglStyleTagRule
 
@@ -55,9 +53,9 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val composeEditor: ComposeCodeEditor
-) : AglEditorAbstract<AsmType, ContextType>(
+) : AglEditorAbstract<AsmType, ContextType, ComposeStyle>(
     languageServiceRequest, languageId, EndPointIdentity(editorId,"none"),
-   editorOptions, logFunction
+   editorOptions, logFunction, AglStyleHandlerComposeStyle()
 ) {
 
     override val baseEditor: Any get() = composeEditor
@@ -95,47 +93,6 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
 
     override fun updateEditorStyles() {
         logger.log(LogLevel.Trace, "updateEditorStyles")
-        val styleToAttrMap = mutableMapOf<String, Map<String, Any>>()
-
-        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss ->
-            ss.rules.forEach { rule ->
-                val ruleClasses = when (rule) {
-                    is AglStyleTagRule -> rule.selector.map {
-                        this.agl.styleHandler.mapSelectorToCssClass(it.value)
-                    }
-
-                    is AglStyleMetaRule -> {
-                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + rule.pattern.pattern)
-                        listOf(mappedSelName)
-                    }
-
-                    else -> error("Subtype not handled")
-                }
-                val attribs = rule.declaration.values.associate { oldStyle ->
-                    when (oldStyle.name) {
-                        "foreground" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_FORE_COLOUR, oldStyle.value)
-                        "background" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_BACK_COLOUR, oldStyle.value)
-                        "text-decoration" -> when (oldStyle.value) {
-                            "underline" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_UNDERLINE, true)
-                            else -> Pair(oldStyle.name, oldStyle.value)
-                        }
-
-                        "font-style" -> when (oldStyle.value) {
-                            "bold" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_BOLD, true)
-                            "italic" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_ITALIC, true)
-                            else -> Pair(oldStyle.name, oldStyle.value)
-                        }
-
-                        else -> Pair(oldStyle.name, oldStyle.value)
-                    }
-                }
-                ruleClasses.forEach {
-                    styleToAttrMap[it] = attribs
-                }
-            }
-        }
-
-        this.workerTokenizer.updateStyleMap(styleToAttrMap)
     }
 
     override fun clearIssueMarkers() {

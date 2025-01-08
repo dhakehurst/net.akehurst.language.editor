@@ -22,14 +22,9 @@ import net.akehurst.language.editor.common.*
 
 internal class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>
-) : ace.Tokenizer, AglTokenizerByWorker {
+) : ace.Tokenizer, AglTokenizerByWorker<CssClassStyle> {
 
-    val aglTokenizer = AglTokenizer(agl)
-//    override var acceptingTokens
-//        get() = aglTokenizer.acceptingTokens
-//        set(value) {
-//            aglTokenizer.acceptingTokens = value
-//        }
+    val aglTokenizer = AglTokenizer<AsmType, ContextType, CssClassStyle>(agl)
 
     override fun reset() {
         this.aglTokenizer.reset()
@@ -53,7 +48,7 @@ internal class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
                 val col = aglTok.position - stateAgl.nextLineStartPosition
                 val value = line.substring(col, col + aglTok.length)
                 AglTokenAce(
-                    styles = aglTok.styles.toTypedArray(),
+                    styles = aglTok.styles.map{it.value}.toTypedArray(),
                     value = value,
                     column = col,
                     index = null

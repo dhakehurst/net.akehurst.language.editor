@@ -22,9 +22,9 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
     val codemirror: codemirror.ICodeMirror,
     val cmEditorView: codemirror.view.IEditorView,
     agl: AglComponents<AsmType, ContextType>
-) : AglTokenizerByWorker {
+) : AglTokenizerByWorker<CssClassStyle> {
 
-    val aglTokenizer = AglTokenizer(agl)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType, CssClassStyle>(agl)
 //    override var acceptingTokens
 //        get() = aglTokenizer.acceptingTokens
 //        set(value) {

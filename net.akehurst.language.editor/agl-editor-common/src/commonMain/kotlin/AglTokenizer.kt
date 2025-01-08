@@ -16,12 +16,13 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.editor.api.AglToken
+import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.sentence.common.SentenceDefault
 import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
 
-interface AglTokenizerByWorker {
+interface AglTokenizerByWorker<EditorStyleType : Any> {
 
 //    var acceptingTokens: Boolean
     //val tokensByLine: Map<Int, List<AglToken>>
@@ -44,14 +45,14 @@ class AglLineState(
 }
 
 class AglTokenDefault(
-    override val styles: List<String>,
+    override val styles: List<EditorStyleIdentity>,
     override val position: Int,
     override val length: Int
 ) : AglToken {
-    override fun toString(): String = "AglToken($position,$length,[${styles.joinToString { it }}])"
+    override fun toString(): String = "AglToken($position,$length,[${styles.joinToString { it.toString() }}])"
     override fun hashCode(): Int = arrayOf(styles, position, length).contentDeepHashCode()
     override fun equals(other: Any?): Boolean = when {
-        other !is AglTokenDefault -> false
+        other !is AglTokenDefault-> false
         other.position != this.position -> false
         other.length != this.length -> false
         other.styles != this.styles -> false
@@ -59,7 +60,7 @@ class AglTokenDefault(
     }
 }
 
-class AglTokenizer<AsmType : Any, ContextType : Any>(
+class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
     val agl: AglComponents<AsmType, ContextType>
 ) {
 
@@ -93,7 +94,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
             }
             this.agl.logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
             val leafs = tv.value.tokens
-            val tokens = this.agl.styleHandler.transformToTokens(leafs)
+            val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
             if (leafs.isEmpty()) {
                 emptyList()
@@ -104,7 +105,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
             agl.logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
             val tokens = when {
                 text.isEmpty() -> emptyList()
-                else -> listOf(AglTokenDefault(listOf("nostyle"), 0, text.length))
+                else -> listOf(AglTokenDefault(emptyList(), 0, text.length))
             }
             tokens
         }
@@ -139,7 +140,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
             }
             this.agl.logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
             val leafs = tv.value.tokens
-            val tokens = this.agl.styleHandler.transformToTokens(leafs)
+            val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
             if (leafs.isEmpty()) {
                 val state = AglLineState(previousLineState.lineNumber + 1, previousLineState.nextLineStartPosition + 1, "")
@@ -156,7 +157,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any>(
             agl.logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
             val tokens = when {
                 lineText.isEmpty() -> emptyList()
-                else -> listOf(AglTokenDefault(listOf("nostyle"), previousLineState.nextLineStartPosition, lineText.length))
+                else -> listOf(AglTokenDefault(emptyList(), previousLineState.nextLineStartPosition, lineText.length))
             }
             val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length + 1
             val state = AglLineState(previousLineState.lineNumber + 1, nextLineStartPosition, "")

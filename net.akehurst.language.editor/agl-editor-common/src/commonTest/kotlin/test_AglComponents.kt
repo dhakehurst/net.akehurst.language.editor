@@ -45,18 +45,18 @@ class test_AglComponents {
 
     @Test
     fun modifyIdentity() {
-        val langId1 = "test1"
+        val langId1 = LanguageIdentity("test1")
         val langId2 = Agl.registry.agl.grammarLanguageIdentity
         val def = Agl.registry.register(
-            identity = LanguageIdentity(langId1),
+            identity = langId1,
             grammarStr = null,
             aglOptions = null,
             buildForDefaultGoal = false,
             configuration = Agl.configurationSimple(),
         )
 
-        val sut = AglComponents<Any, Any>(LanguageIdentity(langId1), "", logger)
-        assertEquals(langId1, sut.languageDefinition.identity.value)
+        val sut = AglComponents<Any, Any>(langId1, "", logger,AglStyleHandlerCssClass(langId1))
+        assertEquals(langId1.value, sut.languageDefinition.identity.value)
 
         sut.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
 

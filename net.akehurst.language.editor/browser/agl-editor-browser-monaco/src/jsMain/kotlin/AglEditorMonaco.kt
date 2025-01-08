@@ -32,16 +32,10 @@ import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.AglEditorAbstract
-import net.akehurst.language.editor.common.AglStyleHandler
-import net.akehurst.language.editor.common.AglTokenizerByWorker
-import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.common.AglStyleHandlerAbstract.Companion.AGL_STYLE_PREFIX
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageProcessorPhase
-import net.akehurst.language.style.api.AglStyleMetaRule
-import net.akehurst.language.style.api.AglStyleRule
-import net.akehurst.language.style.api.AglStyleTagRule
-import net.akehurst.language.style.api.StyleSet
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -96,9 +90,9 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val monaco: Monaco,
-) : AglEditorAbstract<AsmType, ContextType>(
+) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
     languageServiceRequest, languageId, EndPointIdentity(editorId, "none"),
-    editorOptions, logFunction
+    editorOptions, logFunction, AglStyleHandlerCssClass(languageId)
 ) {
 
     companion object {
@@ -144,9 +138,12 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     var parseTimeout: dynamic = null
 
-    override var workerTokenizer: AglTokenizerByWorker = AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl)
+    override var workerTokenizer = AglTokenizerByWorkerMonaco(this.monacoEditor, this.agl)
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
+
+    private val _mcStyleHandler get() = agl.styleHandler as AglStyleHandlerCssClass
+
 
     init {
         try {
@@ -204,48 +201,14 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
-            val oldAglStyleClass =
-                AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
+            val oldAglStyleClass = CssClassStyle(EditorStyleIdentity("$AGL_STYLE_PREFIX-${oldId.value}")).cssClassName
             this.containerElement.removeClass(oldAglStyleClass)
         }
-        this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
+        this.containerElement.addClass(_mcStyleHandler.languageCssClassStyle.cssClassName)
     }
 
     override fun updateEditorStyles() {
-        val aglStyleClass = this.agl.styleHandler.aglStyleClass
-        var mappedCss = ""
-        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss: StyleSet ->
-            ss.rules.forEach { rule: AglStyleRule ->
-                val ruleClasses: List<String> = when (rule) {
-                    is AglStyleTagRule -> rule.selector.map {
-                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass(it.value)
-                        ".monaco_$mappedSelName"
-                    }
-
-                    is AglStyleMetaRule -> {
-                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + rule.pattern.pattern)
-                        listOf(".monaco_$mappedSelName")
-                    }
-
-                    else -> error("Subtype not handled")
-                }
-                val cssClasses = listOf(".$aglStyleClass") + ruleClasses
-                val declarations = LinkedHashMap(rule.declaration.values.associate { oldStyle ->
-                    when (oldStyle.name) {
-                        "foreground" -> Pair("color", oldStyle.value)
-                        "background" -> Pair("background-color", oldStyle.value)
-                        "font-style" -> when (oldStyle.value) {
-                            "bold" -> Pair("font-weight", oldStyle.value)
-                            "italic" -> Pair("font-style", oldStyle.value)
-                            else -> Pair(oldStyle.name, oldStyle.value)
-                        }
-
-                        else -> Pair(oldStyle.name, oldStyle.value)
-                    }
-                })
-                mappedCss = mappedCss + "\n" + AglStyleHandler.toCss(cssClasses, declarations)
-            }
-        }
+        val mappedCss = _mcStyleHandler.stylesToCss()
         val cssText: String = mappedCss
         // remove the current style element for 'languageId' (which is used as the theme name) from the container
         // else the theme css is not reapplied

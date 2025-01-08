@@ -20,6 +20,7 @@ import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.scanner.api.Scanner
 import net.akehurst.language.scanner.api.ScannerKind
 import net.akehurst.language.editor.api.AglEditorLogger
+import net.akehurst.language.editor.api.AglStyleHandler
 import net.akehurst.language.grammar.api.GrammarRuleName
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
 import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
@@ -35,10 +36,11 @@ import net.akehurst.language.sppt.treedata.CompleteTreeDataNode
 class AglComponents<AsmType : Any, ContextType : Any>(
     languageId: LanguageIdentity,
     val editorId: String,
-    val logger: AglEditorLogger
+    val logger: AglEditorLogger,
+    styleHandler: AglStyleHandler<*>
 ) {
     // private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder<AsmType, ContextType>(languageId)
-    private var _styleHandler = AglStyleHandler(languageId)
+    private var _styleHandler = styleHandler
     private var _languageIdentity = languageId
 
     val languageDefinition
@@ -95,7 +97,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
                 new.crossReferenceStrObservers.addAll(crossReferenceStrObservers)
                 new.styleStrObservers.addAll(styleStrObservers)
                 new.formatterStrObservers.addAll(formatterStrObservers)
-                this._styleHandler = AglStyleHandler(value)
+                this._styleHandler = AglStyleHandlerCssClass(value)
 //                this.sppt = null
             }
         }

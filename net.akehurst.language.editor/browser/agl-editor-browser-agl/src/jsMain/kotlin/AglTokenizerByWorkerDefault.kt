@@ -18,12 +18,12 @@ package net.akehurst.language.editor.browser.agl
 
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.common.AglComponents
-import net.akehurst.language.editor.common.AglTokenDefault
 import net.akehurst.language.editor.common.AglTokenizerByWorker
+import net.akehurst.language.editor.common.CssClassStyle
 
 class AglTokenizerByWorkerDefault<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>
-) : AglTokenizerByWorker {
+) : AglTokenizerByWorker<CssClassStyle> {
 
      val tokensByLine = mutableMapOf<Int, List<AglToken>>()
 

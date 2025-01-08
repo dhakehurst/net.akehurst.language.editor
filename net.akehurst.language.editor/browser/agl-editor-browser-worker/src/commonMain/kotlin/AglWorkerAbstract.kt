@@ -26,7 +26,7 @@ import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.api.RequestIdentity
-import net.akehurst.language.editor.common.AglStyleHandler
+import net.akehurst.language.editor.common.AglStyleHandlerCssClass
 import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
 import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
@@ -48,7 +48,7 @@ abstract class AglWorkerAbstract {
     private var _languageDefinition: MutableMap<LanguageIdentity, LanguageDefinition<Any, Any>> = mutableMapOf()
 
     // languageId -> sh
-    private var _styleHandler: MutableMap<LanguageIdentity, AglStyleHandler> = mutableMapOf()
+    private var _styleHandler: MutableMap<LanguageIdentity, AglStyleHandlerCssClass> = mutableMapOf()
 
     // editorId -> options
     private var _editorOptions: MutableMap<String, EditorOptions> = mutableMapOf()
@@ -168,7 +168,7 @@ abstract class AglWorkerAbstract {
 
     protected fun setStyle(port: Any, message: MessageSetStyle) {
         try {
-            val styleHndlr = AglStyleHandler(message.languageId)
+            val styleHndlr = AglStyleHandlerCssClass(message.languageId)
             this._styleHandler[message.languageId] = styleHndlr
             val result = Agl.registry.agl.style.processor!!.process(message.styleStr)
             val styleMdl = result.asm

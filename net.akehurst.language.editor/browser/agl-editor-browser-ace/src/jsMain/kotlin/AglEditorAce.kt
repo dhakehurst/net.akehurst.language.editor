@@ -24,17 +24,11 @@ import kotlinx.dom.removeClass
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
-import net.akehurst.language.editor.common.AglEditorAbstract
-import net.akehurst.language.editor.common.AglStyleHandler
-import net.akehurst.language.editor.common.AglTokenizerByWorker
-import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.common.AglStyleHandlerAbstract.Companion.AGL_STYLE_PREFIX
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.issues.api.LanguageProcessorPhase
-import net.akehurst.language.style.api.AglStyleMetaRule
-import net.akehurst.language.style.api.AglStyleRule
-import net.akehurst.language.style.api.AglStyleTagRule
-import net.akehurst.language.style.api.StyleSet
 import org.w3c.dom.Element
 import org.w3c.dom.ParentNode
 
@@ -89,9 +83,9 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val ace: IAce,
-) : AglEditorAbstract<AsmType, ContextType>(
+) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
     languageServiceRequest, languageId, EndPointIdentity(editorId, aceEditor.getSession()?.id!!),
-    editorOptions, logFunction
+    editorOptions, logFunction, AglStyleHandlerCssClass(languageId)
 ) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
@@ -120,9 +114,11 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
     private var parseTimeout: dynamic = null
 
-    override var workerTokenizer: AglTokenizerByWorker = AglTokenizerByWorkerAce(this.agl)
+    override var workerTokenizer: AglTokenizerByWorker<CssClassStyle> = AglTokenizerByWorkerAce(this.agl)
     override val completionProvider: AglEditorCompletionProvider
         get() = TODO("not implemented")
+
+    private val _aceStyleHandler get() = agl.styleHandler as AglStyleHandlerCssClass
 
     init {
         //TODO: set session and mouseHandler options
@@ -136,6 +132,21 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         this.updateLanguage(null)
         this.updateProcessor()
         this.requestUpdateStyleModel()
+    }
+
+    override fun resetTokenization(fromLine: Int) {
+        val sess = this.aceEditor.getSession()
+        if (null == sess) {
+            this.log(LogLevel.Error, "session is null ??", null)
+        } else {
+            val bgt = sess.bgTokenizer
+            if (null == bgt) {
+                this.log(LogLevel.Error, "bgTokenizer is null ??", null)
+            } else {
+                bgt.start(fromLine)
+                this.aceEditor.renderer.updateText()
+            }
+        }
     }
 
     override fun destroyAglEditor() {
@@ -160,53 +171,20 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
-            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
+            val oldAglStyleClass = CssClassStyle(EditorStyleIdentity("$AGL_STYLE_PREFIX-${oldId.value}")).cssClassName
             this.containerElement.removeClass(oldAglStyleClass)
         }
-        this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
+        this.containerElement.addClass(_aceStyleHandler.languageCssClassStyle.cssClassName)
     }
 
     override fun updateEditorStyles() {
-        // style requires that the element is part of the dom
-        val aglStyleClass = this.agl.styleHandler.aglStyleClass
-        var mappedCss = "" //TODO? this.agl.styleHandler.theme_cache // stored when theme is externally changed
-        this.agl.styleHandler.styleModel.allDefinitions.forEach { ss: StyleSet ->
-            ss.rules.forEach { rule: AglStyleRule ->
-                val ruleClasses = when (rule) {
-                    is AglStyleTagRule -> rule.selector.map {
-                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass(it.value)
-                        ".ace_$mappedSelName"
-                    }
-                    is AglStyleMetaRule -> {
-                        val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + rule.pattern.pattern)
-                        listOf(".ace_$mappedSelName")
-                    }
-                    else -> error("Subtype not handled")
-                }
-                val cssClasses = listOf(".$aglStyleClass") + ruleClasses
-                val declarations = LinkedHashMap(rule.declaration.values.associate { oldStyle ->
-                    when (oldStyle.name) {
-                        "foreground" -> Pair("color", oldStyle.value)
-                        "background" -> Pair("background-color", oldStyle.value)
-                        "font-style" -> when (oldStyle.value) {
-                            "bold" -> Pair("font-weight", oldStyle.value)
-                            "italic" -> Pair("font-style", oldStyle.value)
-                            else -> Pair(oldStyle.name, oldStyle.value)
-                        }
-
-                        else -> Pair(oldStyle.name, oldStyle.value)
-                    }
-                })
-                mappedCss = mappedCss + "\n" + AglStyleHandler.toCss(cssClasses, declarations)
-            }
-        }
-
+        val mappedCss = _aceStyleHandler.stylesToCss()
         val root = this.containerElement.getRootNode() as ParentNode?
         if (null != root) {
-            var curStyle = root.querySelector("style#$aglStyleClass")
+            var curStyle = root.querySelector("style#${_aceStyleHandler.languageCssClassStyle.cssClassName}")
             if (null == curStyle) {
                 curStyle = this.containerElement.ownerDocument!!.createElement("style")
-                curStyle.id = aglStyleClass
+                curStyle.id = _aceStyleHandler.languageCssClassStyle.cssClassName
                 if (root == curStyle.ownerDocument) {
                     curStyle.ownerDocument!!.head!!.prepend(curStyle)
                 } else {
@@ -243,21 +221,6 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
             readOnly: false
         })
          */
-    }
-
-    override fun resetTokenization(fromLine: Int) {
-        val sess = this.aceEditor.getSession()
-        if (null == sess) {
-            this.log(LogLevel.Error, "session is null ??", null)
-        } else {
-            val bgt = sess.bgTokenizer
-            if (null == bgt) {
-                this.log(LogLevel.Error, "bgTokenizer is null ??", null)
-            } else {
-                bgt.start(fromLine)
-                this.aceEditor.renderer.updateText()
-            }
-        }
     }
 
     override fun clearIssueMarkers() {

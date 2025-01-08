@@ -17,13 +17,12 @@
 package net.akehurst.language.editor.browser.ck
 
 
-import js.iterable
-import net.akehurst.language.editor.api.AglEditorLogger
-import net.akehurst.language.editor.api.AglToken
-import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglTokenizer
 import net.akehurst.language.editor.common.AglTokenizerByWorker
+
+
 
 data class CkAttributeData(
     val firstPosition: ck.engine.model.Position,
@@ -35,17 +34,10 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>,
     val emi: EditorModelIndex,
     val logger: AglEditorLogger
-) : AglTokenizerByWorker {
+) : AglTokenizerByWorker<CkStyle> {
 
-    val aglTokenizer = AglTokenizer(agl)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType, CkStyle>(agl)
     private var count = 0
-    private var styleMap: Map<String, Map<String, Any>> = emptyMap()
-
-    fun updateStyleMap(value: Map<String, Map<String, Any>>) {
-        count += 1
-        this.styleMap = value
-        logger.log(LogLevel.Trace, "Updated Styles $count '${aglTokenizer.agl.editorId}': ${this.styleMap}", null)
-    }
 
     override fun reset() {
         this.aglTokenizer.reset()
@@ -108,8 +100,11 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
             val fp = emi.toModelPosition(token.position)
             val lp = emi.toModelPosition(token.position + token.length)
             // to ensure only the last attribute value is set, overwrite map entries
-            val atts = token.styles.map { style -> this.styleMap[style] ?: emptyMap() }
-            val flatAtts = atts.fold(emptyMap<String,Any>()) { acc, it -> acc + it }
+            val styleIds = token.styles
+            val flatAtts = styleIds.fold(emptyMap<String,Any>()) { acc, it ->
+                val ckStyle = aglTokenizer.agl.styleHandler.editorStyleFor(it) as CkStyle?
+                acc + (ckStyle?.attribs ?: emptyMap())
+            }
             ckTokens.add(CkAttributeData(fp,lp,flatAtts))
         }
         updateCkModel(ckTokens)

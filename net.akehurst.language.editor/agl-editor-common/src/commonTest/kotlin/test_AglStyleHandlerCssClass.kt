@@ -23,12 +23,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class test_AglStyleHandler {
+class test_AglStyleHandlerCssClass {
 
     @Test
     fun updateStyleModel() {
         val langId = LanguageIdentity("test.lang")
-        val sut = AglStyleHandler(langId)
+        val sut = AglStyleHandlerCssClass(langId)
 
         val styleModel = Agl.registry.agl.style.processor!!.process(
             sentence = """
@@ -52,7 +52,7 @@ class test_AglStyleHandler {
     @Test
     fun mapToCssClasses() {
         val langId = LanguageIdentity("test.lang")
-        val sut = AglStyleHandler(langId)
+        val sut = AglStyleHandlerCssClass(langId)
 
         val styleModel = Agl.registry.agl.style.processor!!.process(
             sentence = """
@@ -74,7 +74,7 @@ class test_AglStyleHandler {
         val leaf = LeafData("'kw'", false, 0,1, listOf("'kw'"))
         val actual = sut.mapToCssClasses(leaf)
 
-        val expected = listOf("agl_test_lang-1")
+        val expected = listOf(CssClassStyle("agl_test_lang-1"))
         assertEquals(expected, actual)
     }
 }

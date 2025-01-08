@@ -23,13 +23,11 @@ import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.common.AglStyleHandlerAbstract.Companion.AGL_STYLE_PREFIX
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.sentence.api.InputLocation
-import net.akehurst.language.style.api.AglStyleDeclaration
-import net.akehurst.language.style.api.AglStyleMetaRule
-import net.akehurst.language.style.api.AglStyleTagRule
 import org.w3c.dom.Element
 import kotlin.js.Promise
 import kotlin.math.min
@@ -82,9 +80,9 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val codemirrorFunctions: codemirror.ICodeMirror,
-) : AglEditorAbstract<AsmType, ContextType>(
+) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
     languageServiceRequest, languageId, EndPointIdentity(editorId,"none"),
-    editorOptions,logFunction
+    editorOptions,logFunction, AglStyleHandlerCssClass(languageId)
 ) {
 
     override val baseEditor: Any get() = this.cmEditorView
@@ -124,6 +122,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     override val workerTokenizer = AglTokenizerByWorkerCodeMirror(this.codemirrorFunctions, this.cmEditorView, this.agl)
     override val completionProvider = AglCompletionProviderCodeMirror(this)
     private var _linterPromise = mutableListOf<DeferredIssues>()
+    private val _cmStyleHandler get() = agl.styleHandler as AglStyleHandlerCssClass
 
     init {
         // add agl extensions
@@ -179,24 +178,27 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
         if (null != oldId) {
-            val oldAglStyleClass = AglStyleHandler.languageIdToStyleClass(this.agl.styleHandler.styleNamePrefixStart, oldId)
+            val oldAglStyleClass = CssClassStyle(EditorStyleIdentity("$AGL_STYLE_PREFIX-${oldId.value}")).cssClassName
             this.containerElement.removeClass(oldAglStyleClass)
         }
-        this.containerElement.addClass(this.agl.styleHandler.aglStyleClass)
+        this.containerElement.addClass(_cmStyleHandler.languageCssClassStyle.cssClassName)
     }
 
     override fun updateEditorStyles() {
-        val aglStyleClass = this.agl.styleHandler.aglStyleClass
+        val mappedCss = _cmStyleHandler.stylesToCss()
+
         val theme = objectJS {}
+        TODO()
+        /*
         for (ss in this.agl.styleHandler.styleModel.allDefinitions) {
             for (r in ss.rules) {
             val sel:String = when(r) {
                 is AglStyleTagRule ->r.selector.joinToString(separator = ", ") {
-                    val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass(it.value)
+                    val mappedSelName = this._cmStyleHandler.convert(it)
                     ".$mappedSelName"
                 }
                 is AglStyleMetaRule -> {
-                    val mappedSelName = this.agl.styleHandler.mapSelectorToCssClass("\$\$" + r.pattern.pattern)
+                    val mappedSelName = this._cmStyleHandler.convert("\$\$" + r.pattern.pattern)
                     ".$mappedSelName"
                 }
                 else -> error("Subtype not handled")
@@ -219,6 +221,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
             (theme as Any).set(sel, css)
         }
         }
+         */
         //TODO: use computed facet instead of reconfiguring!
         this.cmEditorView.dispatch(objectJSTyped<codemirror.state.TransactionSpec> {
             effects = arrayOf(
