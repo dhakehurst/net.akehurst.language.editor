@@ -145,7 +145,7 @@ open class LanguageServiceRequestDirectExecution(
         crossReferenceModelStr: CrossReferenceString?,
         editorOptions: EditorOptions
     ) {
-        logger.logTrace("processorCreateResponse $endPointIdentity, $languageId")
+        logger.logTrace("processorCreateRequest $endPointIdentity, $languageId")
         try {
             if (grammarStr.value.isBlank()) {
                 response.processorCreateResponse(endPointIdentity, requestId,MessageStatus.FAILURE, "Cannot createProcessor if there is no grammar", emptyList(), emptyList())
