@@ -101,7 +101,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
             this.requestUpdateStyleModel()
         }
 
-    override var processOptions: ProcessOptions<AsmType, ContextType>
+    override var processOptions: ()->ProcessOptions<AsmType, ContextType>
         get() = this.agl.options
         set(value) {
             this.agl.options = value
@@ -198,7 +198,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         if (doUpdate) {
             this.clearIssueMarkers()
             this.languageServiceRequest.interruptRequest(this.endPointIdentity,  nextRequestId,this.languageIdentity, "process Sentence")
-            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, this.text, this.agl.options)
+            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, this.text, this.agl.options.invoke())
         }
     }
 

@@ -445,12 +445,9 @@ open class LanguageServiceRequestDirectExecution(
                 }
                 val opts = Agl.options(options) {
                     semanticAnalysis {
-                        active(options.semanticAnalysis.active)
                         locationMap(locationMap)
                         context(ctx as ContextType)
-                        checkReferences(options.semanticAnalysis.checkReferences)
-                        resolveReferences(options.semanticAnalysis.resolveReferences)
-                        option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
+                        option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false) //FIXME: not sure we should override this here!
                     }
                 }
                 val result = proc.semanticAnalysis(asm, opts)

@@ -80,8 +80,12 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     /**
      * options passed to the processor when processing the editor text
      */
-    var processOptions: ProcessOptions<AsmType, ContextType>
+    var processOptions: ()->ProcessOptions<AsmType, ContextType>
 
+    /**
+     * options about what information (events) are triggered
+     * by this editor when a sentence is processed
+     */
     var editorOptions: EditorOptions
 
     /**

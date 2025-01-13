@@ -198,7 +198,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         logger.logTrace("Autocomplete Invoked")
         val cursorPos = ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
         emi.update(ckEditor.model)
-        languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, nextRequestId, agl.languageIdentity, text, emi.toSentencePosition(cursorPos), this.agl.options)
+        languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, nextRequestId, agl.languageIdentity, text, emi.toSentencePosition(cursorPos), this.agl.options.invoke())
 
         _autocomplete.show()
     }

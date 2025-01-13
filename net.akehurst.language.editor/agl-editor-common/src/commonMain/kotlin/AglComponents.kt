@@ -17,6 +17,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.scanner.api.Scanner
 import net.akehurst.language.scanner.api.ScannerKind
 import net.akehurst.language.editor.api.AglEditorLogger
@@ -55,7 +56,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
             configuration = Agl.configurationBase()
         )
 
-    var options = Agl.options<AsmType, ContextType> {}
+    var options:()-> ProcessOptions<AsmType, ContextType> = { Agl.options<AsmType, ContextType> {} }
     var goalRule: GrammarRuleName? = languageDefinition.defaultGoalRule
 
     val styleHandler get() = _styleHandler

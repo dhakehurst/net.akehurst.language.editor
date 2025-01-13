@@ -49,7 +49,7 @@ internal class AglCompletionProviderCodeMirror<AsmType : Any, ContextType : Any>
             editor.endPointIdentity, editor.nextRequestId, editor.languageIdentity,
             editor.text,
             from,
-            editor.processOptions
+            editor.processOptions.invoke()
         )
         return Promise { resolve, reject ->
             promiseQueue.add(DeferredAutocomplete(context.pos, before, resolve, reject))

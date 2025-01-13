@@ -24,12 +24,12 @@ class ConsoleLogger(
     var outputLevel: LogLevel
 ) {
 
-    fun logFatal(msg: String?) = log(LogLevel.Fatal, msg, null)
-    fun logError(msg: String?) = log(LogLevel.Error, msg, null)
-    fun logWarn(msg: String?) = log(LogLevel.Warning, msg, null)
-    fun logInfo(msg: String?) = log(LogLevel.Information, msg, null)
-    fun logDebug(msg: String?) = log(LogLevel.Debug, msg, null)
-    fun logTrace(msg: String?) = log(LogLevel.Trace, msg, null)
+    fun logFatal(msg: String?, t: Throwable?=null) = log(LogLevel.Fatal, msg, t)
+    fun logError(msg: String?, t: Throwable?=null) = log(LogLevel.Error, msg, t)
+    fun logWarn(msg: String?, t: Throwable?=null) = log(LogLevel.Warning, msg, t)
+    fun logInfo(msg: String?, t: Throwable?=null) = log(LogLevel.Information, msg, t)
+    fun logDebug(msg: String?, t: Throwable?=null) = log(LogLevel.Debug, msg, t)
+    fun logTrace(msg: String?, t: Throwable?=null) = log(LogLevel.Trace, msg, t)
 
     fun log(lvl: LogLevel, msg: String?, t: Throwable?) {
         when {
