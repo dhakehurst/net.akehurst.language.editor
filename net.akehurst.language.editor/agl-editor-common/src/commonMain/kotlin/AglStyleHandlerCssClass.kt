@@ -51,8 +51,7 @@ open class AglStyleHandlerCssClass(
 
     override fun createEditorStyleType(identity: EditorStyleIdentity): CssClassStyle = CssClassStyle(identity)
 
-    override fun updateStyleRule(sr: AglStyleRule): List<CssClassStyle>  {
-        val editorStyles = super.updateStyleRule(sr)
+    override fun updateEditorStyles(editorStyles: List<CssClassStyle>, sr: AglStyleRule) {
         val cssClasses = listOf(languageCssClassStyle) + editorStyles
         val declarations = LinkedHashMap(sr.declaration.values.associate { oldStyle ->
             when (oldStyle.name) {
@@ -68,7 +67,6 @@ open class AglStyleHandlerCssClass(
             }
         })
         _mappedCss = _mappedCss + "\n" + AglStyleHandlerCssClass.toCss(cssClasses, declarations)
-        return editorStyles
     }
 
 }

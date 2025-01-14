@@ -24,7 +24,7 @@ internal class AglTokenizerByWorkerAce<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>
 ) : ace.Tokenizer, AglTokenizerByWorker<CssClassStyle> {
 
-    val aglTokenizer = AglTokenizer<AsmType, ContextType, CssClassStyle>(agl)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType, CssClassStyle>(agl, agl.logger)
 
     override fun reset() {
         this.aglTokenizer.reset()

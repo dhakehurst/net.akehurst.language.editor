@@ -48,7 +48,7 @@ internal class AglTokenizerByWorkerMonaco<AsmType : Any, ContextType : Any>(
 
     val decs = mutableMapOf<Int, Array<String>>()
 
-    val aglTokenizer = AglTokenizer<AsmType, ContextType,CssClassStyle>(agl)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType,CssClassStyle>(agl,agl.logger)
 //    override var acceptingTokens
 //        get() = aglTokenizer.acceptingTokens
 //        set(value) {

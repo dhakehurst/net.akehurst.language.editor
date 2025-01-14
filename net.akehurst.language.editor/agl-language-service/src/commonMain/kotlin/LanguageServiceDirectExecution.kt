@@ -67,12 +67,12 @@ class LanguageServiceResponseDirectExecution(
         issues: List<LanguageIssue>,
         scannerMatchables: List<Matchable>
     ) {
-        logger.logTrace("processorCreateResponse $endPointIdentity, $status, $message, $issues, $scannerMatchables")
+        logger.logTrace("processorCreateResponse $endPointIdentity, $requestId, $status, $message, $issues, $scannerMatchables")
         responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, requestId, status, message, issues, scannerMatchables)
     }
 
     override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String) {
-        logger.logTrace("processorDeleteResponse  $endPointIdentity, $status, $message")
+        logger.logTrace("processorDeleteResponse  $endPointIdentity, $requestId, $status, $message")
         responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, requestId,status, message)
     }
 
@@ -84,12 +84,12 @@ class LanguageServiceResponseDirectExecution(
         issues: List<LanguageIssue>,
         styleModel: AglStyleModel?
     ) {
-        logger.logTrace("processorSetStyleResponse $endPointIdentity, $status, $message, $issues, ${styleModel?.asString()}")
+        logger.logTrace("processorSetStyleResponse $endPointIdentity, $requestId, $status, $message, $issues, ${styleModel?.asString()}")
         responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, requestId,status, message, issues, styleModel)
     }
 
     override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
-        logger.logTrace("sentenceParseResponse $endPointIdentity, $status, $message, $issues, <tree> ")
+        logger.logTrace("sentenceParseResponse $endPointIdentity, $requestId, $status, $message, $issues, <tree> ")
         responseObjects[endPointIdentity]?.sentenceParseResponse(endPointIdentity, requestId,status, message, issues, tree)
     }
 
@@ -101,17 +101,17 @@ class LanguageServiceResponseDirectExecution(
         startLine: Int,
         lineTokens: List<List<AglToken>>
     ) {
-        logger.logTrace("sentenceLineTokensResponse $endPointIdentity, $status, $message, $startLine, $lineTokens")
+        logger.logTrace("sentenceLineTokensResponse $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens")
         responseObjects[endPointIdentity]?.sentenceLineTokensResponse(endPointIdentity, requestId,status, message, startLine, lineTokens)
     }
 
     override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
-        logger.logTrace("sentenceSyntaxAnalysisResponse $endPointIdentity, $status, $message, $issues, <asm>")
+        logger.logTrace("sentenceSyntaxAnalysisResponse $endPointIdentity, $requestId, $status, $message, $issues, <asm>")
         responseObjects[endPointIdentity]?.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId,status, message, issues, asm)
     }
 
     override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
-        logger.logTrace("sentenceSemanticAnalysisResponse $endPointIdentity, $status, $message, $issues, <asm>")
+        logger.logTrace("sentenceSemanticAnalysisResponse $endPointIdentity, $requestId, $status, $message, $issues, <asm>")
         responseObjects[endPointIdentity]?.sentenceSemanticAnalysisResponse(endPointIdentity, requestId,status, message, issues, asm)
     }
 
@@ -123,7 +123,7 @@ class LanguageServiceResponseDirectExecution(
         issues: List<LanguageIssue>,
         completionItems: List<CompletionItem>
     ) {
-        logger.logTrace("sentenceCodeCompleteResponse $endPointIdentity, $status, $message, $issues, $completionItems")
+        logger.logTrace("sentenceCodeCompleteResponse $endPointIdentity, $requestId, $status, $message, $issues, $completionItems")
         responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, requestId,status, message, issues, completionItems)
     }
 }

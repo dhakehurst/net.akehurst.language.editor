@@ -31,6 +31,7 @@ import net.akehurst.language.regex.agl.RegexEnginePlatform
 import net.akehurst.language.regex.api.RegexEngineKind
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.scanner.common.ScannerAbstract
+import net.akehurst.language.scanner.common.ScannerFromMatchables
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sppt.treedata.CompleteTreeDataNode
 
@@ -108,13 +109,6 @@ class AglComponents<AsmType : Any, ContextType : Any>(
             RegexEngineKind.PLATFORM -> RegexEnginePlatform
             RegexEngineKind.AGL -> RegexEngineAgl
         }
-        object : ScannerAbstract(regexEngine) {
-            override val kind: ScannerKind get() = error("Not used")
-            override val matchables: List<Matchable> get() = scannerMatchables
-            override val validTerminals: List<Rule> get() = error("Not used")
-            override fun reset() {}
-            override fun isLookingAt(sentence: Sentence, position: Int, terminalRule: Rule): Boolean = error("Not used")
-            override fun findOrTryCreateLeaf(sentence: Sentence, position: Int, terminalRule: Rule): CompleteTreeDataNode = error("Not used")
-        }
+        ScannerFromMatchables(regexEngine) { scannerMatchables }
     }
 }

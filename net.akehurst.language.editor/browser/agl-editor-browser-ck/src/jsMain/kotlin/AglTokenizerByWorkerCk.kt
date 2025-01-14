@@ -36,7 +36,7 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     val logger: AglEditorLogger
 ) : AglTokenizerByWorker<CkStyle> {
 
-    val aglTokenizer = AglTokenizer<AsmType, ContextType, CkStyle>(agl)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType, CkStyle>(agl, agl.logger)
     private var count = 0
 
     override fun reset() {

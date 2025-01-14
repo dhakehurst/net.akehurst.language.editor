@@ -23,7 +23,6 @@ import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.style.api.*
 import net.akehurst.language.style.asm.AglStyleModelDefault
-import kotlin.jvm.JvmInline
 
 abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
     languageId: LanguageIdentity,
@@ -45,6 +44,8 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
 
     abstract fun createEditorStyleType(identity: EditorStyleIdentity):EditorStyleType
 
+    open fun updateEditorStyles(editorStyles: List<EditorStyleType>, sr: AglStyleRule) {}
+
     open fun updateStyleRule(sr:AglStyleRule): List<EditorStyleType> {
         val editorStyles = when (sr) {
             is AglStyleTagRule -> {
@@ -65,6 +66,7 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
 
             else -> error("Unsupported")
         }
+        updateEditorStyles(editorStyles, sr)
         return editorStyles
     }
 

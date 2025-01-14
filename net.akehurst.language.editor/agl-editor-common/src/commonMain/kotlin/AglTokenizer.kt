@@ -15,6 +15,7 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.editor.api.LogLevel
@@ -61,7 +62,8 @@ class AglTokenDefault(
 }
 
 class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
-    val agl: AglComponents<AsmType, ContextType>
+    val agl: AglComponents<AsmType, ContextType>,
+    val logger: AglEditorLogger
 ) {
 
     val tokensByLine = mutableMapOf<Int, List<AglToken>>()
@@ -92,7 +94,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val tv = measureTimedValue {
                 scanner.scan(sentence, 0, offset)
             }
-            this.agl.logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
+            logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
             val leafs = tv.value.tokens
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
@@ -102,7 +104,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
                 tokens
             }
         } catch (t: Throwable) {
-            agl.logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
+            logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
             val tokens = when {
                 text.isEmpty() -> emptyList()
                 else -> listOf(AglTokenDefault(emptyList(), 0, text.length))
@@ -138,7 +140,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val tv = measureTimedValue {
                 scanner.scan(sentence, 0, offset)
             }
-            this.agl.logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
+            logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
             val leafs = tv.value.tokens
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
@@ -154,7 +156,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
                 Pair(state, tokens)
             }
         } catch (t: Throwable) {
-            agl.logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
+            logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
             val tokens = when {
                 lineText.isEmpty() -> emptyList()
                 else -> listOf(AglTokenDefault(emptyList(), previousLineState.nextLineStartPosition, lineText.length))

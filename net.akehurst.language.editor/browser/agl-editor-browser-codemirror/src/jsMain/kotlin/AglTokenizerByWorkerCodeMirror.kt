@@ -24,7 +24,7 @@ class AglTokenizerByWorkerCodeMirror<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>
 ) : AglTokenizerByWorker<CssClassStyle> {
 
-    val aglTokenizer = AglTokenizer<AsmType, ContextType, CssClassStyle>(agl)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType, CssClassStyle>(agl, agl.logger)
 //    override var acceptingTokens
 //        get() = aglTokenizer.acceptingTokens
 //        set(value) {

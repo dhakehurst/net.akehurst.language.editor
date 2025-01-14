@@ -36,11 +36,9 @@ class AglStyleHandlerCkStyle(
 
     private val _edStyleNamePrefix: String = "aglCkStyle-"
 
-    override fun createEditorStyleType(identity: EditorStyleIdentity) =
-         CkStyle(identity)
+    override fun createEditorStyleType(identity: EditorStyleIdentity) = CkStyle(identity)
 
-    override fun updateStyleRule(sr: AglStyleRule): List<CkStyle> {
-        val editorStyles = super.updateStyleRule(sr)
+    override fun updateEditorStyles(editorStyles: List<CkStyle>, sr: AglStyleRule) {
         val attribs = sr.declaration.values.associate { oldStyle ->
             when (oldStyle.name) {
                 "foreground" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_FONT_FORE_COLOUR, oldStyle.value)
@@ -62,7 +60,6 @@ class AglStyleHandlerCkStyle(
         editorStyles.forEach {
             it.attribs.putAll(attribs)
         }
-        return editorStyles
     }
 
 }

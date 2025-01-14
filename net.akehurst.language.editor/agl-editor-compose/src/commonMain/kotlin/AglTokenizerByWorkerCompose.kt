@@ -32,7 +32,7 @@ class AglTokenizerByWorkerCompose<AsmType : Any, ContextType : Any>(
     val logger: AglEditorLogger
 ) : AglTokenizerByWorker<ComposeStyle> {
 
-    val aglTokenizer = AglTokenizer<AsmType, ContextType, ComposeStyle>(agl)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType, ComposeStyle>(agl,agl.logger)
 
     fun refresh() {
     }
