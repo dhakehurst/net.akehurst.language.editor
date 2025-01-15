@@ -32,9 +32,9 @@ class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView()
     init {
         itemView.label = when(item.kind) {
             CompletionItemKind.LITERAL -> item.text
-            CompletionItemKind.PATTERN -> item.text
-            CompletionItemKind.SEGMENT -> item.label
-            CompletionItemKind.REFERRED -> item.text
+            CompletionItemKind.PATTERN -> "${item.text} (${item.label})"
+            CompletionItemKind.SEGMENT -> "${item.label} (${item.text})"
+            CompletionItemKind.REFERRED -> "${item.text} (${item.label})"
         }
         itemView.withText = true
         this.children.add(itemView)
