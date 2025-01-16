@@ -30,7 +30,7 @@ class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView()
     val itemView = ck.ui.button.ButtonView(ck.utils.Locale())
 
     init {
-        itemView.label = when(item.kind) {
+        itemView.label = when (item.kind) {
             CompletionItemKind.LITERAL -> item.text
             CompletionItemKind.PATTERN -> "${item.text} (${item.label})"
             CompletionItemKind.SEGMENT -> "${item.label} (${item.text})"
@@ -39,7 +39,7 @@ class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView()
         itemView.withText = true
         this.children.add(itemView)
         this.itemView.element.onclick = {
-             this.fire<Any,ck.ui.button.ButtonExecuteEvent>("execute")
+            this.fire<Any, ck.ui.button.ButtonExecuteEvent>("execute")
         }
     }
 
@@ -61,6 +61,9 @@ class CkAutocomplete(
     val ckEditor: ck.core.editor.Editor,
     val balloon: ck.ui.panel.balloon.ContextualBalloon
 ) : AglEditorCompletionProvider {
+
+    val isVisible: Boolean get() = balloon.visibleView === acView
+
     val listView = FilteredListView()
 
     val acView = ck.ui.autocomplete.AutocompleteView<HTMLInputElement>(ck.utils.Locale(), objectJSTyped<ck.ui.autocomplete.AutocompleteViewConfig<HTMLInputElement>> {
@@ -77,7 +80,7 @@ class CkAutocomplete(
     var selected: AutocompleteItemView? = null
 
     private val commitKeys = listOf(ck.utils.keyCodes.enter, ck.utils.keyCodes.tab)
-    private val handledKeys = commitKeys + listOf(ck.utils.keyCodes.arrowdown, ck.utils.keyCodes.arrowup, ck.utils.keyCodes.esc,ck.utils.keyCodes.arrowleft,ck.utils.keyCodes.arrowright)
+    private val handledKeys = commitKeys + listOf(ck.utils.keyCodes.arrowdown, ck.utils.keyCodes.arrowup, ck.utils.keyCodes.esc, ck.utils.keyCodes.arrowleft, ck.utils.keyCodes.arrowright)
 
     init {
         acView.render()
@@ -111,13 +114,67 @@ class CkAutocomplete(
         }, objectJS { priority = "highest" })
     }
 
-    private val isVisible: Boolean get() = balloon.visibleView === acView
+    fun clear() {
+        listView.items.clear()
+    }
 
+    fun show() {
+        //store cursor position when invoked
+        this.insertPosition = ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
+        val cursorRng = ckEditor.model.document.selection.getFirstRange() ?: error("Should always be non-null!")
+        val cursorViewRng = ckEditor.editing.mapper.toViewRange(cursorRng)
+        val domRng = ckEditor.editing.view.domConverter.viewRangeToDom(cursorViewRng)
+        val targetRect = ck.utils.dom.Rect.getDomRangeRects(domRng).first()
+
+        val viewPos = objectJSTyped<ck.utils.dom.Options> {
+            target = targetRect
+            //limiter =
+            //positions =
+        }
+        if (!isVisible) {
+            balloon.add(objectJSTyped {
+                view = acView
+                position = viewPos
+                singleViewMode = true
+            })
+        }
+    }
+
+    // --- AglEditorCompletionProvider ---
+    override fun provide(completionItems: List<CompletionItem>) {
+        try {
+            logger.logTrace("Provided ${completionItems.size} items.")
+            val sorted = completionItems.sortedWith { a, b ->
+                when {
+                    a.kind > b.kind -> 1
+                    a.kind < b.kind -> -1
+                    else -> a.label.compareTo(b.label)
+                }
+            }
+            for (item in sorted) {
+                val listItemView = AutocompleteItemView(item)
+                listItemView.on<Any, ck.ui.button.ButtonExecuteEvent>("execute", { evt, arg ->
+                    val idx = listView.items.getIndex(listItemView)
+                    select(idx)
+                    insertSelected()
+                    hide()
+                })
+                listView.items.add(listItemView)
+            }
+            acView.resultsView.asDynamic().isVisible = true
+            //listView.asDynamic().isVisible = true
+            select(0)
+        } catch (t: Throwable) {
+            logger.logError("Exception trying to provide items.", t)
+        }
+    }
+
+    // --- impl ---
     private fun shouldHandledKey(keyCode: Number): Boolean = handledKeys.contains(keyCode)
 
     private fun hide() {
         if (balloon.hasView(acView)) {
-            listView.items.clear()
+            this.clear()
             balloon.remove(acView)
         }
     }
@@ -125,16 +182,17 @@ class CkAutocomplete(
     private fun insertSelected() {
         val sel = selected
         val pos = insertPosition
-        if (null != sel && null!=pos) {
+        if (null != sel && null != pos) {
             val textToInsert = sel.item.text
             ckEditor.model.change { writer ->
                 writer.insertText(textToInsert, pos)
-                when(sel.item.kind) {
+                when (sel.item.kind) {
                     // select the inserted 'Pattern' text so user can replace it
                     CompletionItemKind.PATTERN -> {
                         val rng = writer.createRange(pos, pos.getShiftedBy(textToInsert.length))
                         writer.setSelection(rng)
                     }
+
                     else -> Unit
                 }
             }
@@ -166,7 +224,7 @@ class CkAutocomplete(
         }
     }
 
-    private fun isSelectedItemVisible():Boolean {
+    private fun isSelectedItemVisible(): Boolean {
         val itemRect = ck.utils.dom.Rect(selected!!.element)
         return ck.utils.dom.Rect(acView.resultsView.element).contains(itemRect)
         //return ck.utils.dom.Rect(listView.element).contains(itemRect)
@@ -183,56 +241,6 @@ class CkAutocomplete(
         if (null != selected) {
             val idx = listView.items.getIndex(selected!!)
             select(idx - 1)
-        }
-    }
-
-    fun show() {
-        //store cursor position when invoked
-        this.insertPosition =  ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
-        val cursorRng = ckEditor.model.document.selection.getFirstRange() ?: error("Should always be non-null!")
-        val cursorViewRng = ckEditor.editing.mapper.toViewRange(cursorRng)
-        val domRng = ckEditor.editing.view.domConverter.viewRangeToDom(cursorViewRng)
-        val targetRect = ck.utils.dom.Rect.getDomRangeRects(domRng).first()
-
-        val viewPos = objectJSTyped<ck.utils.dom.Options> {
-            target = targetRect
-            //limiter =
-            //positions =
-        }
-
-        balloon.add(objectJSTyped {
-            view = acView
-            position = viewPos
-            singleViewMode = true
-        })
-    }
-
-    // --- AglEditorCompletionProvider ---
-    override fun provide(completionItems: List<CompletionItem>) {
-        try {
-            logger.logTrace("Provided ${completionItems.size} items.")
-            val sorted = completionItems.sortedWith { a, b ->
-                when {
-                    a.kind > b.kind -> 1
-                    a.kind < b.kind -> -1
-                    else -> a.label.compareTo(b.label)
-                }
-            }
-            for (item in sorted) {
-                val listItemView = AutocompleteItemView(item)
-                listItemView.on<Any,ck.ui.button.ButtonExecuteEvent>("execute", { evt, arg ->
-                    val idx = listView.items.getIndex(listItemView)
-                    select(idx)
-                    insertSelected()
-                    hide()
-                })
-                listView.items.add(listItemView)
-            }
-            acView.resultsView.asDynamic().isVisible = true
-            //listView.asDynamic().isVisible = true
-            select(0)
-        } catch (t:Throwable) {
-            logger.logError("Exception trying to provide items.", t)
         }
     }
 

@@ -228,7 +228,7 @@ open class LanguageServiceRequestDirectExecution(
         try {
             val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '${languageId}' not found, was it created correctly?")
             val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
-            val result = proc.expectedItemsAt(sentence, position, -1, processOptions)
+            val result = proc.expectedItemsAt(sentence, position, processOptions)
             response.sentenceCodeCompleteResponse(endPointIdentity, requestId,MessageStatus.SUCCESS, "OK", result.issues.all.toList(), result.items)
         } catch (t: Throwable) {
             response.sentenceCodeCompleteResponse(endPointIdentity, requestId,MessageStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), emptyList())

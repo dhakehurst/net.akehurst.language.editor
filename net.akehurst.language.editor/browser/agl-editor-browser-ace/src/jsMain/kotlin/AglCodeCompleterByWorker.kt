@@ -66,7 +66,7 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
             if (null==context) {
                 this.agl.logger.log(LogLevel.Debug,"context is null for code completion.",null)
             }
-            val result = proc.expectedItemsAt(editor.getValue(), pos, 1,
+            val result = proc.expectedItemsAt(editor.getValue(), pos,
                 Agl.options {
                     parse { goalRuleName(goalRule?.value) }
                     completionProvider { context(context) }

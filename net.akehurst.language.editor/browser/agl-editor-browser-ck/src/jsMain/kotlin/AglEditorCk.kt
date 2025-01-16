@@ -91,12 +91,22 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     private lateinit var _contextualBalloon: ck.ui.panel.balloon.ContextualBalloon
     private lateinit var _autocomplete: CkAutocomplete
+    private var _autocompleteDepthIncrement = 0
 
     fun initialise() {
         CkEditorHelper.createAglAttributes(logger, ckEditor)
 
         // CTRL+SPACE
-        ckEditor.keystrokes.set(arrayOf("ctrl!", 32), { invokeAutocomplete() })
+        ckEditor.keystrokes.set(arrayOf("ctrl!", 32), {
+            if(_autocomplete.isVisible) {
+                _autocomplete.clear()
+                _autocompleteDepthIncrement++
+                invokeAutocomplete()
+            } else {
+                _autocompleteDepthIncrement = 0
+                invokeAutocomplete()
+            }
+        })
         _contextualBalloon = ckEditor.plugins.get(ck.ui.panel.balloon.ContextualBalloon::class.js)
         _autocomplete = CkAutocomplete(logger, ckEditor, _contextualBalloon)
 
@@ -195,11 +205,12 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     // ---
     fun invokeAutocomplete() {
-        logger.logTrace("Autocomplete Invoked")
+        logger.logTrace("invokeAutocomplete")
         val cursorPos = ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
         emi.update(ckEditor.model)
-        languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, nextRequestId, agl.languageIdentity, text, emi.toSentencePosition(cursorPos), this.agl.options.invoke())
-
+        val options = this.agl.options.invoke()
+        options.completionProvider.depth += _autocompleteDepthIncrement
+        languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, nextRequestId, agl.languageIdentity, text, emi.toSentencePosition(cursorPos), options)
         _autocomplete.show()
     }
 }

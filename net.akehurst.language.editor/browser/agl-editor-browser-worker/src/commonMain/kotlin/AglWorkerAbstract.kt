@@ -435,7 +435,6 @@ abstract class AglWorkerAbstract {
             val result = proc.expectedItemsAt(
                 message.text,
                 message.position,
-                1,
                 message.options
             )
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), result.items))
