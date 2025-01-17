@@ -33,7 +33,7 @@ class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView()
         itemView.label = when (item.kind) {
             CompletionItemKind.LITERAL -> item.text
             CompletionItemKind.PATTERN -> "${item.text} (${item.label})"
-            CompletionItemKind.SEGMENT -> "${item.label} (${item.text})"
+            CompletionItemKind.SEGMENT -> "${item.label}: ${item.text}"
             CompletionItemKind.REFERRED -> "${item.text} (${item.label})"
         }
         itemView.withText = true
@@ -144,14 +144,7 @@ class CkAutocomplete(
     override fun provide(completionItems: List<CompletionItem>) {
         try {
             logger.logTrace("Provided ${completionItems.size} items.")
-            val sorted = completionItems.sortedWith { a, b ->
-                when {
-                    a.kind > b.kind -> 1
-                    a.kind < b.kind -> -1
-                    else -> a.label.compareTo(b.label)
-                }
-            }
-            for (item in sorted) {
+            for (item in completionItems) {
                 val listItemView = AutocompleteItemView(item)
                 listItemView.on<Any, ck.ui.button.ButtonExecuteEvent>("execute", { evt, arg ->
                     val idx = listView.items.getIndex(listItemView)
