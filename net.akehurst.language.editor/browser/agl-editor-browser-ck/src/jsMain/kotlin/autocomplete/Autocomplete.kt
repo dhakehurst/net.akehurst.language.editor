@@ -2,13 +2,17 @@ package net.akehurst.language.editor.browser.ck.autocomplete
 
 
 import kotlinx.browser.document
+import kotlinx.dom.addClass
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.editor.api.AglEditorCompletionProvider
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
+import org.w3c.dom.HTMLDivElement
+import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.HTMLTemplateElement
 
 class FilteredListView : ck.ui.list.ListView(), ck.ui.search.FilteredView {
     override fun filter(regExp: kotlin.js.RegExp?): ck.ui.search.FilteredViewResult {
@@ -25,22 +29,29 @@ data class AutoCompleteItem(
     val doc: String
 )
 
-class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView() {
+class AutocompleteItemView(
+    locale: ck.utils.Locale,
+    val item: CompletionItem,
+    _styleItem: (item: CompletionItem) -> String
+) : ck.ui.list.ListItemView(locale) {
 
-    val itemView = ck.ui.button.ButtonView(ck.utils.Locale())
+    // private val itemView = ck.ui.button.ButtonView(ck.utils.Locale())
+    val itemView: ck.mention.DomWrapperView
 
     init {
-        itemView.label = when (item.kind) {
-            CompletionItemKind.LITERAL -> item.text
-            CompletionItemKind.PATTERN -> "${item.text} (${item.label})"
-            CompletionItemKind.SEGMENT -> "${item.label}: ${item.text}"
-            CompletionItemKind.REFERRED -> "${item.text} (${item.label})"
-        }
-        itemView.withText = true
+        val html = _styleItem.invoke(item)
+        val domElem = document.createElement("div") as HTMLDivElement
+        domElem.addClass("ck-reset_all-excluded") //or ck css removes all styling
+        domElem.style.margin = "0"
+        domElem.innerHTML = html
+        itemView = ck.mention.DomWrapperView(this.locale!!, domElem)
+        //itemView.label = _styleItem.invoke(item)
+        //itemView.withText = true
         this.children.add(itemView)
-        this.itemView.element.onclick = {
-            this.fire<Any, ck.ui.button.ButtonExecuteEvent>("execute")
-        }
+
+        // this.itemView.element.onclick = {
+        //     this.fire<Any, ck.ui.button.ButtonExecuteEvent>("execute")
+        //}
     }
 
     fun indicateSelected() {
@@ -59,14 +70,16 @@ class AutocompleteItemView(val item: CompletionItem) : ck.ui.list.ListItemView()
 class CkAutocomplete(
     val logger: AglEditorLogger,
     val ckEditor: ck.core.editor.Editor,
-    val balloon: ck.ui.panel.balloon.ContextualBalloon
+    val balloon: ck.ui.panel.balloon.ContextualBalloon,
+    val styleItemView: (item: CompletionItem) -> String
 ) : AglEditorCompletionProvider {
 
     val isVisible: Boolean get() = balloon.visibleView === acView
 
-    val listView = FilteredListView()
+    private val locale = ck.utils.Locale()
+    private val listView = FilteredListView()
 
-    val acView = ck.ui.autocomplete.AutocompleteView<HTMLInputElement>(ck.utils.Locale(), objectJSTyped<ck.ui.autocomplete.AutocompleteViewConfig<HTMLInputElement>> {
+    private val acView = ck.ui.autocomplete.AutocompleteView<HTMLInputElement>(ck.utils.Locale(), objectJSTyped<ck.ui.autocomplete.AutocompleteViewConfig<HTMLInputElement>> {
         filteredView = listView
         queryView = objectJSTyped<ck.ui.search.text.SearchTextQueryViewConfig<HTMLInputElement>> {
             label = "Search Field"
@@ -76,8 +89,8 @@ class CkAutocomplete(
         resetOnBlur = true
     })
 
-    var insertPosition: ck.engine.model.Position? = null
-    var selected: AutocompleteItemView? = null
+    private var insertSelection: ck.engine.model.Selection? = null
+    private var selected: AutocompleteItemView? = null
 
     private val commitKeys = listOf(ck.utils.keyCodes.enter, ck.utils.keyCodes.tab)
     private val handledKeys = commitKeys + listOf(ck.utils.keyCodes.arrowdown, ck.utils.keyCodes.arrowup, ck.utils.keyCodes.esc, ck.utils.keyCodes.arrowleft, ck.utils.keyCodes.arrowright)
@@ -120,7 +133,7 @@ class CkAutocomplete(
 
     fun show() {
         //store cursor position when invoked
-        this.insertPosition = ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
+        this.insertSelection = ckEditor.model.document.selection ?: error("Should always be non-null!")
         val cursorRng = ckEditor.model.document.selection.getFirstRange() ?: error("Should always be non-null!")
         val cursorViewRng = ckEditor.editing.mapper.toViewRange(cursorRng)
         val domRng = ckEditor.editing.view.domConverter.viewRangeToDom(cursorViewRng)
@@ -145,13 +158,14 @@ class CkAutocomplete(
         try {
             logger.logTrace("Provided ${completionItems.size} items.")
             for (item in completionItems) {
-                val listItemView = AutocompleteItemView(item)
-                listItemView.on<Any, ck.ui.button.ButtonExecuteEvent>("execute", { evt, arg ->
+                val listItemView = AutocompleteItemView(this.locale, item, styleItemView)
+                //listItemView.on<Any, ck.ui.button.ButtonExecuteEvent>("execute", { evt, arg ->
+                listItemView.itemView.element.onclick = { _ ->
                     val idx = listView.items.getIndex(listItemView)
                     select(idx)
                     insertSelected()
                     hide()
-                })
+                }
                 listView.items.add(listItemView)
             }
             acView.resultsView.asDynamic().isVisible = true
@@ -174,11 +188,13 @@ class CkAutocomplete(
 
     private fun insertSelected() {
         val sel = selected
-        val pos = insertPosition
+        val insSelection = insertSelection
+        val pos = insSelection?.getFirstPosition()
         if (null != sel && null != pos) {
             val textToInsert = sel.item.text
             ckEditor.model.change { writer ->
-                writer.insertText(textToInsert, pos)
+                writer.remove(insSelection.getFirstRange())
+                writer.insertText(textToInsert,pos)
                 when (sel.item.kind) {
                     // select the inserted 'Pattern' text so user can replace it
                     CompletionItemKind.PATTERN -> {

@@ -1,6 +1,9 @@
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.editor.api.EditorOptions
+import net.akehurst.language.editor.api.StyleCompletionItem
 
 data class EditorOptionsDefault(
     override var parse: Boolean = true,
@@ -11,4 +14,5 @@ data class EditorOptionsDefault(
     override var syntaxAnalysisAsm: Boolean = true,
     override var semanticAnalysis: Boolean = true,
     override var semanticAnalysisAsm: Boolean = true,
+    override var styleCompletionItem: StyleCompletionItem? = null
 ) : EditorOptions

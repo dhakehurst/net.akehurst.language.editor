@@ -40,6 +40,8 @@ class EditorOptionsBuilder(
     private var _semanticAnalysis: Boolean = base.semanticAnalysis
     private var _semanticAnalysisAsm: Boolean = base.semanticAnalysisAsm
 
+    //TODO: finish this if needed, or remove it
+
     fun lineTokensChunkSize(value: Int) {
         _lineTokensChunkSize = value
     }

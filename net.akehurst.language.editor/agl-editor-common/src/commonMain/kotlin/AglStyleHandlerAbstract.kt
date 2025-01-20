@@ -25,13 +25,14 @@ import net.akehurst.language.style.api.*
 import net.akehurst.language.style.asm.AglStyleModelDefault
 
 abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
-    languageId: LanguageIdentity,
-    val EDITOR_NO_STYLE: EditorStyleType
+    languageId: LanguageIdentity
 ) : AglStyleHandler<EditorStyleType> {
 
     companion object {
         const val AGL_STYLE_PREFIX = "agl"
     }
+
+    abstract val EDITOR_NO_STYLE: EditorStyleType
 
     override val styleModel get() = _styleModel
 

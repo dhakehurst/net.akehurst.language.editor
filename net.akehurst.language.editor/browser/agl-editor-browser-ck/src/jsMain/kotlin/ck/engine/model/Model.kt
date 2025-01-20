@@ -42,6 +42,7 @@ external interface Writer {
     fun setSelection(rng:Range)
     fun addMarker(name: String, options: dynamic)
     fun insertText(text:String, position: Position )
+    fun remove(itemOrRange:dynamic)
 }
 
 external class TreeWalker(options: dynamic) {

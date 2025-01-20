@@ -9,6 +9,7 @@ import org.w3c.dom.HTMLElement
  open external class View<TElement : HTMLElement> : ck.utils.Emitter, ck.utils.dom.DomEmitter {
     val element: HTMLElement
     val isRendered: Boolean
+    val locale: ck.utils.Locale?
 
      override fun <TArg, TEvent : BaseEvent<TArg>> on(eventName: String, callback: (ev: EventInfo, arg: TArg) -> Unit, options: dynamic)
      override fun <TArg, TEvent : BaseEvent<TArg>> fire(eventInfoName: String, vararg args: TEvent)

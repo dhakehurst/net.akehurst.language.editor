@@ -32,7 +32,9 @@ data class CkStyle(override val identity: EditorStyleIdentity) : EditorStyle {
 
 class AglStyleHandlerCkStyle(
     languageId: LanguageIdentity,
-) : AglStyleHandlerAbstract<CkStyle>(languageId, CkStyle(EditorStyleIdentity.NO_STYLE)) {
+) : AglStyleHandlerAbstract<CkStyle>(languageId, ) {
+
+    override val EDITOR_NO_STYLE: CkStyle = CkStyle(EditorStyleIdentity.NO_STYLE)
 
     private val _edStyleNamePrefix: String = "aglCkStyle-"
 

@@ -18,14 +18,16 @@ package net.akehurst.language.editor.browser.ck
 
 import kotlinx.browser.window
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.browser.ck.autocomplete.CkAutocomplete
 import net.akehurst.language.editor.common.*
+import net.akehurst.language.editor.common.AglStyleHandlerAsHtml.Companion.escapeForHtml
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
-import net.akehurst.language.style.api.AglStyleMetaRule
-import net.akehurst.language.style.api.AglStyleTagRule
+import net.akehurst.language.sentence.common.SentenceDefault
+import net.akehurst.language.style.api.AglStyleModel
 import org.w3c.dom.Element
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
@@ -82,7 +84,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     override val isConnected: Boolean get() = this.containerElement.isConnected
 
-    override val completionProvider: AglEditorCompletionProvider get() =_autocomplete
+    override val completionProvider: AglEditorCompletionProvider get() = _autocomplete
 
     private var parseTimeout: dynamic = null
     private var emi: EditorModelIndex = EditorModelIndex()
@@ -91,6 +93,8 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     private lateinit var _contextualBalloon: ck.ui.panel.balloon.ContextualBalloon
     private lateinit var _autocomplete: CkAutocomplete
+    private val _autocompleteLabelStyleHandler = AglStyleHandlerAsHtml(languageId)
+    private var _autocompleteDepthMax = 3
     private var _autocompleteDepthIncrement = 0
 
     fun initialise() {
@@ -98,9 +102,9 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
         // CTRL+SPACE
         ckEditor.keystrokes.set(arrayOf("ctrl!", 32), {
-            if(_autocomplete.isVisible) {
+            if (_autocomplete.isVisible) {
                 _autocomplete.clear()
-                _autocompleteDepthIncrement++
+                _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement+1)
                 invokeAutocomplete()
             } else {
                 _autocompleteDepthIncrement = 0
@@ -108,7 +112,20 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
             }
         })
         _contextualBalloon = ckEditor.plugins.get(ck.ui.panel.balloon.ContextualBalloon::class.js)
-        _autocomplete = CkAutocomplete(logger, ckEditor, _contextualBalloon)
+        val styleCompleteItem = editorOptions.styleCompletionItem
+            ?: { item ->
+                val scanRes = agl.simpleScanner.scan(SentenceDefault(item.text))
+                val aglTokens = agl.styleHandler.transformToTokens(scanRes.tokens)
+                val html = _autocompleteLabelStyleHandler.applyHtmlStyling(SentenceDefault(item.text), aglTokens)
+
+                when (item.kind) {
+                    CompletionItemKind.LITERAL -> html
+                    CompletionItemKind.PATTERN -> "<span>${escapeForHtml(item.text)}</span><span> (${escapeForHtml(item.label)})</span>"
+                    CompletionItemKind.SEGMENT -> "<span>${escapeForHtml(item.label)}: </span>$html"
+                    CompletionItemKind.REFERRED -> "<span>${escapeForHtml(item.text)}</span><span> (${escapeForHtml(item.label)})</span>"
+                }
+            }
+        _autocomplete = CkAutocomplete(logger, ckEditor, _contextualBalloon, styleCompleteItem)
 
         ckEditor.model.document.on("change:data") { onEditorTextChangeInternal() }
 
@@ -127,6 +144,11 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
         logger.log(LogLevel.Trace, "updateLanguage $oldId")
+    }
+
+    override fun updateStyleModel(styleModel: AglStyleModel) {
+        super.updateStyleModel(styleModel)
+        this._autocompleteLabelStyleHandler.updateStyleModel(styleModel)
     }
 
     override fun updateEditorStyles() {

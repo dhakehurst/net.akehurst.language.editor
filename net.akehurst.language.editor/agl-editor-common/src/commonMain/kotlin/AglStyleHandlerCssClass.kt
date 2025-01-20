@@ -29,7 +29,7 @@ data class CssClassStyle(override val identity: EditorStyleIdentity) : EditorSty
 
 open class AglStyleHandlerCssClass(
     languageId: LanguageIdentity,
-) : AglStyleHandlerAbstract<CssClassStyle>(languageId, CssClassStyle(EditorStyleIdentity.NO_STYLE)) {
+) : AglStyleHandlerAbstract<CssClassStyle>(languageId) {
 
     companion object {
         fun toCss(selectors: List<CssClassStyle>, declarations: LinkedHashMap<String, String>): String {
@@ -40,6 +40,8 @@ open class AglStyleHandlerCssClass(
          """.trimIndent()
         }
     }
+
+    override val EDITOR_NO_STYLE: CssClassStyle = CssClassStyle(EditorStyleIdentity.NO_STYLE)
 
     val languageCssClassStyle = CssClassStyle(EditorStyleIdentity(".$_stylePrefix"))
 

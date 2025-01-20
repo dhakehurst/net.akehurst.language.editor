@@ -25,7 +25,6 @@ import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.style.api.AglStyleModel
-import net.akehurst.language.style.api.AglStyleRule
 import net.akehurst.language.style.api.AglStyleSelector
 
 enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, All }
@@ -121,6 +120,8 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
 }
 
+typealias StyleCompletionItem = (item:CompletionItem) -> String //TODO: return some other than String perhaps !
+
 interface EditorOptions {
     var parse: Boolean
     var parseLineTokens: Boolean
@@ -130,6 +131,7 @@ interface EditorOptions {
     var syntaxAnalysisAsm: Boolean
     var semanticAnalysis: Boolean
     var semanticAnalysisAsm: Boolean
+    var styleCompletionItem: StyleCompletionItem?
 }
 
 enum class EventStatus { START, FAILURE, SUCCESS }

@@ -163,6 +163,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     protected abstract fun updateLanguage(oldId: LanguageIdentity?)
     protected abstract fun updateEditorStyles()
 
+    protected open fun updateStyleModel(styleModel: AglStyleModel) {
+        this.agl.styleHandler.updateStyleModel(styleModel)
+    }
+
      fun updateProcessor() {
          logger.log(LogLevel.Trace, "updateProcessor")
         val grammarStr = this.agl.languageDefinition.grammarStr
@@ -239,7 +243,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
         logger.log(LogLevel.Trace, "processorSetStyleResponse $endPointIdentity, $requestId, $status, $message ")
         if (status == MessageStatus.SUCCESS && null != styleModel) {
-            this.agl.styleHandler.updateStyleModel(styleModel)
+            this.updateStyleModel(styleModel)
             this.updateEditorStyles()
             this.resetTokenization(0)
         } else {

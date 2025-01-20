@@ -22,8 +22,6 @@ import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglTokenizer
 import net.akehurst.language.editor.common.AglTokenizerByWorker
 
-
-
 data class CkAttributeData(
     val firstPosition: ck.engine.model.Position,
     val lastPosition: ck.engine.model.Position,
