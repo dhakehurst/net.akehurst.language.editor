@@ -37,7 +37,14 @@ external interface EventInfo {
 }
 
 external interface Emitter {
-    fun <TArg, TEvent : BaseEvent<TArg>> on(eventName: String, callback: (ev:EventInfo, arg:TArg) -> Unit, options: dynamic = definedExternally )
+    @JsName("on")
+    fun <TArg, TEvent : BaseEvent<TArg>> on1(eventName: String, callback: (ev:EventInfo, arg:TArg) -> Unit, options: dynamic = definedExternally )
+    @JsName("on")
+    fun <TArg, TEvent : BaseEvent<TArg>> on2(eventName: String, callback: (ev:EventInfo, arg1:TArg, arg2:TArg) -> Unit, options: dynamic = definedExternally )
+    @JsName("on")
+    fun <TArg, TEvent : BaseEvent<TArg>> on3(eventName: String, callback: (ev:EventInfo, arg1:TArg, arg2:TArg, arg3:TArg) -> Unit, options: dynamic = definedExternally )
+    @JsName("on")
+    fun <TArg, TEvent : BaseEvent<TArg>> on5(eventName: String, callback: (ev:EventInfo, arg1:TArg, arg2:TArg, arg3:TArg, arg4:TArg, arg5:TArg) -> Unit, options: dynamic = definedExternally )
 
     fun <TArg, TEvent : BaseEvent<TArg>> fire(eventInfoName:String, vararg args:TEvent)
 }

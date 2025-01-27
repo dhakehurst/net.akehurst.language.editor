@@ -106,7 +106,7 @@ class CkAutocomplete(
             callback = { hide() }
         })
 
-        ckEditor.editing.view.document.on<ck.engine.view.observer.KeyEventData, ck.engine.view.observer.ViewDocumentKeyDownEvent>("keydown", { evt, arg ->
+        ckEditor.editing.view.document.on1<ck.engine.view.observer.KeyEventData, ck.engine.view.observer.ViewDocumentKeyDownEvent>("keydown", { evt, arg ->
             if (isVisible && shouldHandledKey(arg.keyCode)) {
                 arg.preventDefault()
                 evt.stop()
@@ -161,10 +161,12 @@ class CkAutocomplete(
                 val listItemView = AutocompleteItemView(this.locale, item, styleItemView)
                 //listItemView.on<Any, ck.ui.button.ButtonExecuteEvent>("execute", { evt, arg ->
                 listItemView.itemView.element.onclick = { _ ->
-                    val idx = listView.items.getIndex(listItemView)
-                    select(idx)
-                    insertSelected()
-                    hide()
+                    if (isVisible) {
+                        val idx = listView.items.getIndex(listItemView)
+                        select(idx)
+                        insertSelected()
+                        hide()
+                    }
                 }
                 listView.items.add(listItemView)
             }
