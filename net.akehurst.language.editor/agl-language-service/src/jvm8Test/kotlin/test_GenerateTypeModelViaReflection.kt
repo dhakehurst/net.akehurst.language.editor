@@ -30,7 +30,7 @@ class test_GenerateTypeModelViaReflection {
             SimpleName("Test"),
             added,
             GenerateTypeModelViaReflection.KOTLIN_TO_AGL,
-            listOf(EditorMessage.komposite, AglAsm.komposite, AglScope.komposite, AglTypemodel.komposite)
+            listOf(EditorMessage.komposite, AglAsm.komposite, AglScope.komposite, AglTypemodel.kompositeString)
         )
 
 //        gen.addPackage("net.akehurst.language.api.parser")

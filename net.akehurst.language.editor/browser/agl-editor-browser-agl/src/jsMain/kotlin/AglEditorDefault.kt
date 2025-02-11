@@ -18,7 +18,7 @@ package net.akehurst.language.editor.browser.agl
 
 import kotlinx.browser.document
 import kotlinx.browser.window
-import net.akehurst.kotlin.html5.elUpdate
+import net.akehurst.kotlin.html5.elAppend
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
@@ -118,7 +118,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     }
 
     private fun init_() {
-        containerElement.elUpdate {
+        containerElement.elAppend() {
             class_.add("agl-editor")
             textarea {
                 class_.add("editing")
@@ -171,7 +171,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
 }
 """
-        document.head?.elUpdate {
+        document.head?.elAppend {
             htmlElement("style").textContent = css
         }
         editing = containerElement.querySelector(".editing") as HTMLTextAreaElement

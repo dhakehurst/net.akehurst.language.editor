@@ -5,7 +5,7 @@ kotlin = "2.1.0"
 exportPublic = "2.1.0"
 reflect = "2.1.0"
 dokka = "1.9.10"
-buildconfig = "5.5.0"
+buildconfig = "5.5.1"
 credentials = "3.0"
 
 nal-agl = "4.2.1.0"
