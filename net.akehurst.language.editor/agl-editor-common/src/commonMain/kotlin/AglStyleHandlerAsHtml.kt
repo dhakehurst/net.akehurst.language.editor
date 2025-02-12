@@ -25,9 +25,10 @@ class AglStyleHandlerAsHtml(
             "\"" to "&quot;",
             "'" to "&apos;",
         )
+        val HTML_TO_STRING = STRING_TO_HTML.entries.associate { (k, v) -> v to k }
 
-       //val String.escapeForHtml get() = this.replace(Regex("[&<>'\"]")) {mr -> STRING_TO_HTML[mr.value]!!}
-       fun escapeForHtml(str:String) = str.replace(Regex("[&<>'\"]")) {mr -> STRING_TO_HTML[mr.value]!!}
+        fun encodeForHtml(str: String) = str.replace(Regex("[&<>'\"]")) { mr -> STRING_TO_HTML[mr.value] ?: error("No replacement configured for ${mr.value}") }
+        fun decodeFromHtml(encodedHtml: String)= encodedHtml.replace(Regex("[&][^;]+[;]")) { mr -> HTML_TO_STRING[mr.value] ?: error("No replacement configured for ${mr.value}") }
 
     }
 
@@ -77,7 +78,7 @@ class AglStyleHandlerAsHtml(
         val sb = StringBuilder()
         val edStyles = styles.mapNotNull { this.editorStyleFor(it) }
         val cssStyle = edStyles.joinToString(separator = "") { it.css }
-        var wrappedText = escapeForHtml(text)
+        var wrappedText = encodeForHtml(text)
         if (edStyles.any { it.isBold }) {
             wrappedText = "<b>$wrappedText</b>"
         }

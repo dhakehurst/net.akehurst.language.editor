@@ -23,7 +23,7 @@ import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.browser.ck.autocomplete.CkAutocomplete
 import net.akehurst.language.editor.common.*
-import net.akehurst.language.editor.common.AglStyleHandlerAsHtml.Companion.escapeForHtml
+import net.akehurst.language.editor.common.AglStyleHandlerAsHtml.Companion.encodeForHtml
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.sentence.common.SentenceDefault
@@ -120,9 +120,9 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
                 when (item.kind) {
                     CompletionItemKind.LITERAL -> html
-                    CompletionItemKind.PATTERN -> "<span>${escapeForHtml(item.text)}</span><span> (${escapeForHtml(item.label)})</span>"
-                    CompletionItemKind.SEGMENT -> "<span>${escapeForHtml(item.label)}: </span>$html"
-                    CompletionItemKind.REFERRED -> "<span>${escapeForHtml(item.text)}</span><span> (${escapeForHtml(item.label)})</span>"
+                    CompletionItemKind.PATTERN -> "<span>${encodeForHtml(item.text)}</span><span> (${encodeForHtml(item.label)})</span>"
+                    CompletionItemKind.SEGMENT -> "<span>${encodeForHtml(item.label)}: </span>$html"
+                    CompletionItemKind.REFERRED -> "<span>${encodeForHtml(item.text)}</span><span> (${encodeForHtml(item.label)})</span>"
                 }
             }
         _autocomplete = CkAutocomplete(logger, ckEditor, _contextualBalloon, styleCompleteItem)
