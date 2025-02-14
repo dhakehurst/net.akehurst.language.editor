@@ -34,11 +34,11 @@ class SentenceFromEditor<AsmType : Any, ContextType : Any>(
     override var eolPositions: List<Int> = emptyList()//ScannerOnDemand.eolPositions(text)
 
     fun textChanged() {
-        eolPositions =  SentenceDefault.eolPositions(text)
+        eolPositions = SentenceDefault.eolPositions(text)
     }
 }
 
-abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleType:Any>(
+abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
     val languageServiceRequest: LanguageServiceRequest,
     languageId: LanguageIdentity,
     override val endPointIdentity: EndPointIdentity,
@@ -47,33 +47,33 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     styleHandler: AglStyleHandler<EditorStyleType>
 ) : AglEditor<AsmType, ContextType>, LanguageServiceResponse {
 
-    abstract val isConnected:Boolean
+    abstract val isConnected: Boolean
 
-    final override val logger by lazy{ AglEditorLogger(endPointIdentity.editorId,logFunction)}
+    final override val logger by lazy { AglEditorLogger(endPointIdentity.editorId, logFunction) }
 
     val editorId get() = endPointIdentity.editorId
     protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger, styleHandler)
     val nextRequestId get() = RequestIdentity(_nextRequestId)
 
     abstract val workerTokenizer: AglTokenizerByWorker<EditorStyleType>
-    abstract val completionProvider:AglEditorCompletionProvider
+    abstract val completionProvider: AglEditorCompletionProvider
 
     init {
         //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
-        this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
-        this.agl.languageDefinition.typeModelStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
-        this.agl.languageDefinition.asmTransformStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
-        this.agl.languageDefinition.crossReferenceStrObservers.add { _, _ -> this.updateProcessor(); this.requestUpdateStyleModel() }
-        this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.requestUpdateStyleModel() }
+        this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
+        this.agl.languageDefinition.typeModelStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
+        this.agl.languageDefinition.asmTransformStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
+        this.agl.languageDefinition.crossReferenceStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
+        this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.refreshStyleHandler() }
         //this.agl.languageDefinition.formatterStrObservers.add { _, _ -> }
     }
 
-    private val _onTextChange = mutableListOf<(String)->Unit>()
+    private val _onTextChange = mutableListOf<(String) -> Unit>()
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
     private val _onSyntaxAnalysisHandler = mutableListOf<(SyntaxAnalysisEvent) -> Unit>()
     private val _onSemanticAnalysisHandler = mutableListOf<(SemanticAnalysisEvent) -> Unit>()
     private var _editorSpecificStyleStr: StyleString? = null
-    private var _nextRequestId:Int = 0
+    private var _nextRequestId: Int = 0
 
     override var sentence = SentenceFromEditor(this)
 
@@ -86,8 +86,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
             } else {
                 this.agl.languageIdentity = value
                 this.updateLanguage(oldId)
-                this.updateProcessor()
-                this.requestUpdateStyleModel()
+                this.refreshProcessor()
+                this.refreshStyleHandler()
             }
         }
 
@@ -98,10 +98,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.styleStr
         set(value) {
             this._editorSpecificStyleStr = value
-            this.requestUpdateStyleModel()
+            this.refreshStyleHandler()
         }
 
-    override var processOptions: ()->ProcessOptions<AsmType, ContextType>
+    override var processOptions: () -> ProcessOptions<AsmType, ContextType>
         get() = this.agl.options
         set(value) {
             this.agl.options = value
@@ -167,14 +167,15 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         this.agl.styleHandler.updateStyleModel(styleModel)
     }
 
-     fun updateProcessor() {
-         logger.log(LogLevel.Trace, "updateProcessor")
+    override fun refreshProcessor() {
+        logger.log(LogLevel.Trace, "updateProcessor")
         val grammarStr = this.agl.languageDefinition.grammarStr
         if (grammarStr?.value.isNullOrBlank()) {
             //do nothing
         } else {
             this.clearIssueMarkers()
-            this.languageServiceRequest.processorCreateRequest(this.endPointIdentity,  nextRequestId, this.languageIdentity,
+            this.languageServiceRequest.processorCreateRequest(
+                this.endPointIdentity, nextRequestId, this.languageIdentity,
                 grammarStr!!,
                 this.agl.languageDefinition.typeModelStr,
                 this.agl.languageDefinition.asmTransformStr,
@@ -186,7 +187,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         }
     }
 
-    fun requestUpdateStyleModel() {
+    override fun refreshStyleHandler() {
         logger.log(LogLevel.Trace, "requestUpdateStyleModel")
         if (this.isConnected) {
             val styleStr = this.editorSpecificStyleStr
@@ -201,13 +202,20 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         logger.log(LogLevel.Trace, "processSentence")
         if (doUpdate) {
             this.clearIssueMarkers()
-            this.languageServiceRequest.interruptRequest(this.endPointIdentity,  nextRequestId,this.languageIdentity, "process Sentence")
+            this.languageServiceRequest.interruptRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, "process Sentence")
             this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, this.text, this.agl.options.invoke())
         }
     }
 
     ///
-    override fun processorCreateResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
+    override fun processorCreateResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageStatus,
+        message: String,
+        issues: List<LanguageIssue>,
+        scannerMatchables: List<Matchable>
+    ) {
         logger.log(LogLevel.Trace, "processorCreateResponse $endPointIdentity, $requestId, $status, $message, $issues, $scannerMatchables")
         if (status == MessageStatus.SUCCESS) {
             when (message) {
@@ -235,12 +243,19 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         }
     }
 
-    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>,status: MessageStatus, message: String) {
+    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String) {
         logger.log(LogLevel.Trace, "processorDeleteResponse $endPointIdentity, $requestId, $status, $message ")
         TODO("not implemented")
     }
 
-    override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
+    override fun processorSetStyleResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageStatus,
+        message: String,
+        issues: List<LanguageIssue>,
+        styleModel: AglStyleModel?
+    ) {
         logger.log(LogLevel.Trace, "processorSetStyleResponse $endPointIdentity, $requestId, $status, $message ")
         if (status == MessageStatus.SUCCESS && null != styleModel) {
             this.updateStyleModel(styleModel)
@@ -254,7 +269,14 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         }
     }
 
-    override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
+    override fun sentenceLineTokensResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageStatus,
+        message: String,
+        startLine: Int,
+        lineTokens: List<List<AglToken>>
+    ) {
         logger.log(LogLevel.Trace, "sentenceLineTokensResponse $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens")
         if (status == MessageStatus.SUCCESS) {
             this.log(LogLevel.Debug, "Debug: new line tokens from successful parse of ${editorId}", null)
@@ -333,12 +355,19 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         }
     }
 
-    override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
+    override fun sentenceCodeCompleteResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageStatus,
+        message: String,
+        issues: List<LanguageIssue>,
+        completionItems: List<CompletionItem>
+    ) {
         logger.log(LogLevel.Trace, "sentenceCodeCompleteResponse $endPointIdentity, $requestId, $status, $message, $issues, $completionItems")
-        when(status) {
-            MessageStatus.START -> logger.log(LogLevel.Trace,"CodeCompletion START",null)
+        when (status) {
+            MessageStatus.START -> logger.log(LogLevel.Trace, "CodeCompletion START", null)
             MessageStatus.SUCCESS -> this.completionProvider.provide(completionItems)
-            MessageStatus.FAILURE -> logger.log(LogLevel.Error,message,null)
+            MessageStatus.FAILURE -> logger.log(LogLevel.Error, message, null)
         }
 
     }

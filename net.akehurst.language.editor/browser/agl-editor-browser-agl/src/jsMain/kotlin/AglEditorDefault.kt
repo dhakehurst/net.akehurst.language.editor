@@ -181,8 +181,8 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
         editing.onkeydown = this::onkeydown
 
         this.updateLanguage(null)
-        this.updateProcessor()
-        this.requestUpdateStyleModel()
+        this.refreshProcessor()
+        this.refreshStyleHandler()
     }
 
     private fun oninput(ev: InputEvent) {

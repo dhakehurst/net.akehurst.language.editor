@@ -130,8 +130,8 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         ckEditor.model.document.on("change:data") { onEditorTextChangeInternal() }
 
         this.updateLanguage(null)
-        this.updateProcessor()
-        this.requestUpdateStyleModel()
+        this.refreshProcessor()
+        this.refreshStyleHandler()
 
         // trigger first sentence process
         onEditorTextChangeInternal()

@@ -16,6 +16,7 @@
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.buildconfig.BuildConfigExtension
+import org.gradle.kotlin.dsl.kotlin
 
 plugins {
     alias(libs.plugins.kotlin) apply false
@@ -47,7 +48,7 @@ allprojects {
 subprojects {
     val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1
     val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1
-    val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+    val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
 
     apply(plugin = "org.jetbrains.kotlin.multiplatform")
     apply(plugin = "maven-publish")
@@ -77,7 +78,7 @@ subprojects {
     project.ext.set("macosArm64Target", true)
 
     configure<KotlinMultiplatformExtension> {
-        jvm("jvm8") {
+        jvm("jvm11") {
             compilations {
                 val main by getting {
                     compileTaskProvider.configure {
@@ -100,7 +101,7 @@ subprojects {
             }
         }
 
-        js("js", IR) {
+        js {
             binaries.library()
             generateTypeScriptDefinitions()
             compilerOptions {
@@ -116,15 +117,17 @@ subprojects {
 
         sourceSets {
             val commonMain by getting {
-                kotlin.srcDir("$buildDir/generated/kotlin")
-                dependencies {
-                    implementation(kotlin("test"))
-                }
+                kotlin.srcDir("${project.layout.buildDirectory}/generated/kotlin")
             }
             all {
                 languageSettings.optIn("kotlin.ExperimentalStdlibApi")
             }
         }
+    }
+
+    dependencies {
+        "commonTestImplementation"(kotlin("test"))
+        "commonTestImplementation"(kotlin("test-annotations-common"))
     }
 
     val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)

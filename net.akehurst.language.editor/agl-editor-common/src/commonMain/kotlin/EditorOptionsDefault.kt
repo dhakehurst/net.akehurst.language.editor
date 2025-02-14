@@ -1,7 +1,5 @@
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.StyleCompletionItem
 

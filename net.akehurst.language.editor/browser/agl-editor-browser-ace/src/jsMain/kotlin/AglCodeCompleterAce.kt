@@ -25,7 +25,7 @@ import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.objectJS
 
 
-class AglCodeCompleter<AsmType : Any, ContextType : Any>(
+class AglCodeCompleterAce<AsmType : Any, ContextType : Any>(
     val agl: AglComponents<AsmType, ContextType>,
     val languageServiceRequest: LanguageServiceRequest
 ) {

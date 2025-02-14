@@ -183,8 +183,8 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
             this.onChange { this.onEditorTextChangeInternal() }
 
             this.updateLanguage(null)
-            this.updateProcessor()
-            this.requestUpdateStyleModel()
+            this.refreshProcessor()
+            this.refreshStyleHandler()
         } catch (t: Throwable) {
             console.error(t.message, t)
         }

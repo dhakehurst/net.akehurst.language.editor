@@ -38,13 +38,14 @@ class AglTokenizerByWorkerCompose<AsmType : Any, ContextType : Any>(
     }
 
     override fun reset() {
-        logger.log(LogLevel.Trace, "reset()", null)
+        logger.log(LogLevel.Trace, "AglTokenizerByWorkerCompose.reset()", null)
+        this.aglTokenizer.reset()
     }
 
     override fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
-        logger.log(LogLevel.Trace, "receiveTokens $startLine, $tokensForLines", null)
-
-
+        logger.log(LogLevel.Trace, "AglTokenizerByWorkerCompose.receiveTokens $startLine, $tokensForLines", null)
+        this.aglTokenizer.receiveTokens(startLine, tokensForLines)
+        refresh()
     }
 
 }

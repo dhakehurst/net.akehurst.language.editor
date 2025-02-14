@@ -12,7 +12,7 @@ dependencies {
     commonMainImplementation(libs.nak.kotlinx.reflect)
     commonMainImplementation(libs.nak.kserialisation.json)
 
-    jvm8TestImplementation(libs.nal.agl.generators)
+    jvm11TestImplementation(libs.nal.agl.generators)
 }
 
 kotlinxReflect {

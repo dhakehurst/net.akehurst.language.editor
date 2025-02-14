@@ -160,8 +160,8 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         })
 
         this.updateLanguage(null)
-        this.updateProcessor()
-        this.requestUpdateStyleModel()
+        this.refreshProcessor()
+        this.refreshStyleHandler()
     }
 
     override fun destroyAglEditor() {

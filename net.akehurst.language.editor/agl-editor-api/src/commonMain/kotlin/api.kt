@@ -115,6 +115,9 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun clearIssueMarkers()
 
+    fun refreshProcessor()
+    fun refreshStyleHandler()
+
     fun destroyAglEditor()
     fun destroyBaseEditor()
 

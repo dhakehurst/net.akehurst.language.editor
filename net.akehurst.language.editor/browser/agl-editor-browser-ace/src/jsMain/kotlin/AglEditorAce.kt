@@ -71,6 +71,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
         ace = ace
     )
     languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
+    aglEditor.initialise()
     return aglEditor
 }
 
@@ -120,18 +121,18 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
     private val _aceStyleHandler get() = agl.styleHandler as AglStyleHandlerCssClass
 
-    init {
+    fun initialise() {
         //TODO: set session and mouseHandler options
         this.aceEditor.getSession()?.bgTokenizer?.setTokenizer(this.workerTokenizer as ace.Tokenizer)
         this.aceEditor.getSession()?.bgTokenizer?.setDocument(this.aceEditor.getSession()?.getDocument())
         //this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
-        this.aceEditor.completers = arrayOf(AglCodeCompleter(this.agl, this.languageServiceRequest))
+        this.aceEditor.completers = arrayOf(AglCodeCompleterAce(this.agl, this.languageServiceRequest))
 
         this.aceEditor.on("change") { _ -> this.onEditorTextChangeInternal() }
 
         this.updateLanguage(null)
-        this.updateProcessor()
-        this.requestUpdateStyleModel()
+        this.refreshProcessor()
+        this.refreshStyleHandler()
     }
 
     override fun resetTokenization(fromLine: Int) {
