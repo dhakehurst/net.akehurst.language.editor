@@ -16,10 +16,7 @@
 
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.*
-import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceRequestDirectExecution
 import net.akehurst.language.issues.api.LanguageIssue

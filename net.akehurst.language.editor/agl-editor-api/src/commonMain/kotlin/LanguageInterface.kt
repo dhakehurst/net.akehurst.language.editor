@@ -1,9 +1,6 @@
 package net.akehurst.language.editor.api
 
-import net.akehurst.language.agl.*
-import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.processor.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.style.api.AglStyleModel

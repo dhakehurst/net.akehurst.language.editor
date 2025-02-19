@@ -53,7 +53,7 @@ class AglTokenDefault(
     override fun toString(): String = "AglToken($position,$length,[${styles.joinToString { it.toString() }}])"
     override fun hashCode(): Int = arrayOf(styles, position, length).contentDeepHashCode()
     override fun equals(other: Any?): Boolean = when {
-        other !is AglTokenDefault-> false
+        other !is AglTokenDefault -> false
         other.position != this.position -> false
         other.length != this.length -> false
         other.styles != this.styles -> false
@@ -115,21 +115,34 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
 
     /**
      * row - 0 indexed line number
+     * lineText should end with EOL, unless it's the last line.
      */
     fun getLineTokens(lineText: String, previousLineState: AglLineState): Pair<AglLineState, List<AglToken>> {
         val tokens = this.tokensByLine[previousLineState.lineNumber + 1]
-        val validStart = tokens?.firstOrNull()?.position == previousLineState.nextLineStartPosition
-        // last token should be length 1 and an eol, so only need its position as linesText does not include the eol
-        val validEnd = tokens?.lastOrNull()?.position == previousLineState.nextLineStartPosition + lineText.length
-        return if (validStart && validEnd && null != tokens) {
-            this.useCachedTokens(tokens, lineText, previousLineState)
-        } else {
-            this.getLineTokensByScan(lineText, previousLineState)
+        return when {
+            null == tokens -> this.getLineTokensByScan(lineText, previousLineState)
+            tokens.isEmpty() -> this.getLineTokensByScan(lineText, previousLineState)
+            else -> {
+                val fstTok = tokens.first()
+                val lstTok = tokens.last()
+                val toksStart = fstTok.position
+                val toksLength = (lstTok.position + lstTok.length) - toksStart
+                // NO - last token should be length 1 and an eol, so only need its position as linesText does not include the eol
+                val validStart = toksStart == previousLineState.nextLineStartPosition
+                val validEnd = toksLength == lineText.length
+
+                if (validStart && validEnd) {
+                    this.useCachedTokens(tokens, lineText, previousLineState)
+                } else {
+                    this.getLineTokensByScan(lineText, previousLineState)
+                }
+            }
         }
     }
 
     /**
      * row assumed to start at 0
+     * lineText should end with EOL, unless it's the last line.
      */
     fun getLineTokensByScan(lineText: String, previousLineState: AglLineState): Pair<AglLineState, List<AglToken>> {
         return try {
@@ -151,7 +164,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
                 val lastLeaf = leafs.last()
                 val endOfLastLeaf = lastLeaf.position - offset + lastLeaf.length
                 val leftOverText = lineText.substring(endOfLastLeaf, lineText.length)
-                val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length + 1
+                val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length
                 val state = AglLineState(previousLineState.lineNumber + 1, nextLineStartPosition, leftOverText)
                 Pair(state, tokens)
             }
@@ -161,7 +174,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
                 lineText.isEmpty() -> emptyList()
                 else -> listOf(AglTokenDefault(emptyList(), previousLineState.nextLineStartPosition, lineText.length))
             }
-            val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length + 1
+            val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length
             val state = AglLineState(previousLineState.lineNumber + 1, nextLineStartPosition, "")
             Pair(state, tokens)
         }
@@ -171,7 +184,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
      * row assumed to start at 0
      */
     fun useCachedTokens(tokens: List<AglToken>, lineText: String, previousLineState: AglLineState): Pair<AglLineState, List<AglToken>> {
-        val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length + 1
+        val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length
         val endState = AglLineState(previousLineState.lineNumber + 1, nextLineStartPosition, "")
         return Pair(endState, tokens)
     }

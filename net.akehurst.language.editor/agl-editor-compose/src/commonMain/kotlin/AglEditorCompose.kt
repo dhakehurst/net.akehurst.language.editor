@@ -21,6 +21,7 @@ import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
 import net.akehurst.kotlin.compose.editor.api.simple.AutocompleteItemSimple
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
@@ -28,7 +29,7 @@ import net.akehurst.language.issues.api.LanguageIssue
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     languageService: LanguageService,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -36,7 +37,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
 ): AglEditor<AsmType, ContextType> {
     val aglEditor = AglEditorCompose<AsmType, ContextType>(
         languageServiceRequest = languageService.request,
-        languageId = languageId,
+        languageDefinition = languageDefinition,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -50,14 +51,14 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
 
 class AglEditorCompose<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val composeEditor: ComposeCodeEditor
 ) : AglEditorAbstract<AsmType, ContextType, ComposeStyle>(
-    languageServiceRequest, languageId, EndPointIdentity(editorId,"none"),
-   editorOptions, logFunction, AglStyleHandlerComposeStyle()
+    languageServiceRequest, languageDefinition, EndPointIdentity(editorId, "none"),
+    editorOptions, logFunction, AglStyleHandlerComposeStyle(languageDefinition.identity)
 ) {
 
     override val baseEditor: Any get() = composeEditor
@@ -82,20 +83,22 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         }
     }
 
-    private var _completionsResult:AutocompleteSuggestion? = null
+    private var _completionsResult: AutocompleteSuggestion? = null
     private var _autocompleteDepthMax = 3
     private var _autocompleteDepthIncrement = 0
 
+
     fun initialise() {
 
-        //composeEditor.getLineTokens = { lineNumber, lineStartPosition, lineText ->
-        //    workerTokenizer.aglTokenizer.getLineTokens(lineText,)
-       // }
+        composeEditor.getLineTokens = { lineNumber, lineStartPosition, lineText ->
+            workerTokenizer.getLineTokens(lineNumber, lineStartPosition, lineText)
+        }
 
-        composeEditor.onTextChange = { _ -> onEditorTextChangeInternal() }
         composeEditor.requestAutocompleteSuggestions = { position, text, result ->
             requestAutocomplete(position, text, result)
         }
+
+        composeEditor.onTextChange = { txt -> onEditorTextChangeInternal(txt) }
 
         this.updateLanguage(null)
         this.refreshProcessor()
@@ -145,9 +148,9 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
 
     fun requestAutocomplete(position: Int, text1: CharSequence, result: AutocompleteSuggestion) {
         logger.logTrace("AglEditorCompose.requestAutocomplete")
-        if(composeEditor.autocomplete.isVisible) {
+        if (composeEditor.autocomplete.isVisible) {
             // subsequent request
-            _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement+1)
+            _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement + 1)
         } else {
             // first request
             _autocompleteDepthIncrement = 0
@@ -159,15 +162,15 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     }
 
     // --- AglEditorAbstract ---
-    override fun onEditorTextChangeInternal() {
+    override fun onEditorTextChangeInternal(newText:String) {
         logger.log(LogLevel.Trace, "AglEditorCompose.onEditorTextChangeInternal")
         //console.log("onEditorTextChangeInternal, editor '${this.editorId}' text is '${this.text}'")
         if (doUpdate) {
             //console.log("doUpdate")
-            super.onEditorTextChangeInternal()
+            super.onEditorTextChangeInternal(newText)
             //window.clearTimeout(parseTimeout)
             //this.parseTimeout = window.setTimeout({
-                this.processSentence()
+            this.processSentence(newText)
             //}, 500)
         }
     }

@@ -6,9 +6,6 @@ application {
     mainClass.set( "demo.MainKt")
 }
 
-val version_agl_editor: String by project
-val version_html_builder: String by project
-
 dependencies {
     // need this so that the gradle application-plugin can find the module built by the kotlin-plugin
     "runtimeOnly"( project(path=":application-editor-desktop-demo", configuration="jvm8RuntimeElements") )

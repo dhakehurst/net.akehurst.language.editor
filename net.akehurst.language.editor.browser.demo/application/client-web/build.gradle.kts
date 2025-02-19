@@ -41,11 +41,11 @@ dependencies {
     jsMainImplementation(libs.nale.agl.editor.browser.ck)
     jsMainImplementation( npm("ckeditor5",version_ck))
 
-    jsMainImplementation(libs.kotlinx.coroutines)
+    jsMainImplementation(libs.kotlinx.coroutines.core)
 }
 
 kotlin {
-    js("js", IR) {
+    js {
         binaries.executable()
         browser {
             commonWebpackConfig {
@@ -63,7 +63,7 @@ kotlin {
             val res = kotlinExtension.sourceSets.getByName("commonMain").resources
             resources.srcDir(res)
         }
-        val jvm8Main by getting {
+        val jvm11Main by getting {
             resources.srcDir("$buildDir/dist/js/developmentExecutable")
         }
     }
@@ -110,8 +110,8 @@ tasks.getByName("jsProductionExecutableCompileSync").dependsOn(workerTask)
 //tasks.getByName("jsBrowserProductionExecutableDistributeResources").dependsOn(workerTask)
 tasks.getByName("jsJar").dependsOn(workerTask)
 
-tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserProductionWebpack")
-tasks.getByName("jvm8ProcessResources").dependsOn("jsBrowserDistribution")
+tasks.getByName("jvm11ProcessResources").dependsOn("jsBrowserProductionWebpack")
+tasks.getByName("jvm11ProcessResources").dependsOn("jsBrowserDistribution")
 
 
 val pythonServerDev = tasks.register<Exec>("pythonServerDev") {

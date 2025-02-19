@@ -12,20 +12,18 @@ application {
     mainClass.set( "net.akehurst.language.editor.web.server.MainKt")
 }
 
-val version_kaf:String by project
-val version_ktor:String by project
 dependencies {
     // need this so that the gradle application-plugin can find the module built by the kotlin-plugin
     runtimeOnly( project(path=":application-editor-web-server", configuration="jvm8RuntimeElements") )
 
-    jvm8MainImplementation(project(":application-client-web"))
+    jvm11MainImplementation(project(":application-client-web"))
 
     // ktor server modules
-    jvm8MainImplementation(libs.ktor.websockets)
-    jvm8MainImplementation(libs.ktor.server)
-    jvm8MainImplementation(libs.ktor.server.core)
-    jvm8MainImplementation(libs.ktor.server.jetty)
+    jvm11MainImplementation(libs.ktor.websockets)
+    jvm11MainImplementation(libs.ktor.server)
+    jvm11MainImplementation(libs.ktor.server.core)
+    jvm11MainImplementation(libs.ktor.server.jetty)
 
     // for logging
-    jvm8MainImplementation(libs.slf4j.simple)
+    jvm11MainImplementation(libs.slf4j.simple)
 }

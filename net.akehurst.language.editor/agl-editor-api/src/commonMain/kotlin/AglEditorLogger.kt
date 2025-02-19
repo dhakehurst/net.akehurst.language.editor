@@ -23,9 +23,7 @@ class AglEditorLogger(
     var bind: LogFunction?
 ) {
 
-    fun log(level: LogLevel, message: String, t:Throwable? = null) = this.bind?.also {
-        it.invoke(level, prefix, message, t)
-    }
+    fun log(level: LogLevel, message: String, t:Throwable? = null) = this.bind?.invoke(level, prefix, message, t)
 
     fun logFatal(message: String, t:Throwable? = null) = log(LogLevel.Fatal, message, t)
     fun logError(message: String, t:Throwable? = null) = log(LogLevel.Error, message, t)

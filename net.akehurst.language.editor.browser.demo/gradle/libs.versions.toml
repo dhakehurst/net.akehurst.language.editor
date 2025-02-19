@@ -4,9 +4,9 @@ project = "2.1.0"
 kotlin = "2.1.0"
 dokka = "1.9.10"
 exportPublic = "2.1.0"
-buildconfig = "5.5.0"
+buildconfig = "5.5.1"
 credentials = "3.0"
-compose = "1.7.1"
+compose = "1.8.0-alpha03"
 
 nal-agl = "4.2.1.0"
 nal-editor = "2.1.0"
@@ -57,5 +57,6 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 exportPublic =  { id = "net.akehurst.kotlin.gradle.plugin.exportPublic", version.ref = "exportPublic" }
 buildconfig =  { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 credentials =  { id = "nu.studer.credentials", version.ref = "credentials" }
+
 compose = { id="org.jetbrains.compose", version.ref="compose" }
 kotlin-compose = { id="org.jetbrains.kotlin.plugin.compose", version.ref="kotlin" }

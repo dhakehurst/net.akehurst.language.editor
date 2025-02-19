@@ -16,11 +16,7 @@
 
 package net.akehurst.language.editor.api
 
-import net.akehurst.language.agl.StyleString
-import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.processor.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sppt.api.LeafData
@@ -45,7 +41,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     /**
      * the language identity for this editor
      */
-    var languageIdentity: LanguageIdentity
+    val languageIdentity: LanguageIdentity
 
     /**
      * The language definition for the editor, found or created using the languageId
@@ -101,9 +97,9 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     //fun configureSyntaxAnalyser(configuration: Map<String, Any>)
 
     /**
-     * trigger processing the text of the editor
+     * trigger processing the text
      */
-    fun processSentence()
+    fun processSentence(text:String)
 
     fun onTextChange(handler: (String) -> Unit)
 
@@ -114,6 +110,9 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     fun onSemanticAnalysis(handler: (SemanticAnalysisEvent) -> Unit)
 
     fun clearIssueMarkers()
+
+    fun updateLanguage(grammarStr: GrammarString?, typeModelStr: TypeModelString?, asmTransformStr: TransformString?, crossReferenceStr: CrossReferenceString?, styleStr: StyleString?)
+    fun updateLanguageDefinition(languageDefinition: LanguageDefinition<AsmType, ContextType>)
 
     fun refreshProcessor()
     fun refreshStyleHandler()

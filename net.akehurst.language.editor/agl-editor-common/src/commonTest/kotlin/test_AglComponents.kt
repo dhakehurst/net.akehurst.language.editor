@@ -58,7 +58,7 @@ class test_AglComponents {
         val sut = AglComponents<Any, Any>(langId1, "", logger,AglStyleHandlerCssClass(langId1))
         assertEquals(langId1.value, sut.languageDefinition.identity.value)
 
-        sut.languageIdentity = Agl.registry.agl.grammarLanguageIdentity
+        sut.languageDefinition =  Agl.registry.findOrPlaceholder( Agl.registry.agl.grammarLanguageIdentity)
 
         assertEquals(Agl.registry.agl.grammarLanguageIdentity, sut.languageDefinition.identity)
     }

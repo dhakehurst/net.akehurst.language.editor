@@ -30,6 +30,7 @@ import monaco.languages.ILanguageExtensionPoint
 import monaco.languages.TokensProvider
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
@@ -43,7 +44,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
     languageService: LanguageService,
     containerElement: Element,
     monacoEditor: IStandaloneCodeEditor,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -53,7 +54,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
         languageServiceRequest = languageService.request,
         containerElement = containerElement,
         monacoEditor = monacoEditor,
-        languageId = languageId,
+        languageDefinition = languageDefinition,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -85,14 +86,14 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val monacoEditor: IStandaloneCodeEditor,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val monaco: Monaco,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
-    languageServiceRequest, languageId, EndPointIdentity(editorId, "none"),
-    editorOptions, logFunction, AglStyleHandlerCssClass(languageId)
+    languageServiceRequest, languageDefinition, EndPointIdentity(editorId, "none"),
+    editorOptions, logFunction, AglStyleHandlerCssClass(languageDefinition.identity)
 ) {
 
     companion object {
@@ -180,7 +181,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
                 AglCompletionProviderMonaco(monaco, this.agl)
             )
 
-            this.onChange { this.onEditorTextChangeInternal() }
+            this.onChange { this.onEditorTextChangeInternal(this.text) }
 
             this.updateLanguage(null)
             this.refreshProcessor()
@@ -225,18 +226,18 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
         )
 
         // need to update because token style types may have changed, not just their attributes
-        this.onEditorTextChangeInternal()
+        this.onEditorTextChangeInternal(this.text)
         this.resetTokenization(0)
     }
 
-    override fun onEditorTextChangeInternal() {
+    override fun onEditorTextChangeInternal(newText:String) {
         if (doUpdate) {
-            super.onEditorTextChangeInternal()
+            super.onEditorTextChangeInternal(newText)
             this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
 //                this.workerTokenizer.acceptingTokens = true
-                this.processSentence()
+                this.processSentence(newText)
             }, 500)
         }
     }
@@ -248,7 +249,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     fun onChange(handler: (String) -> Unit) {
         this.monacoEditor.onDidChangeModelContent { event ->
             val text = this.text
-            handler(text);
+            handler(text)
         }
     }
 

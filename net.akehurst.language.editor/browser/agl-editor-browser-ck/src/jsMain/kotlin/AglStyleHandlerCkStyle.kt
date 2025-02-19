@@ -26,7 +26,9 @@ import kotlin.collections.associate
 import kotlin.collections.forEach
 import kotlin.collections.mutableMapOf
 
-data class CkStyle(override val identity: EditorStyleIdentity) : EditorStyle {
+data class CkStyle(
+    override val identity: EditorStyleIdentity
+) : EditorStyle {
     val attribs = mutableMapOf<String,Any>()
 }
 

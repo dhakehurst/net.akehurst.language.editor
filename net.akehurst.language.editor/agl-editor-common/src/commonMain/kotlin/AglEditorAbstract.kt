@@ -15,11 +15,7 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.StyleString
-import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
@@ -33,14 +29,15 @@ class SentenceFromEditor<AsmType : Any, ContextType : Any>(
     override val text: String get() = editor.text
     override var eolPositions: List<Int> = emptyList()//ScannerOnDemand.eolPositions(text)
 
-    fun textChanged() {
-        eolPositions = SentenceDefault.eolPositions(text)
+    fun textChanged(newText:String) {
+        eolPositions = SentenceDefault.eolPositions(newText)
     }
 }
 
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
     val languageServiceRequest: LanguageServiceRequest,
-    languageId: LanguageIdentity,
+//    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     override val endPointIdentity: EndPointIdentity,
     override var editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -52,7 +49,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     final override val logger by lazy { AglEditorLogger(endPointIdentity.editorId, logFunction) }
 
     val editorId get() = endPointIdentity.editorId
-    protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger, styleHandler)
+    //protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger, styleHandler)
+    protected val agl = AglComponents<AsmType, ContextType>(languageDefinition, editorId, logger, styleHandler)
     val nextRequestId get() = RequestIdentity(_nextRequestId)
 
     abstract val workerTokenizer: AglTokenizerByWorker<EditorStyleType>
@@ -77,9 +75,9 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override var sentence = SentenceFromEditor(this)
 
-    override var languageIdentity: LanguageIdentity
+    override val languageIdentity: LanguageIdentity
         get() = this.agl.languageIdentity
-        set(value) {
+    /*    set(value) {
             val oldId = this.agl.languageIdentity
             if (oldId == value) {
                 //same, no need to update
@@ -90,7 +88,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
                 this.refreshStyleHandler()
             }
         }
-
+*/
     override val languageDefinition: LanguageDefinition<AsmType, ContextType>
         get() = agl.languageDefinition
 
@@ -109,9 +107,9 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override var doUpdate: Boolean = true
 
-    protected open fun onEditorTextChangeInternal() {
+    protected open fun onEditorTextChangeInternal(newText:String) {
         if (doUpdate) {
-            this.sentence.textChanged()
+            this.sentence.textChanged(newText)
         }
         this.notifyTextChange()
     }
@@ -167,6 +165,22 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         this.agl.styleHandler.updateStyleModel(styleModel)
     }
 
+    override fun updateLanguage(
+        grammarStr: GrammarString?,
+        typeModelStr: TypeModelString?,
+        asmTransformStr: TransformString?,
+        crossReferenceStr: CrossReferenceString?,
+        styleStr: StyleString?
+    ) {
+        this.agl.languageDefinition.update(grammarStr, typeModelStr, asmTransformStr, crossReferenceStr, styleStr)
+        this.refreshProcessor()
+        this.refreshStyleHandler()
+    }
+
+    override fun updateLanguageDefinition(languageDefinition: LanguageDefinition<AsmType, ContextType>) {
+        this.agl.languageDefinition = languageDefinition
+    }
+
     override fun refreshProcessor() {
         logger.log(LogLevel.Trace, "updateProcessor")
         val grammarStr = this.agl.languageDefinition.grammarStr
@@ -198,12 +212,12 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         }
     }
 
-    override fun processSentence() {
+    override fun processSentence(text:String) {
         logger.log(LogLevel.Trace, "processSentence")
         if (doUpdate) {
             this.clearIssueMarkers()
             this.languageServiceRequest.interruptRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, "process Sentence")
-            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, this.text, this.agl.options.invoke())
+            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, text, this.agl.options.invoke())
         }
     }
 
@@ -223,7 +237,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
                     this.log(LogLevel.Debug, "New Processor created for ${editorId}", null)
 //                    this.workerTokenizer.acceptingTokens = true
                     this.agl.scannerMatchables = scannerMatchables
-                    this.processSentence()
+                    this.processSentence(this.text)
                     this.resetTokenization(0)
                 }
 

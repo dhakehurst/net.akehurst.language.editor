@@ -18,8 +18,7 @@ package net.akehurst.language.editor.language.service
 
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.*
-import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.language.service.messages.*
@@ -28,16 +27,14 @@ import org.w3c.dom.MessageEvent
 import org.w3c.dom.SharedWorker
 import org.w3c.dom.Worker
 import org.w3c.dom.events.EventTarget
-import kotlin.collections.mutableMapOf
-import kotlin.collections.set
 import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
 
 class AglLanguageServiceByWorker(
     val worker: AbstractWorker,
-    val logger: AglEditorLogger
+    logFunction: LogFunction?
 ) : LanguageService {
-
+    val logger = AglEditorLogger("AglLanguageServiceByWorker", logFunction)
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
         override fun processorCreateRequest(
             endPointIdentity: EndPointIdentity,

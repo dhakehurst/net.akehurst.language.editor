@@ -20,6 +20,7 @@ import kotlinx.browser.document
 import kotlinx.browser.window
 import net.akehurst.kotlin.html5.elAppend
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
@@ -36,14 +37,14 @@ import org.w3c.dom.events.KeyboardEvent
 fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     languageService: LanguageService,
     containerElement: Element,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
 ): AglEditor<AsmType, ContextType> {
     return AglEditorDefault<AsmType, ContextType>(
         containerElement = containerElement,
-        languageId = languageId,
+        languageDefinition = languageDefinition,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -54,13 +55,13 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
 class AglEditorDefault<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
-    languageServiceRequest, languageId, EndPointIdentity(editorId,"session"),
-    editorOptions, logFunction, AglStyleHandlerCssClass(languageId)
+    languageServiceRequest, languageDefinition, EndPointIdentity(editorId,"session"),
+    editorOptions, logFunction, AglStyleHandlerCssClass(languageDefinition.identity)
 ) {
 
     override val baseEditor: Any get() = this
@@ -198,7 +199,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
                 }
             }
         }
-        textUpdated()
+        textUpdated(newText)
     }
 
     private fun onscroll(ev: Event) {
@@ -209,13 +210,13 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
     }
 
-    private fun textUpdated() {
+    private fun textUpdated(newText:String) {
         if (doUpdate) {
             this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
 //                this.workerTokenizer.acceptingTokens = true
-                this.processSentence()
+                this.processSentence(newText)
             }, 500)
         }
     }

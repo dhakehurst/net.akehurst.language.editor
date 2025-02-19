@@ -16,6 +16,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.scanner.api.Scanner
@@ -36,15 +37,17 @@ import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sppt.treedata.CompleteTreeDataNode
 
 class AglComponents<AsmType : Any, ContextType : Any>(
-    languageId: LanguageIdentity,
+//    languageId: LanguageIdentity,
+    var languageDefinition: LanguageDefinition<AsmType, ContextType>,
     val editorId: String,
     val logger: AglEditorLogger,
     styleHandler: AglStyleHandler<*>
 ) {
     // private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder<AsmType, ContextType>(languageId)
     private var _styleHandler = styleHandler
-    private var _languageIdentity = languageId
+//    private var _languageIdentity = languageId
 
+    /*
     val languageDefinition
         get() = Agl.registry.findOrPlaceholder<AsmType, ContextType>(
             _languageIdentity,
@@ -56,6 +59,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
             },
             configuration = Agl.configurationBase()
         )
+*/
 
     var options:()-> ProcessOptions<AsmType, ContextType> = { Agl.options<AsmType, ContextType> {} }
     var goalRule: GrammarRuleName? = languageDefinition.defaultGoalRule
@@ -76,7 +80,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
             }
             _scannerMatchables = value.map { it.using(regexEngine) }
         }
-
+/*
     var languageIdentity: LanguageIdentity
         get() = languageDefinition.identity
         set(value) {
@@ -103,6 +107,8 @@ class AglComponents<AsmType : Any, ContextType : Any>(
 //                this.sppt = null
             }
         }
+*/
+    val languageIdentity get() = languageDefinition.identity
 
     val simpleScanner: Scanner by lazy {
         val regexEngine = when (this.languageDefinition.configuration.regexEngineKind) {

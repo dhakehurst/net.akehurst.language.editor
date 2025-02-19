@@ -16,16 +16,17 @@
 
 package net.akehurst.language.editor.compose
 
+import androidx.compose.ui.text.SpanStyle
+import net.akehurst.kotlin.compose.editor.api.EditorLineToken
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.AglToken
+import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglComponents
+import net.akehurst.language.editor.common.AglLineState
 import net.akehurst.language.editor.common.AglTokenizer
 import net.akehurst.language.editor.common.AglTokenizerByWorker
-
-data class ComposeStyle(val value: String) {
-
-}
+import kotlin.collections.set
 
 class AglTokenizerByWorkerCompose<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>,
@@ -33,6 +34,8 @@ class AglTokenizerByWorkerCompose<AsmType : Any, ContextType : Any>(
 ) : AglTokenizerByWorker<ComposeStyle> {
 
     val aglTokenizer = AglTokenizer<AsmType, ContextType, ComposeStyle>(agl,agl.logger)
+
+    private var _lineStates = mutableMapOf<Int, AglLineState>()
 
     fun refresh() {
     }
@@ -48,4 +51,23 @@ class AglTokenizerByWorkerCompose<AsmType : Any, ContextType : Any>(
         refresh()
     }
 
+    fun getLineTokens(lineNumber: Int, lineStartPosition: Int, lineText: String): List<EditorLineToken> {
+        val aglState = _lineStates[lineNumber - 1] ?: let {
+            val newstate = AglLineState(lineNumber-1, 0, "")
+            _lineStates[lineNumber-1] = newstate
+            newstate
+        }
+        val (state, toks) = aglTokenizer.getLineTokens(lineText, aglState)
+        _lineStates[lineNumber] = state
+        val edToks = toks.map {
+            val styles = it.styles.mapNotNull { (aglTokenizer.agl.styleHandler.editorStyleFor(it) as ComposeStyle?)?.composeStyle }
+            val style = styles.fold(ComposeStyle(EditorStyleIdentity.NO_STYLE).composeStyle) { acc, it -> acc.merge(it) }
+            object : EditorLineToken {
+                override val start: Int = it.position - lineStartPosition
+                override val finish: Int = (it.position + it.length) - lineStartPosition
+                override val style: SpanStyle = style
+            }
+        }
+        return edToks
+    }
 }

@@ -22,6 +22,7 @@ import kotlinx.browser.window
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
@@ -54,7 +55,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     languageService: LanguageService,
     containerElement: Element,
     aceEditor: ace.IEditor,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -64,7 +65,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
         languageServiceRequest = languageService.request,
         containerElement = containerElement,
         aceEditor = aceEditor,
-        languageId = languageId,
+        languageDefinition = languageDefinition,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -79,14 +80,14 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val aceEditor: ace.IEditor,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val ace: IAce,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
-    languageServiceRequest, languageId, EndPointIdentity(editorId, aceEditor.getSession()?.id!!),
-    editorOptions, logFunction, AglStyleHandlerCssClass(languageId)
+    languageServiceRequest, languageDefinition, EndPointIdentity(editorId, aceEditor.getSession()?.id!!),
+    editorOptions, logFunction, AglStyleHandlerCssClass(languageDefinition.identity)
 ) {
 
     private val errorParseMarkerIds = mutableListOf<Int>()
@@ -128,7 +129,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         //this.aceEditor.commands.addCommand(ace.ext.Autocomplete.startCommand)
         this.aceEditor.completers = arrayOf(AglCodeCompleterAce(this.agl, this.languageServiceRequest))
 
-        this.aceEditor.on("change") { _ -> this.onEditorTextChangeInternal() }
+        this.aceEditor.on("change") { eventName -> this.onEditorTextChangeInternal(this.text) }
 
         this.updateLanguage(null)
         this.refreshProcessor()
@@ -197,18 +198,18 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         }
 
         // need to update because token style types may have changed, not just their attributes
-        this.onEditorTextChangeInternal()
+        this.onEditorTextChangeInternal(this.text)
         this.resetTokenization(0)
     }
 
-    override fun onEditorTextChangeInternal() {
+    override fun onEditorTextChangeInternal(newText:String) {
         if (doUpdate) {
-            super.onEditorTextChangeInternal()
+            super.onEditorTextChangeInternal(newText)
             //this.workerTokenizer.reset()
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
 //                this.workerTokenizer.acceptingTokens = true
-                this.processSentence()
+                this.processSentence(newText)
             }, 500)
         }
     }

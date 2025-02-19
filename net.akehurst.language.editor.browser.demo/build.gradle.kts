@@ -16,7 +16,6 @@
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import com.github.gmazzo.buildconfig.BuildConfigExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 
 plugins {
     alias(libs.plugins.kotlin) apply false
@@ -41,7 +40,7 @@ fun getProjectProperty(s: String) = project.findProperty(s) as String?
 subprojects {
     val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1
     val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1
-    val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+    val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
 
     apply(plugin = "org.jetbrains.kotlin.multiplatform")
     apply(plugin = "maven-publish")
@@ -72,25 +71,29 @@ subprojects {
     }
 
     configure<KotlinMultiplatformExtension> {
-        jvm("jvm8") {
+        jvm("jvm11") {
             compilations {
                 val main by getting {
-                    compilerOptions.configure {
-                        languageVersion.set(kotlin_languageVersion)
-                        apiVersion.set(kotlin_apiVersion)
-                        jvmTarget.set(jvmTargetVersion)
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            languageVersion.set(kotlin_languageVersion)
+                            apiVersion.set(kotlin_apiVersion)
+                            jvmTarget.set(jvmTargetVersion)
+                        }
                     }
                 }
                 val test by getting {
-                    compilerOptions.configure {
-                        languageVersion.set(kotlin_languageVersion)
-                        apiVersion.set(kotlin_apiVersion)
-                        jvmTarget.set(jvmTargetVersion)
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            languageVersion.set(kotlin_languageVersion)
+                            apiVersion.set(kotlin_apiVersion)
+                            jvmTarget.set(jvmTargetVersion)
+                        }
                     }
                 }
             }
         }
-        js("js", IR) {
+        js {
             generateTypeScriptDefinitions()
             compilerOptions {
                 target.set("es2015")

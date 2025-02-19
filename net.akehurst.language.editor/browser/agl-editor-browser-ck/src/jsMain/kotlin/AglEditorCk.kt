@@ -19,6 +19,7 @@ package net.akehurst.language.editor.browser.ck
 import kotlinx.browser.window
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItemKind
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.browser.ck.autocomplete.CkAutocomplete
@@ -34,7 +35,8 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     languageService: LanguageService,
     containerElement: Element,
     ckEditor: ck.core.editor.Editor,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
+//    languageId: LanguageIdentity,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?
@@ -43,7 +45,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
         languageServiceRequest = languageService.request,
         containerElement = containerElement,
         ckEditor = ckEditor,
-        languageId = languageId,
+        languageDefinition = languageDefinition,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction
@@ -57,13 +59,14 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val ckEditor: ck.core.editor.Editor,
-    languageId: LanguageIdentity,
+//    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?
 ) : AglEditorAbstract<AsmType, ContextType, CkStyle>(
-    languageServiceRequest, languageId, EndPointIdentity(editorId, "none"),
-    editorOptions, logFunction, AglStyleHandlerCkStyle(languageId)
+    languageServiceRequest, languageDefinition, EndPointIdentity(editorId, "none"),
+    editorOptions, logFunction, AglStyleHandlerCkStyle(languageDefinition.identity)
 ) {
 
     override val baseEditor: Any = ckEditor
@@ -79,7 +82,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
             emi.clear()
             ckEditor.setData(data)
             emi.update(ckEditor.model)
-            this.processSentence() // fire this explicitly to ensure it happens immediately
+            this.processSentence(value) // fire this explicitly to ensure it happens immediately
         }
 
     override val isConnected: Boolean get() = this.containerElement.isConnected
@@ -93,7 +96,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     private lateinit var _contextualBalloon: ck.ui.panel.balloon.ContextualBalloon
     private lateinit var _autocomplete: CkAutocomplete
-    private val _autocompleteLabelStyleHandler = AglStyleHandlerAsHtml(languageId)
+    private val _autocompleteLabelStyleHandler = AglStyleHandlerAsHtml(languageDefinition.identity)
     private var _autocompleteDepthMax = 3
     private var _autocompleteDepthIncrement = 0
 
@@ -127,14 +130,14 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
             }
         _autocomplete = CkAutocomplete(logger, ckEditor, _contextualBalloon, styleCompleteItem)
 
-        ckEditor.model.document.on("change:data") { onEditorTextChangeInternal() }
+        ckEditor.model.document.on("change:data") { onEditorTextChangeInternal(this.text) } //TODO get text from event
 
         this.updateLanguage(null)
         this.refreshProcessor()
         this.refreshStyleHandler()
 
         // trigger first sentence process
-        onEditorTextChangeInternal()
+        onEditorTextChangeInternal(this.text)
     }
 
     override fun resetTokenization(fromLine: Int) {
@@ -198,12 +201,12 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     }
 
     // --- AglEditorAbstract ---
-    override fun onEditorTextChangeInternal() {
+    override fun onEditorTextChangeInternal(newText:String) {
         logger.log(LogLevel.Trace, "onEditorTextChangeInternal")
         //console.log("onEditorTextChangeInternal, editor '${this.editorId}' text is '${this.text}'")
         if (doUpdate) {
             //console.log("doUpdate")
-            super.onEditorTextChangeInternal()
+            super.onEditorTextChangeInternal(newText)
             window.clearTimeout(parseTimeout)
             this.parseTimeout = window.setTimeout({
                 //console.log("new timeout")
@@ -211,7 +214,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
                 emi.update(ckEditor.model)
                 if (emi.rawText != oldText) {
                     //console.log("rawtext changed")
-                    this.processSentence()
+                    this.processSentence(newText)
                 }
             }, 500)
         }

@@ -3,6 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+repositories {
+    google()
+}
+
 dependencies {
     commonMainApi(libs.nak.compose.code.editor)
     commonMainImplementation(libs.nale.agl.editor.compose)
@@ -13,6 +17,8 @@ dependencies {
     commonMainImplementation(compose.material3)
     commonMainApi(libs.nak.compose.code.editor)
 
-    jvm8MainImplementation(compose.desktop.currentOs)
+    jvm11MainImplementation(compose.desktop.currentOs)
+
+//    commonTestImplementation(libs.kotlinx.coroutines)
 
 }

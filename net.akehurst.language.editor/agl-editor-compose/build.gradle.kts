@@ -13,13 +13,16 @@ dependencies {
     commonMainApi(project(":agl-language-service"))
 
     commonMainApi(libs.nak.compose.code.editor.api)
-
     commonMainImplementation(libs.kotlinx.coroutines)
 
+    // for AglComposeTextEditor
+    commonMainApi(libs.nak.compose.code.editor)
+    commonMainApi(compose.material3)
+
+    // to test it
     commonTestImplementation(libs.nak.compose.code.editor)
     commonTestImplementation(compose.ui)
     commonTestImplementation(compose.foundation)
-    commonTestImplementation(compose.material3)
     commonTestImplementation(libs.kotlinx.coroutines)
     jvm11TestImplementation(compose.desktop.currentOs)
 }

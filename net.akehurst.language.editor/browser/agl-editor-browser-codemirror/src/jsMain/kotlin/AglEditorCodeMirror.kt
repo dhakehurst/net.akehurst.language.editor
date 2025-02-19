@@ -20,6 +20,7 @@ package net.akehurst.language.editor.browser.codemirror
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
@@ -51,7 +52,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
     languageService: LanguageService,
     containerElement: Element,
     cmEditor: codemirror.view.IEditorView,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -61,7 +62,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
         languageServiceRequest = languageService.request,
         containerElement = containerElement,
         cmEditorView = cmEditor,
-        languageId = languageId,
+        languageDefinition = languageDefinition,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -75,14 +76,14 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val cmEditorView: codemirror.view.IEditorView,
-    languageId: LanguageIdentity,
+    languageDefinition: LanguageDefinition<AsmType,ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val codemirrorFunctions: codemirror.ICodeMirror,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
-    languageServiceRequest, languageId, EndPointIdentity(editorId,"none"),
-    editorOptions,logFunction, AglStyleHandlerCssClass(languageId)
+    languageServiceRequest, languageDefinition, EndPointIdentity(editorId,"none"),
+    editorOptions,logFunction, AglStyleHandlerCssClass(languageDefinition.identity)
 ) {
 
     override val baseEditor: Any get() = this.cmEditorView
@@ -133,7 +134,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
                         // react to text changes
                         codemirrorFunctions.view.EditorView.updateListener.of({ view: codemirror.view.IViewUpdate ->
                             if (view.docChanged || view.viewportChanged) {
-                                this@AglEditorCodeMirror.onEditorTextChanged()
+                                this@AglEditorCodeMirror.onEditorTextChanged(view.view.state.doc.toString())
                             }
                         }),
                         // theme and token colors
@@ -232,7 +233,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
         })
 
         // need to update because token style types may have changed, not just their attributes
-        this.onEditorTextChangeInternal()
+        this.onEditorTextChangeInternal(this.text)
         this.resetTokenization(0)
     }
 
@@ -240,7 +241,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     private fun lintSource(view: codemirror.view.IEditorView): Promise<Array<codemirror.lint.Diagnostic>> {
         return if(doUpdate) {
             this.workerTokenizer.reset()
-            this.processSentence()
+            this.processSentence(view.state.doc.toString())
             Promise { resolve, reject ->
                 _linterPromise.add(DeferredIssues(resolve, reject))
             }
@@ -250,9 +251,9 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     }
 
-    private fun onEditorTextChanged() {
+    private fun onEditorTextChanged(newText:String) {
         _needsRefresh = true
-        super.onEditorTextChangeInternal()
+        super.onEditorTextChangeInternal(newText)
     }
 
     private fun update() {

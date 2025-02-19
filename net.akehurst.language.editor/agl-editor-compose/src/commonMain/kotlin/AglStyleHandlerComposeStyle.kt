@@ -16,35 +16,84 @@
 
 package net.akehurst.language.editor.compose
 
-import net.akehurst.language.editor.api.AglStyleHandler
-import net.akehurst.language.editor.api.AglToken
+import androidx.compose.runtime.Stable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.editor.api.EditorStyle
 import net.akehurst.language.editor.api.EditorStyleIdentity
-import net.akehurst.language.sppt.api.LeafData
-import net.akehurst.language.style.api.AglStyleModel
-import net.akehurst.language.style.api.AglStyleSelector
+import net.akehurst.language.editor.common.AglStyleHandlerAbstract
+import net.akehurst.language.style.api.AglStyleRule
 
-class AglStyleHandlerComposeStyle(): AglStyleHandler<ComposeStyle> {
+data class ComposeStyle(
+    override val identity: EditorStyleIdentity
+) : EditorStyle {
+    var composeStyle = SpanStyle()
+}
 
-    override val styleModel: AglStyleModel
-        get() = TODO("not implemented")
+class AglStyleHandlerComposeStyle(
+    languageId: LanguageIdentity,
+) : AglStyleHandlerAbstract<ComposeStyle>(languageId) {
 
-    override fun reset() {
-        TODO("not implemented")
+    override val EDITOR_NO_STYLE: ComposeStyle = ComposeStyle(EditorStyleIdentity.NO_STYLE)
+
+    override fun createEditorStyleType(identity: EditorStyleIdentity) = ComposeStyle(identity)
+
+    override fun updateEditorStyles(editorStyles: List<ComposeStyle>, sr: AglStyleRule) {
+        var foreground = Color.Black
+        var background = Color.Transparent
+        var fontWeight = FontWeight.Normal
+        var fontStyle = FontStyle.Normal
+        var textDecoration = TextDecoration.None
+        sr.declaration.values.forEach { oldStyle ->
+            when (oldStyle.name) {
+                "foreground" -> foreground = oldStyle.value.toComposeColor()
+                "background" -> background = oldStyle.value.toComposeColor()
+                "text-decoration" -> when (oldStyle.value) {
+                    "underline" -> textDecoration = TextDecoration.Underline
+                    else -> Unit
+                }
+
+                "font-style" -> when (oldStyle.value) {
+                    "bold" -> fontWeight = FontWeight.Bold
+                    "italic" -> fontStyle = FontStyle.Italic
+                    else -> Unit
+                }
+
+                else -> Unit
+            }
+        }
+        editorStyles.forEach {
+            it.composeStyle = SpanStyle(
+                color = foreground,
+                background = background,
+                fontWeight = fontWeight,
+                fontStyle = fontStyle,
+                textDecoration = textDecoration,
+            )
+        }
     }
 
-    override fun updateStyleModel(styleModel: AglStyleModel) {
-        TODO("not implemented")
-    }
-
-    override fun editorStyleFor(identity: EditorStyleIdentity): ComposeStyle? {
-        TODO("not implemented")
-    }
-
-    override fun convert(selector: AglStyleSelector): ComposeStyle {
-        TODO("not implemented")
-    }
-
-    override fun transformToTokens(leafs: List<LeafData>): List<AglToken> {
-        TODO("not implemented")
+    fun String.toComposeColor(alpha: Int = 0xFF, defaultColor: Color = Color.Black): Color {
+        return when {
+            this.startsWith("#") -> {
+                val digits = this.removePrefix("#")
+                val num = when (digits.length) {
+                    8 -> digits.toLong(16)
+                    else ->  digits.toLong(16) or 0x00000000FF000000
+                }
+                Color(num)
+            }
+            else -> {
+                val lower = this.lowercase()
+                CssColours.NAME_to_HEX[lower]?.let {
+                    val num = it.toLong()
+                    Color(num)
+                } ?: defaultColor
+            }
+        }
     }
 }

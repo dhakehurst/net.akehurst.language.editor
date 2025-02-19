@@ -16,26 +16,42 @@
 
 package net.akehurst.language.editor.compose
 
+import androidx.compose.material3.Surface
 import androidx.compose.ui.window.singleWindowApplication
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
-import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.StyleString
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.aglEditorOptions
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
-import androidx.compose.material3.Surface
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import net.akehurst.language.agl.GrammarString
-import net.akehurst.language.agl.StyleString
 import kotlin.test.Test
 
 class test_AglEditorCompose {
 
     private companion object {
+        const val INITIAL_TEXT = """
+SELECT col1 FROM table ;
+SELECT col1, col2 FROM table ;
+SELECT * FROM table ;
+
+UPDATE table SET col1=1 ;
+UPDATE table SET col1=1, col1=2, col3='hello' ;
+
+DELETE FROM table ;
+
+INSERT INTO table ( col1 ) VALUES ( 1 ) ;
+INSERT INTO table ( col1, col2 ) VALUES ( 1, 2 ) ;
+INSERT INTO table ( col1, col2, col3 ) VALUES ( 1, 2, 'hello' ) ;
+
+CREATE TABLE table ( col1  Int, col2 Int ) ;            
+        """
+
         const val GRAMMAR = """
 namespace net.akehurst.language.example
 
@@ -105,10 +121,15 @@ grammar SQL {
         const val STYLE = """
 namespace net.akehurst.language.example
 styles SQL {
-    ID {
+    ID,table-id,column-id {
+      foreground: red;
+      font-style: normal;
+    }
+    REF {
       foreground: blue;
       font-style: italic;
-    }
+      text-decoration: underline;
+    }    
     CREATE,TABLE,SELECT,UPDATE,DELETE,INSERT,INTO,FROM,VALUES,SET {
       foreground: chocolate;
       font-style: bold;
@@ -117,8 +138,43 @@ styles SQL {
         """
     }
 
+
     @Test
-    fun runMe() = runBlocking {
+    fun run_AglComposeTextEditor() = runBlocking {
+        val aglEditor = AglComposeTextEditor()
+        val defr = async {
+            singleWindowApplication(
+                title = "Code Editor Test",
+            ) {
+                Surface {
+                    aglEditor.content()
+                }
+            }
+        }
+        defr.await()
+    }
+
+    @Test
+    fun run_AglComposeTextEditor_SQL() = runBlocking {
+        val aglEditor = AglComposeTextEditor(
+            initialText = INITIAL_TEXT,
+            grammarString = GrammarString(GRAMMAR),
+            styleString = StyleString(STYLE)
+        )
+        val defr = async {
+            singleWindowApplication(
+                title = "Code Editor Test",
+            ) {
+                Surface {
+                    aglEditor.content()
+                }
+            }
+        }
+        defr.await()
+    }
+
+    @Test
+    fun run_ComposableCodeEditor() = runBlocking {
 
         var composeEditor = ComposableCodeEditor()
 
@@ -137,28 +193,31 @@ styles SQL {
         }
         val editorId = "test"
         val languageId = LanguageIdentity("test")
+        val languageDefinition = Agl.registry.findOrPlaceholder(
+            languageId,
+            aglOptions = Agl.options {  },
+            configuration = Agl.configurationSimple()
+        )
         val languageService = LanguageServiceDirectExecution(logFunction)
 
         delay(1000) //wait for compose to start
 
-        val aglEditor = Agl.attachToComposeEditor<Any, Any>(languageService, languageId, editorId, editorOptions, logFunction, composeEditor!!)
+        val aglEditor = Agl.attachToComposeEditor(
+            languageService, languageDefinition, editorId,
+            editorOptions, logFunction, composeEditor!!
+        )
         println("Attached AGL")
 
-        aglEditor.languageDefinition.update(
-           grammarStr =  GrammarString(GRAMMAR),
+        aglEditor.updateLanguage(
+           grammarStr = GrammarString(GRAMMAR),
             typeModelStr = null,
             asmTransformStr = null,
             crossReferenceStr = null,
             styleStr = StyleString(STYLE)
         )
-        aglEditor.refreshProcessor()
-        aglEditor.refreshStyleHandler()
 
         defr.await()
 
     }
 
-    fun start() {
-
-    }
 }
