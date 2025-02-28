@@ -115,6 +115,12 @@ subprojects {
             }
         }
 
+        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+        wasmJs() {
+            binaries.library()
+            browser()
+        }
+
         sourceSets {
             val commonMain by getting {
                 kotlin.srcDir("${project.layout.buildDirectory}/generated/kotlin")

@@ -16,20 +16,20 @@
 
 package net.akehurst.language.editor.api
 
-typealias LogFunction = (level: LogLevel, prefix:String, message: String,t:Throwable?) -> Unit
+typealias LogFunction = (level: LogLevel, prefix: String, t: Throwable?, lazyMessage: () -> String) -> Unit
 
 class AglEditorLogger(
     val prefix: String,
     var bind: LogFunction?
 ) {
 
-    fun log(level: LogLevel, message: String, t:Throwable? = null) = this.bind?.invoke(level, prefix, message, t)
+    fun log(level: LogLevel, t: Throwable? = null, lazyMessage: () -> String) = this.bind?.invoke(level, prefix, t, lazyMessage)
 
-    fun logFatal(message: String, t:Throwable? = null) = log(LogLevel.Fatal, message, t)
-    fun logError(message: String, t:Throwable? = null) = log(LogLevel.Error, message, t)
-    fun logWarning(message: String, t:Throwable? = null) = log(LogLevel.Warning, message, t)
-    fun logInformation(message: String, t:Throwable? = null) = log(LogLevel.Information, message, t)
-    fun logDebug(message: String, t:Throwable? = null) = log(LogLevel.Debug, message, t)
-    fun logTrace(message: String, t:Throwable? = null) = log(LogLevel.Trace, message, t)
+    fun logFatal(t: Throwable? = null,lazyMessage: () -> String) = log(LogLevel.Fatal, t, lazyMessage)
+    fun logError(t: Throwable? = null,lazyMessage: () -> String) = log(LogLevel.Error, t, lazyMessage)
+    fun logWarning(t: Throwable? = null,lazyMessage: () -> String) = log(LogLevel.Warning, t, lazyMessage)
+    fun logInformation(t: Throwable? = null,lazyMessage: () -> String) = log(LogLevel.Information, t, lazyMessage)
+    fun logDebug(t: Throwable? = null,lazyMessage: () -> String) = log(LogLevel.Debug, t, lazyMessage)
+    fun logTrace(t: Throwable? = null, lazyMessage: () -> String) = log(LogLevel.Trace, t, lazyMessage)
 
 }

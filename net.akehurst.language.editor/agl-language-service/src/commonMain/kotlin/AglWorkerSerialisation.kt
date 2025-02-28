@@ -1665,9 +1665,9 @@ object AglWorkerSerialisation {
         check(issues.isEmpty()) { issues.joinToString(separator = "\n") }
     }
 
-    fun configureFromKompositeString(datatypeModel: String) {
-        serialiser.configureFromKompositeString(datatypeModel)
-    }
+    //fun configureFromKompositeString(datatypeModel: String) {
+    //    serialiser.configureFromKompositeString(datatypeModel)
+    //}
 
     fun configureFromTypeModel(datatypeModel: TypeModel) {
         serialiser.configureFromTypeModel(datatypeModel)

@@ -95,7 +95,7 @@ object CkEditorHelper {
                 }
             })
         } catch (t: Throwable) {
-            logger.logError("exception during createAglAttributes: ", t)
+            logger.logError(t) { "exception during createAglAttributes: " }
         }
     }
 
@@ -128,16 +128,16 @@ object CkEditorHelper {
                     for (tok in newAttributes) {
                         val rng = writer.createRange(tok.firstPosition, tok.lastPosition)
                         for (att in tok.attributes) {
-                            logger.log(LogLevel.Trace, "Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]", null)
+                            logger.logTrace { "Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]" }
                             writer.setAttribute(att.key, att.value, rng)
                         }
                     }
                 } catch (t: Throwable) {
-                    logger.logError("exception during addAttributes...enqueueChange: ", t)
+                    logger.logError(t) { "exception during addAttributes...enqueueChange: " }
                 }
             }
         } catch (t: Throwable) {
-            logger.logError("exception during addAttributes: ", t)
+            logger.logError(t) { "exception during addAttributes: " }
         }
     }
 
@@ -152,13 +152,13 @@ object CkEditorHelper {
                         try {
                             writer.removeAttribute(attributeName, item)
                         } catch (t: Throwable) {
-                            logger.logError("exception during removeAttributes: ", t)
+                            logger.logError(t) { "exception during removeAttributes: " }
                         }
                     }
                 }
             }
         } catch (t: Throwable) {
-            logger.logError("exception during createAglAttributes: ", t)
+            logger.logError(t) { "exception during createAglAttributes: " }
         }
     }
 

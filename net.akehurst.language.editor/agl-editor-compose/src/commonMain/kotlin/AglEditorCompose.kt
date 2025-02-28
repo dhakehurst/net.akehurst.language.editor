@@ -29,7 +29,7 @@ import net.akehurst.language.issues.api.LanguageIssue
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     languageService: LanguageService,
-    languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    languageDefinition: LanguageDefinition<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -51,7 +51,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
 
 class AglEditorCompose<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
-    languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    languageDefinition: LanguageDefinition<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -64,10 +64,13 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     override val baseEditor: Any get() = composeEditor
     override val isConnected: Boolean get() = true
     override var text: String
-        get() = composeEditor.text
+        get() = composeEditor.rawText
         set(value) {
-            composeEditor.text = value
+            composeEditor.rawText = value
         }
+
+    //TODO: add setter! - currently cannot 'set' annotatedString in TextFieldState
+    val styledText get() = composeEditor.annotatedText
 
     override var workerTokenizer = AglTokenizerByWorkerCompose(this.agl, this.logger)
 
@@ -89,28 +92,41 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
 
 
     fun initialise() {
+        this.updateLanguageDefinition(languageDefinition)
 
         composeEditor.getLineTokens = { lineNumber, lineStartPosition, lineText ->
-            workerTokenizer.getLineTokens(lineNumber, lineStartPosition, lineText)
+            try {
+                workerTokenizer.getLineTokens(lineNumber, lineStartPosition, lineText)
+            } catch (t: Throwable) {
+                logger.logError(t) { "Failed to getLineTokens" }
+                emptyList()
+            }
         }
 
         composeEditor.requestAutocompleteSuggestions = { position, text, result ->
-            requestAutocomplete(position, text, result)
+            try {
+                requestAutocomplete(position, text, result)
+            } catch (t: Throwable) {
+                logger.logError(t) { "Failed to requestAutocompleteSuggestions" }
+            }
         }
 
-        composeEditor.onTextChange = { txt -> onEditorTextChangeInternal(txt) }
-
-        this.updateLanguage(null)
-        this.refreshProcessor()
-        this.refreshStyleHandler()
+        composeEditor.onTextChange = { txt ->
+            try {
+                onEditorTextChangeInternal(txt)
+            } catch (t: Throwable) {
+                logger.logError(t) { "Failed to onTextChange" }
+            }
+        }
 
         // trigger first sentence process
         //onEditorTextChangeInternal()
     }
 
     override fun resetTokenization(fromLine: Int) {
-        logger.log(LogLevel.Trace, "AglEditorCompose.resetTokenization $fromLine")
+        logger.logTrace { "AglEditorCompose.resetTokenization $fromLine" }
         workerTokenizer.refresh()
+        composeEditor.refreshTokens()
     }
 
     override fun destroyBaseEditor() {
@@ -121,33 +137,33 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     }
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
-        logger.log(LogLevel.Trace, "AglEditorCompose.updateLanguage $oldId")
+        logger.logTrace { "AglEditorCompose.updateLanguage $oldId" }
     }
 
     override fun updateEditorStyles() {
-        logger.log(LogLevel.Trace, "AglEditorCompose.updateEditorStyles")
+        logger.logTrace { "AglEditorCompose.updateEditorStyles" }
     }
 
     override fun clearIssueMarkers() {
-        logger.log(LogLevel.Trace, "AglEditorCompose.clearIssueMarkers")
+        logger.logTrace { "AglEditorCompose.clearIssueMarkers" }
         try {
             //TODO:
         } catch (t: Throwable) {
-            logger.logError("AglEditorCompose.exception during clearIssueMarkers: ", t)
+            logger.logError(t) { "AglEditorCompose.exception during clearIssueMarkers: " }
         }
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        logger.log(LogLevel.Trace, "AglEditorCompose.createIssueMarkers $issues")
+        logger.logTrace { "AglEditorCompose.createIssueMarkers $issues" }
         try {
             //TODO:
         } catch (t: Throwable) {
-            logger.logError("AglEditorCompose.exception during clearIssueMarkers: ", t)
+            logger.logError(t) { "AglEditorCompose.exception during clearIssueMarkers: " }
         }
     }
 
     fun requestAutocomplete(position: Int, text1: CharSequence, result: AutocompleteSuggestion) {
-        logger.logTrace("AglEditorCompose.requestAutocomplete")
+        logger.logTrace { "AglEditorCompose.requestAutocomplete" }
         if (composeEditor.autocomplete.isVisible) {
             // subsequent request
             _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement + 1)
@@ -162,8 +178,8 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     }
 
     // --- AglEditorAbstract ---
-    override fun onEditorTextChangeInternal(newText:String) {
-        logger.log(LogLevel.Trace, "AglEditorCompose.onEditorTextChangeInternal")
+    override fun onEditorTextChangeInternal(newText: String) {
+        logger.logTrace { "AglEditorCompose.onEditorTextChangeInternal" }
         //console.log("onEditorTextChangeInternal, editor '${this.editorId}' text is '${this.text}'")
         if (doUpdate) {
             //console.log("doUpdate")

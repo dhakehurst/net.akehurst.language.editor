@@ -55,7 +55,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     languageService: LanguageService,
     containerElement: Element,
     aceEditor: ace.IEditor,
-    languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    languageDefinition: LanguageDefinition<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -80,7 +80,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val aceEditor: ace.IEditor,
-    languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    languageDefinition: LanguageDefinition<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -139,11 +139,11 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     override fun resetTokenization(fromLine: Int) {
         val sess = this.aceEditor.getSession()
         if (null == sess) {
-            this.log(LogLevel.Error, "session is null ??", null)
+            this.logger.logError { "session is null ??" }
         } else {
             val bgt = sess.bgTokenizer
             if (null == bgt) {
-                this.log(LogLevel.Error, "bgTokenizer is null ??", null)
+                logger.logError{ "bgTokenizer is null ??"}
             } else {
                 bgt.start(fromLine)
                 this.aceEditor.renderer.updateText()
@@ -202,7 +202,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         this.resetTokenization(0)
     }
 
-    override fun onEditorTextChangeInternal(newText:String) {
+    override fun onEditorTextChangeInternal(newText: String) {
         if (doUpdate) {
             super.onEditorTextChangeInternal(newText)
             //this.workerTokenizer.reset()

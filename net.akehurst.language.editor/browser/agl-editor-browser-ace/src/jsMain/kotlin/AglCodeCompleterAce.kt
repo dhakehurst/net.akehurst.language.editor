@@ -67,7 +67,7 @@ class AglCodeCompleterAce<AsmType : Any, ContextType : Any>(
             val goalRule = this.agl.goalRule
             val context = this.agl.context
             if (null == context) {
-                this.agl.logger.log(LogLevel.Debug, "context is null for code completion.", null)
+                this.agl.logger.logDebug { "context is null for code completion." }
             }
             val result = proc.expectedItemsAt(
                 editor.getValue(), pos,

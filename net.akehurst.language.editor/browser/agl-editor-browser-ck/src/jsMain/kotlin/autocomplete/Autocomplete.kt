@@ -156,7 +156,7 @@ class CkAutocomplete(
     // --- AglEditorCompletionProvider ---
     override fun provide(completionItems: List<CompletionItem>) {
         try {
-            logger.logTrace("Provided ${completionItems.size} items.")
+            logger.logTrace { "Provided ${completionItems.size} items." }
             for (item in completionItems) {
                 val listItemView = AutocompleteItemView(this.locale, item, styleItemView)
                 //listItemView.on<Any, ck.ui.button.ButtonExecuteEvent>("execute", { evt, arg ->
@@ -174,7 +174,7 @@ class CkAutocomplete(
             //listView.asDynamic().isVisible = true
             select(0)
         } catch (t: Throwable) {
-            logger.logError("Exception trying to provide items.", t)
+            logger.logError(t) { "Exception trying to provide items." }
         }
     }
 
@@ -196,7 +196,7 @@ class CkAutocomplete(
             val textToInsert = sel.item.text
             ckEditor.model.change { writer ->
                 writer.remove(insSelection.getFirstRange())
-                writer.insertText(textToInsert,pos)
+                writer.insertText(textToInsert, pos)
                 when (sel.item.kind) {
                     // select the inserted 'Pattern' text so user can replace it
                     CompletionItemKind.PATTERN -> {

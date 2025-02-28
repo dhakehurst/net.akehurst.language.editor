@@ -25,7 +25,7 @@ import net.akehurst.language.editor.common.AglTokenizerByWorker
 data class CkAttributeData(
     val firstPosition: ck.engine.model.Position,
     val lastPosition: ck.engine.model.Position,
-    val attributes : Map<String,Any>
+    val attributes: Map<String, Any>
 )
 
 class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
@@ -42,7 +42,7 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     }
 
     override fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
-        logger.log(LogLevel.Trace, "Received tokens: $startLine, $tokensForLines", null)
+        logger.logTrace { "Received tokens: $startLine, $tokensForLines" }
         this.aglTokenizer.receiveTokens(startLine, tokensForLines)
         //TODO: Line based update - maybe 'CK-Block' based update as blocks somehow map to lines
         refresh()
@@ -52,7 +52,7 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
         try {
             emi.model?.let { CkEditorHelper.addAttributes(logger, it, ckTokens, CkEditorHelper.ATTRIBUTE_SET_SYNTAX_STYLE) }
         } catch (t: Throwable) {
-            logger.logError("Failed to add CK attribute (could be because the model has changed)", t)
+            logger.logError(t) { "Failed to add CK attribute (could be because the model has changed)" }
         }
     }
 
@@ -93,17 +93,17 @@ class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     fun refresh() {
         val ckTokens = mutableListOf<CkAttributeData>()
         val tokens = aglTokenizer.getAllTokens(emi.rawText)
-        logger.log(LogLevel.Trace, "Refresh Tokens: $tokens", null)
+        logger.logTrace { "Refresh Tokens: $tokens" }
         for (token in tokens) {
             val fp = emi.toModelPosition(token.position)
             val lp = emi.toModelPosition(token.position + token.length)
             // to ensure only the last attribute value is set, overwrite map entries
             val styleIds = token.styles
-            val flatAtts = styleIds.fold(emptyMap<String,Any>()) { acc, it ->
+            val flatAtts = styleIds.fold(emptyMap<String, Any>()) { acc, it ->
                 val ckStyle = aglTokenizer.agl.styleHandler.editorStyleFor(it) as CkStyle?
                 acc + (ckStyle?.attribs ?: emptyMap())
             }
-            ckTokens.add(CkAttributeData(fp,lp,flatAtts))
+            ckTokens.add(CkAttributeData(fp, lp, flatAtts))
         }
         updateCkModel(ckTokens)
     }

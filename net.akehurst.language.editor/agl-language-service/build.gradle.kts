@@ -11,7 +11,7 @@ dependencies {
     commonMainImplementation(libs.nak.kotlinx.collections)
     commonMainImplementation(libs.nak.kotlinx.reflect)
     commonMainImplementation(libs.nak.kserialisation.json)
-
+    commonMainImplementation(libs.kotlinx.coroutines)
     jvm11TestImplementation(libs.nal.agl.generators)
 }
 

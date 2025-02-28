@@ -94,7 +94,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val tv = measureTimedValue {
                 scanner.scan(sentence, 0, offset)
             }
-            logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
+            logger.logTrace { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
             val leafs = tv.value.tokens
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
@@ -104,7 +104,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
                 tokens
             }
         } catch (t: Throwable) {
-            logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
+            logger.logError(t) { "Unable to getLineTokensByScan" }
             val tokens = when {
                 text.isEmpty() -> emptyList()
                 else -> listOf(AglTokenDefault(emptyList(), 0, text.length))
@@ -153,7 +153,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val tv = measureTimedValue {
                 scanner.scan(sentence, 0, offset)
             }
-            logger.log(LogLevel.Debug, "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
+            logger.logDebug { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
             val leafs = tv.value.tokens
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
@@ -169,7 +169,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
                 Pair(state, tokens)
             }
         } catch (t: Throwable) {
-            logger.log(LogLevel.Error, "Unable to getLineTokensByScan", t)
+            logger.logError(t) { "Unable to getLineTokensByScan" }
             val tokens = when {
                 lineText.isEmpty() -> emptyList()
                 else -> listOf(AglTokenDefault(emptyList(), previousLineState.nextLineStartPosition, lineText.length))

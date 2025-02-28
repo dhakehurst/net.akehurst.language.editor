@@ -39,7 +39,7 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
                 CompletionItemKind.LITERAL -> ""
                 CompletionItemKind.PATTERN -> "(${ci.label})"
                 CompletionItemKind.SEGMENT -> "(${ci.label})"
-                CompletionItemKind.REFERRED  -> "(${ci.label})"
+                CompletionItemKind.REFERRED -> "(${ci.label})"
             }
             val s = when (ci.kind) {
                 CompletionItemKind.REFERRED -> 4
@@ -63,10 +63,11 @@ class AglCodeCompleterByWorker<AsmType : Any, ContextType : Any>(
         return if (null != proc) {
             val goalRule = this.agl.goalRule
             val context = this.agl.context
-            if (null==context) {
-                this.agl.logger.log(LogLevel.Debug,"context is null for code completion.",null)
+            if (null == context) {
+                this.agl.logger.logDebug { "context is null for code completion." }
             }
-            val result = proc.expectedItemsAt(editor.getValue(), pos,
+            val result = proc.expectedItemsAt(
+                editor.getValue(), pos,
                 Agl.options {
                     parse { goalRuleName(goalRule?.value) }
                     completionProvider { context(context) }

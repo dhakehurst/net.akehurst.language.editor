@@ -1,9 +1,8 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.LogLevel
 import kotlin.test.BeforeTest
@@ -12,8 +11,8 @@ import kotlin.test.assertEquals
 
 class test_AglComponents {
 
-    val logger = AglEditorLogger("Log") { logLevel: LogLevel, prefix:String, msg: String, throwable: Throwable? ->
-        println("$logLevel: $msg")
+    val logger = AglEditorLogger("Log") { logLevel, prefix, throwable, msg ->
+        println("$logLevel: $prefix - ${msg()}")
     }
 
     @BeforeTest
@@ -55,10 +54,10 @@ class test_AglComponents {
             configuration = Agl.configurationSimple(),
         )
 
-        val sut = AglComponents<Any, Any>(langId1, "", logger,AglStyleHandlerCssClass(langId1))
+        val sut = AglComponents(def, "", logger,AglStyleHandlerCssClass(langId1))
         assertEquals(langId1.value, sut.languageDefinition.identity.value)
 
-        sut.languageDefinition =  Agl.registry.findOrPlaceholder( Agl.registry.agl.grammarLanguageIdentity)
+        sut.languageDefinition =  Agl.registry.findOrPlaceholder( Agl.registry.agl.grammarLanguageIdentity,null,null)
 
         assertEquals(Agl.registry.agl.grammarLanguageIdentity, sut.languageDefinition.identity)
     }

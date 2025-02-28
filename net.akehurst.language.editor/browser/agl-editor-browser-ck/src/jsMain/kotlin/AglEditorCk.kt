@@ -35,7 +35,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     languageService: LanguageService,
     containerElement: Element,
     ckEditor: ck.core.editor.Editor,
-    languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    languageDefinition: LanguageDefinition<AsmType, ContextType>,
 //    languageId: LanguageIdentity,
     editorId: String,
     editorOptions: EditorOptions,
@@ -60,7 +60,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     val ckEditor: ck.core.editor.Editor,
 //    languageId: LanguageIdentity,
-    languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    languageDefinition: LanguageDefinition<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?
@@ -73,7 +73,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     override var text: String
         get() = emi.rawText
         set(value) {
-            logger.logTrace("Editor '${this.editorId}' text set to '$value'")
+            logger.logTrace{"Editor '${this.editorId}' text set to '$value'"}
             val data = value.split("\n")
                 .map {
                     "<p>$it</p>"
@@ -107,7 +107,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         ckEditor.keystrokes.set(arrayOf("ctrl!", 32), {
             if (_autocomplete.isVisible) {
                 _autocomplete.clear()
-                _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement+1)
+                _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement + 1)
                 invokeAutocomplete()
             } else {
                 _autocompleteDepthIncrement = 0
@@ -141,12 +141,12 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     }
 
     override fun resetTokenization(fromLine: Int) {
-        logger.log(LogLevel.Trace, "resetTokenization $fromLine")
+        logger.logTrace { "resetTokenization $fromLine" }
         workerTokenizer.refresh()
     }
 
     override fun updateLanguage(oldId: LanguageIdentity?) {
-        logger.log(LogLevel.Trace, "updateLanguage $oldId")
+        logger.logTrace { "updateLanguage $oldId" }
     }
 
     override fun updateStyleModel(styleModel: AglStyleModel) {
@@ -155,21 +155,21 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     }
 
     override fun updateEditorStyles() {
-        logger.log(LogLevel.Trace, "updateEditorStyles")
+        logger.logTrace { "updateEditorStyles" }
     }
 
     override fun clearIssueMarkers() {
-        logger.log(LogLevel.Trace, "clearIssueMarkers")
+        logger.logTrace { "clearIssueMarkers" }
         try {
             ckEditor.model.enqueueChange { writer ->
                 try {
                     CkEditorHelper.removeAttributes(logger, writer, setOf(CkEditorHelper.ATTRIBUTE_NAME_ERROR_MARKER))
                 } catch (t: Throwable) {
-                    logger.logError("exception during clearIssueMarkers...enqueueChange : ", t)
+                    logger.logError(t) { "exception during clearIssueMarkers...enqueueChange : " }
                 }
             }
         } catch (t: Throwable) {
-            logger.logError("exception during clearIssueMarkers: ", t)
+            logger.logError(t) { "exception during clearIssueMarkers: " }
         }
 
         //TODO: Maybe not explicitly do this, rather remove issues when removing styles
@@ -179,7 +179,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     }
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
-        logger.log(LogLevel.Trace, "createIssueMarkers $issues")
+        logger.logTrace { "createIssueMarkers $issues" }
         val atts = issues.map { iss ->
             val fp = emi.toModelPosition(iss.location?.position ?: 0)
             val lp = emi.toModelPosition(iss.location?.endPosition ?: 1)
@@ -201,8 +201,8 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     }
 
     // --- AglEditorAbstract ---
-    override fun onEditorTextChangeInternal(newText:String) {
-        logger.log(LogLevel.Trace, "onEditorTextChangeInternal")
+    override fun onEditorTextChangeInternal(newText: String) {
+        logger.logTrace { "onEditorTextChangeInternal" }
         //console.log("onEditorTextChangeInternal, editor '${this.editorId}' text is '${this.text}'")
         if (doUpdate) {
             //console.log("doUpdate")
@@ -230,7 +230,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
     // ---
     fun invokeAutocomplete() {
-        logger.logTrace("invokeAutocomplete")
+        logger.logTrace { "invokeAutocomplete"}
         val cursorPos = ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
         emi.update(ckEditor.model)
         val options = this.agl.options.invoke()

@@ -46,7 +46,7 @@ class AglLanguageServiceByWorker(
             crossReferenceModelStr: CrossReferenceString?,
             editorOptions: EditorOptions
         ) {
-            sendToWorker(MessageProcessorCreate(endPointIdentity, requestId,languageId, grammarStr.value, typeModelStr?.value, asmTransformStr?.value, crossReferenceModelStr?.value, editorOptions))
+            sendToWorker(MessageProcessorCreate(endPointIdentity, requestId, languageId, grammarStr.value, typeModelStr?.value, asmTransformStr?.value, crossReferenceModelStr?.value, editorOptions))
         }
 
         override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity) {
@@ -54,11 +54,11 @@ class AglLanguageServiceByWorker(
         }
 
         override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, styleStr: StyleString) {
-            sendToWorker(MessageSetStyle(endPointIdentity, requestId,languageId, styleStr.value))
+            sendToWorker(MessageSetStyle(endPointIdentity, requestId, languageId, styleStr.value))
         }
 
         override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, reason: String) {
-            sendToWorker(MessageParserInterruptRequest(endPointIdentity, requestId,languageId, reason))
+            sendToWorker(MessageParserInterruptRequest(endPointIdentity, requestId, languageId, reason))
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
@@ -68,7 +68,7 @@ class AglLanguageServiceByWorker(
             sentence: String,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            sendToWorker(MessageProcessRequest(endPointIdentity, requestId,languageId, sentence, processOptions))
+            sendToWorker(MessageProcessRequest(endPointIdentity, requestId, languageId, sentence, processOptions))
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
@@ -79,7 +79,7 @@ class AglLanguageServiceByWorker(
             position: Int,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            sendToWorker(MessageCodeCompleteRequest(endPointIdentity,requestId, languageId, text, position, processOptions))
+            sendToWorker(MessageCodeCompleteRequest(endPointIdentity, requestId, languageId, text, position, processOptions))
         }
 
     }
@@ -94,7 +94,7 @@ class AglLanguageServiceByWorker(
 
     init {
         this.worker.onerror = {
-            this.logger.log(LogLevel.Error, it.toString(), null)
+            this.logger.logError { it.toString() }
         }
         val tgt: EventTarget = if (this.sharedWorker) (this.worker as SharedWorker).port else this.worker as Worker
         tgt.addEventListener("message", { ev ->
@@ -103,23 +103,23 @@ class AglLanguageServiceByWorker(
                 if (data is String) {
                     val str = ev.data as String
                     when {
-                        str.startsWith("Error:") -> this.logger.log(LogLevel.Error, str.substringAfter("Error:"), null)
-                        str.startsWith("Info:") -> this.logger.log(LogLevel.Information, str.substringAfter("Info:"), null)
+                        str.startsWith("Error:") -> this.logger.logError { str.substringAfter("Error:") }
+                        str.startsWith("Info:") -> this.logger.logInformation { str.substringAfter("Info:") }
 
                         else -> {
                             val tv = measureTimedValue {
                                 AglWorkerSerialisation.deserialise<AglWorkerMessage>(str)
                             }
-                            this.logger.log(LogLevel.Debug, "Deserialisation of worker message (length=${str.length}) took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms", null)
+                            this.logger.logDebug { "Deserialisation of worker message (length=${str.length}) took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
                             val msg: AglWorkerMessage = tv.value
                             this.receiveMessageFromWorker(msg)
                         }
                     }
                 } else {
-                    this.logger.log(LogLevel.Error, "Handling message from Worker, data content should be a String, got - '${ev.data}'", null)
+                    this.logger.logError { "Handling message from Worker, data content should be a String, got - '${ev.data}'" }
                 }
             } catch (e: Throwable) {
-                this.logger.log(LogLevel.Error, "Handling message from Worker", e)
+                this.logger.logError(e) { "Handling message from Worker" }
             }
         }, objectJS { })
         //need to explicitly start because used addEventListener
@@ -133,9 +133,9 @@ class AglLanguageServiceByWorker(
     private fun sendToWorker(msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
         //val jsObj = msg.toJsObject()
         //val str = AglWorkerMessage.serialise(msg)
-        this.logger.log(LogLevel.Trace, "Sending message: $msg", null)
+        this.logger.logTrace{ "Sending message: $msg"}
         val tv = measureTimedValue { AglWorkerSerialisation.serialise(msg) }
-        this.logger.log(LogLevel.Trace, "Serialisation took ${tv.duration.toString(DurationUnit.MILLISECONDS)}", null)
+        this.logger.logTrace{ "Serialisation took ${tv.duration.toString(DurationUnit.MILLISECONDS)}"}
         val str = tv.value
         if (this.sharedWorker) {
             (this.worker as SharedWorker).port.postMessage(str, transferables)
@@ -145,7 +145,7 @@ class AglLanguageServiceByWorker(
     }
 
     private fun receiveMessageFromWorker(msg: AglWorkerMessage) {
-        this.logger.log(LogLevel.Trace, "Received message: $msg", null)
+        this.logger.logTrace{ "Received message: $msg"}
         val endPoint = responseObjects[msg.endPoint]
         if (null != endPoint) { //TODO: should  test for sessionId also
             when (msg) {
