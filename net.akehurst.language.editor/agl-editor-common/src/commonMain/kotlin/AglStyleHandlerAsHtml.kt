@@ -1,3 +1,19 @@
+/**
+ * Copyright (C) 2024 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -18,6 +34,8 @@ class AglStyleHandlerAsHtml(
 ) : AglStyleHandlerAbstract<HtmlStyle>(languageId) {
 
     companion object {
+        val REGEX_MATCH_SPECIAL = Regex("[&<>'\"]")
+        val REGEX_MATCH_ENCODED_SPECIAL = Regex("&[^;]+;")
         val STRING_TO_HTML = mapOf(
             "&" to "&amp;",
             "<" to "&lt;",
@@ -27,8 +45,18 @@ class AglStyleHandlerAsHtml(
         )
         val HTML_TO_STRING = STRING_TO_HTML.entries.associate { (k, v) -> v to k }
 
-        fun encodeForHtml(str: String) = str.replace(Regex("[&<>'\"]")) { mr -> STRING_TO_HTML[mr.value] ?: error("No replacement configured for ${mr.value}") }
-        fun decodeFromHtml(encodedHtml: String)= encodedHtml.replace(Regex("[&][^;]+[;]")) { mr -> HTML_TO_STRING[mr.value] ?: error("No replacement configured for ${mr.value}") }
+        fun encodeForHtml(str: String) = str.replace(REGEX_MATCH_SPECIAL) { mr ->
+            val matched = mr.value
+            STRING_TO_HTML[matched]
+                ?: error("No replacement configured for ${mr.value}")
+        }
+
+        fun decodeFromHtml(encodedHtml: String) = decodeFromHtml1(decodeFromHtml1(encodedHtml))
+        fun decodeFromHtml1(encodedHtml: String) = encodedHtml.replace(REGEX_MATCH_ENCODED_SPECIAL) { mr ->
+            val matched = mr.value
+            HTML_TO_STRING[matched]
+                ?: error("No replacement configured for ${mr.value}")
+        }
 
     }
 

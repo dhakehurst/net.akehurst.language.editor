@@ -158,7 +158,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
             if (leafs.isEmpty()) {
-                val state = AglLineState(previousLineState.lineNumber + 1, previousLineState.nextLineStartPosition + 1, "")
+                val state = AglLineState(previousLineState.lineNumber + 1, previousLineState.nextLineStartPosition, "")
                 Pair(state, emptyList())
             } else {
                 val lastLeaf = leafs.last()

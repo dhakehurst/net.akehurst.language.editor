@@ -111,7 +111,13 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun clearIssueMarkers()
 
-    fun updateLanguageDefinitionWith(grammarStr: GrammarString?, typeModelStr: TypeModelString?, asmTransformStr: TransformString?, crossReferenceStr: CrossReferenceString?, styleStr: StyleString?)
+    fun updateLanguageDefinitionWith(
+        grammarStr: GrammarString?=null,
+        typeModelStr: TypeModelString?=null,
+        asmTransformStr: TransformString?=null,
+        crossReferenceStr: CrossReferenceString?=null,
+        styleStr: StyleString?=null
+    )
     fun updateLanguageDefinition(languageDefinition: LanguageDefinition<AsmType, ContextType>)
 
     fun refreshProcessor()

@@ -1,9 +1,8 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.api.processor.GrammarString
 import kotlin.test.Test
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class test_Complex {

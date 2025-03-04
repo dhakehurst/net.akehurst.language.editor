@@ -25,19 +25,20 @@ import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor2
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.GrammarString
+import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.StyleString
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.aglEditorOptions
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
+import net.akehurst.language.grammar.processor.AglGrammar
 import kotlin.test.Test
 
 class test_AglEditorCompose {
 
     private companion object {
-        const val INITIAL_TEXT = """
-SELECT col1 FROM table ;
+        const val INITIAL_TEXT = """SELECT col1 FROM table ;
 SELECT col1, col2 FROM table ;
 SELECT * FROM table ;
 
@@ -224,7 +225,9 @@ styles SQL {
     @Test
     fun run_ComposableCodeEditor2b() = runBlocking {
 
-        var composeEditor = ComposableCodeEditor2()
+        var composeEditor = ComposableCodeEditor2(
+            initialText = INITIAL_TEXT,
+        )
 
         val defr = async {
             singleWindowApplication(
@@ -262,6 +265,57 @@ styles SQL {
             asmTransformStr = null,
             crossReferenceStr = null,
             styleStr = StyleString(STYLE)
+        )
+
+        defr.await()
+
+    }
+
+    @Test
+    fun run_ComposableCodeEditor2c() = runBlocking {
+
+        var composeEditor = ComposableCodeEditor2(
+            initialText = """
+                namespace test
+                grammar Test {
+                  S = 'a' ;
+                }
+            """.trimIndent(),
+        )
+
+        val defr = async {
+            singleWindowApplication(
+                title = "Code Editor Test",
+            ) {
+                Surface {
+                    composeEditor.content()
+                }
+            }
+        }
+
+        val logFunction: LogFunction = { level, prefix, t, message -> println("$level - $prefix: ${message()}"); t?.printStackTrace() }
+        val editorOptions = aglEditorOptions() {
+        }
+        val editorId = "test"
+        val languageId = Agl.registry.agl.grammarLanguageIdentity
+        val languageDefinition = Agl.languageDefinitionFromString<Any,Any>(
+            languageId,
+            grammarDefinitionStr = GrammarString(GRAMMAR),
+            styleStr = StyleString(STYLE)
+        )
+        val languageService = LanguageServiceDirectExecution(logFunction)
+
+        delay(1000) //wait for compose to start
+
+        val aglEditor = Agl.attachToComposeEditor(
+            languageService, languageDefinition, editorId,
+            editorOptions, logFunction, composeEditor!!
+        )
+        println("Attached AGL")
+
+        aglEditor.updateLanguageDefinitionWith(
+            grammarStr = GrammarString(AglGrammar.grammarStr),
+            styleStr = StyleString(AglGrammar.styleStr)
         )
 
         defr.await()

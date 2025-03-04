@@ -18,6 +18,7 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.sppt.api.LeafData
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -50,7 +51,7 @@ class test_AglStyleHandlerCssClass {
     }
 
     @Test
-    fun mapToCssClasses() {
+    fun mapToEditorStyle() {
         val langId = LanguageIdentity("test.lang")
         val sut = AglStyleHandlerCssClass(langId)
 
@@ -72,9 +73,12 @@ class test_AglStyleHandlerCssClass {
 
 
         val leaf = LeafData("'kw'", false, 0,1, listOf("'kw'"))
-        val actual = sut.mapToCssClasses(leaf)
+        val actual = sut.transformToTokens(listOf(leaf))
 
-        val expected = listOf(CssClassStyle("agl_test_lang-1"))
+        val expected = listOf(AglTokenDefault(
+            listOf(EditorStyleIdentity("agl-test.lang1")),
+            0,1
+        ))
         assertEquals(expected, actual)
     }
 }

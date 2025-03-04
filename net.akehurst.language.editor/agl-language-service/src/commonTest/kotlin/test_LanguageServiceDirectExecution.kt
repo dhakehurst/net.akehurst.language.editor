@@ -1,8 +1,7 @@
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
@@ -49,7 +48,7 @@ class test_LanguageServiceDirectExecution {
             }
 
         }
-        val logFunction = { level: LogLevel, prefix: String, message: String, t: Throwable? -> println("$level: $prefix - $message, $t") }
+        val logFunction = { level: LogLevel, prefix: String, t: Throwable?,message: ()->String, -> println("$level: $prefix - ${message()}, $t") }
     }
 
     @Test

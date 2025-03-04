@@ -17,13 +17,14 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.agl.simple.contextAsmSimple
+import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.asm.api.Asm
 import net.akehurst.language.asm.builder.asmSimple
+import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageStatus
 import net.akehurst.language.editor.api.RequestIdentity
@@ -86,7 +87,7 @@ class test_AglWorkerSerialisation {
             """.trimIndent()
         ).asm!!.primary!!
 
-        test(input.namespace){ expected, actual ->
+        test(input.namespace) { expected, actual ->
             assertEquals(expected.asString(), actual.asString())
         }
     }
@@ -103,7 +104,7 @@ class test_AglWorkerSerialisation {
                     supertypes("ADatType")
                     propertyPrimitiveType("propPrim", "String", false, 0)
                     propertyListTypeOf("propList", "String", false, 1)
-                    propertyUnionTypeOf("propUnnamedType", "",false, 2)
+                    propertyUnionTypeOf("propUnnamedType", "", false, 2)
                     propertyTupleType("tt", false, 3) {
                         typeRef("a", "String", false)
                     }
@@ -184,7 +185,7 @@ class test_AglWorkerSerialisation {
             """.trimIndent()
         )
         assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
-        val input= result.asm!!
+        val input = result.asm!!
 
         test(input) { expected, actual ->
             assertEquals(expected.asString(), actual.asString())
@@ -262,21 +263,22 @@ class test_AglWorkerSerialisation {
     // --- MessageProcessorCreate ---
     @Test
     fun MessageProcessorCreate_com_null() {
-        val input = MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(1), languageId, "", null,null,null, EditorOptionsDefault())
+        val input = MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(1), languageId, "", null, null, null, EditorOptionsDefault())
 
         test(input)
     }
 
     @Test
     fun MessageProcessorCreate_com_blank() {
-        val input = MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(1),languageId, "", null,null,null, EditorOptionsDefault())
+        val input = MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(1), languageId, "", null, null, null, EditorOptionsDefault())
 
         test(input)
     }
 
     @Test
     fun MessageProcessorCreate_com_grammar() {
-        val input = MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(1),languageId, "namespace test grammar Test { rule1 = 'a' ; }", null,null,null, EditorOptionsDefault())
+        val input =
+            MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(1), languageId, "namespace test grammar Test { rule1 = 'a' ; }", null, null, null, EditorOptionsDefault())
 
         test(input)
     }
@@ -300,7 +302,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageProcessorCreateResponse_com_Error() {
         val input = MessageProcessorCreateResponse(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.FAILURE, "Error",
             listOf(
                 LanguageIssue(
@@ -325,9 +327,9 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageProcessorCreateResponse_com_Success() {
         val expected = MessageProcessorCreateResponse(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.SUCCESS, "OK", emptyList(), listOf(
-                Matchable("tag", "expr", MatchableKind.LITERAL)
+                Matchable(0, 0, "tag", "expr", MatchableKind.LITERAL)
             )
         )
 
@@ -408,7 +410,7 @@ class test_AglWorkerSerialisation {
         val proc = Agl.processorFromStringSimple(GrammarString(grammarStr)).processor!!
         val context = ContextFromTypeModel(proc.typeModel)
         val expected = MessageProcessRequest(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             languageId,
             "",
             Agl.options {
@@ -462,7 +464,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageLineTokens_empty() {
         val expected = MessageLineTokens(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.SUCCESS,
             "",
             0,
@@ -480,17 +482,17 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageLineTokens_lines() {
         val expected = MessageLineTokens(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.SUCCESS,
             "",
             0,
             listOf(
                 listOf(
-                    AglTokenDefault(listOf("xxx"), 0, 3),
-                    AglTokenDefault(listOf("eol"), 3, 1)
+                    AglTokenDefault(listOf(EditorStyleIdentity("xxx")), 0, 3),
+                    AglTokenDefault(listOf(EditorStyleIdentity("eol")), 3, 1)
                 ),
                 listOf(
-                    AglTokenDefault(listOf("xx"), 4, 2)
+                    AglTokenDefault(listOf(EditorStyleIdentity("xx")), 4, 2)
                 )
             )
         )
@@ -510,7 +512,7 @@ class test_AglWorkerSerialisation {
         val treeData = TreeDataComplete2(0)
 
         val expected = MessageParseResult2(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.START,
             "Start",
             emptyList(),
@@ -541,7 +543,7 @@ class test_AglWorkerSerialisation {
         val treeData = p.parse("a").sppt?.treeData!!
 
         val expected = MessageParseResult2(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.START,
             "Start",
             emptyList(),
@@ -563,7 +565,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageParseResult_com_Start() {
         val expected = MessageParseResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.START,
             "Start",
             emptyList(),
@@ -582,7 +584,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageParseResult_com_Error() {
         val expected = MessageParseResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.FAILURE,
             "Error",
             listOf(
@@ -603,7 +605,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageParseResult_com_OK() {
         val expected = MessageParseResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.SUCCESS,
             "OK",
             emptyList(),
@@ -623,7 +625,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageSyntaxAnalysisResult_com_Start() {
         val expected = MessageSyntaxAnalysisResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.START,
             "Start",
             emptyList(),
@@ -642,7 +644,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageSyntaxAnalysisResult_com_Error() {
         val expected = MessageSyntaxAnalysisResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.FAILURE,
             "Error",
             listOf(
@@ -670,7 +672,7 @@ class test_AglWorkerSerialisation {
         """
         val proc = Agl.processorFromStringSimple(GrammarString(grammarStr)).processor!!
         val expected = MessageSyntaxAnalysisResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.SUCCESS,
             "OK",
             emptyList(),
@@ -691,7 +693,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageSemanticAnalysisResult_com_Start() {
         val expected = MessageSemanticAnalysisResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.START,
             "Start",
             emptyList(),
@@ -709,7 +711,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageSemanticAnalysisResult_com_Error() {
         val expected = MessageSemanticAnalysisResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.FAILURE,
             "Error",
             listOf(
@@ -729,7 +731,7 @@ class test_AglWorkerSerialisation {
     @Test
     fun MessageSemanticAnalysisResult_com_OK_with_reference() {
         val expected = MessageSemanticAnalysisResult(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             MessageStatus.SUCCESS,
             "OK",
             emptyList(),
@@ -791,7 +793,7 @@ class test_AglWorkerSerialisation {
         val context = ContextFromTypeModel(typeModel)
 
         val expected = MessageProcessRequest(
-            EndPointIdentity(editorId, sessionId),RequestIdentity(1),
+            EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             languageId,
             "Start",
             Agl.options {
