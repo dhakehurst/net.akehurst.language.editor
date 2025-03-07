@@ -16,10 +16,6 @@
 
 package net.akehurst.language.editor.compose
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.PlatformSpanStyle
@@ -37,6 +33,9 @@ import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
+
+@OptIn(ExperimentalTextApi::class)
+val PlatformSpanStyle_TextDecorationLineStyle_WAVY get() = PlatformSpanStyle(textDecorationLineStyle = TextDecorationLineStyle.Wavy)
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     languageService: LanguageService,
@@ -71,10 +70,6 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     languageServiceRequest, languageDefinition, EndPointIdentity(editorId, "none"),
     editorOptions, logFunction, AglStyleHandlerComposeStyle(languageDefinition.identity)
 ) {
-
-    companion object {
-        val ORANGE = Color(255,165,0)
-    }
 
     override val baseEditor: Any get() = composeEditor
     override val isConnected: Boolean get() = true
@@ -172,16 +167,15 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     @OptIn(ExperimentalTextApi::class)
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
         logger.logTrace { "AglEditorCompose.createIssueMarkers $issues" }
-        val wavyStyle = PlatformSpanStyle(textDecorationLineStyle = TextDecorationLineStyle.Wavy)
         try {
            issues.forEach {
                val pos = it.location?.position ?: 0
                val len = it.location?.length ?: 2
                val line = it.location?.line ?: 1
                val (icon,colour, style) = when(it.kind) {
-                   LanguageIssueKind.ERROR -> Triple(EditorIcons.Error, Color.Red, SpanStyle(color = Color.Red, textDecoration =  TextDecoration.Underline, platformStyle = wavyStyle))
-                   LanguageIssueKind.WARNING -> Triple(EditorIcons.Warning, ORANGE, SpanStyle(color = ORANGE, textDecoration =  TextDecoration.Underline, platformStyle = wavyStyle))
-                   LanguageIssueKind.INFORMATION -> Triple(EditorIcons.Infomation, Color.Blue, SpanStyle(color = Color.Blue, textDecoration =  TextDecoration.Underline, platformStyle = wavyStyle))
+                   LanguageIssueKind.ERROR -> Triple(EditorIcons.Error, Color.Red, SpanStyle(color = Color.Red, textDecoration =  TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY))
+                   LanguageIssueKind.WARNING -> Triple(EditorIcons.Warning, EditorIcons.ORANGE, SpanStyle(color = EditorIcons.ORANGE, textDecoration =  TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY))
+                   LanguageIssueKind.INFORMATION -> Triple(EditorIcons.Information, Color.Blue, SpanStyle(color = Color.Blue, textDecoration =  TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY))
                }
                composeEditor.addMarginItem(line-1, it.kind.toString(), it.message, icon, colour)
                composeEditor.addTextMarker(pos,len,style)

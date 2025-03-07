@@ -35,9 +35,12 @@ import net.akehurst.language.parser.api.ParseResult
 import net.akehurst.language.parser.leftcorner.ParseResultDefault
 import net.akehurst.language.reference.asm.CrossReferenceModelDefault
 import net.akehurst.language.scanner.api.Matchable
+import net.akehurst.language.scanner.api.ScanResult
+import net.akehurst.language.scanner.common.ScanResultDefault
 import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sentence.common.SentenceDefault
+import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.sppt.api.SharedPackedParseTree
 import net.akehurst.language.style.api.AglStyleModel
 import net.akehurst.language.transform.asm.TransformDomainDefault
@@ -88,6 +91,11 @@ class LanguageServiceResponseDirectExecution(
     ) {
         logger.logTrace { "processorSetStyleResponse $endPointIdentity, $requestId, $status, $message, $issues, ${styleModel?.asString()}" }
         responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, requestId, status, message, issues, styleModel)
+    }
+
+    override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>) {
+        logger.logTrace { "sentenceParseResponse $endPointIdentity, $requestId, $status, $message, $issues, <tree> " }
+        responseObjects[endPointIdentity]?.sentenceScanResponse(endPointIdentity, requestId, status, message, issues)
     }
 
     override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
@@ -213,6 +221,7 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace { "sentenceProcessRequest $endPointIdentity, $languageId" }
         val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '${languageId}' not found, was it created correctly?")
         val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
+        val scan = scan(endPointIdentity, requestId, languageId, proc, processOptions, sentence)
         val parse = parse(endPointIdentity, requestId, languageId, proc, processOptions, sentence)
         val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(endPointIdentity, requestId, languageId, proc, processOptions, it) }
         val semanticAnalysis = syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(endPointIdentity, requestId, languageId, proc, processOptions, it, r.locationMap) } }
@@ -292,6 +301,35 @@ open class LanguageServiceRequestDirectExecution(
         return ld
     }
 
+    protected fun <AsmType : Any, ContextType : Any> scan(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        languageId: LanguageIdentity,
+        proc: LanguageProcessor<AsmType, ContextType>,
+        processOptions: ProcessOptions<AsmType, ContextType>,
+        sentence: String
+    ): ScanResult {
+        logger.logTrace { "parse $endPointIdentity, $languageId" }
+        return try {
+            response.sentenceScanResponse(endPointIdentity, requestId, MessageStatus.START, "Start", emptyList())
+            val editorOptions = _editorOptions[endPointIdentity.editorId]
+            if (true == editorOptions?.scan && processOptions.scan.enabled) {
+                val result = proc.scan(sentence, processOptions.scan)
+                this.sendLineTokens(endPointIdentity, requestId, languageId, result.tokensByLine, editorOptions.lineTokensChunkSize)
+                response.sentenceScanResponse(endPointIdentity, requestId, MessageStatus.SUCCESS, "Success", result.issues.all.toList())
+                result
+            } else {
+                response.sentenceParseResponse(endPointIdentity, requestId, MessageStatus.SUCCESS, "Scan not enabled, in editor and process options", emptyList(), null)
+                ScanResultDefault(emptyList(), IssueHolder(LanguageProcessorPhase.SCAN))
+            }
+        } catch (t: Throwable) {
+            val st = t.stackTraceToString().substring(0, 100)
+            val msg = "Exception during 'scan' - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
+            response.sentenceScanResponse(endPointIdentity, requestId, MessageStatus.FAILURE, msg, emptyList())
+            ScanResultDefault(emptyList(), IssueHolder(LanguageProcessorPhase.SCAN))
+        }
+    }
+
     protected fun <AsmType : Any, ContextType : Any> parse(
         endPointIdentity: EndPointIdentity,
         requestId: RequestIdentity<*>,
@@ -304,13 +342,14 @@ open class LanguageServiceRequestDirectExecution(
         return try {
             response.sentenceParseResponse(endPointIdentity, requestId, MessageStatus.START, "Start", emptyList(), null)
             val editorOptions = _editorOptions[endPointIdentity.editorId]
-            if (true == editorOptions?.parse) {
+            if (true == editorOptions?.parse && processOptions.parse.enabled) {
                 val result = proc.parse(sentence, processOptions.parse)
                 val sppt = result.sppt
                 if (null == sppt) {
                     response.sentenceParseResponse(endPointIdentity, requestId, MessageStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null)
                 } else {
-                    this.sendLineTokens(endPointIdentity, requestId, languageId, SentenceDefault(sentence), sppt, editorOptions.lineTokensChunkSize)
+                    val tokens = sppt.tokensByLineAll()
+                    this.sendLineTokens(endPointIdentity, requestId, languageId, tokens, editorOptions.lineTokensChunkSize)
                     if (editorOptions.parseTree) {
                         response.sentenceParseResponse(endPointIdentity, requestId, MessageStatus.SUCCESS, "Success", result.issues.all.toList(), sppt)
                     } else {
@@ -341,15 +380,13 @@ open class LanguageServiceRequestDirectExecution(
         endPointIdentity: EndPointIdentity,
         requestId: RequestIdentity<*>,
         languageId: LanguageIdentity,
-        sentence: Sentence,
-        sppt: SharedPackedParseTree,
+        tokens: List<List<LeafData>>,
         lineTokensChunkSize: Int
     ) {
         logger.logTrace { "sendLineTokens $endPointIdentity, $languageId" }
         try {
             val editorOptions = _editorOptions[endPointIdentity.editorId]
             if (true == editorOptions?.parseLineTokens) {
-                val tokens = sppt.tokensByLineAll()
                 val style = this._styleHandler[languageId]
                 if (null == style) {
                     val msg = "StyleHandler for ${languageId} not found"
@@ -382,6 +419,10 @@ open class LanguageServiceRequestDirectExecution(
         }
     }
 
+    private fun sendLineTokens() {
+
+    }
+
     private fun <AsmType : Any, ContextType : Any> syntaxAnalysis(
         endPointIdentity: EndPointIdentity,
         requestId: RequestIdentity<*>,
@@ -394,7 +435,7 @@ open class LanguageServiceRequestDirectExecution(
         return try {
             response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId, MessageStatus.START, "Start", emptyList(), null)
             val editorOptions = _editorOptions[endPointIdentity.editorId]
-            if (true == editorOptions?.syntaxAnalysis) {
+            if (true == editorOptions?.syntaxAnalysis && options.syntaxAnalysis.enabled) {
                 val result = proc.syntaxAnalysis(sppt, options)
                 val asm = result.asm
                 if (null == asm) {
@@ -414,7 +455,7 @@ open class LanguageServiceRequestDirectExecution(
                 }
                 result
             } else {
-                response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId, MessageStatus.FAILURE, "SyntaxAnalysis Interest not registered during Processor Creation", emptyList(), null)
+                response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId, MessageStatus.FAILURE, "SyntaxAnalysis Interest not enabled, in editor and process options", emptyList(), null)
                 SyntaxAnalysisResultDefault(null, IssueHolder(LanguageProcessorPhase.SYNTAX_ANALYSIS), emptyMap())
             }
         } catch (t: Throwable) {
@@ -438,7 +479,7 @@ open class LanguageServiceRequestDirectExecution(
         try {
             response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId, MessageStatus.START, "Start", emptyList(), null)
             val editorOptions = _editorOptions[endPointIdentity.editorId]
-            if (true == editorOptions?.semanticAnalysis) {
+            if (true == editorOptions?.semanticAnalysis && options.semanticAnalysis.enabled) {
                 // to save time serialisating/deserialising contexts that are based on information already in the worker
                 // when (language) {
                 //  is Agl Grammar -> create ContextFromGrammarRegistry
@@ -479,7 +520,7 @@ open class LanguageServiceRequestDirectExecution(
                     )
                 }
             } else {
-                response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId, MessageStatus.FAILURE, "SemanticAnalysis Interest not registered during Processor Creation", emptyList(), null)
+                response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId, MessageStatus.FAILURE, "SemanticAnalysis not enabled, in editor and process options", emptyList(), null)
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)

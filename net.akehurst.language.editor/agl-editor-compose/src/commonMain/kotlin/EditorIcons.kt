@@ -11,11 +11,9 @@ import androidx.compose.ui.unit.dp
 
 object EditorIcons {
 
-    private var _Warning: ImageVector? = null
-    private var _Emergency_home: ImageVector? = null
-    private var _Info: ImageVector? = null
+    val ORANGE = Color(255, 165, 0)
 
-     val Error: ImageVector
+    val Error: ImageVector
         get() {
             if (_Warning != null) {
                 return _Warning!!
@@ -135,7 +133,7 @@ object EditorIcons {
             return _Emergency_home!!
         }
 
-    val Infomation: ImageVector
+    val Information: ImageVector
         get() {
             if (_Info != null) {
                 return _Info!!
@@ -204,5 +202,8 @@ object EditorIcons {
             return _Info!!
         }
 
+    private var _Warning: ImageVector? = null
+    private var _Emergency_home: ImageVector? = null
+    private var _Info: ImageVector? = null
 
 }

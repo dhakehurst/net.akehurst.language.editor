@@ -101,7 +101,6 @@ class AglStyleHandlerAsHtml(
         }
     }
 
-
     private fun applyStyle(text: String, styles: List<EditorStyleIdentity>): String {
         val sb = StringBuilder()
         val edStyles = styles.mapNotNull { this.editorStyleFor(it) }

@@ -19,6 +19,8 @@ import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.scanner.api.ScanOptions
+import net.akehurst.language.scanner.common.ScanOptionsDefault
 import net.akehurst.language.sentence.common.SentenceDefault
 import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
@@ -92,10 +94,10 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val offset = 0
             val sentence = SentenceDefault(text)
             val tv = measureTimedValue {
-                scanner.scan(sentence, 0, offset)
+                scanner.scan(sentence, ScanOptionsDefault(true, false, 0, offset))
             }
             logger.logTrace { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
-            val leafs = tv.value.tokens
+            val leafs = tv.value.allTokens
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
             if (leafs.isEmpty()) {
@@ -151,10 +153,10 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val offset = previousLineState.nextLineStartPosition - previousLineState.leftOverText.length
             val sentence = SentenceDefault(text)
             val tv = measureTimedValue {
-                scanner.scan(sentence, 0, offset)
+                scanner.scan(sentence, ScanOptionsDefault(true, false, 0, offset))
             }
             logger.logDebug { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
-            val leafs = tv.value.tokens
+            val leafs = tv.value.allTokens
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
             if (leafs.isEmpty()) {

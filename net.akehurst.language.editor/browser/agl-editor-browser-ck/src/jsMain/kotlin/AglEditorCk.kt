@@ -118,7 +118,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         val styleCompleteItem = editorOptions.styleCompletionItem
             ?: { item ->
                 val scanRes = agl.simpleScanner.scan(SentenceDefault(item.text))
-                val aglTokens = agl.styleHandler.transformToTokens(scanRes.tokens)
+                val aglTokens = agl.styleHandler.transformToTokens(scanRes.allTokens)
                 val html = _autocompleteLabelStyleHandler.applyHtmlStyling(SentenceDefault(item.text), aglTokens)
 
                 when (item.kind) {

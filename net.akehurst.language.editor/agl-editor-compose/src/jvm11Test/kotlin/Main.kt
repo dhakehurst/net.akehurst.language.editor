@@ -314,8 +314,8 @@ styles SQL {
         println("Attached AGL")
 
         aglEditor.updateLanguageDefinitionWith(
-            grammarStr = GrammarString(AglGrammar.grammarStr),
-            styleStr = StyleString(AglGrammar.styleStr)
+            grammarStr = GrammarString(AglGrammar.grammarString),
+            styleStr = StyleString(AglGrammar.styleString)
         )
 
         defr.await()

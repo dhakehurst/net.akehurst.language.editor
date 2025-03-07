@@ -18,6 +18,7 @@ package net.akehurst.language.editor.api
 
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.issues.ram.IssueHolder
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.style.api.AglStyleModel
@@ -48,17 +49,13 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
      */
     val languageDefinition: LanguageDefinition<AsmType, ContextType>
 
-//    /**
-//     * The name of a rule in the grammar from which to start the parse.
-//     * If null, the first non-skip rule will be used
-//     */
-//    var goalRuleName: String?
-
     /**
      * Set style specific to this editor (rather than using the one from LanguageDefinition associated with the languageId).
      * If null, then the style from the LanguageDefinition is used. (default is null)
      */
     var editorSpecificStyleStr: StyleString?
+
+    val styleHandler:AglStyleHandler<*>
 
 //    /**
 //     * The context for syntax and semantic analysis of the sentence (text) in the editor
@@ -71,6 +68,8 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     var text: String
 
     val sentence: Sentence
+
+    val issues: IssueHolder
 
     /**
      * options passed to the processor when processing the editor text
@@ -103,6 +102,8 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun onTextChange(handler: (String) -> Unit)
 
+    fun onIssues(handler: (List<LanguageIssue>) -> Unit)
+
     fun onParse(handler: (ParseEvent) -> Unit)
 
     fun onSyntaxAnalysis(handler: (SyntaxAnalysisEvent) -> Unit)
@@ -131,6 +132,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 typealias StyleCompletionItem = (item:CompletionItem) -> String //TODO: return some other than String perhaps !
 
 interface EditorOptions {
+    var scan:Boolean
     var parse: Boolean
     var parseLineTokens: Boolean
     var lineTokensChunkSize: Int

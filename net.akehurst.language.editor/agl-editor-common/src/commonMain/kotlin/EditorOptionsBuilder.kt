@@ -31,6 +31,7 @@ fun aglEditorOptions(base: EditorOptions = EditorOptionsDefault(), init: EditorO
 class EditorOptionsBuilder(
     base: EditorOptions
 ) {
+    private var _scan: Boolean = base.scan
     private var _parse: Boolean = base.parse
     private var _parseLineTokens: Boolean = base.parseLineTokens
     private var _lineTokensChunkSize: Int = base.lineTokensChunkSize
@@ -48,6 +49,7 @@ class EditorOptionsBuilder(
 
     fun build(): EditorOptions {
         return EditorOptionsDefault(
+            _scan,
             _parse,
             _parseLineTokens,
             _lineTokensChunkSize,
