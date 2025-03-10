@@ -100,7 +100,6 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     private var _autocompleteDepthMax = 3
     private var _autocompleteDepthIncrement = 0
 
-
     fun initialise() {
         this.updateLanguageDefinition(languageDefinition)
 
@@ -130,7 +129,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         }
 
         // trigger first sentence process
-        //onEditorTextChangeInternal()
+        onEditorTextChangeInternal(composeEditor.rawText)
     }
 
     override fun resetTokenization(fromLine: Int) {
