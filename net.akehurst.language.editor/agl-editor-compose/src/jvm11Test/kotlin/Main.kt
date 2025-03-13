@@ -16,7 +16,14 @@
 
 package net.akehurst.language.editor.compose
 
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -234,7 +241,7 @@ styles SQL {
                 title = "Code Editor Test",
             ) {
                 Surface {
-                    composeEditor.content()
+                    composeEditor.content(autocompleteModifier = Modifier.widthIn(100.dp,400.dp).heightIn(30.dp,300.dp))
                 }
             }
         }
@@ -288,7 +295,7 @@ styles SQL {
                 title = "Code Editor Test",
             ) {
                 Surface {
-                    composeEditor.content()
+                    composeEditor.content(autocompleteModifier = Modifier.width(400.dp).height(300.dp))
                 }
             }
         }

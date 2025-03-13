@@ -96,7 +96,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val tv = measureTimedValue {
                 scanner.scan(sentence, ScanOptionsDefault(true, false, 0, offset))
             }
-            logger.logTrace { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
+            //logger.logTrace { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
             val leafs = tv.value.allTokens
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)
@@ -155,7 +155,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val tv = measureTimedValue {
                 scanner.scan(sentence, ScanOptionsDefault(true, false, 0, offset))
             }
-            logger.logDebug { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
+            //logger.logDebug { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
             val leafs = tv.value.allTokens
             val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
             //val tokens = transformToTokens(leafs)

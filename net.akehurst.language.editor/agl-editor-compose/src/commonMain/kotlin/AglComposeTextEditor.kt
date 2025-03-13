@@ -42,7 +42,7 @@ class AglComposeTextEditor(
         }
     """.trimIndent()
     ),
-    typeModelString: TypeModelString = TypeModelString(""),
+    typeModelString: TypesString = TypesString(""),
     asmTransformString: TransformString = TransformString(""),
     crossReferenceString: CrossReferenceString = CrossReferenceString(""),
     styleString: StyleString = StyleString("")
@@ -95,7 +95,7 @@ class AglComposeTextEditor(
 
     fun updateLanguageDefinition(
         grammarString: GrammarString,
-        typeModelString: TypeModelString = TypeModelString(""),
+        typeModelString: TypesString = TypesString(""),
         asmTransformString: TransformString = TransformString(""),
         crossReferenceString: CrossReferenceString = CrossReferenceString(""),
         styleString: StyleString = StyleString("")

@@ -114,7 +114,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun updateLanguageDefinitionWith(
         grammarStr: GrammarString?=null,
-        typeModelStr: TypeModelString?=null,
+        typeModelStr: TypesString?=null,
         asmTransformStr: TransformString?=null,
         crossReferenceStr: CrossReferenceString?=null,
         styleStr: StyleString?=null

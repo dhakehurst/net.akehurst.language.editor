@@ -59,7 +59,7 @@ abstract class AglWorkerAbstract {
     protected open fun configureLanguageDefinition(
         ld: LanguageDefinition<Any, Any>,
         grammarStr: GrammarString?,
-        typeModelStr: TypeModelString?,
+        typeModelStr: TypesString?,
         asmTransformStr: TransformString?,
         crossReferenceModelStr: CrossReferenceString?
     ) {
@@ -67,22 +67,23 @@ abstract class AglWorkerAbstract {
         // TODO: could be an argument
         ld.configuration = Agl.configuration(base = Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>) {
             if (null != crossReferenceModelStr) {
-                crossReferenceModelResolver { p -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typeModel), crossReferenceModelStr) }
+                crossReferenceResolver { p -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typeModel), crossReferenceModelStr) }
             }
         }
         ld.update(
-            grammarStr = grammarStr,
-            typeModelStr = typeModelStr,
-            asmTransformStr = asmTransformStr,
-            crossReferenceStr = crossReferenceModelStr,
-            null
+            grammarString = grammarStr,
+            typesString = typeModelStr,
+            transformString = asmTransformStr,
+            crossReferenceString = crossReferenceModelStr,
+            styleString = null,
+            formatString = null,
         )
     }
 
     protected open fun createLanguageDefinition(
         languageId: LanguageIdentity,
         grammarStr: GrammarString?,
-        typeModelStr: TypeModelString?,
+        typeModelStr: TypesString?,
         asmTransformStr: TransformString?,
         crossReferenceModelStr: CrossReferenceString?
     ): LanguageDefinition<Any, Any> {
@@ -122,7 +123,7 @@ abstract class AglWorkerAbstract {
                 val ld = createLanguageDefinition(
                     message.languageId,
                     GrammarString(message.grammarStr),
-                    message.typeModelStr?.let { TypeModelString(it) },
+                    message.typeModelStr?.let { TypesString(it) },
                     message.asmTransformStr?.let { TransformString(it) },
                     message.crossReferenceStr?.let { CrossReferenceString(it) }
                 )
@@ -334,7 +335,7 @@ abstract class AglWorkerAbstract {
                             is ContextFromTypeModelReference -> {
                                 val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId
                                 val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                                val res = TransformDomainDefault.fromGrammarModel(ld.grammarModel)
+                                val res = TransformDomainDefault.fromGrammarModel(ld.grammarModel!!)
                                 val trfm = when {
                                     res.issues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
                                     else -> TODO()

@@ -150,10 +150,10 @@ open class LanguageServiceRequestDirectExecution(
         requestId: RequestIdentity<*>,
         languageId: LanguageIdentity,
         grammarStr: GrammarString,
-        typeModelStr: TypeModelString?,
+        typeModelStr: TypesString?,
         asmTransformStr: TransformString?,
         crossReferenceModelStr: CrossReferenceString?,
-        editorOptions: EditorOptions
+        editorOptions: EditorOptions //TODO: make part of a different call
     ) {
         logger.logTrace { "processorCreateRequest $endPointIdentity, $languageId" }
         try {
@@ -162,7 +162,7 @@ open class LanguageServiceRequestDirectExecution(
             } else {
                 val ld = createLanguageDefinition(languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr)
                 _languageDefinition[languageId] = ld
-                _editorOptions[endPointIdentity.editorId] = editorOptions
+                _editorOptions[endPointIdentity] = editorOptions
                 //if there is a grammar check that grammar is well-defined and a processor can be created from it
 
                 try {
@@ -192,7 +192,7 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace { "processorSetStyleRequest $endPointIdentity, $languageId" }
         try {
             val styleHndlr = AglStyleHandlerCssClass(languageId)
-            this._styleHandler[languageId] = styleHndlr
+            this._styleHandler[endPointIdentity] = styleHndlr
             val result = Agl.registry.agl.style.processor!!.process(styleStr.value)
             val styleMdl = result.asm
             if (null != styleMdl) {
@@ -250,22 +250,17 @@ open class LanguageServiceRequestDirectExecution(
     protected open fun configureLanguageDefinition(
         ld: LanguageDefinition<Any, Any>,
         grammarStr: GrammarString?,
-        typeModelStr: TypeModelString?,
+        typeModelStr: TypesString?,
         asmTransformStr: TransformString?,
         crossReferenceModelStr: CrossReferenceString?
     ) {
         logger.logTrace { "configureLanguageDefinition ${ld.identity}" }
         // TODO: could be an argument
         ld.configuration = Agl.configuration<Any, Any>(Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>) {
-            if (null != typeModelStr) {
-                typeModelResolver { p: LanguageProcessor<Any, Any> -> TypeModelSimple.fromString(typeModelStr) }
-            }
-            if (null != asmTransformStr) {
-                asmTransformResolver { p: LanguageProcessor<Any, Any> -> TransformDomainDefault.fromString(ContextFromGrammarAndTypeModel(p.grammarModel!!, p.baseTypeModel), asmTransformStr) }
-            }
-            if (null != crossReferenceModelStr) {
-                crossReferenceModelResolver { p: LanguageProcessor<Any, Any> -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typeModel), crossReferenceModelStr) }
-            }
+            grammarString(grammarStr)
+            typesString(typeModelStr)
+            transformString(asmTransformStr)
+            crossReferenceString(crossReferenceModelStr)
             //if (null != styleStr) {
             //     styleResolver { p:LanguageProcessor<Asm, ContextAsmSimple> -> AglStyleModelDefault.fromString(ContextFromGrammar.createContextFrom(p.grammarModel!!), styleStr) }
             // }
@@ -273,27 +268,31 @@ open class LanguageServiceRequestDirectExecution(
             //     formatterResolver { p:LanguageProcessor<Asm, ContextAsmSimple> -> AglFormatterModelFromAsm.fromString(ContextFromTypeModel(p.typeModel), formatterModelStr) }
             // }
         }
-        ld.update(grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr, ld.styleStr)
+        //ld.update(grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr, ld.styleString)
     }
 
     protected open fun createLanguageDefinition(
         languageId: LanguageIdentity,
         grammarStr: GrammarString?,
-        typeModelStr: TypeModelString?,
+        typeModelStr: TypesString?,
         asmTransformStr: TransformString?,
         crossReferenceModelStr: CrossReferenceString?
     ): LanguageDefinition<Any, Any> {
         logger.logTrace { "createLanguageDefinition $languageId" }
-        val ld = Agl.registry.findOrPlaceholder<Any, Any>(
+        val ld = Agl.languageDefinitionFromString(
             identity = languageId,
-            aglOptions = Agl.options {
+            grammarDefinitionStr = grammarStr ?: GrammarString(""),
+            typeStr =  typeModelStr,
+            transformStr = asmTransformStr,
+            referenceStr = crossReferenceModelStr,
+            grammarAglOptions = Agl.options {
                 semanticAnalysis {
                     context(ContextFromGrammarRegistry(Agl.registry))
                     option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             },
             //TODO: how to use configurationDefault ? - needed once completion-provider moved to worker
-            configuration = Agl.configurationBase() //use if placeholder created, not found
+            configurationBase = Agl.configurationBase() //use if placeholder created, not found
         )
         if (ld.isModifiable) {
             configureLanguageDefinition(ld, grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr)
@@ -312,7 +311,7 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace { "parse $endPointIdentity, $languageId" }
         return try {
             response.sentenceScanResponse(endPointIdentity, requestId, MessageStatus.START, "Start", emptyList())
-            val editorOptions = _editorOptions[endPointIdentity.editorId]
+            val editorOptions = _editorOptions[endPointIdentity]
             if (true == editorOptions?.scan && processOptions.scan.enabled) {
                 val result = proc.scan(sentence, processOptions.scan)
                 this.sendLineTokens(endPointIdentity, requestId, languageId, result.tokensByLine, editorOptions.lineTokensChunkSize)
@@ -341,7 +340,7 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace { "parse $endPointIdentity, $languageId" }
         return try {
             response.sentenceParseResponse(endPointIdentity, requestId, MessageStatus.START, "Start", emptyList(), null)
-            val editorOptions = _editorOptions[endPointIdentity.editorId]
+            val editorOptions = _editorOptions[endPointIdentity]
             if (true == editorOptions?.parse && processOptions.parse.enabled) {
                 val result = proc.parse(sentence, processOptions.parse)
                 val sppt = result.sppt
@@ -385,9 +384,9 @@ open class LanguageServiceRequestDirectExecution(
     ) {
         logger.logTrace { "sendLineTokens $endPointIdentity, $languageId" }
         try {
-            val editorOptions = _editorOptions[endPointIdentity.editorId]
+            val editorOptions = _editorOptions[endPointIdentity]
             if (true == editorOptions?.parseLineTokens) {
-                val style = this._styleHandler[languageId]
+                val style = this._styleHandler[endPointIdentity]
                 if (null == style) {
                     val msg = "StyleHandler for ${languageId} not found"
                     response.sentenceLineTokensResponse(endPointIdentity, requestId, MessageStatus.FAILURE, msg, -1, emptyList())
@@ -434,7 +433,7 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace { "syntaxAnalysis $endPointIdentity, $languageId" }
         return try {
             response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId, MessageStatus.START, "Start", emptyList(), null)
-            val editorOptions = _editorOptions[endPointIdentity.editorId]
+            val editorOptions = _editorOptions[endPointIdentity]
             if (true == editorOptions?.syntaxAnalysis && options.syntaxAnalysis.enabled) {
                 val result = proc.syntaxAnalysis(sppt, options)
                 val asm = result.asm
@@ -478,7 +477,7 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace { "semanticAnalysis $endPointIdentity, $languageId" }
         try {
             response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId, MessageStatus.START, "Start", emptyList(), null)
-            val editorOptions = _editorOptions[endPointIdentity.editorId]
+            val editorOptions = _editorOptions[endPointIdentity]
             if (true == editorOptions?.semanticAnalysis && options.semanticAnalysis.enabled) {
                 // to save time serialisating/deserialising contexts that are based on information already in the worker
                 // when (language) {
@@ -491,7 +490,7 @@ open class LanguageServiceRequestDirectExecution(
                         is ContextFromTypeModelReference -> {
                             val langId = LanguageIdentity((options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId.value)
                             val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                            val tm = TransformDomainDefault.fromGrammarModel(ld.grammarModel).asm!!.typeModel!!
+                            val tm = TransformDomainDefault.fromGrammarModel(ld.grammarModel!!).asm!!.typeModel!!
                             ContextFromTypeModel(tm)
                         }
 
@@ -534,8 +533,8 @@ open class LanguageServiceRequestDirectExecution(
     private var _languageDefinition: MutableMap<LanguageIdentity, LanguageDefinition<Any, Any>> = mutableMapOf()
 
     // languageId -> sh
-    private var _styleHandler: MutableMap<LanguageIdentity, AglStyleHandlerCssClass> = mutableMapOf()
+    private var _styleHandler: MutableMap<EndPointIdentity, AglStyleHandlerCssClass> = mutableMapOf()
 
     // editorId -> options
-    private var _editorOptions: MutableMap<String, EditorOptions> = mutableMapOf()
+    private var _editorOptions: MutableMap<EndPointIdentity, EditorOptions> = mutableMapOf()
 }

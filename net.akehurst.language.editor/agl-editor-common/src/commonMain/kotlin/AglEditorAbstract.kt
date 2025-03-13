@@ -100,7 +100,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         get() = agl.languageDefinition
 
     override var editorSpecificStyleStr: StyleString?
-        get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.styleStr
+        get() = this._editorSpecificStyleStr ?: this.agl.languageDefinition.styleString
         set(value) {
             this._editorSpecificStyleStr = value
             this.refreshStyleHandler()
@@ -178,7 +178,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override fun updateLanguageDefinitionWith(
         grammarStr: GrammarString?,
-        typeModelStr: TypeModelString?,
+        typeModelStr: TypesString?,
         asmTransformStr: TransformString?,
         crossReferenceStr: CrossReferenceString?,
         styleStr: StyleString?
@@ -197,16 +197,16 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     override fun refreshProcessor() {
         logger.logTrace { "refreshProcessor" }
         clearIssues()
-        val grammarStr = this.agl.languageDefinition.grammarStr
+        val grammarStr = this.agl.languageDefinition.grammarString
         if (grammarStr?.value.isNullOrBlank()) {
             //do nothing
         } else {
             this.languageServiceRequest.processorCreateRequest(
                 this.endPointIdentity, nextRequestId, this.languageIdentity,
                 grammarStr!!,
-                this.agl.languageDefinition.typeModelStr,
-                this.agl.languageDefinition.asmTransformStr,
-                this.agl.languageDefinition.crossReferenceStr,
+                this.agl.languageDefinition.typesString,
+                this.agl.languageDefinition.transformString,
+                this.agl.languageDefinition.crossReferenceString,
                 this.editorOptions
             )
             this.workerTokenizer.reset()

@@ -41,7 +41,7 @@ class AglLanguageServiceByWorker(
             requestId: RequestIdentity<*>,
             languageId: LanguageIdentity,
             grammarStr: GrammarString,
-            typeModelStr: TypeModelString?,
+            typeModelStr: TypesString?,
             asmTransformStr: TransformString?,
             crossReferenceModelStr: CrossReferenceString?,
             editorOptions: EditorOptions

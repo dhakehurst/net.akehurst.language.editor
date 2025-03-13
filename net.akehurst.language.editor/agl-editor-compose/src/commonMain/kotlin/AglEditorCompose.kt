@@ -22,11 +22,14 @@ import androidx.compose.ui.text.PlatformSpanStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextDecorationLineStyle
 import androidx.compose.ui.text.style.TextDecoration
+import net.akehurst.kotlin.compose.editor.api.AutocompleteItem
+import net.akehurst.kotlin.compose.editor.api.AutocompleteItemDivider
 import net.akehurst.kotlin.compose.editor.api.AutocompleteSuggestion
 import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
 import net.akehurst.kotlin.compose.editor.api.simple.AutocompleteItemSimple
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
@@ -87,9 +90,22 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     override val completionProvider = object : AglEditorCompletionProvider {
         override fun provide(completionItems: List<CompletionItem>) {
             _completionsResult?.let {
-                val edItems = completionItems.map {
-                    AutocompleteItemSimple(it.text, it.label)
+                val refItems = mutableListOf<AutocompleteItem>()
+                val segmentItems = mutableListOf<AutocompleteItem>()
+                val constItems = mutableListOf<AutocompleteItem>()
+                completionItems.forEach {
+                    when (it.kind) {
+                        CompletionItemKind.REFERRED ->  refItems.add(AutocompleteItemSimple(it.text, it.label))
+                        CompletionItemKind.SEGMENT -> segmentItems.add(AutocompleteItemSimple(it.text, it.label))
+                        CompletionItemKind.LITERAL ->  constItems.add(AutocompleteItemSimple(it.text, it.label))
+                        CompletionItemKind.PATTERN ->   constItems.add(AutocompleteItemSimple(it.text, it.label))
+                    }
                 }
+                val edItems = refItems.toMutableList()
+                if (refItems.isNotEmpty()) edItems.add(AutocompleteItemDivider)
+                edItems.addAll(segmentItems)
+                if (segmentItems.isNotEmpty()) edItems.add(AutocompleteItemDivider)
+                edItems.addAll(constItems)
                 it.provide(edItems)
                 _completionsResult = null
             }
@@ -167,18 +183,32 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
         logger.logTrace { "AglEditorCompose.createIssueMarkers $issues" }
         try {
-           issues.forEach {
-               val pos = it.location?.position ?: 0
-               val len = it.location?.length ?: 2
-               val line = it.location?.line ?: 1
-               val (icon,colour, style) = when(it.kind) {
-                   LanguageIssueKind.ERROR -> Triple(EditorIcons.Error, Color.Red, SpanStyle(color = Color.Red, textDecoration =  TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY))
-                   LanguageIssueKind.WARNING -> Triple(EditorIcons.Warning, EditorIcons.ORANGE, SpanStyle(color = EditorIcons.ORANGE, textDecoration =  TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY))
-                   LanguageIssueKind.INFORMATION -> Triple(EditorIcons.Information, Color.Blue, SpanStyle(color = Color.Blue, textDecoration =  TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY))
-               }
-               composeEditor.addMarginItem(line-1, it.kind.toString(), it.message, icon, colour)
-               composeEditor.addTextMarker(pos,len,style)
-           }
+            issues.forEach {
+                val pos = it.location?.position ?: 0
+                val len = it.location?.length ?: 2
+                val line = it.location?.line ?: 1
+                val (icon, colour, style) = when (it.kind) {
+                    LanguageIssueKind.ERROR -> Triple(
+                        EditorIcons.Error,
+                        Color.Red,
+                        SpanStyle(color = Color.Red, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                    )
+
+                    LanguageIssueKind.WARNING -> Triple(
+                        EditorIcons.Warning,
+                        EditorIcons.ORANGE,
+                        SpanStyle(color = EditorIcons.ORANGE, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                    )
+
+                    LanguageIssueKind.INFORMATION -> Triple(
+                        EditorIcons.Information,
+                        Color.Blue,
+                        SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                    )
+                }
+                composeEditor.addMarginItem(line - 1, it.kind.toString(), it.message, icon, colour)
+                composeEditor.addTextMarker(pos, len, style)
+            }
         } catch (t: Throwable) {
             logger.logError(t) { "AglEditorCompose.exception during clearIssueMarkers: " }
         }
