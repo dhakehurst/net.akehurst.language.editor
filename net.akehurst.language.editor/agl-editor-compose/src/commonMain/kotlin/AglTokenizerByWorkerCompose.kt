@@ -17,7 +17,7 @@
 package net.akehurst.language.editor.compose
 
 import androidx.compose.ui.text.SpanStyle
-import net.akehurst.kotlin.compose.editor.api.EditorLineToken
+import net.akehurst.kotlin.compose.editor.api.EditorSegmentStyle
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.api.EditorStyleIdentity
@@ -33,7 +33,7 @@ class AglTokenizerByWorkerCompose<AsmType : Any, ContextType : Any>(
     val logger: AglEditorLogger
 ) : AglTokenizerByWorker<ComposeStyle> {
 
-    val aglTokenizer = AglTokenizer<AsmType, ContextType, ComposeStyle>(agl,agl.logger)
+    val aglTokenizer = AglTokenizer<AsmType, ContextType, ComposeStyle>(agl, agl.logger)
 
     private var _lineStates = mutableMapOf<Int, AglLineState>()
 
@@ -41,33 +41,38 @@ class AglTokenizerByWorkerCompose<AsmType : Any, ContextType : Any>(
     }
 
     override fun reset() {
-        logger.logTrace{ "AglTokenizerByWorkerCompose.reset()"}
+        logger.logTrace { "AglTokenizerByWorkerCompose.reset()" }
         this.aglTokenizer.reset()
     }
 
     override fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
-        logger.logTrace{ "AglTokenizerByWorkerCompose.receiveTokens $startLine, $tokensForLines"}
+        logger.logTrace { "AglTokenizerByWorkerCompose.receiveTokens $startLine, $tokensForLines" }
         this.aglTokenizer.receiveTokens(startLine, tokensForLines)
         refresh()
     }
 
-    fun getLineTokens(lineNumber: Int, lineStartPosition: Int, lineText: String): List<EditorLineToken> {
+    fun getLineTokens(lineNumber: Int, lineStartPosition: Int, lineText: String): List<EditorSegmentStyle> {
         val aglState = _lineStates[lineNumber - 1] ?: let {
-            val newstate = AglLineState(lineNumber-1, 0, "")
-            _lineStates[lineNumber-1] = newstate
+            val newstate = AglLineState(lineNumber - 1, 0, "")
+            _lineStates[lineNumber - 1] = newstate
             newstate
         }
         val (state, toks) = aglTokenizer.getLineTokens(lineText, aglState)
         _lineStates[lineNumber] = state
-        val edToks = toks.map {
+        return toEditorTokens(toks)
+    }
+
+    fun toEditorTokens(aglTokens: List<AglToken>) = when {
+        aglTokens.isEmpty() -> emptyList()
+        else -> aglTokens.map {
+            val lineStartPosition = aglTokens[0].position
             val styles = it.styles.mapNotNull { (aglTokenizer.agl.styleHandler.editorStyleFor(it) as ComposeStyle?)?.composeStyle }
             val style = styles.fold(ComposeStyle(EditorStyleIdentity.NO_STYLE).composeStyle) { acc, it -> acc.merge(it) }
-            object : EditorLineToken {
+            object : EditorSegmentStyle {
                 override val start: Int = it.position - lineStartPosition
                 override val finish: Int = (it.position + it.length) - lineStartPosition
                 override val style: SpanStyle = style
             }
         }
-        return edToks
     }
 }

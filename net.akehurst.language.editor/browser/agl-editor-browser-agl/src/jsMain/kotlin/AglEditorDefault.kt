@@ -22,6 +22,7 @@ import net.akehurst.kotlin.html5.elAppend
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.editor.common.AglStyleHandlerCssClass
@@ -38,6 +39,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     languageService: LanguageService,
     containerElement: Element,
     languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -45,6 +47,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     return AglEditorDefault<AsmType, ContextType>(
         containerElement = containerElement,
         languageDefinition = languageDefinition,
+        processOptions = processOptions,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -56,11 +59,12 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
-    languageServiceRequest, languageDefinition, EndPointIdentity(editorId,"session"),
+    languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId,"session"),
     editorOptions, logFunction, AglStyleHandlerCssClass(languageDefinition.identity)
 ) {
 

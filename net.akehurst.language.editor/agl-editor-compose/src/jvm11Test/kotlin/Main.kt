@@ -30,17 +30,22 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor2
+import net.akehurst.kotlin.compose.editor.ComposableCodeEditor3
 import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.simple.ContextAsmSimple
+import net.akehurst.language.api.processor.CrossReferenceString
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.StyleString
 import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.language.editor.common.EditorOptionsDefault
 import net.akehurst.language.editor.common.aglEditorOptions
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 import net.akehurst.language.grammar.processor.AglGrammar
 import kotlin.test.Test
+import kotlin.time.Duration.Companion.seconds
 
 class test_AglEditorCompose {
 
@@ -58,7 +63,7 @@ INSERT INTO table ( col1 ) VALUES ( 1 ) ;
 INSERT INTO table ( col1, col2 ) VALUES ( 1, 2 ) ;
 INSERT INTO table ( col1, col2, col3 ) VALUES ( 1, 2, 'hello' ) ;
 
-CREATE TABLE table ( col1  Int, col2 Int ) ;            
+CREATE TABLE table ( col1  Int, col2 Int, col3 Int ) ;            
         """
 
         const val GRAMMAR = """
@@ -127,6 +132,34 @@ grammar SQL {
 }
         """
 
+        const val CROSS_REFERENCE = """
+namespace net.akehurst.language.example.SQL
+    identify TableDefinition by table-id
+    scope TableDefinition {
+        identify ColumnDefinition by column-id
+    }
+    references {
+        in Select {
+            property tableRef.ref refers-to TableDefinition
+            forall columns of-type ColumnRef {
+                property ref refers-to ColumnDefinition from tableRef.ref
+            }
+        }
+        in Update {
+            property tableRef.ref refers-to TableDefinition
+            forall columnValueList {
+                property columnRef.ref refers-to ColumnDefinition from tableRef.ref
+            }
+        }
+        in Insert {
+            property tableRef.ref refers-to TableDefinition
+            forall columns of-type ColumnRef {
+                property ref refers-to ColumnDefinition from tableRef.ref
+            }
+        }
+    }            
+        """
+
         const val STYLE = """
 namespace net.akehurst.language.example
 styles SQL {
@@ -137,7 +170,6 @@ styles SQL {
     REF {
       foreground: blue;
       font-style: italic;
-      text-decoration: underline;
     }    
     CREATE,TABLE,SELECT,UPDATE,DELETE,INSERT,INTO,FROM,VALUES,SET {
       foreground: chocolate;
@@ -146,7 +178,6 @@ styles SQL {
 }
         """
     }
-
 
     @Test
     fun run_AglComposeTextEditor() = runBlocking {
@@ -204,7 +235,7 @@ styles SQL {
         val languageId = LanguageIdentity("test")
         val languageDefinition = Agl.registry.findOrPlaceholder(
             languageId,
-            aglOptions = Agl.options {  },
+            aglOptions = Agl.options { },
             configuration = Agl.configurationSimple()
         )
         val languageService = LanguageServiceDirectExecution(logFunction)
@@ -212,18 +243,11 @@ styles SQL {
         delay(1000) //wait for compose to start
 
         val aglEditor = Agl.attachToComposeEditor(
-            languageService, languageDefinition, editorId,
-            editorOptions, logFunction, composeEditor!!
+            languageService, languageDefinition,
+            { Agl.options { semanticAnalysis { context(ContextAsmSimple()) } } },
+            editorId, editorOptions, logFunction, composeEditor!!
         )
         println("Attached AGL")
-
-        aglEditor.updateLanguageDefinitionWith(
-           grammarStr = GrammarString(GRAMMAR),
-            typeModelStr = null,
-            asmTransformStr = null,
-            crossReferenceStr = null,
-            styleStr = StyleString(STYLE)
-        )
 
         defr.await()
 
@@ -232,7 +256,7 @@ styles SQL {
     @Test
     fun run_ComposableCodeEditor2b() = runBlocking {
 
-        var composeEditor = ComposableCodeEditor2(
+        var composeEditor = ComposableCodeEditor3(
             initialText = INITIAL_TEXT,
         )
 
@@ -241,19 +265,19 @@ styles SQL {
                 title = "Code Editor Test",
             ) {
                 Surface {
-                    composeEditor.content(autocompleteModifier = Modifier.widthIn(100.dp,400.dp).heightIn(30.dp,300.dp))
+                    composeEditor.content(autocompleteModifier = Modifier.widthIn(100.dp, 400.dp).heightIn(30.dp, 300.dp))
                 }
             }
         }
 
         val logFunction: LogFunction = { level, prefix, t, message -> println("$level - $prefix: ${message()}"); t?.printStackTrace() }
-        val editorOptions = aglEditorOptions() {
-        }
+        val editorOptions = EditorOptionsDefault()
         val editorId = "test"
         val languageId = LanguageIdentity("test")
         val languageDefinition = Agl.languageDefinitionFromStringSimple(
             languageId,
             grammarDefinitionStr = GrammarString(GRAMMAR),
+            referenceStr = CrossReferenceString(CROSS_REFERENCE),
             styleStr = StyleString(STYLE)
         )
         val languageService = LanguageServiceDirectExecution(logFunction)
@@ -261,18 +285,12 @@ styles SQL {
         delay(1000) //wait for compose to start
 
         val aglEditor = Agl.attachToComposeEditor(
-            languageService, languageDefinition, editorId,
-            editorOptions, logFunction, composeEditor!!
+            languageService, languageDefinition,
+            { Agl.options { semanticAnalysis { context(ContextAsmSimple()) } } },
+            editorId, editorOptions, logFunction, composeEditor!!
         )
-        println("Attached AGL")
 
-        aglEditor.updateLanguageDefinitionWith(
-            grammarStr = GrammarString(GRAMMAR),
-            typeModelStr = null,
-            asmTransformStr = null,
-            crossReferenceStr = null,
-            styleStr = StyleString(STYLE)
-        )
+        println("Attached AGL")
 
         defr.await()
 
@@ -305,7 +323,7 @@ styles SQL {
         }
         val editorId = "test"
         val languageId = Agl.registry.agl.grammarLanguageIdentity
-        val languageDefinition = Agl.languageDefinitionFromString<Any,Any>(
+        val languageDefinition = Agl.languageDefinitionFromString<Any, Any>(
             languageId,
             grammarDefinitionStr = GrammarString(GRAMMAR),
             styleStr = StyleString(STYLE)
@@ -315,7 +333,9 @@ styles SQL {
         delay(1000) //wait for compose to start
 
         val aglEditor = Agl.attachToComposeEditor(
-            languageService, languageDefinition, editorId,
+            languageService, languageDefinition,
+            { Agl.options { semanticAnalysis { context(ContextAsmSimple()) } } },
+            editorId,
             editorOptions, logFunction, composeEditor!!
         )
         println("Attached AGL")

@@ -15,6 +15,7 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.issues.api.LanguageIssue
@@ -38,8 +39,8 @@ class SentenceFromEditor<AsmType : Any, ContextType : Any>(
 
 abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
     val languageServiceRequest: LanguageServiceRequest,
-//    languageId: LanguageIdentity,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
+    processOptions: ()-> ProcessOptions<AsmType, ContextType> ,
     override val endPointIdentity: EndPointIdentity,
     override var editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -60,6 +61,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     abstract val completionProvider: AglEditorCompletionProvider
 
     init {
+        this.agl.options = processOptions
         //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
         this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
         this.agl.languageDefinition.typeModelStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }

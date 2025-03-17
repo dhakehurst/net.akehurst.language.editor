@@ -32,6 +32,7 @@ import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.editor.common.AglStyleHandlerAbstract.Companion.AGL_STYLE_PREFIX
@@ -45,6 +46,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
     containerElement: Element,
     monacoEditor: IStandaloneCodeEditor,
     languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -55,6 +57,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
         containerElement = containerElement,
         monacoEditor = monacoEditor,
         languageDefinition = languageDefinition,
+        processOptions = processOptions,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -87,12 +90,13 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     val monacoEditor: IStandaloneCodeEditor,
     languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val monaco: Monaco,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
-    languageServiceRequest, languageDefinition, EndPointIdentity(editorId, "none"),
+    languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId, "none"),
     editorOptions, logFunction, AglStyleHandlerCssClass(languageDefinition.identity)
 ) {
 

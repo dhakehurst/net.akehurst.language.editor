@@ -32,6 +32,7 @@ import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglEditorAbstract
 import net.akehurst.language.issues.api.LanguageIssue
@@ -43,6 +44,7 @@ val PlatformSpanStyle_TextDecorationLineStyle_WAVY get() = PlatformSpanStyle(tex
 fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     languageService: LanguageService,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
+    processOptions: ()-> ProcessOptions<AsmType, ContextType> ,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -51,6 +53,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     val aglEditor = AglEditorCompose<AsmType, ContextType>(
         languageServiceRequest = languageService.request,
         languageDefinition = languageDefinition,
+        processOptions = processOptions,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -65,12 +68,13 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
 class AglEditorCompose<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
+    processOptions: ()-> ProcessOptions<AsmType, ContextType> ,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val composeEditor: ComposeCodeEditor
 ) : AglEditorAbstract<AsmType, ContextType, ComposeStyle>(
-    languageServiceRequest, languageDefinition, EndPointIdentity(editorId, "none"),
+    languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId, "none"),
     editorOptions, logFunction, AglStyleHandlerComposeStyle(languageDefinition.identity)
 ) {
 
@@ -119,14 +123,14 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     fun initialise() {
         this.updateLanguageDefinition(languageDefinition)
 
-        composeEditor.getLineTokens = { lineNumber, lineStartPosition, lineText ->
-            try {
-                workerTokenizer.getLineTokens(lineNumber, lineStartPosition, lineText)
-            } catch (t: Throwable) {
-                logger.logError(t) { "Failed to getLineTokens" }
-                emptyList()
-            }
-        }
+//        composeEditor.getLineTokens = { lineNumber, lineStartPosition, lineText ->
+//            try {
+//                workerTokenizer.getLineTokens(lineNumber, lineStartPosition, lineText)
+//            } catch (t: Throwable) {
+//                logger.logError(t) { "Failed to getLineTokens" }
+//                emptyList()
+//            }
+//        }
 
         composeEditor.requestAutocompleteSuggestions = { position, text, result ->
             try {
@@ -151,6 +155,10 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     override fun resetTokenization(fromLine: Int) {
         logger.logTrace { "AglEditorCompose.resetTokenization $fromLine" }
         workerTokenizer.refresh()
+        //TODO: maybe do this different!
+        composeEditor.lineStyles = workerTokenizer.aglTokenizer.tokensByLine.mapValues { (k,v) ->
+            workerTokenizer.toEditorTokens(v)
+        }
         composeEditor.refreshTokens()
     }
 

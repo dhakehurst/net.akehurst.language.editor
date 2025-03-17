@@ -80,34 +80,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
             }
             _scannerMatchables = value.map { it.using(regexEngine) }
         }
-/*
-    var languageIdentity: LanguageIdentity
-        get() = languageDefinition.identity
-        set(value) {
-            if (languageDefinition.identity == value) {
-                //do NOT update, could end up in a loop and run out of memory with observer adding!
-                // it did for version 1.9.0-RC of kotlin on JS
-            } else {
-                val old = this.languageDefinition
-                val grammarStrObservers = old.grammarStrObservers
-                val typeModelStrObservers = old.typeModelStrObservers
-                val asmTransformStrObservers = old.asmTransformStrObservers
-                val crossReferenceStrObservers = old.crossReferenceStrObservers
-                val styleStrObservers = old.styleStrObservers
-                val formatterStrObservers = old.formatterStrObservers
-                this._languageIdentity = value
-                val new = this.languageDefinition
-                new.grammarStrObservers.addAll(grammarStrObservers)
-                new.typeModelStrObservers.addAll(typeModelStrObservers)
-                new.asmTransformStrObservers.addAll(asmTransformStrObservers)
-                new.crossReferenceStrObservers.addAll(crossReferenceStrObservers)
-                new.styleStrObservers.addAll(styleStrObservers)
-                new.formatterStrObservers.addAll(formatterStrObservers)
-                this._styleHandler = AglStyleHandlerCssClass(value)
-//                this.sppt = null
-            }
-        }
-*/
+
     val languageIdentity get() = languageDefinition.identity
 
     val simpleScanner: Scanner by lazy {

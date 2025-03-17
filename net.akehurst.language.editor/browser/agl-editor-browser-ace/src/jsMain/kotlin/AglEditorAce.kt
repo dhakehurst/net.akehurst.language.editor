@@ -24,6 +24,7 @@ import kotlinx.dom.removeClass
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.editor.common.AglStyleHandlerAbstract.Companion.AGL_STYLE_PREFIX
@@ -56,6 +57,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
     containerElement: Element,
     aceEditor: ace.IEditor,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -66,6 +68,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAce(
         containerElement = containerElement,
         aceEditor = aceEditor,
         languageDefinition = languageDefinition,
+        processOptions = processOptions,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -81,12 +84,14 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     val aceEditor: ace.IEditor,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val ace: IAce,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
-    languageServiceRequest, languageDefinition, EndPointIdentity(editorId, aceEditor.getSession()?.id!!),
+    languageServiceRequest, languageDefinition, processOptions,
+    EndPointIdentity(editorId, aceEditor.getSession()?.id!!),
     editorOptions, logFunction, AglStyleHandlerCssClass(languageDefinition.identity)
 ) {
 
@@ -143,7 +148,7 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
         } else {
             val bgt = sess.bgTokenizer
             if (null == bgt) {
-                logger.logError{ "bgTokenizer is null ??"}
+                logger.logError { "bgTokenizer is null ??" }
             } else {
                 bgt.start(fromLine)
                 this.aceEditor.renderer.updateText()

@@ -21,6 +21,7 @@ import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.browser.ck.autocomplete.CkAutocomplete
 import net.akehurst.language.editor.common.*
@@ -36,7 +37,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     containerElement: Element,
     ckEditor: ck.core.editor.Editor,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
-//    languageId: LanguageIdentity,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?
@@ -46,6 +47,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
         containerElement = containerElement,
         ckEditor = ckEditor,
         languageDefinition = languageDefinition,
+        processOptions = processOptions,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction
@@ -59,13 +61,13 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     val containerElement: Element,
     val ckEditor: ck.core.editor.Editor,
-//    languageId: LanguageIdentity,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?
 ) : AglEditorAbstract<AsmType, ContextType, CkStyle>(
-    languageServiceRequest, languageDefinition, EndPointIdentity(editorId, "none"),
+    languageServiceRequest, languageDefinition, processOptions,EndPointIdentity(editorId, "none"),
     editorOptions, logFunction, AglStyleHandlerCkStyle(languageDefinition.identity)
 ) {
 

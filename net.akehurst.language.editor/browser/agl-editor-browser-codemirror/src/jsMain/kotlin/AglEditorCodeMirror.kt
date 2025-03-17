@@ -22,6 +22,7 @@ import kotlinx.dom.removeClass
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.*
 import net.akehurst.language.editor.common.AglStyleHandlerAbstract.Companion.AGL_STYLE_PREFIX
@@ -53,6 +54,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
     containerElement: Element,
     cmEditor: codemirror.view.IEditorView,
     languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
@@ -63,6 +65,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
         containerElement = containerElement,
         cmEditorView = cmEditor,
         languageDefinition = languageDefinition,
+        processOptions = processOptions,
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
@@ -77,12 +80,13 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     val containerElement: Element,
     val cmEditorView: codemirror.view.IEditorView,
     languageDefinition: LanguageDefinition<AsmType,ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction?,
     val codemirrorFunctions: codemirror.ICodeMirror,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
-    languageServiceRequest, languageDefinition, EndPointIdentity(editorId,"none"),
+    languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId,"none"),
     editorOptions,logFunction, AglStyleHandlerCssClass(languageDefinition.identity)
 ) {
 
