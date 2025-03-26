@@ -103,6 +103,8 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     private var _autocompleteDepthIncrement = 0
 
     fun initialise() {
+        this.updateLanguageDefinition(languageDefinition)
+
         CkEditorHelper.createAglAttributes(logger, ckEditor)
 
         // CTRL+SPACE
@@ -119,9 +121,10 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         _contextualBalloon = ckEditor.plugins.get(ck.ui.panel.balloon.ContextualBalloon::class.js)
         val styleCompleteItem = editorOptions.styleCompletionItem
             ?: { item ->
-                val scanRes = agl.simpleScanner.scan(SentenceDefault(item.text))
+                val senDef =SentenceDefault(item.text, agl.options.invoke().parse.sentenceIdentity())
+                val scanRes = agl.simpleScanner.scan(senDef)
                 val aglTokens = agl.styleHandler.transformToTokens(scanRes.allTokens)
-                val html = _autocompleteLabelStyleHandler.applyHtmlStyling(SentenceDefault(item.text), aglTokens)
+                val html = _autocompleteLabelStyleHandler.applyHtmlStyling(senDef, aglTokens)
 
                 when (item.kind) {
                     CompletionItemKind.LITERAL -> html
@@ -134,9 +137,9 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
 
         ckEditor.model.document.on("change:data") { onEditorTextChangeInternal(this.text) } //TODO get text from event
 
-        this.updateLanguage(null)
-        this.refreshProcessor()
-        this.refreshStyleHandler()
+        ////this.updateLanguage(null)
+        //this.refreshProcessor()
+        //this.refreshStyleHandler()
 
         // trigger first sentence process
         onEditorTextChangeInternal(this.text)
@@ -222,10 +225,10 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
         super.sentenceParseResponse(endPointIdentity, requestId, status, message, issues, tree)
         when (status) {
-            MessageStatus.FAILURE -> this.resetTokenization(0) // reset to trigger use of scan tokens
+            MessageResponseStatus.FAILURE -> this.resetTokenization(0) // reset to trigger use of scan tokens
             else -> Unit
         }
     }

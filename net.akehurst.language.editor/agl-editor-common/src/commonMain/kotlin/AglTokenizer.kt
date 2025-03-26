@@ -92,7 +92,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
         return try {
             val scanner = agl.simpleScanner
             val offset = 0
-            val sentence = SentenceDefault(text)
+            val sentence = SentenceDefault(text,agl.options().parse.sentenceIdentity())
             val tv = measureTimedValue {
                 scanner.scan(sentence, ScanOptionsDefault(true, false, 0, offset))
             }
@@ -151,7 +151,7 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
             val scanner = agl.simpleScanner
             val text = previousLineState.leftOverText + lineText
             val offset = previousLineState.nextLineStartPosition - previousLineState.leftOverText.length
-            val sentence = SentenceDefault(text)
+            val sentence = SentenceDefault(text,agl.options().parse.sentenceIdentity())
             val tv = measureTimedValue {
                 scanner.scan(sentence, ScanOptionsDefault(true, false, 0, offset))
             }

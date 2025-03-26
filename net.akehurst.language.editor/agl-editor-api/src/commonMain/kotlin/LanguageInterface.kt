@@ -48,24 +48,31 @@ interface LanguageServiceResponse {
     fun processorCreateResponse(
         endPointIdentity: EndPointIdentity,
         requestId: RequestIdentity<*>,
-        status: MessageStatus,
+        status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
         scannerMatchables: List<Matchable>
     )
 
-    fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String)
-    fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?)
+    fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String)
+    fun processorSetStyleResponse(
+        endPointIdentity: EndPointIdentity,
+        requestId: RequestIdentity<*>,
+        status: MessageResponseStatus,
+        message: String,
+        issues: List<LanguageIssue>,
+        styleModel: AglStyleModel?
+    )
 
-    fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>)
-    fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>)
-    fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?)
-    fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?)
-    fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?)
+    fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>)
+    fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>)
+    fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?)
+    fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?)
+    fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?)
     fun sentenceCodeCompleteResponse(
         endPointIdentity: EndPointIdentity,
         requestId: RequestIdentity<*>,
-        status: MessageStatus,
+        status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
         completionItems: List<CompletionItem>
@@ -82,7 +89,16 @@ data class EndPointIdentity(
     override fun toString(): String = "editorId=$editorId, sessionId=$sessionId"
 }
 
-enum class MessageStatus { START, FAILURE, SUCCESS }
+enum class MessageResponseStatus {
+    /** request to perform action was received */
+    RECEIVED,
+    /** requested action was not performed, e.g. due to it being disabled */
+    IGNORED,
+    /** requested action failed */
+    FAILURE,
+    /** requested action succeeded */
+    SUCCESS
+}
 
 @JvmInline
 value class EditorStyleIdentity(val value: String) {

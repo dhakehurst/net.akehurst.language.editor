@@ -67,7 +67,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
      */
     var text: String
 
-    val sentence: Sentence
+//    val sentence: Sentence
 
     val issues: IssueHolder
 
@@ -133,6 +133,7 @@ typealias StyleCompletionItem = (item:CompletionItem) -> String //TODO: return s
 
 interface EditorOptions {
     var scan:Boolean
+    var scanLineTokens: Boolean
     var parse: Boolean
     var parseLineTokens: Boolean
     var lineTokensChunkSize: Int
@@ -144,7 +145,7 @@ interface EditorOptions {
     var styleCompletionItem: StyleCompletionItem?
 }
 
-enum class EventStatus { START, FAILURE, SUCCESS }
+enum class EventStatus { START, IGNORED, FAILURE, SUCCESS }
 
 /**
  * Three kinds of event,

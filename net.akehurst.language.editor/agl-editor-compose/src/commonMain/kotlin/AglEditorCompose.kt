@@ -122,16 +122,6 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
 
     fun initialise() {
         this.updateLanguageDefinition(languageDefinition)
-
-//        composeEditor.getLineTokens = { lineNumber, lineStartPosition, lineText ->
-//            try {
-//                workerTokenizer.getLineTokens(lineNumber, lineStartPosition, lineText)
-//            } catch (t: Throwable) {
-//                logger.logError(t) { "Failed to getLineTokens" }
-//                emptyList()
-//            }
-//        }
-
         composeEditor.requestAutocompleteSuggestions = { position, text, result ->
             try {
                 requestAutocomplete(position, text, result)
@@ -139,7 +129,6 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
                 logger.logError(t) { "Failed to requestAutocompleteSuggestions" }
             }
         }
-
         composeEditor.onTextChange = { txt ->
             try {
                 onEditorTextChangeInternal(txt)

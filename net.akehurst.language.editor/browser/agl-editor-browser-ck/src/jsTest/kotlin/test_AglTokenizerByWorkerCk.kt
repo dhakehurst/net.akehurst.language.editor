@@ -16,7 +16,11 @@
 
 package net.akehurst.language.editor.browser.ck
 
+import net.akehurst.language.agl.Agl
+import net.akehurst.language.agl.simple.ContextAsmSimple
+import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.asm.api.Asm
 import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.editor.common.AglComponents
@@ -29,12 +33,16 @@ class test_AglTokenizerByWorkerCk {
     fun test() {
         // Given
         val languageId = LanguageIdentity("test-language")
+        val languageDef = Agl.languageDefinitionFromString<Asm, ContextAsmSimple>(
+            identity = languageId,
+            grammarDefinitionStr = GrammarString("")
+        )
         val editorId = "test-editor"
         val logger = AglEditorLogger("",{ level, prfx, message, t -> println("${level}: $message - $t") })
         val styleHandler = AglStyleHandlerCkStyle(languageId)
-        val agl = AglComponents<Any, Any>(languageId, editorId, logger, styleHandler)
+        val agl = AglComponents<Asm, ContextAsmSimple>(languageDef, editorId, logger, styleHandler)
         val emi = EditorModelIndex()
-        val sut = AglTokenizerByWorkerCk<Any, Any>(agl, emi, logger)
+        val sut = AglTokenizerByWorkerCk<Asm, ContextAsmSimple>(agl, emi, logger)
 
         // When
         val tokens = listOf(listOf(AglTokenDefault(listOf(EditorStyleIdentity("style1")),0,5)))

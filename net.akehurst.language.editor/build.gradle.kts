@@ -164,6 +164,15 @@ subprojects {
                     password = sonatype_pwd
                 }
             }
+            maven {
+                name = "Other"
+                setUrl(getProjectProperty("PUB_URL")?: "<use -P PUB_URL=<...> to set>")
+                credentials {
+                    username = getProjectProperty("PUB_USERNAME")
+                        ?: error("Must set project property with Username (-P PUB_USERNAME=<...> or set in ~/.gradle/gradle.properties)")
+                    password = getProjectProperty("PUB_PASSWORD")?: creds.forKey(getProjectProperty("PUB_USERNAME"))
+                }
+            }
         }
         publications.withType<MavenPublication> {
 //            artifact(javadocJar.get())

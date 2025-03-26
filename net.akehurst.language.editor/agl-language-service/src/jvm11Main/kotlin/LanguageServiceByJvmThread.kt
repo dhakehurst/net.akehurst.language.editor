@@ -89,7 +89,7 @@ open class LanguageServiceByJvmThread(
         override fun processorCreateResponse(
             endPointIdentity: EndPointIdentity,
             requestId: RequestIdentity<*>,
-            status: MessageStatus,
+            status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
             scannerMatchables: List<Matchable>
@@ -97,14 +97,14 @@ open class LanguageServiceByJvmThread(
             responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, requestId, status, message, issues, scannerMatchables)
         }
 
-        override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String) {
+        override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String) {
             responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, requestId, status, message)
         }
 
         override fun processorSetStyleResponse(
             endPointIdentity: EndPointIdentity,
             requestId: RequestIdentity<*>,
-            status: MessageStatus,
+            status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
             styleModel: AglStyleModel?
@@ -112,17 +112,17 @@ open class LanguageServiceByJvmThread(
             responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, requestId, status, message, issues, styleModel)
         }
 
-        override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>) {
+        override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
             responseObjects[endPointIdentity]?.sentenceScanResponse(endPointIdentity, requestId, status, message, issues)
         }
-        override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+        override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
             responseObjects[endPointIdentity]?.sentenceParseResponse(endPointIdentity, requestId, status, message, issues, tree)
         }
 
         override fun sentenceLineTokensResponse(
             endPointIdentity: EndPointIdentity,
             requestId: RequestIdentity<*>,
-            status: MessageStatus,
+            status: MessageResponseStatus,
             message: String,
             startLine: Int,
             lineTokens: List<List<AglToken>>
@@ -130,14 +130,14 @@ open class LanguageServiceByJvmThread(
             responseObjects[endPointIdentity]?.sentenceLineTokensResponse(endPointIdentity, requestId, status, message, startLine, lineTokens)
         }
 
-        override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+        override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
             responseObjects[endPointIdentity]?.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId, status, message, issues, asm)
         }
 
         override fun sentenceSemanticAnalysisResponse(
             endPointIdentity: EndPointIdentity,
             requestId: RequestIdentity<*>,
-            status: MessageStatus,
+            status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
             asm: Any?
@@ -148,7 +148,7 @@ open class LanguageServiceByJvmThread(
         override fun sentenceCodeCompleteResponse(
             endPointIdentity: EndPointIdentity,
             requestId: RequestIdentity<*>,
-            status: MessageStatus,
+            status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
             completionItems: List<CompletionItem>

@@ -128,6 +128,8 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
     private val _aceStyleHandler get() = agl.styleHandler as AglStyleHandlerCssClass
 
     fun initialise() {
+        this.updateLanguageDefinition(languageDefinition)
+
         //TODO: set session and mouseHandler options
         this.aceEditor.getSession()?.bgTokenizer?.setTokenizer(this.workerTokenizer as ace.Tokenizer)
         this.aceEditor.getSession()?.bgTokenizer?.setDocument(this.aceEditor.getSession()?.getDocument())
@@ -136,9 +138,9 @@ private class AglEditorAce<AsmType : Any, ContextType : Any>(
 
         this.aceEditor.on("change") { eventName -> this.onEditorTextChangeInternal(this.text) }
 
-        this.updateLanguage(null)
-        this.refreshProcessor()
-        this.refreshStyleHandler()
+        //this.updateLanguage(null)
+        //this.refreshProcessor()
+        //this.refreshStyleHandler()
     }
 
     override fun resetTokenization(fromLine: Int) {

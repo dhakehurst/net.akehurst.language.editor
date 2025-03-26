@@ -128,7 +128,7 @@ object CkEditorHelper {
                     for (tok in newAttributes) {
                         val rng = writer.createRange(tok.firstPosition, tok.lastPosition)
                         for (att in tok.attributes) {
-                            logger.logTrace { "Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]" }
+//                            logger.logTrace { "Set '${att.key}' = '${att.value}' for [${rng.start.path} - ${rng.end.path}]" }
                             writer.setAttribute(att.key, att.value, rng)
                         }
                     }

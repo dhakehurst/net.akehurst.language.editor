@@ -5,6 +5,7 @@ import net.akehurst.language.editor.api.StyleCompletionItem
 
 data class EditorOptionsDefault(
     override var scan: Boolean = true,
+    override var scanLineTokens: Boolean = true,
     override var parse: Boolean = true,
     override var parseLineTokens: Boolean = true,
     override var lineTokensChunkSize: Int = 0,

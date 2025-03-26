@@ -1,25 +1,25 @@
 [versions]
-project = "2.1.20-RC3"
+project = "2.1.20-SNAPSHOT"
 
-kotlin = "2.1.20-RC3"
-exportPublic = "2.1.20-RC3"
-reflect = "2.1.20-RC3"
+kotlin = "2.1.20"
+exportPublic = "2.1.20"
+reflect = "2.1.20"
 dokka = "2.0.0"
 buildconfig = "5.5.1"
 credentials = "3.0"
 
-nal-agl = "4.2.1.20-RC3"
+nal-agl = "4.2.1.20-SNAPSHOT"
 
-nak-compose-code-editor = "2.1.20-RC3"
+nak-compose-code-editor = "2.1.20-SNAPSHOT"
 
-nak-serialisation = "2.1.20-RC3"
-nak-json = "2.1.20-RC3"
-nak-kotlinx = "2.1.20-RC3"
-nak-html-builder = "2.1.20-RC3"
-nak-codemirror-api = "6.0.1"
+nak-serialisation = "2.1.20-SNAPSHOT"
+nak-json = "2.1.20"
+nak-kotlinx = "2.1.20"
+nak-html-builder = "2.1.20"
+nak-codemirror-api = "2.1.20"
 
 kotlinx-coroutines = "1.10.1"
-compose = "1.8.0-alpha04"
+compose = "1.8.0-beta01"
 
 [libraries]
 nal-agl-processor = { module = "net.akehurst.language:agl-processor", version.ref = "nal-agl" }
@@ -34,7 +34,7 @@ nak-json = { module = "net.akehurst.kotlin.json:json", version.ref = "nak-json" 
 nak-kotlinx-collections = { module = "net.akehurst.kotlinx:kotlinx-collections", version.ref = "nak-kotlinx" }
 nak-kotlinx-reflect = { module = "net.akehurst.kotlinx:kotlinx-reflect", version.ref = "nak-kotlinx" }
 nak-html-builder = { module = "net.akehurst.kotlin.html5:html-builder", version.ref = "nak-html-builder" }
-nak-codemirror-api = { module = "net.akehurst.kotlin:codemirror-api", version.ref = "nak-codemirror-api" }
+nak-codemirror-api = { module = "net.akehurst.kotlin.editor:codemirror-api", version.ref = "nak-codemirror-api" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
 [plugins]
