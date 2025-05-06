@@ -19,6 +19,7 @@ package net.akehurst.language.editor.browser.codemirror
 
 import kotlinx.dom.addClass
 import kotlinx.dom.removeClass
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -57,7 +58,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCodeMirror(
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
     codemirror: codemirror.ICodeMirror
 ): AglEditor<AsmType, ContextType> {
     val aglEditor = AglEditorCodeMirror<AsmType, ContextType>(
@@ -83,7 +84,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
     val codemirrorFunctions: codemirror.ICodeMirror,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
     languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId,"none"),

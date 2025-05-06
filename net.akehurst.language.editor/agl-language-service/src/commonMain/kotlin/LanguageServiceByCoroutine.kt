@@ -20,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.issues.api.LanguageIssue
@@ -28,7 +29,7 @@ import net.akehurst.language.style.api.AglStyleModel
 
 open class LanguageServiceByCoroutine(
     val scope: CoroutineScope,
-    logFunction: LogFunction?
+    logFunction: LogFunction
 ) : LanguageService {
 
     private val _aglRegLock = Mutex()

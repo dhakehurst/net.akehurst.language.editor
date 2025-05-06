@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     commonMainApi(project(":agl-editor-api"))
-    //commonMainApi(project(":agl-language-service"))
+    commonMainImplementation(libs.nak.kotlinx.logging.common)
     commonMainImplementation(libs.nak.kotlinx.reflect)
 }
 

@@ -16,7 +16,6 @@
 
 package net.akehurst.language.editor.compose
 
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
@@ -28,24 +27,20 @@ import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor2
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor3
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.api.processor.CrossReferenceString
 import net.akehurst.language.api.processor.GrammarString
-import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.StyleString
-import net.akehurst.language.editor.api.LogFunction
-import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.EditorOptionsDefault
 import net.akehurst.language.editor.common.aglEditorOptions
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 import net.akehurst.language.grammar.processor.AglGrammar
 import kotlin.test.Test
-import kotlin.time.Duration.Companion.seconds
 
 class test_AglEditorCompose {
 

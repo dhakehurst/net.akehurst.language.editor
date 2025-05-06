@@ -15,7 +15,7 @@ dependencies {
     commonMainApi(project(":agl-editor-common"))
 //    jsMainApi(project(":agl-language-service-serialisation"))
     commonMainApi(project(":agl-editor-browser-worker"))
-
+    commonMainImplementation(libs.nak.kotlinx.logging.common)
 }
 
 configure<PublishingExtension> {

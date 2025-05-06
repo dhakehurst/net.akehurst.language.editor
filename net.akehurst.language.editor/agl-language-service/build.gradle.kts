@@ -7,6 +7,7 @@ dependencies {
     commonMainApi(project(":agl-editor-common"))
 
     //jsMainImplementation(project(":agl-language-service-serialisation"))
+    commonMainImplementation(libs.nak.kotlinx.logging.common)
     commonMainImplementation(libs.nal.kotlinx.komposite)
     commonMainImplementation(libs.nak.kotlinx.collections)
     commonMainImplementation(libs.nak.kotlinx.reflect)

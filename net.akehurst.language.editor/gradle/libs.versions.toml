@@ -1,25 +1,25 @@
 [versions]
-project = "2.1.20-SNAPSHOT"
+project = "2.1.21-RC"
 
-kotlin = "2.1.20"
-exportPublic = "2.1.20"
-reflect = "2.1.20"
+kotlin = "2.1.21-RC"
+exportPublic = "2.1.21-RC"
+reflect = "2.1.21-RC"
 dokka = "2.0.0"
 buildconfig = "5.5.1"
 credentials = "3.0"
 
-nal-agl = "4.2.1.20-SNAPSHOT"
+nal-agl = "4.2.1.21-RC"
 
-nak-compose-code-editor = "2.1.20-SNAPSHOT"
+nak-compose-code-editor = "2.1.21-RC"
 
-nak-serialisation = "2.1.20-SNAPSHOT"
-nak-json = "2.1.20"
-nak-kotlinx = "2.1.20"
-nak-html-builder = "2.1.20"
-nak-codemirror-api = "2.1.20"
+nak-serialisation = "2.1.21-RC"
+nak-json = "2.1.21-RC"
+nak-kotlinx = "2.1.21-RC"
+nak-html-builder = "2.1.21-RC"
+nak-codemirror-api = "2.1.21-RC"
 
 kotlinx-coroutines = "1.10.1"
-compose = "1.8.0-beta01"
+compose = "1.8.0-rc01"
 
 [libraries]
 nal-agl-processor = { module = "net.akehurst.language:agl-processor", version.ref = "nal-agl" }
@@ -31,6 +31,8 @@ nak-compose-code-editor = {module="net.akehurst.kotlin.compose:code-editor",vers
 
 nak-kserialisation-json = { module = "net.akehurst.kotlin.kserialisation:kserialisation-json", version.ref = "nak-serialisation" }
 nak-json = { module = "net.akehurst.kotlin.json:json", version.ref = "nak-json" }
+nak-kotlinx-logging-api = { module = "net.akehurst.kotlinx:kotlinx-logging-api", version.ref = "nak-kotlinx" }
+nak-kotlinx-logging-common = { module = "net.akehurst.kotlinx:kotlinx-logging-common", version.ref = "nak-kotlinx" }
 nak-kotlinx-collections = { module = "net.akehurst.kotlinx:kotlinx-collections", version.ref = "nak-kotlinx" }
 nak-kotlinx-reflect = { module = "net.akehurst.kotlinx:kotlinx-reflect", version.ref = "nak-kotlinx" }
 nak-html-builder = { module = "net.akehurst.kotlin.html5:html-builder", version.ref = "nak-html-builder" }

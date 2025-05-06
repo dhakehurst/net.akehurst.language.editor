@@ -1,8 +1,7 @@
 package net.akehurst.language.editor.browser.ck
 
 import js.iterable
-import net.akehurst.language.editor.api.AglEditorLogger
-import net.akehurst.language.editor.api.LogLevel
+import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 
@@ -30,7 +29,7 @@ object CkEditorHelper {
     /**
      * create own styles so we can remove them, leaving user styles
      */
-    fun createAglAttributes(logger: AglEditorLogger, ckEditor: ck.core.editor.Editor) {
+    fun createAglAttributes(logger: Logger, ckEditor: ck.core.editor.Editor) {
         try {
             //create style for foreground colour //TODO
             //create style for background colour //TODO
@@ -120,7 +119,7 @@ object CkEditorHelper {
         return result
     }
 
-    fun addAttributes(logger: AglEditorLogger, model: ck.engine.model.Model, newAttributes: List<CkAttributeData>, allAttributeNames: Set<String>) {
+    fun addAttributes(logger: Logger, model: ck.engine.model.Model, newAttributes: List<CkAttributeData>, allAttributeNames: Set<String>) {
         try {
             model.enqueueChange { writer ->
                 try {
@@ -141,7 +140,7 @@ object CkEditorHelper {
         }
     }
 
-    fun removeAttributes(logger: AglEditorLogger, writer: ck.engine.model.Writer, attributeNames: Set<String>) {
+    fun removeAttributes(logger: Logger, writer: ck.engine.model.Writer, attributeNames: Set<String>) {
         try {
             val rootRange = writer.model.createRangeIn(writer.model.document.getRoot())
             val items = rootRange.getItems().iterable()

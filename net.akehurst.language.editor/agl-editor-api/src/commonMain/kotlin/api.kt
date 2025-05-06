@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.api
 
+import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.ram.IssueHolder
@@ -23,8 +24,6 @@ import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.style.api.AglStyleModel
 import net.akehurst.language.style.api.AglStyleSelector
-
-enum class LogLevel { None, Fatal, Error, Warning, Information, Debug, Trace, All }
 
 interface AglEditor<AsmType : Any, ContextType : Any> {
 
@@ -91,7 +90,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     /**
      * destination for logging messages
      */
-    val logger: AglEditorLogger
+    val logger: Logger
 
     //fun configureSyntaxAnalyser(configuration: Map<String, Any>)
 

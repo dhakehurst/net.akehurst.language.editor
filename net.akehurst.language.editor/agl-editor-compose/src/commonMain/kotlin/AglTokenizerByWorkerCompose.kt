@@ -18,19 +18,17 @@ package net.akehurst.language.editor.compose
 
 import androidx.compose.ui.text.SpanStyle
 import net.akehurst.kotlin.compose.editor.api.EditorSegmentStyle
-import net.akehurst.language.editor.api.AglEditorLogger
+import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.api.EditorStyleIdentity
-import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglLineState
 import net.akehurst.language.editor.common.AglTokenizer
 import net.akehurst.language.editor.common.AglTokenizerByWorker
-import kotlin.collections.set
 
 class AglTokenizerByWorkerCompose<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>,
-    val logger: AglEditorLogger
+    val logger: Logger
 ) : AglTokenizerByWorker<ComposeStyle> {
 
     val aglTokenizer = AglTokenizer<AsmType, ContextType, ComposeStyle>(agl, agl.logger)

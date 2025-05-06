@@ -19,15 +19,12 @@ package net.akehurst.language.editor.compose
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor2
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.api.processor.*
-import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EndPointIdentity
-import net.akehurst.language.editor.api.LogFunction
 import net.akehurst.language.editor.common.aglEditorOptions
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 

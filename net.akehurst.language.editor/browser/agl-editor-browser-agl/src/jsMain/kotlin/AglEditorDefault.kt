@@ -19,6 +19,7 @@ package net.akehurst.language.editor.browser.agl
 import kotlinx.browser.document
 import kotlinx.browser.window
 import net.akehurst.kotlin.html5.elAppend
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -42,7 +43,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToAglEditor(
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
 ): AglEditor<AsmType, ContextType> {
     return AglEditorDefault<AsmType, ContextType>(
         containerElement = containerElement,
@@ -62,7 +63,7 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
     languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId,"session"),
     editorOptions, logFunction, AglStyleHandlerCssClass(languageDefinition.identity)

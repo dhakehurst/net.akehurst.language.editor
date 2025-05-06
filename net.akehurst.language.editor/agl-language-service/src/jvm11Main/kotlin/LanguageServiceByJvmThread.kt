@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.common
 
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceRequestDirectExecution
@@ -26,7 +27,7 @@ import java.util.concurrent.ExecutorService
 
 open class LanguageServiceByJvmThread(
     val executorService: ExecutorService,
-    logFunction: LogFunction?
+    logFunction: LogFunction
 ) : LanguageService {
 
     // --- LanguageService ---

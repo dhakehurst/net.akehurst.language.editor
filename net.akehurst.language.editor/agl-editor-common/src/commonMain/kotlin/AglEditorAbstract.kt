@@ -15,6 +15,9 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.kotlinx.logging.api.LogFunction
+import net.akehurst.kotlinx.logging.api.Logger
+import net.akehurst.kotlinx.logging.common.LoggerCommon
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.issues.api.LanguageIssue
@@ -43,13 +46,13 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     override val endPointIdentity: EndPointIdentity,
     override var editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
     styleHandler: AglStyleHandler<EditorStyleType>
 ) : AglEditor<AsmType, ContextType>, LanguageServiceResponse {
 
     abstract val isConnected: Boolean
 
-    final override val logger by lazy { AglEditorLogger(endPointIdentity.editorId, logFunction) }
+    final override val logger: Logger by lazy { LoggerCommon(endPointIdentity.editorId, logFunction) }
 
     val editorId get() = endPointIdentity.editorId
 

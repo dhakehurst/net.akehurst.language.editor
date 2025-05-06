@@ -3,16 +3,14 @@ package net.akehurst.language.editor.browser.ck.autocomplete
 
 import kotlinx.browser.document
 import kotlinx.dom.addClass
+import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.editor.api.AglEditorCompletionProvider
-import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
 import org.w3c.dom.HTMLDivElement
-import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLInputElement
-import org.w3c.dom.HTMLTemplateElement
 
 class FilteredListView : ck.ui.list.ListView(), ck.ui.search.FilteredView {
     override fun filter(regExp: kotlin.js.RegExp?): ck.ui.search.FilteredViewResult {
@@ -68,7 +66,7 @@ class AutocompleteItemView(
 }
 
 class CkAutocomplete(
-    val logger: AglEditorLogger,
+    val logger: Logger,
     val ckEditor: ck.core.editor.Editor,
     val balloon: ck.ui.panel.balloon.ContextualBalloon,
     val styleItemView: (item: CompletionItem) -> String

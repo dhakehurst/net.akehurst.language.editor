@@ -16,6 +16,8 @@
 
 package net.akehurst.language.editor.language.service
 
+import net.akehurst.kotlinx.logging.api.LogFunction
+import net.akehurst.kotlinx.logging.common.LoggerCommon
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
@@ -40,9 +42,9 @@ import net.akehurst.language.style.api.AglStyleModel
 import net.akehurst.language.transform.asm.TransformDomainDefault
 
 class LanguageServiceDirectExecution(
-    logFunction: LogFunction?
+    logFunction: LogFunction
 ) : LanguageService {
-    val logger = AglEditorLogger("LanguageServiceDirectExecution", logFunction)
+    //val logger = AglEditorLogger("LanguageServiceDirectExecution", logFunction)
     val response = LanguageServiceResponseDirectExecution(logFunction)
     override val request: LanguageServiceRequest = LanguageServiceRequestDirectExecution(response, logFunction)
 
@@ -52,9 +54,9 @@ class LanguageServiceDirectExecution(
 }
 
 class LanguageServiceResponseDirectExecution(
-    logFunction: LogFunction?
+    logFunction: LogFunction
 ) : LanguageServiceResponse {
-    val logger = AglEditorLogger("LanguageServiceResponseDirectExecution", logFunction)
+    val logger = LoggerCommon("LanguageServiceResponseDirectExecution", logFunction)
     val responseObjects = mutableMapOf<EndPointIdentity, LanguageServiceResponse>()
 
     override fun processorCreateResponse(
@@ -147,9 +149,9 @@ class LanguageServiceResponseDirectExecution(
 
 open class LanguageServiceRequestDirectExecution(
     val response: LanguageServiceResponse,
-    logFunction: LogFunction?
+    logFunction: LogFunction
 ) : LanguageServiceRequest {
-    val logger = AglEditorLogger("LanguageServiceRequestDirectExecution", logFunction)
+    val logger = LoggerCommon("LanguageServiceRequestDirectExecution", logFunction)
 
     // --- LanguageServiceRequest ---
     override fun processorCreateRequest(

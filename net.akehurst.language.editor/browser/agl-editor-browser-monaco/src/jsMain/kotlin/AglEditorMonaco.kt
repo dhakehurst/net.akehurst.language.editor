@@ -28,6 +28,7 @@ import monaco.languages.CompletionItemKind
 import monaco.languages.CompletionItemProvider
 import monaco.languages.ILanguageExtensionPoint
 import monaco.languages.TokensProvider
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.LanguageDefinition
@@ -49,7 +50,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToMonaco(
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
     monaco: Monaco
 ): AglEditor<AsmType, ContextType> {
     val aglEditor = AglEditorMonaco<AsmType, ContextType>(
@@ -93,7 +94,7 @@ private class AglEditorMonaco<AsmType : Any, ContextType : Any>(
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
     val monaco: Monaco,
 ) : AglEditorAbstract<AsmType, ContextType, CssClassStyle>(
     languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId, "none"),

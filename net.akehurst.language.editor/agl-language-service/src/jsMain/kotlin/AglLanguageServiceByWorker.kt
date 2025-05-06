@@ -17,6 +17,8 @@
 package net.akehurst.language.editor.language.service
 
 import net.akehurst.kotlin.json.JsonString
+import net.akehurst.kotlinx.logging.api.LogFunction
+import net.akehurst.kotlinx.logging.common.LoggerCommon
 import net.akehurst.language.agl.*
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
@@ -32,9 +34,9 @@ import kotlin.time.measureTimedValue
 
 class AglLanguageServiceByWorker(
     val worker: AbstractWorker,
-    logFunction: LogFunction?
+    logFunction: LogFunction
 ) : LanguageService {
-    val logger = AglEditorLogger("AglLanguageServiceByWorker", logFunction)
+    val logger = LoggerCommon("AglLanguageServiceByWorker", logFunction)
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
         override fun processorCreateRequest(
             endPointIdentity: EndPointIdentity,

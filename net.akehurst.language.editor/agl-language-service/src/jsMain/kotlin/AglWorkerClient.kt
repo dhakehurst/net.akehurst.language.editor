@@ -20,7 +20,6 @@ import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
-import net.akehurst.language.editor.api.LogLevel
 import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.objectJS

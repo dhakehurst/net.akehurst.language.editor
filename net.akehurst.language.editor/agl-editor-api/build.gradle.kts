@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     commonMainApi(libs.nal.agl.processor)
+    commonMainApi(libs.nak.kotlinx.logging.api)
 
     commonMainImplementation(libs.nak.kotlinx.reflect)
 }

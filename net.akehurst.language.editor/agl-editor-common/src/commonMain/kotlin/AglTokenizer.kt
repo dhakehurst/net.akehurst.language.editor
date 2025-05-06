@@ -15,14 +15,11 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.editor.api.AglEditorLogger
+import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.api.EditorStyleIdentity
-import net.akehurst.language.editor.api.LogLevel
-import net.akehurst.language.scanner.api.ScanOptions
 import net.akehurst.language.scanner.common.ScanOptionsDefault
 import net.akehurst.language.sentence.common.SentenceDefault
-import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
 
 interface AglTokenizerByWorker<EditorStyleType : Any> {
@@ -65,7 +62,7 @@ class AglTokenDefault(
 
 class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
     val agl: AglComponents<AsmType, ContextType>,
-    val logger: AglEditorLogger
+    val logger: Logger
 ) {
 
     val tokensByLine = mutableMapOf<Int, List<AglToken>>()

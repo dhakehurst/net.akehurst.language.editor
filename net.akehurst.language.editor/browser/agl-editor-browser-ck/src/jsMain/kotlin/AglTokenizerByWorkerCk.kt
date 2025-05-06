@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.browser.ck
 
 
+import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglComponents
 import net.akehurst.language.editor.common.AglTokenizer
@@ -31,7 +32,7 @@ data class CkAttributeData(
 class AglTokenizerByWorkerCk<AsmType : Any, ContextType : Any>(
     agl: AglComponents<AsmType, ContextType>,
     val emi: EditorModelIndex,
-    val logger: AglEditorLogger
+    val logger: Logger
 ) : AglTokenizerByWorker<CkStyle> {
 
     val aglTokenizer = AglTokenizer<AsmType, ContextType, CkStyle>(agl, agl.logger)

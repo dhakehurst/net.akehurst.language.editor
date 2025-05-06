@@ -15,32 +15,24 @@
  */
 package net.akehurst.language.editor.common
 
+import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
-import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ProcessOptions
-import net.akehurst.language.scanner.api.Scanner
-import net.akehurst.language.scanner.api.ScannerKind
-import net.akehurst.language.editor.api.AglEditorLogger
 import net.akehurst.language.editor.api.AglStyleHandler
 import net.akehurst.language.grammar.api.GrammarRuleName
-import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
-import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
-import net.akehurst.language.parser.api.Rule
 import net.akehurst.language.regex.agl.RegexEngineAgl
 import net.akehurst.language.regex.agl.RegexEnginePlatform
 import net.akehurst.language.regex.api.RegexEngineKind
 import net.akehurst.language.scanner.api.Matchable
-import net.akehurst.language.scanner.common.ScannerAbstract
+import net.akehurst.language.scanner.api.Scanner
 import net.akehurst.language.scanner.common.ScannerFromMatchables
-import net.akehurst.language.sentence.api.Sentence
-import net.akehurst.language.sppt.treedata.CompleteTreeDataNode
 
 class AglComponents<AsmType : Any, ContextType : Any>(
 //    languageId: LanguageIdentity,
     var languageDefinition: LanguageDefinition<AsmType, ContextType>,
     val editorId: String,
-    val logger: AglEditorLogger,
+    val logger: Logger,
     styleHandler: AglStyleHandler<*>
 ) {
     // private var _languageDefinition: LanguageDefinition<AsmType, ContextType> = Agl.registry.findOrPlaceholder<AsmType, ContextType>(languageId)

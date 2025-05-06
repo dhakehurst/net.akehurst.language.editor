@@ -1,17 +1,16 @@
 package net.akehurst.language.editor.common
 
+import net.akehurst.kotlinx.logging.common.LoggerCommon
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.editor.api.AglEditorLogger
-import net.akehurst.language.editor.api.LogLevel
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class test_AglComponents {
 
-    val logger = AglEditorLogger("Log") { logLevel, prefix, throwable, msg ->
+    val logger = LoggerCommon("Log") { logLevel, prefix, throwable, msg ->
         println("$logLevel: $prefix - ${msg()}")
     }
 
@@ -27,7 +26,6 @@ class test_AglComponents {
         val langId = "test"
         val def = Agl.registry.register(
             identity = LanguageIdentity(langId),
-            grammarStr = null,
             aglOptions = null,
             buildForDefaultGoal = false,
             configuration = Agl.configurationSimple(),
@@ -37,7 +35,9 @@ class test_AglComponents {
             modified = s2
         }
 
-        def.grammarStr =GrammarString( "something new")
+        def.configuration = Agl.configuration(Agl.configurationSimple()){
+            grammarString(GrammarString( "something new"))
+        }
 
         assertEquals("something new", modified?.value)
     }
@@ -48,7 +48,6 @@ class test_AglComponents {
         val langId2 = Agl.registry.agl.grammarLanguageIdentity
         val def = Agl.registry.register(
             identity = langId1,
-            grammarStr = null,
             aglOptions = null,
             buildForDefaultGoal = false,
             configuration = Agl.configurationSimple(),

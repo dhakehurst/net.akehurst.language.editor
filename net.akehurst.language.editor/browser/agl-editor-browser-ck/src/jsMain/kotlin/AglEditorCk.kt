@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.browser.ck
 
 import kotlinx.browser.window
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItemKind
 import net.akehurst.language.api.processor.LanguageDefinition
@@ -40,7 +41,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?
+    logFunction: LogFunction
 ): AglEditor<AsmType, ContextType> {
     val aglEditor = AglEditorCk<AsmType, ContextType>(
         languageServiceRequest = languageService.request,
@@ -65,7 +66,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?
+    logFunction: LogFunction
 ) : AglEditorAbstract<AsmType, ContextType, CkStyle>(
     languageServiceRequest, languageDefinition, processOptions,EndPointIdentity(editorId, "none"),
     editorOptions, logFunction, AglStyleHandlerCkStyle(languageDefinition.identity)

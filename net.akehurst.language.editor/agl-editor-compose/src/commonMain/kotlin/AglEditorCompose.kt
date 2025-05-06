@@ -27,6 +27,7 @@ import net.akehurst.kotlin.compose.editor.api.AutocompleteItemDivider
 import net.akehurst.kotlin.compose.editor.api.AutocompleteSuggestion
 import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
 import net.akehurst.kotlin.compose.editor.api.simple.AutocompleteItemSimple
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.CompletionItemKind
@@ -47,7 +48,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     processOptions: ()-> ProcessOptions<AsmType, ContextType> ,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
     composeEditor: ComposeCodeEditor
 ): AglEditor<AsmType, ContextType> {
     val aglEditor = AglEditorCompose<AsmType, ContextType>(
@@ -71,7 +72,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     processOptions: ()-> ProcessOptions<AsmType, ContextType> ,
     editorId: String,
     editorOptions: EditorOptions,
-    logFunction: LogFunction?,
+    logFunction: LogFunction,
     val composeEditor: ComposeCodeEditor
 ) : AglEditorAbstract<AsmType, ContextType, ComposeStyle>(
     languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId, "none"),
