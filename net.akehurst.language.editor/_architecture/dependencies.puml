@@ -18,7 +18,7 @@ artifact "Ext: ake.kserialisation" as kserialisation
 artifact "Ext: ake.kotlinx" as kotlinx
 
 
-ed_api -[dotted]-> agl_proc
+ed_com -[dotted]-> agl_proc
 ed_com -[dotted]-> ed_api
 ed_compose -[dotted]-> nak_comp_ed_api
 

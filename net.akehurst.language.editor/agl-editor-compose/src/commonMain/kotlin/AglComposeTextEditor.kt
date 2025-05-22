@@ -22,7 +22,7 @@ import androidx.compose.runtime.Composable
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor2
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.simple.ContextAsmSimple
+import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.common.aglEditorOptions
@@ -70,7 +70,7 @@ class AglComposeTextEditor(
 
     val aglEditor = Agl.attachToComposeEditor(
         languageService, languageDefinition,
-        { Agl.options { semanticAnalysis { context(ContextAsmSimple()) } } },
+        { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
         editorId, editorOptions, logFunction, composableEditor
     )
 

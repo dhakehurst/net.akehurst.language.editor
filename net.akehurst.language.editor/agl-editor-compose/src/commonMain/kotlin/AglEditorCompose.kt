@@ -146,7 +146,8 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         logger.logTrace { "AglEditorCompose.resetTokenization $fromLine" }
         workerTokenizer.refresh()
         //TODO: maybe do this different!
-        composeEditor.lineStyles = workerTokenizer.aglTokenizer.tokensByLine.mapValues { (k,v) ->
+        //FIXME: is 'this.text' the correct value here ?
+        composeEditor.lineStyles = workerTokenizer.aglTokenizer.getAllTokensByLine(text).mapValues { (k,v) ->
             workerTokenizer.toEditorTokens(v)
         }
         composeEditor.refreshTokens()

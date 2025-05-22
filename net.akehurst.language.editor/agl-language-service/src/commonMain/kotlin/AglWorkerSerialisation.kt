@@ -21,7 +21,7 @@ import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
 import net.akehurst.language.asm.simple.AglAsm
 import net.akehurst.language.base.processor.AglBase
 import net.akehurst.language.grammar.processor.AglGrammar
-import net.akehurst.language.typemodel.processor.AglTypemodel
+import net.akehurst.language.typemodel.processor.AglTypes
 import net.akehurst.language.expressions.processor.AglExpressions
 import net.akehurst.language.reference.processor.AglCrossReference
 import net.akehurst.language.style.processor.AglStyle
@@ -100,13 +100,13 @@ object AglWorkerSerialisation {
      */
     private fun initialiseAllTypemodels() {
         val namesapces = (
-                AglBase.typeModel.namespace +
-                        AglGrammar.typeModel.namespace +
-                        AglTypemodel.typeModel.namespace +
+                AglBase.typesModel.namespace +
+                        AglGrammar.typesModel.namespace +
+                        AglTypes.typesModel.namespace +
                         AglAsm.typeModel.namespace +
-                        AglExpressions.typeModel.namespace +
+                        AglExpressions.typesModel.namespace +
                         AglCrossReference.typeModel.namespace +
-                        AglStyle.typeModel.namespace +
+                        AglStyle.typesModel.namespace +
                         AglScope.typeModel.namespace
                 ).toSet().toList()
         println(namesapces)

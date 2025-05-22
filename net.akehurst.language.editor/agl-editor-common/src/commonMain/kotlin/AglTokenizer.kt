@@ -77,6 +77,23 @@ class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
         }
     }
 
+    fun getAllTokensByLine(text: String): Map<Int,List<AglToken>> {
+        return if (tokensByLine.isEmpty()) {
+            val scanToksByLine = mutableMapOf<Int, List<AglToken>>()
+            val lines = text.lines()
+            var prevState = AglLineState(-1, 0, "")
+            for(i in lines.indices) {
+                val line = lines[i]
+                val (s, lineToks) = getLineTokensByScan(line, prevState)
+                scanToksByLine[i] = lineToks
+                prevState = s
+            }
+            return scanToksByLine
+        } else {
+            tokensByLine
+        }
+    }
+
     fun getAllTokens(text: String): List<AglToken> {
         return if (tokensByLine.isEmpty()) {
             return getAllTokensByScan(text)

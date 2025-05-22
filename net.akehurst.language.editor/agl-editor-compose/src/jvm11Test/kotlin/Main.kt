@@ -31,7 +31,7 @@ import net.akehurst.kotlin.compose.editor.ComposableCodeEditor2
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor3
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.simple.ContextAsmSimple
+import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.CrossReferenceString
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -239,7 +239,7 @@ styles SQL {
 
         val aglEditor = Agl.attachToComposeEditor(
             languageService, languageDefinition,
-            { Agl.options { semanticAnalysis { context(ContextAsmSimple()) } } },
+            { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
             editorId, editorOptions, logFunction, composeEditor!!
         )
         println("Attached AGL")
@@ -249,7 +249,7 @@ styles SQL {
     }
 
     @Test
-    fun run_ComposableCodeEditor2b() = runBlocking {
+    fun run_ComposableCodeEditor3b() = runBlocking {
 
         var composeEditor = ComposableCodeEditor3(
             initialText = INITIAL_TEXT,
@@ -281,7 +281,7 @@ styles SQL {
 
         val aglEditor = Agl.attachToComposeEditor(
             languageService, languageDefinition,
-            { Agl.options { semanticAnalysis { context(ContextAsmSimple()) } } },
+            { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
             editorId, editorOptions, logFunction, composeEditor!!
         )
 
@@ -329,7 +329,7 @@ styles SQL {
 
         val aglEditor = Agl.attachToComposeEditor(
             languageService, languageDefinition,
-            { Agl.options { semanticAnalysis { context(ContextAsmSimple()) } } },
+            { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
             editorId,
             editorOptions, logFunction, composeEditor!!
         )

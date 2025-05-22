@@ -19,6 +19,7 @@ package net.akehurst.language.editor.common
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.simple.ContextAsmSimple
+import net.akehurst.language.agl.simple.ContextWithScope
 import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -31,7 +32,7 @@ import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.language.service.AglWorkerSerialisation
 import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.grammar.api.Grammar
-import net.akehurst.language.grammar.processor.ContextFromGrammar
+import net.akehurst.language.grammar.processor.contextFromGrammar
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.issues.api.LanguageProcessorPhase
@@ -96,11 +97,11 @@ class test_AglWorkerSerialisation {
     fun TypeModel_serialise_deserialise() {
         val input: TypeModel = typeModel("test", true, listOf(StdLibDefault)) {
             namespace("test", listOf("std")) {
-                primitiveType("APrimType")
-                enumType("AnEnumType", listOf("A", "B", "C"))
-                collectionType("ACollType", listOf("E"))
-                dataType("ADatType")
-                dataType("BDatType") {
+                primitive("APrimType")
+                enum("AnEnumType", listOf("A", "B", "C"))
+                collection("ACollType", listOf("E"))
+                data("ADatType")
+                data("BDatType") {
                     supertypes("ADatType")
                     propertyPrimitiveType("propPrim", "String", false, 0)
                     propertyListTypeOf("propList", "String", false, 1)
@@ -109,7 +110,7 @@ class test_AglWorkerSerialisation {
                         typeRef("a", "String", false)
                     }
                 }
-                unionType("") {
+                union("") {
                     typeRef("String")
                     typeRef("ADatType")
                 }
@@ -196,11 +197,11 @@ class test_AglWorkerSerialisation {
     fun ContextSimple_serialise_deserialise() {
         val input = contextAsmSimple {
             scope("a1", "A", "/a1")
-            item("b1", "B", "/a1/b1")
-            scopedItem("c1", "C", "/c1") {
+            item("b1", "B", null,"/a1/b1")
+            scopedItem("c1", "C",null, "/c1") {
                 scope("a1", "A", "/c1/a1")
-                item("b1", "B", "/c1/a1/b1")
-                scopedItem("c1", "C", "/c1/c1") {}
+                item("b1", "B", null,"/c1/a1/b1")
+                scopedItem("c1", "C", null,"/c1/c1") {}
             }
         }
 
@@ -223,8 +224,8 @@ class test_AglWorkerSerialisation {
         assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
         val tm = typeModel("Test", true) {
             namespace("ns") {
-                dataType("Root")
-                dataType("Elem2") {
+                data("Root")
+                data("Elem2") {
                     propertyPrimitiveType("id", "String", false, 0)
                     propertyPrimitiveType("ref", "String", false, 1)
                 }
@@ -308,7 +309,7 @@ class test_AglWorkerSerialisation {
                 LanguageIssue(
                     LanguageIssueKind.ERROR,
                     LanguageProcessorPhase.PARSE,
-                    InputLocation(0, 1, 1, 1),
+                    InputLocation(0, 1, 1, 1, null),
                     "error",
                     emptySet<String>()
                 )
@@ -377,7 +378,7 @@ class test_AglWorkerSerialisation {
             }
         """
         val grammar = Agl.registry.agl.grammar.processor!!.process(grammarStr).asm!!
-        val context = ContextFromGrammar.createContextFrom(grammar)
+        val context = contextFromGrammar(grammar)
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             languageId,
@@ -391,12 +392,12 @@ class test_AglWorkerSerialisation {
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextFromGrammar>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextWithScope<Any,Any>>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.options.semanticAnalysis.context as ContextFromGrammar, actual.options.semanticAnalysis.context as ContextFromGrammar)
+        assertEquals(expected.options.semanticAnalysis.context as ContextWithScope<Any,Any>, actual.options.semanticAnalysis.context as ContextWithScope<Any,Any>)
     }
 
     @Test
@@ -408,7 +409,7 @@ class test_AglWorkerSerialisation {
             }
         """
         val proc = Agl.processorFromStringSimple(GrammarString(grammarStr)).processor!!
-        val context = ContextFromTypeModel(proc.typeModel)
+        val context = ContextFromTypeModel(proc.typesModel)
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             languageId,
@@ -588,7 +589,7 @@ class test_AglWorkerSerialisation {
             MessageResponseStatus.FAILURE,
             "Error",
             listOf(
-                LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.PARSE, InputLocation(0, 1, 1, 1), "error", emptySet<String>())
+                LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.PARSE, InputLocation(0, 1, 1, 1,null), "error", emptySet<String>())
             ),
             null
         )
@@ -648,7 +649,7 @@ class test_AglWorkerSerialisation {
             MessageResponseStatus.FAILURE,
             "Error",
             listOf(
-                LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.SYNTAX_ANALYSIS, InputLocation(0, 1, 1, 1), "error", null)
+                LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.SYNTAX_ANALYSIS, InputLocation(0, 1, 1, 1,null), "error", null)
             ),
             null
         )
@@ -715,7 +716,7 @@ class test_AglWorkerSerialisation {
             MessageResponseStatus.FAILURE,
             "Error",
             listOf(
-                LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.SEMANTIC_ANALYSIS, InputLocation(0, 1, 1, 1), "error")
+                LanguageIssue(LanguageIssueKind.ERROR, LanguageProcessorPhase.SEMANTIC_ANALYSIS, InputLocation(0, 1, 1, 1,null), "error")
             ),
             null
         )

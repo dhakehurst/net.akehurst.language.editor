@@ -45,6 +45,14 @@ class AglStyleHandlerAsHtml(
         )
         val HTML_TO_STRING = STRING_TO_HTML.entries.associate { (k, v) -> v to k }
 
+        /**
+         * encode HTML special characters
+         * * `&` -> `&amp;`</li>
+         * * `<` -> `&lt;`</li>
+         * * `>` -> `&gt;`</li>
+         * * `"` -> `&quot;`</li>
+         * * `'` -> `&apos;`</li>
+         */
         fun encodeForHtml(str: String) = str.replace(REGEX_MATCH_SPECIAL) { mr ->
             val matched = mr.value
             STRING_TO_HTML[matched]

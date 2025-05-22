@@ -15,10 +15,10 @@ object EditorIcons {
 
     val Error: ImageVector
         get() {
-            if (_Warning != null) {
-                return _Warning!!
+            if (_Error != null) {
+                return _Error!!
             }
-            _Warning = ImageVector.Builder(
+            _Error = ImageVector.Builder(
                 name = "Warning",
                 defaultWidth = 24.dp,
                 defaultHeight = 24.dp,
@@ -61,15 +61,15 @@ object EditorIcons {
                     moveToRelative(40f, -100f)
                 }
             }.build()
-            return _Warning!!
+            return _Error!!
         }
 
     val Warning: ImageVector
         get() {
-            if (_Emergency_home != null) {
-                return _Emergency_home!!
+            if (_Warning != null) {
+                return _Warning!!
             }
-            _Emergency_home = ImageVector.Builder(
+            _Warning = ImageVector.Builder(
                 name = "Emergency_home",
                 defaultWidth = 24.dp,
                 defaultHeight = 24.dp,
@@ -130,7 +130,7 @@ object EditorIcons {
                     moveToRelative(0f, -160f)
                 }
             }.build()
-            return _Emergency_home!!
+            return _Warning!!
         }
 
     val Information: ImageVector
@@ -202,8 +202,8 @@ object EditorIcons {
             return _Info!!
         }
 
+    private var _Error: ImageVector? = null
     private var _Warning: ImageVector? = null
-    private var _Emergency_home: ImageVector? = null
     private var _Info: ImageVector? = null
 
 }
