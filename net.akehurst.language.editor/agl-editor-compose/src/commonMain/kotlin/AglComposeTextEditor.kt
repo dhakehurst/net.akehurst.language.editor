@@ -19,7 +19,7 @@ package net.akehurst.language.editor.compose
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import net.akehurst.kotlin.compose.editor.ComposableCodeEditor2
+import net.akehurst.kotlin.compose.editor.ComposableCodeEditor3
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.contextAsmSimple
@@ -64,7 +64,7 @@ class AglComposeTextEditor(
     val logFunction: LogFunction = { lvl, prefix, msg, t -> println("$lvl: $prefix - $msg") }
     val languageService = LanguageServiceDirectExecution(logFunction)
 
-    val composableEditor = ComposableCodeEditor2(
+    val composableEditor = ComposableCodeEditor3(
         initialText = initialText
     )
 

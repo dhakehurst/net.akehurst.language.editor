@@ -24,6 +24,7 @@ import androidx.compose.ui.text.TextDecorationLineStyle
 import androidx.compose.ui.text.style.TextDecoration
 import net.akehurst.kotlin.compose.editor.api.AutocompleteItem
 import net.akehurst.kotlin.compose.editor.api.AutocompleteItemDivider
+import net.akehurst.kotlin.compose.editor.api.AutocompleteRequestData
 import net.akehurst.kotlin.compose.editor.api.AutocompleteSuggestion
 import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
 import net.akehurst.kotlin.compose.editor.api.simple.AutocompleteItemSimple
@@ -45,7 +46,7 @@ val PlatformSpanStyle_TextDecorationLineStyle_WAVY get() = PlatformSpanStyle(tex
 fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
     languageService: LanguageService,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
-    processOptions: ()-> ProcessOptions<AsmType, ContextType> ,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction,
@@ -69,7 +70,7 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
 class AglEditorCompose<AsmType : Any, ContextType : Any>(
     languageServiceRequest: LanguageServiceRequest,
     languageDefinition: LanguageDefinition<AsmType, ContextType>,
-    processOptions: ()-> ProcessOptions<AsmType, ContextType> ,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction,
@@ -94,16 +95,17 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
 
     override val completionProvider = object : AglEditorCompletionProvider {
         override fun provide(completionItems: List<CompletionItem>) {
-            _completionsResult?.let {
+            _lastProvidedCompletionItem = completionItems
+            _completionsResult?.let { cmplRes ->
                 val refItems = mutableListOf<AutocompleteItem>()
                 val segmentItems = mutableListOf<AutocompleteItem>()
                 val constItems = mutableListOf<AutocompleteItem>()
                 completionItems.forEach {
                     when (it.kind) {
-                        CompletionItemKind.REFERRED ->  refItems.add(AutocompleteItemSimple(it.text, it.label))
+                        CompletionItemKind.REFERRED -> refItems.add(AutocompleteItemSimple(it.text, it.label))
                         CompletionItemKind.SEGMENT -> segmentItems.add(AutocompleteItemSimple(it.text, it.label))
-                        CompletionItemKind.LITERAL ->  constItems.add(AutocompleteItemSimple(it.text, it.label))
-                        CompletionItemKind.PATTERN ->   constItems.add(AutocompleteItemSimple(it.text, it.label))
+                        CompletionItemKind.LITERAL -> constItems.add(AutocompleteItemSimple(it.text, it.label))
+                        CompletionItemKind.PATTERN -> constItems.add(AutocompleteItemSimple(it.text, it.label))
                     }
                 }
                 val edItems = refItems.toMutableList()
@@ -111,21 +113,25 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
                 edItems.addAll(segmentItems)
                 if (segmentItems.isNotEmpty()) edItems.add(AutocompleteItemDivider)
                 edItems.addAll(constItems)
-                it.provide(edItems)
+                cmplRes.provide(edItems)
                 _completionsResult = null
             }
         }
     }
 
     private var _completionsResult: AutocompleteSuggestion? = null
+    private var _lastProvidedCompletionItem = listOf<CompletionItem>()
     private var _autocompleteDepthMax = 3
     private var _autocompleteDepthIncrement = 0
 
+    // List<(Depth, PropIndex)>
+    private var _autocompletePath = mutableListOf<Pair<Int, Int>>()
+
     fun initialise() {
         this.updateLanguageDefinition(languageDefinition)
-        composeEditor.requestAutocompleteSuggestions = { position, text, result ->
+        composeEditor.requestAutocompleteSuggestions = { request, result ->
             try {
-                requestAutocomplete(position, text, result)
+                requestAutocomplete(request, result)
             } catch (t: Throwable) {
                 logger.logError(t) { "Failed to requestAutocompleteSuggestions" }
             }
@@ -147,7 +153,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         workerTokenizer.refresh()
         //TODO: maybe do this different!
         //FIXME: is 'this.text' the correct value here ?
-        composeEditor.lineStyles = workerTokenizer.aglTokenizer.getAllTokensByLine(text).mapValues { (k,v) ->
+        composeEditor.lineStyles = workerTokenizer.aglTokenizer.getAllTokensByLine(text).mapValues { (k, v) ->
             workerTokenizer.toEditorTokens(v)
         }
         composeEditor.refreshTokens()
@@ -213,20 +219,42 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         }
     }
 
-    fun requestAutocomplete(position: Int, text1: CharSequence, result: AutocompleteSuggestion) {
+    fun requestAutocomplete(request: AutocompleteRequestData, result: AutocompleteSuggestion) {
         logger.logTrace { "AglEditorCompose.requestAutocomplete" }
-        if (composeEditor.autocomplete.isVisible) {
+        if (request.isOpen) {
             // subsequent request
-            composeEditor.autocomplete.clear()
-            _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement + 1)
+            when {
+                +1 == request.proposalPathDelta -> {
+                    if(_autocompletePath.isEmpty()) {
+                        _autocompletePath += Pair(1, -1)
+                    }
+                    val ciId = _lastProvidedCompletionItem.getOrNull(request.currentIndex)?.id
+                    if (null != ciId) {
+                        val last = _autocompletePath.last()
+                        _autocompletePath.removeLast()
+                        _autocompletePath += Pair(last.first, ciId)
+                        _autocompletePath += Pair(1,-1) //TODO: add cur depth here
+                    }
+                }
+                -1 == request.proposalPathDelta -> {
+                    _autocompletePath.removeLast()
+                }
+                else -> { // assume 0
+                    _autocompleteDepthIncrement = maxOf(0, _autocompleteDepthIncrement + request.depthDelta)
+                    _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement)
+                }
+            }
+
         } else {
             // first request
             _autocompleteDepthIncrement = 0
+            _autocompletePath.clear()
         }
         _completionsResult = result
         val options = this.agl.options.invoke()
         options.completionProvider.depth += _autocompleteDepthIncrement
-        languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, nextRequestId, agl.languageIdentity, text, position, options)
+        options.completionProvider.path = _autocompletePath
+        languageServiceRequest.sentenceCodeCompleteRequest(endPointIdentity, nextRequestId, agl.languageIdentity, request.text.toString(), request.position, options)
     }
 
     // --- AglEditorAbstract ---

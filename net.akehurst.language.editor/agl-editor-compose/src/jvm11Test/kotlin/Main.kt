@@ -27,7 +27,6 @@ import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import net.akehurst.kotlin.compose.editor.ComposableCodeEditor2
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor3
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
@@ -207,7 +206,7 @@ styles SQL {
         }
         defr.await()
     }
-
+/*
     @Test
     fun run_ComposableCodeEditor2() = runBlocking {
 
@@ -247,7 +246,7 @@ styles SQL {
         defr.await()
 
     }
-
+*/
     @Test
     fun run_ComposableCodeEditor3b() = runBlocking {
 
@@ -290,7 +289,7 @@ styles SQL {
         defr.await()
 
     }
-
+/*
     @Test
     fun run_ComposableCodeEditor2c() = runBlocking {
 
@@ -343,5 +342,5 @@ styles SQL {
         defr.await()
 
     }
-
+*/
 }

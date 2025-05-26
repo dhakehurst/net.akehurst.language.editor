@@ -113,10 +113,10 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
             if (_autocomplete.isVisible) {
                 _autocomplete.clear()
                 _autocompleteDepthIncrement = minOf(_autocompleteDepthMax, _autocompleteDepthIncrement + 1)
-                invokeAutocomplete()
+                requestAutocomplete()
             } else {
                 _autocompleteDepthIncrement = 0
-                invokeAutocomplete()
+                requestAutocomplete()
             }
         })
         _contextualBalloon = ckEditor.plugins.get(ck.ui.panel.balloon.ContextualBalloon::class.js)
@@ -235,7 +235,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
     }
 
     // ---
-    fun invokeAutocomplete() {
+    fun requestAutocomplete() {
         logger.logTrace { "invokeAutocomplete"}
         val cursorPos = ckEditor.model.document.selection.getFirstPosition() ?: error("Should always be non-null!")
         emi.update(ckEditor.model)
