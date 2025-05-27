@@ -226,7 +226,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
             when {
                 +1 == request.proposalPathDelta -> {
                     if(_autocompletePath.isEmpty()) {
-                        _autocompletePath += Pair(1, -1)
+                        _autocompletePath += Pair(0, -1)
                     }
                     val ciId = _lastProvidedCompletionItem.getOrNull(request.currentIndex)?.id
                     if (null != ciId) {
