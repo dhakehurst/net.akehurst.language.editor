@@ -27,6 +27,7 @@ import net.akehurst.kotlin.compose.editor.api.AutocompleteItemDivider
 import net.akehurst.kotlin.compose.editor.api.AutocompleteRequestData
 import net.akehurst.kotlin.compose.editor.api.AutocompleteSuggestion
 import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
+import net.akehurst.kotlin.compose.editor.api.TextDecorationStyle
 import net.akehurst.kotlin.compose.editor.api.simple.AutocompleteItemSimple
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
@@ -90,6 +91,13 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
 
     //TODO: add setter! - currently cannot 'set' annotatedString in TextFieldState
     val styledText get() = composeEditor.annotatedText
+
+    var errorMessageProvider = { issue: LanguageIssue -> issue.message }
+    var errorMarkerColorProvider = { issue: LanguageIssue -> when(issue.kind) {
+        LanguageIssueKind.INFORMATION -> Color.Blue
+        LanguageIssueKind.WARNING -> EditorIcons.ORANGE
+        LanguageIssueKind.ERROR -> Color.Red
+    } }
 
     override var workerTokenizer = AglTokenizerByWorkerCompose(this.agl, this.logger)
 
@@ -189,30 +197,36 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         logger.logTrace { "AglEditorCompose.createIssueMarkers $issues" }
         try {
             issues.forEach {
-                val pos = it.location?.position ?: 0
-                val len = it.location?.length ?: 2
+                val pos = if (1 == it.location?.length) {
+                    maxOf(0,it.location?.position?.minus(2) ?: 0)
+                } else {
+                    it.location?.position ?: 0
+                }
+                val len = if (1 == it.location?.length) {
+                    4
+                } else {
+                    it.location?.length ?: 4
+                }
                 val line = it.location?.line ?: 1
-                val (icon, colour, style) = when (it.kind) {
-                    LanguageIssueKind.ERROR -> Triple(
+                val colour =  errorMarkerColorProvider(it)
+                val (icon, style) = when (it.kind) {
+                    LanguageIssueKind.ERROR -> Pair(
                         EditorIcons.Error,
-                        Color.Red,
-                        SpanStyle(color = Color.Red, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                        SpanStyle(color = Color.Red)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
                     )
 
-                    LanguageIssueKind.WARNING -> Triple(
+                    LanguageIssueKind.WARNING -> Pair(
                         EditorIcons.Warning,
-                        EditorIcons.ORANGE,
-                        SpanStyle(color = EditorIcons.ORANGE, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                        SpanStyle(color = EditorIcons.ORANGE)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
                     )
 
-                    LanguageIssueKind.INFORMATION -> Triple(
+                    LanguageIssueKind.INFORMATION -> Pair(
                         EditorIcons.Information,
-                        Color.Blue,
-                        SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                        SpanStyle(color = Color.Blue)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
                     )
                 }
-                composeEditor.addMarginItem(line - 1, it.kind.toString(), it.message, icon, colour)
-                composeEditor.addTextMarker(pos, len, style)
+                composeEditor.addMarginItem(line - 1, it.kind.toString(), errorMessageProvider(it), icon, colour)
+                composeEditor.addTextMarker(pos, len, style, TextDecorationStyle.SQUIGGLY)
             }
         } catch (t: Throwable) {
             logger.logError(t) { "AglEditorCompose.exception during clearIssueMarkers: " }
@@ -229,7 +243,9 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
                         _autocompletePath += Pair(0, -1)
                     }
                     val ciId = _lastProvidedCompletionItem.getOrNull(request.currentIndex)?.id
-                    if (null != ciId) {
+                    if (null == ciId) {
+                        return //do not expand further
+                    } else {
                         val last = _autocompletePath.last()
                         _autocompletePath.removeLast()
                         _autocompletePath += Pair(last.first, ciId)
