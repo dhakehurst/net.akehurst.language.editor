@@ -24,7 +24,7 @@ import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.style.api.AglStyleRule
 
 data class HtmlStyle(override val identity: EditorStyleIdentity) : EditorStyle {
-    var css: String = ""
+    var css: Map<String,String> = mutableMapOf()
     var isBold: Boolean = false
     var isItalic: Boolean = false
 }
@@ -88,9 +88,9 @@ class AglStyleHandlerAsHtml(
                 else -> Pair(oldStyle.name, oldStyle.value)
             }
         }
-        val css = mergedCss.map { (k, v) -> "$k:$v;" }.joinToString(separator = "")
+        //val css = mergedCss.map { (k, v) -> "$k:$v;" }.joinToString(separator = "")
         editorStyles.forEach { style ->
-            style.css = css
+            style.css = mergedCss
             style.isBold = mergedIsBold
             style.isItalic = mergedIsItalic
         }
@@ -112,7 +112,8 @@ class AglStyleHandlerAsHtml(
     private fun applyStyle(text: String, styles: List<EditorStyleIdentity>): String {
         val sb = StringBuilder()
         val edStyles = styles.mapNotNull { this.editorStyleFor(it) }
-        val cssStyle = edStyles.joinToString(separator = "") { it.css }
+        val merged = edStyles.fold(mapOf<String, String>()) { acc, it -> acc.plus(it.css) }
+        val cssStyle = merged.entries.joinToString(separator = "") { (k,v) -> "$k:$v;" }
         var wrappedText = encodeForHtml(text)
         if (edStyles.any { it.isBold }) {
             wrappedText = "<b>$wrappedText</b>"

@@ -212,17 +212,17 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
                 val (icon, style) = when (it.kind) {
                     LanguageIssueKind.ERROR -> Pair(
                         EditorIcons.Error,
-                        SpanStyle(color = Color.Red)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                        SpanStyle(color = colour)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
                     )
 
                     LanguageIssueKind.WARNING -> Pair(
                         EditorIcons.Warning,
-                        SpanStyle(color = EditorIcons.ORANGE)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                        SpanStyle(color = colour)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
                     )
 
                     LanguageIssueKind.INFORMATION -> Pair(
                         EditorIcons.Information,
-                        SpanStyle(color = Color.Blue)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
+                        SpanStyle(color = colour)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
                     )
                 }
                 composeEditor.addMarginItem(line - 1, it.kind.toString(), errorMessageProvider(it), icon, colour)
