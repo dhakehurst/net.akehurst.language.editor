@@ -157,7 +157,7 @@ class AglLanguageServiceByWorker(
                 is MessageParseResult -> endPoint.sentenceParseResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, deserialiseParseTree(msg.treeSerialised))
                 is MessageSyntaxAnalysisResult -> endPoint.sentenceSyntaxAnalysisResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.asm)
                 is MessageSemanticAnalysisResult -> endPoint.sentenceSemanticAnalysisResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.asm)
-                is MessageCodeCompleteResult -> endPoint.sentenceCodeCompleteResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.completionItems)
+                is MessageCodeCompleteResult -> endPoint.sentenceCodeCompleteResponse(msg.endPoint, msg.requestId, msg.status, msg.message, msg.issues, msg.offset,msg.completionItems)
                 else -> error("Unknown Message type")
             }
         } else {

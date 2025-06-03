@@ -167,7 +167,7 @@ styles SQL {
     }    
     CREATE,TABLE,SELECT,UPDATE,DELETE,INSERT,INTO,FROM,VALUES,SET {
       foreground: chocolate;
-      font-style: bold;
+      font-weight: bold;
     }
 }
         """

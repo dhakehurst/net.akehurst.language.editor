@@ -22,7 +22,9 @@ import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
+import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
+import net.akehurst.language.api.syntaxAnalyser.LocationMap
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglStyleHandlerCssClass
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
@@ -140,10 +142,11 @@ class LanguageServiceResponseDirectExecution(
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
+        offset:Int,
         completionItems: List<CompletionItem>
     ) {
         logger.logTrace { "sentenceCodeCompleteResponse $endPointIdentity, $requestId, $status, $message, $issues, $completionItems" }
-        responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, requestId, status, message, issues, completionItems)
+        responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, requestId, status, message, issues, offset, completionItems)
     }
 }
 
@@ -249,9 +252,9 @@ open class LanguageServiceRequestDirectExecution(
             val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '${languageId}' not found, was it created correctly?")
             val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
             val result = proc.expectedItemsAt(sentence, position, processOptions)
-            response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.issues.all.toList(), result.items)
+            response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.issues.all.toList(), result.offset, result.items)
         } catch (t: Throwable) {
-            response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), emptyList())
+            response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), 0, emptyList())
         }
     }
 
@@ -468,13 +471,13 @@ open class LanguageServiceRequestDirectExecution(
                     emptyList(),
                     null
                 )
-                SyntaxAnalysisResultDefault(null, IssueHolder(LanguageProcessorPhase.SYNTAX_ANALYSIS), emptyMap())
+                SyntaxAnalysisResultDefault(null, IssueHolder(LanguageProcessorPhase.SYNTAX_ANALYSIS), LocationMapDefault())
             }
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Exception during syntaxAnalysis - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
             response.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, msg, emptyList(), null)
-            SyntaxAnalysisResultDefault(null, IssueHolder(LanguageProcessorPhase.SYNTAX_ANALYSIS), emptyMap())
+            SyntaxAnalysisResultDefault(null, IssueHolder(LanguageProcessorPhase.SYNTAX_ANALYSIS), LocationMapDefault())
         }
     }
 
@@ -485,7 +488,7 @@ open class LanguageServiceRequestDirectExecution(
         proc: LanguageProcessor<AsmType, ContextType>,
         options: ProcessOptions<AsmType, ContextType>,
         asm: AsmType,
-        locationMap: Map<Any, InputLocation>
+        locationMap: LocationMap
     ) {
         logger.logTrace { "semanticAnalysis $endPointIdentity, $languageId" }
         try {

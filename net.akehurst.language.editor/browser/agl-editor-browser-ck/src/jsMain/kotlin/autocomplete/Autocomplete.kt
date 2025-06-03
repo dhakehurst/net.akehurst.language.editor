@@ -152,7 +152,7 @@ class CkAutocomplete(
     }
 
     // --- AglEditorCompletionProvider ---
-    override fun provide(completionItems: List<CompletionItem>) {
+    override fun provide(offset:Int, completionItems: List<CompletionItem>) {
         try {
             logger.logTrace { "Provided ${completionItems.size} items." }
             for (item in completionItems) {

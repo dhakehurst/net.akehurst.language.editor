@@ -102,7 +102,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     override var workerTokenizer = AglTokenizerByWorkerCompose(this.agl, this.logger)
 
     override val completionProvider = object : AglEditorCompletionProvider {
-        override fun provide(completionItems: List<CompletionItem>) {
+        override fun provide(offset:Int, completionItems: List<CompletionItem>) {
             _lastProvidedCompletionItem = completionItems
             _completionsResult?.let { cmplRes ->
                 val refItems = mutableListOf<AutocompleteItem>()
@@ -110,10 +110,10 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
                 val constItems = mutableListOf<AutocompleteItem>()
                 completionItems.forEach {
                     when (it.kind) {
-                        CompletionItemKind.REFERRED -> refItems.add(AutocompleteItemSimple(it.text, it.label))
-                        CompletionItemKind.SEGMENT -> segmentItems.add(AutocompleteItemSimple(it.text, it.label))
-                        CompletionItemKind.LITERAL -> constItems.add(AutocompleteItemSimple(it.text, it.label))
-                        CompletionItemKind.PATTERN -> constItems.add(AutocompleteItemSimple(it.text, it.label))
+                        CompletionItemKind.REFERRED -> refItems.add(AutocompleteItemSimple(it.text, offset, it.label))
+                        CompletionItemKind.SEGMENT -> segmentItems.add(AutocompleteItemSimple(it.text,offset, it.label))
+                        CompletionItemKind.LITERAL -> constItems.add(AutocompleteItemSimple(it.text, offset,it.label))
+                        CompletionItemKind.PATTERN -> constItems.add(AutocompleteItemSimple(it.text, offset,it.label))
                     }
                 }
                 val edItems = refItems.toMutableList()
@@ -164,7 +164,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         composeEditor.lineStyles = workerTokenizer.aglTokenizer.getAllTokensByLine(text).mapValues { (k, v) ->
             workerTokenizer.toEditorTokens(v)
         }
-        composeEditor.refreshTokens()
+//        composeEditor.refreshTokens() //calling this causes undo/redo to stop working
     }
 
     override fun destroyBaseEditor() {

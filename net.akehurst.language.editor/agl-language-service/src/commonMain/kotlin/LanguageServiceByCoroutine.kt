@@ -162,9 +162,10 @@ open class LanguageServiceByCoroutine(
             status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
+            offset: Int,
             completionItems: List<CompletionItem>
         ) {
-            responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, requestId, status, message, issues, completionItems)
+            responseObjects[endPointIdentity]?.sentenceCodeCompleteResponse(endPointIdentity, requestId, status, message, issues, offset, completionItems)
         }
     }
 

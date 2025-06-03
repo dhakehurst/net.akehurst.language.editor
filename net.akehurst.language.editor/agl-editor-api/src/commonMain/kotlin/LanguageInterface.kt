@@ -75,6 +75,7 @@ interface LanguageServiceResponse {
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
+        offset: Int,
         completionItems: List<CompletionItem>
     )
 }

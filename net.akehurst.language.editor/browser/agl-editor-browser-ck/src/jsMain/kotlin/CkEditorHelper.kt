@@ -34,11 +34,10 @@ object CkEditorHelper {
             //create style for foreground colour //TODO
             //create style for background colour //TODO
 
-
             //create style for bold
             // TODO: maybe support font-weight by number as ck.Bold does - see CK code
             val boldViewStyle = objectJS {}
-            boldViewStyle["font-style"] = "bold"
+            boldViewStyle["font-weight"] = "bold"
             attributeToElement(ckEditor, ATTRIBUTE_NAME_STYLE_BOLD, objectJS {
                 model = ATTRIBUTE_NAME_STYLE_BOLD
                 view = "b"

@@ -198,7 +198,7 @@ interface AglEditorCompletionProvider {
     /**
      * does editor specific provision
      */
-    fun provide(completionItems: List<CompletionItem>)
+    fun provide(offset:Int, completionItems: List<CompletionItem>)
 }
 
 interface AglStyleHandler<EditorStyleType : Any> {

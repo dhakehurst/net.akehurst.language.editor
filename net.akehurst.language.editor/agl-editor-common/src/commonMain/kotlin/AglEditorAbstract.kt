@@ -415,6 +415,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
+        offset: Int,
         completionItems: List<CompletionItem>
     ) {
         logger.logTrace { "sentenceCodeCompleteResponse $endPointIdentity, $requestId, $status, $message, $issues, $completionItems" }
@@ -422,16 +423,16 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
             MessageResponseStatus.RECEIVED -> logger.logTrace { "CodeCompletion RECEIVED" }
             MessageResponseStatus.IGNORED -> {
                 logger.logTrace { "CodeCompletion IGNORED" };
-                this.completionProvider.provide(emptyList())
+                this.completionProvider.provide(offset, emptyList())
             }
 
             MessageResponseStatus.SUCCESS -> {
-                this.completionProvider.provide(completionItems)
+                this.completionProvider.provide(offset, completionItems)
             }
 
             MessageResponseStatus.FAILURE -> {
                 logger.logError { "CodeCompletion FAILURE: $message" };
-                this.completionProvider.provide(emptyList())
+                this.completionProvider.provide(offset, emptyList())
             }
         }
     }

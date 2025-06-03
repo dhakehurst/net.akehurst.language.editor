@@ -22,11 +22,27 @@ import net.akehurst.language.editor.api.EditorStyle
 import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.style.api.AglStyleRule
+import net.akehurst.language.style.processor.AglStyle
 
 data class HtmlStyle(override val identity: EditorStyleIdentity) : EditorStyle {
-    var css: Map<String,String> = mutableMapOf()
-    var isBold: Boolean = false
-    var isItalic: Boolean = false
+    var css: Map<String, String> = mutableMapOf()
+    var isBold: Boolean? = null
+    var isItalic: Boolean? = null
+}
+
+data class CssToken(
+    var css: Map<String, String>,
+    var isBold: Boolean?,
+    var isItalic: Boolean?,
+    val position: Int,
+    val length: Int
+) {
+    fun styleMatches(other: CssToken): Boolean {
+        if (this.isBold != other.isBold) return false
+        if (this.isItalic != other.isItalic) return false
+        if (this.css != other.css) return false
+        return true
+    }
 }
 
 class AglStyleHandlerAsHtml(
@@ -73,15 +89,21 @@ class AglStyleHandlerAsHtml(
     override fun createEditorStyleType(identity: EditorStyleIdentity): HtmlStyle = HtmlStyle(identity)
     override fun updateEditorStyles(editorStyles: List<HtmlStyle>, sr: AglStyleRule) {
         val mergedCss = mutableMapOf<String, String>()
-        var mergedIsBold = false
-        var mergedIsItalic = false
+        var mergedIsBold: Boolean? = null
+        var mergedIsItalic: Boolean? = null
         sr.declaration.values.forEach { oldStyle ->
             when (oldStyle.name) {
                 "foreground" -> mergedCss["color"] = oldStyle.value
                 "background" -> mergedCss["background-color"] = oldStyle.value
                 "font-style" -> when (oldStyle.value) {
-                    "bold" -> mergedIsBold = true
                     "italic" -> mergedIsItalic = true
+                    "normal" -> mergedIsItalic = false
+                    else -> Pair(oldStyle.name, oldStyle.value)
+                }
+
+                "font-weight" -> when (oldStyle.value) {
+                    "bold" -> mergedIsBold = true
+                    "normal" -> mergedIsBold = false
                     else -> Pair(oldStyle.name, oldStyle.value)
                 }
 
@@ -96,29 +118,69 @@ class AglStyleHandlerAsHtml(
         }
     }
 
-    fun applyHtmlStyling(sentence: Sentence, lineTokens: List<AglToken>): String = when {
-        lineTokens.isEmpty() -> ""
+    fun applyHtmlStyling(sentence: Sentence, tokens: List<AglToken>): String = when {
+        tokens.isEmpty() -> ""
         else -> {
+            val styledTokens = tokens.map { toCssStyle(it) }
+            val merged = mergeStyles(styledTokens)
             val sb = StringBuilder()
-            for (tok in lineTokens) {
+            for (tok in merged) {
                 val txt = sentence.textAt(tok.position, tok.length)
-                val styled = applyStyle(txt, tok.styles)
+                val styled = applyStyle(txt, tok)
                 sb.append(styled)
             }
             sb.toString()
         }
     }
 
-    private fun applyStyle(text: String, styles: List<EditorStyleIdentity>): String {
-        val sb = StringBuilder()
-        val edStyles = styles.mapNotNull { this.editorStyleFor(it) }
+    private fun toCssStyle(token: AglToken): CssToken {
+        val edStyles = token.styles.mapNotNull { this.editorStyleFor(it) }
         val merged = edStyles.fold(mapOf<String, String>()) { acc, it -> acc.plus(it.css) }
-        val cssStyle = merged.entries.joinToString(separator = "") { (k,v) -> "$k:$v;" }
+        val fontStyle: Boolean? = edStyles.fold(null) { acc, it -> it.isItalic ?: acc }
+        val fontWeight: Boolean? = edStyles.fold(null) { acc, it -> it.isBold ?: acc }
+        return CssToken(
+            css = merged,
+            isBold = fontWeight,
+            isItalic = fontStyle,
+            position = token.position,
+            length = token.length
+        )
+    }
+
+    private fun mergeStyles(tokens: List<CssToken>): List<CssToken> {
+        val merged = mutableListOf<CssToken>()
+        var last = tokens.first()
+        for (i in 1 until tokens.size) {
+            val tok = tokens[i]
+            when {
+                tok.styleMatches(last) -> {
+                    last = CssToken(
+                        last.css,
+                        last.isBold,
+                        last.isItalic,
+                        last.position,
+                        tok.length + last.length
+                    )
+                }
+
+                else -> {
+                    merged.add(last)
+                    last = tok
+                }
+            }
+        }
+        merged.add(last)
+        return merged
+    }
+
+    private fun applyStyle(text: String, style: CssToken): String {
+        val sb = StringBuilder()
+        val cssStyle = style.css.entries.joinToString(separator = "") { (k, v) -> "$k:$v;" }
         var wrappedText = encodeForHtml(text)
-        if (edStyles.any { it.isBold }) {
+        if (true == style.isBold) {
             wrappedText = "<b>$wrappedText</b>"
         }
-        if (edStyles.any { it.isItalic }) {
+        if (true == style.isItalic) {
             wrappedText = "<i>$wrappedText</i>"
         }
         val styledText = when {

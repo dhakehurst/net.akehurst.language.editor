@@ -58,8 +58,14 @@ class AglStyleHandlerComposeStyle(
                 }
 
                 "font-style" -> when (oldStyle.value) {
-                    "bold" -> fontWeight = FontWeight.Bold
+                    "normal" -> fontStyle = FontStyle.Normal
                     "italic" -> fontStyle = FontStyle.Italic
+                    else -> Unit
+                }
+
+                "font-weight" -> when (oldStyle.value) {
+                    "bold" -> fontWeight = FontWeight.Bold
+                    "normal" -> fontWeight = FontWeight.Normal
                     else -> Unit
                 }
 
@@ -83,10 +89,11 @@ class AglStyleHandlerComposeStyle(
                 val digits = this.removePrefix("#")
                 val num = when (digits.length) {
                     8 -> digits.toLong(16)
-                    else ->  digits.toLong(16) or 0x00000000FF000000
+                    else -> digits.toLong(16) or 0x00000000FF000000
                 }
                 Color(num)
             }
+
             else -> {
                 val lower = this.lowercase()
                 CssColours.NAME_to_HEX[lower]?.let {

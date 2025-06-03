@@ -53,11 +53,15 @@ class AglStyleHandlerCkStyle(
                 }
 
                 "font-style" -> when (oldStyle.value) {
-                    "bold" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_BOLD, true)
+                    "normal" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_ITALIC, false)
                     "italic" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_ITALIC, true)
                     else -> Pair(oldStyle.name, oldStyle.value)
                 }
-
+                "font-weight" -> when (oldStyle.value) {
+                    "bold" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_BOLD, true)
+                    "normal" -> Pair(CkEditorHelper.ATTRIBUTE_NAME_STYLE_BOLD, false)
+                    else -> Pair(oldStyle.name, oldStyle.value)
+                }
                 else -> Pair(oldStyle.name, oldStyle.value)
             }
         }

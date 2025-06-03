@@ -16,13 +16,17 @@
 
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.editor.api.EditorStyleIdentity
+import net.akehurst.language.sentence.common.SentenceDefault
+import net.akehurst.language.style.builder.styleModel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class test_AglStyleHandlerAsHtml {
 
     @Test
-    fun decodeFromHtml() {
+    fun decodeFromHtml1() {
         val encodedHtml = "&lt; Max Valve Position AND Thermostat Head's Valve Position &amp;gt;"
         val actual = AglStyleHandlerAsHtml.decodeFromHtml(encodedHtml)
 
@@ -52,4 +56,81 @@ class test_AglStyleHandlerAsHtml {
 
         assertEquals(expected, actual)
     }
+
+    @Test
+    fun encodeForHtml2() {
+        val text = """
+            The External System definition Radiator accepts the transition
+            from state Completely Closed Valve to state Partially Open Valve
+            when the event Thermostat Head's Valve Position < Max Valve
+            Position AND Thermostat Head's Valve Position > Min Valve
+            Position becomes true occurs.
+        """
+        val actual = AglStyleHandlerAsHtml.encodeForHtml(text)
+        val expected = """
+            The External System definition Radiator accepts the transition
+            from state Completely Closed Valve to state Partially Open Valve
+            when the event Thermostat Head's Valve Position &lt; Max Valve
+            Position AND Thermostat Head's Valve Position &amp;gt; Min Valve
+            Position becomes true occurs.
+        """
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun applyHtmlStyling__aaaaa_as_1_token() {
+        // given
+        val sentence = SentenceDefault("aaaaa", 0)
+        val tokens = listOf(
+            AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 0, 5)
+        )
+        val styleModel = styleModel("Test") {
+            namespace("test") {
+                styles("Test") {
+                    tagRule("aaaaa") {
+                        declaration("foreground", "red")
+                    }
+                }
+            }
+        }
+
+        // when
+        val sut = AglStyleHandlerAsHtml(LanguageIdentity("test"))
+        sut.updateStyleModel(styleModel)
+        val actual = sut.applyHtmlStyling(sentence, tokens)
+
+        // then
+        val expected = "<span style='color:red;'>aaaaa</span>"
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun applyHtmlStyling__aaaaa_as_2_tokens() {
+        // given
+        val sentence = SentenceDefault("aaaaa", 0)
+        val tokens = listOf(
+            AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 0, 3),
+            AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 3, 2)
+        )
+        val styleModel = styleModel("Test") {
+            namespace("test") {
+                styles("Test") {
+                    tagRule("aaaaa") {
+                        declaration("foreground", "red")
+                    }
+                }
+            }
+        }
+
+        // when
+        val sut = AglStyleHandlerAsHtml(LanguageIdentity("test"))
+        sut.updateStyleModel(styleModel)
+        val actual = sut.applyHtmlStyling(sentence, tokens)
+
+        // then
+        val expected = "<span style='color:red;'>aaaaa</span>"
+        assertEquals(expected, actual)
+    }
+
 }

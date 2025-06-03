@@ -60,11 +60,15 @@ open class AglStyleHandlerCssClass(
                 "foreground" -> Pair("color", oldStyle.value)
                 "background" -> Pair("background-color", oldStyle.value)
                 "font-style" -> when (oldStyle.value) {
-                    "bold" -> Pair("font-weight", oldStyle.value)
                     "italic" -> Pair("font-style", oldStyle.value)
+                    "normal" -> Pair("font-style", oldStyle.value)
                     else -> Pair(oldStyle.name, oldStyle.value)
                 }
-
+                "font-weight" -> when (oldStyle.value) {
+                    "bold" -> Pair("font-weight", oldStyle.value)
+                    "normal" -> Pair("font-weight", oldStyle.value)
+                    else -> Pair(oldStyle.name, oldStyle.value)
+                }
                 else -> Pair(oldStyle.name, oldStyle.value)
             }
         })

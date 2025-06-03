@@ -57,7 +57,7 @@ internal class AglCompletionProviderCodeMirror<AsmType : Any, ContextType : Any>
     }
 
 
-    override fun provide(completionItems: List<CompletionItem>) {
+    override fun provide(offset:Int, completionItems: List<CompletionItem>) {
         val promise = promiseQueue.removeFirstOrNull()
         when (promise) {
             null -> Unit //should not happen!

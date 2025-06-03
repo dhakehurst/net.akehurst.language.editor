@@ -315,6 +315,7 @@ data class MessageCodeCompleteResult(
     override val status: MessageResponseStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
+    val offset: Int,
     val completionItems: List<CompletionItem>
 ) : AglWorkerMessageResponse("MessageCodeCompleteResult")
 
