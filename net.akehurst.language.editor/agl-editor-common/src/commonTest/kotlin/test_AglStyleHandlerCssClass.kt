@@ -41,7 +41,7 @@ class test_AglStyleHandlerCssClass {
                 }
             """
         ).let {
-            assertTrue(it.issues.errors.isEmpty(), it.issues.toString())
+            assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
         }
 
@@ -65,7 +65,7 @@ class test_AglStyleHandlerCssClass {
                 }
             """
         ).let {
-            assertTrue(it.issues.errors.isEmpty(), it.issues.toString())
+            assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
         }
 

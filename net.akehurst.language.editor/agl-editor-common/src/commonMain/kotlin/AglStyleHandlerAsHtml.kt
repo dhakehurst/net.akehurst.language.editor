@@ -17,6 +17,7 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ResolvedReference
 import net.akehurst.language.editor.api.AglToken
 import net.akehurst.language.editor.api.EditorStyle
 import net.akehurst.language.editor.api.EditorStyleIdentity
@@ -63,11 +64,11 @@ class AglStyleHandlerAsHtml(
 
         /**
          * encode HTML special characters
-         * * `&` -> `&amp;`</li>
-         * * `<` -> `&lt;`</li>
-         * * `>` -> `&gt;`</li>
-         * * `"` -> `&quot;`</li>
-         * * `'` -> `&apos;`</li>
+         * * `&` -> `&amp;`
+         * * `<` -> `&lt;`
+         * * `>` -> `&gt;`
+         * * `"` -> `&quot;`
+         * * `'` -> `&apos;`
          */
         fun encodeForHtml(str: String) = str.replace(REGEX_MATCH_SPECIAL) { mr ->
             val matched = mr.value
@@ -118,7 +119,7 @@ class AglStyleHandlerAsHtml(
         }
     }
 
-    fun applyHtmlStyling(sentence: Sentence, tokens: List<AglToken>): String = when {
+    fun applyHtmlStyling(sentence: Sentence, tokens: List<AglToken>, references:List<ResolvedReference>): String = when {
         tokens.isEmpty() -> ""
         else -> {
             val styledTokens = tokens.map { toCssStyle(it) }

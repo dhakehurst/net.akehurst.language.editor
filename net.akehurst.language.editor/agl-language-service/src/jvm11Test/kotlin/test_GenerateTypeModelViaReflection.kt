@@ -12,7 +12,7 @@ import net.akehurst.language.editor.language.service.messages.EditorMessage
 import net.akehurst.language.scope.processor.AglScope
 import net.akehurst.language.style.processor.AglStyle
 import net.akehurst.language.typemodel.api.TypeModel
-import net.akehurst.language.typemodel.processor.AglTypemodel
+import net.akehurst.language.typemodel.processor.AglTypes
 import kotlin.test.Test
 
 class test_GenerateTypeModelViaReflection {
@@ -21,16 +21,16 @@ class test_GenerateTypeModelViaReflection {
 
     fun gen_messages(): Pair<TypeModel, List<QualifiedName>> {
         val added = (
-                AglStyle.typeModel.namespace +
+                AglStyle.typesModel.namespace +
                         AglAsm.typeModel.namespace +
                         AglScope.typeModel.namespace +
-                        AglTypemodel.typeModel.namespace
+                        AglTypes.typesModel.namespace
                 ).toSet().toList()
         val gen = GenerateTypeModelViaReflection(
             SimpleName("Test"),
             added,
             GenerateTypeModelViaReflection.KOTLIN_TO_AGL,
-            listOf(EditorMessage.komposite, AglAsm.komposite, AglScope.komposite, AglTypemodel.kompositeString)
+            listOf(EditorMessage.komposite, AglAsm.komposite, AglScope.komposite, AglTypes.kompositeString)
         )
 
 //        gen.addPackage("net.akehurst.language.api.parser")

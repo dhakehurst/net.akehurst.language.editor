@@ -18,7 +18,6 @@ package net.akehurst.language.editor.common
 
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.simple.ContextAsmSimple
 import net.akehurst.language.agl.simple.ContextWithScope
 import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.GrammarString
@@ -185,7 +184,7 @@ class test_AglWorkerSerialisation {
                     }
             """.trimIndent()
         )
-        assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
+        assertTrue(result.allIssues.errors.isEmpty(), result.allIssues.toString())
         val input = result.asm!!
 
         test(input) { expected, actual ->
@@ -196,12 +195,14 @@ class test_AglWorkerSerialisation {
     @Test
     fun ContextSimple_serialise_deserialise() {
         val input = contextAsmSimple {
-            scope("a1", "A", "/a1")
-            item("b1", "B", null,"/a1/b1")
-            scopedItem("c1", "C",null, "/c1") {
-                scope("a1", "A", "/c1/a1")
-                item("b1", "B", null,"/c1/a1/b1")
-                scopedItem("c1", "C", null,"/c1/c1") {}
+            forSentence(null) {
+                scope("a1", "A")
+                item("b1", "B", null, "/a1/b1")
+                scopedItem("c1", "C", null, "/c1") {
+                    scope("a1", "A")
+                    item("b1", "B", null, "/c1/a1/b1")
+                    scopedItem("c1", "C", null, "/c1/c1") {}
+                }
             }
         }
 
@@ -221,7 +222,7 @@ class test_AglWorkerSerialisation {
                     }
             """.trimIndent()
         )
-        assertTrue(result.issues.errors.isEmpty(), result.issues.toString())
+        assertTrue(result.allIssues.errors.isEmpty(), result.allIssues.toString())
         val tm = typeModel("Test", true) {
             namespace("ns") {
                 data("Root")
@@ -231,7 +232,7 @@ class test_AglWorkerSerialisation {
                 }
             }
         }
-        val context = ContextAsmSimple()
+        val context = ContextWithScope<Any,Any>()
         val input: Asm = asmSimple(typeModel = tm, crossReferenceModel = result.asm!!, context = context) {
             element("Root") {
                 propertyElementExplicitType("content", "Elem1") {
@@ -346,7 +347,7 @@ class test_AglWorkerSerialisation {
     // --- MessageProcessRequest ---
     @Test
     fun MessageProcessRequest_com_empty_ContextSimple() {
-        val context = ContextAsmSimple()
+        val context = ContextWithScope<Any,Any>()
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), RequestIdentity(1),
             languageId,
@@ -361,7 +362,7 @@ class test_AglWorkerSerialisation {
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         println(jsonStr)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmSimple>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextWithScope<Any,Any>>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
@@ -452,7 +453,7 @@ class test_AglWorkerSerialisation {
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmSimple>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextWithScope<Any,Any>>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
@@ -807,7 +808,7 @@ class test_AglWorkerSerialisation {
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
         println(jsonStr)
-        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextAsmSimple>>(jsonStr)
+        val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextWithScope<Any,Any>>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)

@@ -177,9 +177,9 @@ abstract class AglWorkerAbstract {
             val styleMdl = result.asm
             if (null != styleMdl) {
                 styleHndlr.updateStyleModel(styleMdl)
-                sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl))
+                sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.SUCCESS, "OK", result.allIssues.all.toList(), styleMdl))
             } else {
-                sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.FAILURE, "Invalid Style", result.issues.all.toList(), null))
+                sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.FAILURE, "Invalid Style", result.allIssues.all.toList(), null))
             }
         } catch (t: Throwable) {
             sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.FAILURE, t.message ?: "", emptyList(), null))
@@ -344,7 +344,7 @@ abstract class AglWorkerAbstract {
                                 val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
                                 val res = TransformDomainDefault.fromGrammarModel(ld.grammarModel!!)
                                 val trfm = when {
-                                    res.issues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
+                                    res.allIssues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
                                     else -> TODO()
                                 }
                                 val tm = trfm.typeModel ?: error("No TypeModel found in TransformModel")

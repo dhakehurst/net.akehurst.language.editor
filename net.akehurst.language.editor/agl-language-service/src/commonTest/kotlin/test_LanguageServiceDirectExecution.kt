@@ -1,5 +1,6 @@
 package net.akehurst.language.editor.common
 
+import net.akehurst.kotlinx.logging.api.LogLevel
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -31,6 +32,10 @@ class test_LanguageServiceDirectExecution {
                 println("sentenceLineTokensResponse: $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens")
             }
 
+            override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
+                println("sentenceScanResponse: $endPointIdentity, $requestId, $status, $message, $issues")
+            }
+
             override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
                 println("sentenceParseResponse: $endPointIdentity, $status, $requestId, $message, $issues, $tree")
             }
@@ -43,7 +48,15 @@ class test_LanguageServiceDirectExecution {
                 println("sentenceSemanticAnalysisResponse: $endPointIdentity, $requestId, $status, $message, $issues, $asm")
             }
 
-            override fun sentenceCodeCompleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, completionItems: List<CompletionItem>) {
+            override fun sentenceCodeCompleteResponse(
+                endPointIdentity: EndPointIdentity,
+                requestId: RequestIdentity<*>,
+                status: MessageResponseStatus,
+                message: String,
+                issues: List<LanguageIssue>,
+                offset: Int,
+                completionItems: List<CompletionItem>
+            ) {
                 println("sentenceCodeCompleteResponse: $endPointIdentity, $requestId, $status, $message, $issues, $completionItems")
             }
 

@@ -31,7 +31,7 @@ grammar Test {
         }
 
         val asm = proc.process(sentence).let {
-            assertTrue(it.issues.errors.isEmpty(), it.issues.toString())
+            assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
         }
         println(asm.asString())

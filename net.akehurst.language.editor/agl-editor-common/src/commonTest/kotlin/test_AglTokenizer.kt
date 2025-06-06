@@ -52,7 +52,7 @@ class test_AglTokenizer {
         """.trimIndent()
 
         val styleMdl = Agl.registry.agl.style.processor!!.process(styleStr).let {
-            assertTrue(it.issues.errors.isEmpty(), it.issues.toString())
+            assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
         }
 

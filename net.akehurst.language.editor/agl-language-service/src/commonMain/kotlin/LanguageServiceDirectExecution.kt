@@ -46,7 +46,7 @@ import net.akehurst.language.transform.asm.TransformDomainDefault
 class LanguageServiceDirectExecution(
     logFunction: LogFunction
 ) : LanguageService {
-    //val logger = AglEditorLogger("LanguageServiceDirectExecution", logFunction)
+
     val response = LanguageServiceResponseDirectExecution(logFunction)
     override val request: LanguageServiceRequest = LanguageServiceRequestDirectExecution(response, logFunction)
 
@@ -209,9 +209,9 @@ open class LanguageServiceRequestDirectExecution(
             val styleMdl = result.asm
             if (null != styleMdl) {
                 styleHndlr.updateStyleModel(styleMdl)
-                response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.issues.all.toList(), styleMdl)
+                response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.allIssues.all.toList(), styleMdl)
             } else {
-                response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, "Error in style string", result.issues.all.toList(), null)
+                response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, "Error in style string", result.allIssues.all.toList(), null)
             }
         } catch (t: Throwable) {
             response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), null)
