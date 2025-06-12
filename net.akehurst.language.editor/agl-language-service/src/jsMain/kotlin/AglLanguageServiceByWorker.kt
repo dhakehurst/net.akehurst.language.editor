@@ -40,7 +40,7 @@ class AglLanguageServiceByWorker(
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
         override fun processorCreateRequest(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             languageId: LanguageIdentity,
             grammarStr: GrammarString,
             typeModelStr: TypesString?,
@@ -51,21 +51,21 @@ class AglLanguageServiceByWorker(
             sendToWorker(MessageProcessorCreate(endPointIdentity, requestId, languageId, grammarStr.value, typeModelStr?.value, asmTransformStr?.value, crossReferenceModelStr?.value, editorOptions))
         }
 
-        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity) {
+        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity) {
             TODO("not implemented")
         }
 
-        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, styleStr: StyleString) {
+        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
             sendToWorker(MessageSetStyle(endPointIdentity, requestId, languageId, styleStr.value))
         }
 
-        override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, reason: String) {
+        override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, reason: String) {
             sendToWorker(MessageParserInterruptRequest(endPointIdentity, requestId, languageId, reason))
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             languageId: LanguageIdentity,
             sentence: String,
             processOptions: ProcessOptions<AsmType, ContextType>
@@ -75,7 +75,7 @@ class AglLanguageServiceByWorker(
 
         override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             languageId: LanguageIdentity,
             text: String,
             position: Int,

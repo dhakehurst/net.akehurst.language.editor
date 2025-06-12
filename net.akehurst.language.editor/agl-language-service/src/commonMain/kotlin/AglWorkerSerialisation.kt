@@ -20,6 +20,7 @@ import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
 import net.akehurst.language.asm.simple.AglAsm
 import net.akehurst.language.base.processor.AglBase
+import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.grammar.processor.AglGrammar
 import net.akehurst.language.typemodel.processor.AglTypes
 import net.akehurst.language.expressions.processor.AglExpressions
@@ -27,6 +28,7 @@ import net.akehurst.language.reference.processor.AglCrossReference
 import net.akehurst.language.style.processor.AglStyle
 import net.akehurst.language.scope.processor.AglScope
 import net.akehurst.language.typemodel.api.TypeModel
+import net.akehurst.language.typemodel.asm.StdLibDefault
 import net.akehurst.language.typemodel.builder.typeModel
 
 //
@@ -63,6 +65,7 @@ object AglWorkerSerialisation {
 //            initialiseMessages()
 //            initialiseAsmSimple()
             serialiser.registry.resolveImports()
+            serialiser.registerPrimitiveAsObject(RequestIdentity::class, { obj ->  },{json -> })
             initialised = true
         }
     }
@@ -99,7 +102,7 @@ object AglWorkerSerialisation {
     agl.language.reference.asm --> api.language.reference, api.language.expressions
      */
     private fun initialiseAllTypemodels() {
-        val namesapces = (
+        val namespaces = (
                 AglBase.typesModel.namespace +
                         AglGrammar.typesModel.namespace +
                         AglTypes.typesModel.namespace +
@@ -109,8 +112,8 @@ object AglWorkerSerialisation {
                         AglStyle.typesModel.namespace +
                         AglScope.typeModel.namespace
                 ).toSet().toList()
-        println(namesapces)
-        val tm = typeModel("Messages", true, namesapces) {
+        println(namespaces)
+        val tm = typeModel("Messages", true, namespaces) {
             namespace(
                 "net.akehurst.language.editor.language.service.messages",
                 listOf(
@@ -129,156 +132,176 @@ object AglWorkerSerialisation {
                     supertype("AglWorkerMessage")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
+                        parameter("requestId", "RequestIdentity", false)
                         parameter("languageId", "LanguageIdentity", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
                 }
                 data("MessageGrammarAmbiguityAnalysisResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
                 }
                 data("MessageGrammarAmbiguityAnalysisRequest") {
                     supertype("AglWorkerMessage")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
+                        parameter("requestId", "RequestIdentity", false)
                         parameter("languageId", "LanguageIdentity", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
                 }
                 data("MessageSyntaxAnalysisResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
                         parameter("asm", "Any", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "asm", "Any", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "asm", "Any", false)
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
                 }
                 data("MessageLineTokens") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("startLine", "Integer", false)
                         parameter("lineTokens", "List", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAR, CMP, STORED), "lineTokens", "List", false) {
+                    propertyOf(setOf(VAR, CMP, STR), "lineTokens", "List", false) {
                         typeArgument("List")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "startLine", "Integer", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "startLine", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
                 }
                 data("MessageParseResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
                         parameter("treeSerialised", "String", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
-                    propertyOf(setOf(VAL, REF, STORED), "treeSerialised", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "treeSerialised", "String", false)
                 }
                 data("MessageSetStyle") {
                     supertype("AglWorkerMessage")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
+                        parameter("requestId", "RequestIdentity", false)
                         parameter("languageId", "LanguageIdentity", false)
                         parameter("styleStr", "String", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "languageId", "LanguageIdentity", false)
-                    propertyOf(setOf(VAL, REF, STORED), "styleStr", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "styleStr", "String", false)
                 }
                 data("MessageProcessorDeleteResponse") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
                 }
                 data("MessageProcessorCreateResponse") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
                         parameter("scannerMatchables", "List", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "scannerMatchables", "List", false) {
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "scannerMatchables", "List", false) {
                         typeArgument("Matchable")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
                 }
                 data("MessageSemanticAnalysisResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
                         parameter("asm", "Any", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "asm", "Any", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "asm", "Any", false)
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
                 }
                 data("AglWorkerMessageResponse") {
                     supertype("AglWorkerMessage")
                     constructor_ {
                         parameter("action", "String", false)
                     }
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
                 }
@@ -286,143 +309,166 @@ object AglWorkerSerialisation {
                     supertype("AglWorkerMessage")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
+                        parameter("requestId", "RequestIdentity", false)
                         parameter("languageId", "LanguageIdentity", false)
                         parameter("reason", "String", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "languageId", "LanguageIdentity", false)
-                    propertyOf(setOf(VAL, REF, STORED), "reason", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "reason", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
                 }
                 data("MessageCodeCompleteResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
+                        parameter("offset", "Integer", false)
                         parameter("completionItems", "List", false)
                     }
-                    propertyOf(setOf(VAR, CMP, STORED), "completionItems", "List", false) {
+                    propertyOf(setOf(VAR, CMP, STR), "completionItems", "List", false) {
                         typeArgument("CompletionItem")
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "offset", "Integer", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
                 }
                 data("MessageProcessorCreate") {
                     supertype("AglWorkerMessage")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
+                        parameter("requestId", "RequestIdentity", false)
                         parameter("languageId", "LanguageIdentity", false)
                         parameter("grammarStr", "String", false)
-                        parameter("crossReferenceModelStr", "String", false)
+                        parameter("typesModelStr", "String", false)
+                        parameter("transformStr", "String", false)
+                        parameter("crossReferenceStr", "String", false)
                         parameter("editorOptions", "EditorOptions", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "crossReferenceModelStr", "String", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "editorOptions", "EditorOptions", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAL, REF, STORED), "grammarStr", "String", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "crossReferenceStr", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "editorOptions", "EditorOptions", false)
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "grammarStr", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "transformStr", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "typesModelStr", "String", false)
                 }
                 data("MessageCodeCompleteRequest") {
                     typeParameters("AsmType", "ContextType")
                     supertype("AglWorkerMessage")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
+                        parameter("requestId", "RequestIdentity", false)
                         parameter("languageId", "LanguageIdentity", false)
                         parameter("text", "String", false)
                         parameter("position", "Integer", false)
                         parameter("options", "ProcessOptions", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "languageId", "LanguageIdentity", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "options", "ProcessOptions", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "options", "ProcessOptions", false) {
                         typeArgument("AsmType")
                         typeArgument("ContextType")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "position", "Integer", false)
-                    propertyOf(setOf(VAL, REF, STORED), "text", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "position", "Integer", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "text", "String", false)
                 }
                 data("MessageProcessRequest") {
                     typeParameters("AsmType", "ContextType")
                     supertype("AglWorkerMessage")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
+                        parameter("requestId", "RequestIdentity", false)
                         parameter("languageId", "LanguageIdentity", false)
                         parameter("text", "String", false)
                         parameter("options", "ProcessOptions", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "languageId", "LanguageIdentity", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "options", "ProcessOptions", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "options", "ProcessOptions", false) {
                         typeArgument("AsmType")
                         typeArgument("ContextType")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "text", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "text", "String", false)
                 }
                 data("MessageParseResult2") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
                         parameter("treeData", "TreeData", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "treeData", "TreeData", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
+                    propertyOf(setOf(VAL, CMP, STR), "treeData", "TreeData", false)
                 }
                 data("MessageSetStyleResponse") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
                         parameter("styleModel", "AglStyleModel", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "styleModel", "AglStyleModel", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
+                    propertyOf(setOf(VAL, CMP, STR), "styleModel", "AglStyleModel", false)
                 }
                 data("AglWorkerMessage") {
 
                     constructor_ {
                         parameter("action", "String", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "action", "String", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "action", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
                 }
                 data("MessageScanResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
                         parameter("endPoint", "EndPointIdentity", false)
-                        parameter("status", "MessageStatus", false)
+                        parameter("requestId", "RequestIdentity", false)
+                        parameter("status", "MessageResponseStatus", false)
                         parameter("message", "String", false)
                         parameter("issues", "List", false)
                         parameter("lineTokens", "List", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "issues", "List", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
+                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
                     }
-                    propertyOf(setOf(VAR, CMP, STORED), "lineTokens", "List", false) {
+                    propertyOf(setOf(VAR, CMP, STR), "lineTokens", "List", false) {
                         typeArgument("AglTokenDefault")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "status", "MessageStatus", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
+                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
                 }
             }
             namespace("net.akehurst.language.sppt.api", listOf("std", "net.akehurst.language.parser.api")) {
@@ -439,30 +485,25 @@ object AglWorkerSerialisation {
                     constructor_ {
                         parameter("forStateSetNumber", "Integer", false)
                     }
-                    propertyOf(setOf(VAR, CMP, STORED), "_complete", "Map", false) {
+                    propertyOf(setOf(VAR, CMP, STR), "_complete", "Map", false) {
                         typeArgument("SpptDataNode")
-                        typeArgument("Map") {
-                            typeArgument("Integer")
-                            typeArgument("List") {
-                                typeArgument("SpptDataNode")
-                            }
-                        }
+                        typeArgument("Map")
                     }
-                    propertyOf(setOf(VAR, CMP, STORED), "_embeddedFor", "Map", false) {
+                    propertyOf(setOf(VAR, CMP, STR), "_embeddedFor", "Map", false) {
                         typeArgument("SpptDataNode")
                         typeArgument("TreeData")
                     }
-                    propertyOf(setOf(VAR, CMP, STORED), "_preferred", "Map", false) {
+                    propertyOf(setOf(VAR, CMP, STR), "_preferred", "Map", false) {
                         typeArgument("PreferredNode")
                         typeArgument("SpptDataNode")
                     }
-                    propertyOf(setOf(VAR, CMP, STORED), "_skipDataAfter", "Map", false) {
+                    propertyOf(setOf(VAR, CMP, STR), "_skipDataAfter", "Map", false) {
                         typeArgument("SpptDataNode")
                         typeArgument("TreeData")
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "forStateSetNumber", "Integer", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "initialSkip", "TreeData", false)
-                    propertyOf(setOf(VAR, REF, STORED), "root", "SpptDataNode", false)
+                    propertyOf(setOf(VAL, REF, STR), "forStateSetNumber", "Integer", false)
+                    propertyOf(setOf(VAR, CMP, STR), "initialSkip", "TreeData", false)
+                    propertyOf(setOf(VAR, REF, STR), "root", "SpptDataNode", false)
                 }
                 data("CompleteTreeDataNode") {
                     supertype("SpptDataNode")
@@ -471,13 +512,17 @@ object AglWorkerSerialisation {
                         parameter("startPosition", "Integer", false)
                         parameter("nextInputPosition", "Integer", false)
                         parameter("nextInputNoSkip", "Integer", false)
-                        parameter("option", "Integer", false)
+                        parameter("option", "OptionNum", false)
+                        parameter("dynamicPriority", "List", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "nextInputNoSkip", "Integer", false)
-                    propertyOf(setOf(VAL, REF, STORED), "nextInputPosition", "Integer", false)
-                    propertyOf(setOf(VAL, REF, STORED), "option", "Integer", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "rule", "Rule", false)
-                    propertyOf(setOf(VAL, REF, STORED), "startPosition", "Integer", false)
+                    propertyOf(setOf(VAR, REF, STR), "dynamicPriority", "List", false) {
+                        typeArgument("Integer")
+                    }
+                    propertyOf(setOf(VAL, REF, STR), "nextInputNoSkip", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "nextInputPosition", "Integer", false)
+                    propertyOf(setOf(VAL, CMP, STR), "option", "OptionNum", false)
+                    propertyOf(setOf(VAL, REF, STR), "rule", "Rule", false)
+                    propertyOf(setOf(VAL, REF, STR), "startPosition", "Integer", false)
                 }
                 data("PreferredNode") {
 
@@ -485,8 +530,8 @@ object AglWorkerSerialisation {
                         parameter("rule", "Rule", false)
                         parameter("startPosition", "Integer", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "rule", "Rule", false)
-                    propertyOf(setOf(VAL, REF, STORED), "startPosition", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "rule", "Rule", false)
+                    propertyOf(setOf(VAL, REF, STR), "startPosition", "Integer", false)
                 }
             }
             namespace("net.akehurst.language.parser.api", listOf("std")) {
@@ -507,11 +552,11 @@ object AglWorkerSerialisation {
                         parameter("isSkip", "Boolean", false)
                         parameter("isPseudo", "Boolean", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "isPseudo", "Boolean", false)
-                    propertyOf(setOf(VAL, REF, STORED), "isSkip", "Boolean", false)
-                    propertyOf(setOf(VAL, REF, STORED), "name", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "ruleNumber", "Integer", false)
-                    propertyOf(setOf(VAL, REF, STORED), "runtimeRuleSetNumber", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "isPseudo", "Boolean", false)
+                    propertyOf(setOf(VAL, REF, STR), "isSkip", "Boolean", false)
+                    propertyOf(setOf(VAL, REF, STR), "name", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "ruleNumber", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "runtimeRuleSetNumber", "Integer", false)
                 }
             }
             namespace("net.akehurst.language.sentence.api", listOf("std")) {
@@ -522,11 +567,13 @@ object AglWorkerSerialisation {
                         parameter("column", "Integer", false)
                         parameter("line", "Integer", false)
                         parameter("length", "Integer", false)
+                        parameter("sentenceIdentity", "Any", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "column", "Integer", false)
-                    propertyOf(setOf(VAR, REF, STORED), "length", "Integer", false)
-                    propertyOf(setOf(VAL, REF, STORED), "line", "Integer", false)
-                    propertyOf(setOf(VAL, REF, STORED), "position", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "column", "Integer", false)
+                    propertyOf(setOf(VAR, REF, STR), "length", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "line", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "position", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "sentenceIdentity", "Any", false)
                 }
             }
             namespace("net.akehurst.language.issues.api", listOf("std", "net.akehurst.language.sentence.api")) {
@@ -541,11 +588,11 @@ object AglWorkerSerialisation {
                         parameter("message", "String", false)
                         parameter("data", "Any", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "data", "Any", false)
-                    propertyOf(setOf(VAL, REF, STORED), "kind", "LanguageIssueKind", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "location", "InputLocation", false)
-                    propertyOf(setOf(VAL, REF, STORED), "message", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "phase", "LanguageProcessorPhase", false)
+                    propertyOf(setOf(VAL, REF, STR), "data", "Any", false)
+                    propertyOf(setOf(VAL, REF, STR), "kind", "LanguageIssueKind", false)
+                    propertyOf(setOf(VAL, CMP, STR), "location", "InputLocation", false)
+                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "phase", "LanguageProcessorPhase", false)
                 }
             }
             namespace("net.akehurst.language.scanner.api", listOf("std")) {
@@ -556,40 +603,49 @@ object AglWorkerSerialisation {
                 data("Matchable") {
 
                     constructor_ {
+                        parameter("ruleSetNumber", "Integer", false)
+                        parameter("ruleNumber", "Integer", false)
                         parameter("tag", "String", false)
                         parameter("expression", "String", false)
                         parameter("kind", "MatchableKind", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "expression", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "kind", "MatchableKind", false)
-                    propertyOf(setOf(VAL, REF, STORED), "tag", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "expression", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "kind", "MatchableKind", false)
+                    propertyOf(setOf(VAL, REF, STR), "ruleNumber", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "ruleSetNumber", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "tag", "String", false)
                 }
             }
             namespace(
                 "net.akehurst.language.api.processor",
-                listOf("net.akehurst.language.base.api", "std", "net.akehurst.language.parser.api", "net.akehurst.language.scanner.api", "net.akehurst.language.sentence.api")
+                listOf(
+                    "net.akehurst.language.base.api",
+                    "std",
+                    "net.akehurst.language.parser.api",
+                    "net.akehurst.language.scanner.api",
+                    "net.akehurst.language.issues.api",
+                    "net.akehurst.language.api.syntaxAnalyser"
+                )
             ) {
                 value("LanguageIdentity") {
                     supertype("PublicValueType")
                     constructor_ {
                         parameter("value", "String", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "value", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
                 }
                 interface_("ProcessOptions") {
                     typeParameters("AsmType", "ContextType")
 
-                    propertyOf(setOf(VAL, CMP, STORED), "completionProvider", "CompletionProviderOptions", false){
-                        typeArgument("AsmType")
+                    propertyOf(setOf(VAL, CMP, STR), "completionProvider", "CompletionProviderOptions", false) {
                         typeArgument("ContextType")
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "parse", "ParseOptions", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "scan", "ScanOptions", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "semanticAnalysis", "SemanticAnalysisOptions", false){
-                        typeArgument("AsmType")
+                    propertyOf(setOf(VAL, CMP, STR), "parse", "ParseOptions", false)
+                    propertyOf(setOf(VAL, CMP, STR), "scan", "ScanOptions", false)
+                    propertyOf(setOf(VAL, CMP, STR), "semanticAnalysis", "SemanticAnalysisOptions", false) {
                         typeArgument("ContextType")
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "syntaxAnalysis", "SyntaxAnalysisOptions", false){
+                    propertyOf(setOf(VAL, CMP, STR), "syntaxAnalysis", "SyntaxAnalysisOptions", false) {
                         typeArgument("AsmType")
                     }
                 }
@@ -598,101 +654,135 @@ object AglWorkerSerialisation {
 
                 }
                 interface_("SemanticAnalysisOptions") {
-                    typeParameters("AsmType", "ContextType")
-                    propertyOf(setOf(VAR, CMP, STORED), "context", "ContextType", false)
+                    typeParameters("ContextType")
+
+                    propertyOf(setOf(VAR, CMP, STR), "context", "ContextType", false)
                 }
                 interface_("CompletionProviderOptions") {
-                    typeParameters("AsmType", "ContextType")
+                    typeParameters("ContextType")
 
                 }
                 data("CompletionItem") {
 
                     constructor_ {
                         parameter("kind", "CompletionItemKind", false)
+                        parameter("label", "String", false)
                         parameter("text", "String", false)
-                        parameter("name", "String", false)
                     }
-                    propertyOf(setOf(VAR, REF, STORED), "description", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "kind", "CompletionItemKind", false)
-                    propertyOf(setOf(VAL, REF, STORED), "name", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "text", "String", false)
+                    propertyOf(setOf(VAR, REF, STR), "description", "String", false)
+                    propertyOf(setOf(VAR, REF, STR), "id", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "kind", "CompletionItemKind", false)
+                    propertyOf(setOf(VAL, REF, STR), "label", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "text", "String", false)
                 }
             }
             namespace("net.akehurst.language.api.semanticAnalyser", listOf("std")) {
                 interface_("SentenceContext") {
-                    typeParameters("E")
 
                 }
             }
             namespace("net.akehurst.language.scanner.common", listOf("net.akehurst.language.scanner.api", "std")) {
                 data("ScanOptionsDefault") {
                     supertype("ScanOptions")
-                    constructor_ {}
+                    constructor_ {
+                        parameter("enabled", "Boolean", false)
+                        parameter("resultsByLine", "Boolean", false)
+                        parameter("startAtPosition", "Integer", false)
+                        parameter("offsetPosition", "Integer", false)
+                    }
+                    propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "offsetPosition", "Integer", false)
+                    propertyOf(setOf(VAR, REF, STR), "resultsByLine", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "startAtPosition", "Integer", false)
                 }
             }
             namespace("net.akehurst.language.parser.leftcorner", listOf("net.akehurst.language.parser.api", "std")) {
                 data("ParseOptionsDefault") {
                     supertype("ParseOptions")
                     constructor_ {
+                        parameter("enabled", "Boolean", false)
                         parameter("goalRuleName", "String", false)
+                        parameter("sentenceIdentity", "SentenceIdentityFunction", false)
                         parameter("reportErrors", "Boolean", false)
                         parameter("reportGrammarAmbiguities", "Boolean", false)
                         parameter("cacheSkip", "Boolean", false)
                     }
-                    propertyOf(setOf(VAR, REF, STORED), "cacheSkip", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "goalRuleName", "String", false)
-                    propertyOf(setOf(VAR, REF, STORED), "reportErrors", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "reportGrammarAmbiguities", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "cacheSkip", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "goalRuleName", "String", false)
+                    propertyOf(setOf(VAR, REF, STR), "reportErrors", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "reportGrammarAmbiguities", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "sentenceIdentity", "SentenceIdentityFunction", false)
                 }
             }
             namespace(
                 "net.akehurst.language.agl.processor",
-                listOf("net.akehurst.language.api.processor", "std", "net.akehurst.language.sentence.api", "net.akehurst.language.scanner.api", "net.akehurst.language.parser.api")
+                listOf(
+                    "net.akehurst.language.api.processor",
+                    "std",
+                    "net.akehurst.language.api.syntaxAnalyser",
+                    "net.akehurst.language.issues.api",
+                    "net.akehurst.language.scanner.api",
+                    "net.akehurst.language.parser.api"
+                )
             ) {
                 data("SyntaxAnalysisOptionsDefault") {
                     typeParameters("AsmType")
                     supertype("SyntaxAnalysisOptions") { ref("AsmType") }
                     constructor_ {
-                        parameter("active", "Boolean", false)
+                        parameter("enabled", "Boolean", false)
                     }
-                    propertyOf(setOf(VAR, REF, STORED), "active", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
                 }
                 data("SemanticAnalysisOptionsDefault") {
-                    typeParameters("AsmType", "ContextType")
-                    supertype("SemanticAnalysisOptions") { ref("AsmType"); ref("ContextType") }
+                    typeParameters("ContextType")
+                    supertype("SemanticAnalysisOptions") { ref("ContextType") }
                     constructor_ {
-                        parameter("active", "Boolean", false)
-                        parameter("locationMap", "Map", false)
+                        parameter("enabled", "Boolean", false)
+                        parameter("locationMap", "LocationMap", false)
                         parameter("context", "ContextType", false)
+                        parameter("buildScope", "Boolean", false)
+                        parameter("replaceIfItemAlreadyExistsInScope", "Boolean", false)
+                        parameter("ifItemAlreadyExistsInScopeIssueKind", "LanguageIssueKind", false)
                         parameter("checkReferences", "Boolean", false)
                         parameter("resolveReferences", "Boolean", false)
                         parameter("other", "Map", false)
                     }
-                    propertyOf(setOf(VAR, REF, STORED), "active", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "checkReferences", "Boolean", false)
-                    propertyOf(setOf(VAR, CMP, STORED), "context", "ContextType", false)
-                    propertyOf(setOf(VAR, REF, STORED), "locationMap", "Map", false) {
-                        typeArgument("Any")
-                        typeArgument("InputLocation")
-                    }
-                    propertyOf(setOf(VAR, REF, STORED), "other", "Map", false) {
+                    propertyOf(setOf(VAR, REF, STR), "buildScope", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "checkReferences", "Boolean", false)
+                    propertyOf(setOf(VAR, CMP, STR), "context", "ContextType", false)
+                    propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "ifItemAlreadyExistsInScopeIssueKind", "LanguageIssueKind", false)
+                    propertyOf(setOf(VAR, REF, STR), "locationMap", "LocationMap", false)
+                    propertyOf(setOf(VAR, REF, STR), "other", "Map", false) {
                         typeArgument("String")
                         typeArgument("Any")
                     }
-                    propertyOf(setOf(VAR, REF, STORED), "resolveReferences", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "replaceIfItemAlreadyExistsInScope", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "resolveReferences", "Boolean", false)
                 }
                 data("CompletionProviderOptionsDefault") {
-                    typeParameters("AsmType", "ContextType")
-                    supertype("CompletionProviderOptions") { ref("AsmType"); ref("ContextType") }
+                    typeParameters("ContextType")
+                    supertype("CompletionProviderOptions") { ref("ContextType") }
                     constructor_ {
                         parameter("context", "ContextType", false)
+                        parameter("depth", "Integer", false)
+                        parameter("path", "List", false)
+                        parameter("showOptionalItems", "Boolean", false)
+                        parameter("provideValuesForPatternTerminals", "Boolean", false)
                         parameter("other", "Map", false)
                     }
-                    propertyOf(setOf(VAR, REF, STORED), "context", "ContextType", false)
-                    propertyOf(setOf(VAR, REF, STORED), "other", "Map", false) {
+                    propertyOf(setOf(VAR, REF, STR), "context", "ContextType", false)
+                    propertyOf(setOf(VAR, REF, STR), "depth", "Integer", false)
+                    propertyOf(setOf(VAR, REF, STR), "other", "Map", false) {
                         typeArgument("String")
                         typeArgument("Any")
                     }
+                    propertyOf(setOf(VAR, REF, STR), "path", "List", false) {
+                        typeArgument("Pair")
+                    }
+                    propertyOf(setOf(VAR, REF, STR), "provideValuesForPatternTerminals", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "showOptionalItems", "Boolean", false)
                 }
                 data("ProcessOptionsDefault") {
                     typeParameters("AsmType", "ContextType")
@@ -704,60 +794,83 @@ object AglWorkerSerialisation {
                         parameter("semanticAnalysis", "SemanticAnalysisOptions", false)
                         parameter("completionProvider", "CompletionProviderOptions", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "completionProvider", "CompletionProviderOptions", false) {
-                        typeArgument("AsmType")
+                    propertyOf(setOf(VAL, CMP, STR), "completionProvider", "CompletionProviderOptions", false) {
                         typeArgument("ContextType")
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "parse", "ParseOptions", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "scan", "ScanOptions", false)
-                    propertyOf(setOf(VAL, CMP, STORED), "semanticAnalysis", "SemanticAnalysisOptions", false) {
-                        typeArgument("AsmType")
+                    propertyOf(setOf(VAL, CMP, STR), "parse", "ParseOptions", false)
+                    propertyOf(setOf(VAL, CMP, STR), "scan", "ScanOptions", false)
+                    propertyOf(setOf(VAL, CMP, STR), "semanticAnalysis", "SemanticAnalysisOptions", false) {
                         typeArgument("ContextType")
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "syntaxAnalysis", "SyntaxAnalysisOptions", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "syntaxAnalysis", "SyntaxAnalysisOptions", false) {
                         typeArgument("AsmType")
                     }
                 }
             }
-            namespace("net.akehurst.language.agl.simple", listOf("net.akehurst.language.asm.api", "net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.scope.asm")) {
-                data("ContextAsmSimple") {
-                    supertype("SentenceContext") { ref("net.akehurst.language.asm.api.AsmPath") }
-                    constructor_ {}
-                    propertyOf(setOf(VAR, CMP, STORED), "rootScope", "ScopeSimple", false) {
-                        typeArgument("AsmPath")
+            namespace("net.akehurst.language.agl.simple", listOf("net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.scope.asm")) {
+                singleton("NULL_SENTENCE_IDENTIFIER")
+                singleton("CreateScopedItemDefault")
+                singleton("ResolveScopedItemDefault")
+                data("ContextWithScope") {
+                    typeParameters("ItemType", "ItemInScopeType")
+                    supertype("SentenceContext")
+                    constructor_ {
+                        parameter("createScopedItem", "CreateScopedItem", false)
+                        parameter("resolveScopedItem", "ResolveScopedItem", false)
+                    }
+                    propertyOf(setOf(VAL, CMP, STR), "createScopedItem", "CreateScopedItem", false) {
+                        typeArgument("ItemType")
+                        typeArgument("ItemInScopeType")
+                    }
+                    propertyOf(setOf(VAL, CMP, STR), "resolveScopedItem", "ResolveScopedItem", false) {
+                        typeArgument("ItemType")
+                        typeArgument("ItemInScopeType")
+                    }
+                    propertyOf(setOf(VAR, CMP, STR), "scopeForSentence", "Map", false) {
+                        typeArgument("Any")
+                        typeArgument("ScopeSimple")
                     }
                 }
             }
-            namespace("net.akehurst.language.grammar.processor", listOf("std", "net.akehurst.language.api.semanticAnalyser", "net.akehurst.language.scope.asm")) {
-                data("ContextFromGrammar") {
-                    supertype("SentenceContext") { ref("std.String") }
-                    constructor_ {}
-                    propertyOf(setOf(VAR, CMP, STORED), "rootScope", "ScopeSimple", false) {
-                        typeArgument("String")
-                    }
+            namespace("net.akehurst.language.api.syntaxAnalyser", listOf("std")) {
+                interface_("LocationMap") {
+
                 }
             }
             namespace(
                 "net.akehurst.language.agl.semanticAnalyser",
-                listOf("std", "net.akehurst.language.api.semanticAnalyser", "net.akehurst.language.api.processor", "net.akehurst.language.typemodel.api")
+                listOf("net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.api.processor", "net.akehurst.language.typemodel.api")
             ) {
                 data("ContextFromTypeModelReference") {
-                    supertype("SentenceContext") { ref("std.String") }
+                    supertype("SentenceContext")
                     constructor_ {
                         parameter("languageDefinitionId", "LanguageIdentity", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "languageDefinitionId", "LanguageIdentity", false)
+                    propertyOf(setOf(VAL, CMP, STR), "languageDefinitionId", "LanguageIdentity", false)
                 }
                 data("ContextFromTypeModel") {
-                    supertype("SentenceContext") { ref("std.String") }
+                    supertype("SentenceContext")
                     constructor_ {
                         parameter("typeModel", "TypeModel", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STORED), "typeModel", "TypeModel", false)
+                    propertyOf(setOf(VAL, CMP, STR), "typeModel", "TypeModel", false)
                 }
             }
-            namespace("net.akehurst.language.editor.api", listOf("std")) {
-                enum("MessageStatus", listOf("START", "FAILURE", "SUCCESS"))
+            namespace(
+                "net.akehurst.language.editor.api", listOf(
+                    "std",
+                    "net.akehurst.language.base.api",
+                    "net.akehurst.language.api.processor"
+                )
+            ) {
+                enum("MessageResponseStatus", listOf("RECEIVED", "IGNORED", "FAILURE", "SUCCESS"))
+                value("RequestIdentity") {
+                    supertype("PublicValueType")
+                    constructor_ {
+                        parameter("value", "Any", false)
+                    }
+                    propertyOf(setOf(VAL, REF, STR), "value", "Any", false)
+                }
                 interface_("EditorOptions") {
 
                 }
@@ -770,11 +883,11 @@ object AglWorkerSerialisation {
                         parameter("editorId", "String", false)
                         parameter("sessionId", "String", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "editorId", "String", false)
-                    propertyOf(setOf(VAL, REF, STORED), "sessionId", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "editorId", "String", false)
+                    propertyOf(setOf(VAL, REF, STR), "sessionId", "String", false)
                 }
             }
-            namespace("net.akehurst.language.editor.common", listOf("net.akehurst.language.editor.api", "std")) {
+            namespace("net.akehurst.language.editor.common", listOf("net.akehurst.language.editor.api", "std", "net.akehurst.language.api.processor")) {
                 data("AglTokenDefault") {
                     supertype("AglToken")
                     constructor_ {
@@ -782,15 +895,17 @@ object AglWorkerSerialisation {
                         parameter("position", "Integer", false)
                         parameter("length", "Integer", false)
                     }
-                    propertyOf(setOf(VAL, REF, STORED), "length", "Integer", false)
-                    propertyOf(setOf(VAL, REF, STORED), "position", "Integer", false)
-                    propertyOf(setOf(VAR, REF, STORED), "styles", "List", false) {
-                        typeArgument("String")
+                    propertyOf(setOf(VAL, REF, STR), "length", "Integer", false)
+                    propertyOf(setOf(VAL, REF, STR), "position", "Integer", false)
+                    propertyOf(setOf(VAR, CMP, STR), "styles", "List", false) {
+                        typeArgument("EditorStyleIdentity")
                     }
                 }
                 data("EditorOptionsDefault") {
                     supertype("EditorOptions")
                     constructor_ {
+                        parameter("scan", "Boolean", false)
+                        parameter("scanLineTokens", "Boolean", false)
                         parameter("parse", "Boolean", false)
                         parameter("parseLineTokens", "Boolean", false)
                         parameter("lineTokensChunkSize", "Integer", false)
@@ -799,18 +914,26 @@ object AglWorkerSerialisation {
                         parameter("syntaxAnalysisAsm", "Boolean", false)
                         parameter("semanticAnalysis", "Boolean", false)
                         parameter("semanticAnalysisAsm", "Boolean", false)
+                        parameter("styleCompletionItem", "LambdaType", false)
                     }
-                    propertyOf(setOf(VAR, REF, STORED), "lineTokensChunkSize", "Integer", false)
-                    propertyOf(setOf(VAR, REF, STORED), "parse", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "parseLineTokens", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "parseTree", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "semanticAnalysis", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "semanticAnalysisAsm", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "syntaxAnalysis", "Boolean", false)
-                    propertyOf(setOf(VAR, REF, STORED), "syntaxAnalysisAsm", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "lineTokensChunkSize", "Integer", false)
+                    propertyOf(setOf(VAR, REF, STR), "parse", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "parseLineTokens", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "parseTree", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "scan", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "scanLineTokens", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "semanticAnalysis", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "semanticAnalysisAsm", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "styleCompletionItem", "LambdaType", false) {
+                        typeArgument("CompletionItem")
+                        typeArgument("String")
+                    }
+                    propertyOf(setOf(VAR, REF, STR), "syntaxAnalysis", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "syntaxAnalysisAsm", "Boolean", false)
                 }
             }
         }
+
         serialiser.configureFromTypeModel(tm)
     }
 
@@ -837,8 +960,8 @@ object AglWorkerSerialisation {
             {
                 data("GrammarTypeNamespaceFromGrammar") {
                     supertypes("GrammarTypeNamespaceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "imports", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "qualifiedName", "String")
+                    propertyOf(setOf(CON, CMP), "imports", "List") { typeArgument("String") }
                 }
             }*/
             namespace(
@@ -848,12 +971,12 @@ object AglWorkerSerialisation {
             {
                 data("GrammarTypeNamespaceSimple") {
                     supertypes("GrammarTypeNamespaceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "imports", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "qualifiedName", "String")
+                    propertyOf(setOf(CON, CMP), "imports", "List") { typeArgument("String") }
                 }
                 data("GrammarTypeNamespaceAbstract") {
                     supertypes("TypeNamespaceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "imports", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "imports", "List") { typeArgument("String") }
 
                     propertyOf(setOf(VAR, CMP), "allRuleNameToType", "Map") {
                         typeArgument("String")
@@ -869,11 +992,11 @@ object AglWorkerSerialisation {
                 singleton("SimpleTypeModelStdLib")
                 data("TypeModelSimple") {
                     supertypes("TypeModelSimpleAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "name", "String")
                 }
                 data("TypeModelSimpleAbstract") {
                     supertypes("TypeModel")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "name", "String")
 
                     propertyOf(setOf(VAR, CMP), "namespace", "Map") {
                         typeArgument("String")
@@ -887,31 +1010,31 @@ object AglWorkerSerialisation {
                 }
                 data("TypeInstanceSimple") {
                     supertypes("TypeInstanceAbstract")
-                    //propertyOf(setOf(CONSTRUCTOR, REF), "context", "TypeDeclaration")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "contextQualifiedTypeName", "String", true)
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedOrImportedTypeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeArguments", "List") { typeArgument("TypeInstance") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isNullable", "Boolean")
+                    //propertyOf(setOf(CON, REF), "context", "TypeDeclaration")
+                    propertyOf(setOf(CON, CMP), "contextQualifiedTypeName", "String", true)
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, CMP), "qualifiedOrImportedTypeName", "String")
+                    propertyOf(setOf(CON, CMP), "typeArguments", "List") { typeArgument("TypeInstance") }
+                    propertyOf(setOf(CON, CMP), "isNullable", "Boolean")
                 }
                 data("TupleTypeInstance") {
                     supertypes("TypeInstanceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "declaration", "TupleType")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeArguments", "List") { typeArgument("TypeInstance") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isNullable", "Boolean")
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, REF), "declaration", "TupleType")
+                    propertyOf(setOf(CON, CMP), "typeArguments", "List") { typeArgument("TypeInstance") }
+                    propertyOf(setOf(CON, CMP), "isNullable", "Boolean")
                 }
                 data("UnnamedSupertypeTypeInstance") {
                     supertypes("TypeInstanceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "declaration", "UnnamedSupertypeType")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeArguments", "List") { typeArgument("TypeInstance") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isNullable", "Boolean")
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, REF), "declaration", "UnnamedSupertypeType")
+                    propertyOf(setOf(CON, CMP), "typeArguments", "List") { typeArgument("TypeInstance") }
+                    propertyOf(setOf(CON, CMP), "isNullable", "Boolean")
                 }
                 data("TypeNamespaceAbstract") {
                     supertypes("TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "imports", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "qualifiedName", "String")
+                    propertyOf(setOf(CON, CMP), "imports", "List") { typeArgument("String") }
                     propertyOf(setOf(VAR, CMP), "ownedUnnamedSupertypeType", "List") {
                         typeArgument("UnnamedSupertypeTypeSimple")
                     }
@@ -925,8 +1048,8 @@ object AglWorkerSerialisation {
                 }
                 data("TypeNamespaceSimple") {
                     supertypes("TypeNamespaceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "imports", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "qualifiedName", "String")
+                    propertyOf(setOf(CON, CMP), "imports", "List") { typeArgument("String") }
                 }
                 data("TypeDeclarationSimpleAbstract") {
                     supertypes("TypeDeclaration")
@@ -939,71 +1062,71 @@ object AglWorkerSerialisation {
                 }
                 data("SpecialTypeSimple") {
                     supertypes("TypeDeclarationSimpleAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, CMP), "name", "String")
                 }
                 data("PrimitiveTypeSimple") {
                     supertypes("TypeDeclarationSimpleAbstract", "PrimitiveType")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, CMP), "name", "String")
                 }
                 data("EnumTypeSimple") {
                     supertypes("TypeDeclarationSimpleAbstract", "EnumType")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "literals", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "literals", "List") { typeArgument("String") }
                 }
                 data("UnnamedSupertypeTypeSimple") {
                     supertypes("TypeDeclarationSimpleAbstract", "UnnamedSupertypeType")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "id", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "subtypes", "List") { typeArgument("TypeInstance") }
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, CMP), "id", "Int")
+                    propertyOf(setOf(CON, CMP), "subtypes", "List") { typeArgument("TypeInstance") }
                 }
                 data("StructuredTypeSimpleAbstract") {
                     supertypes("TypeDeclarationSimpleAbstract", "StructuredType")
                 }
                 data("TupleTypeSimple") {
                     supertypes("StructuredTypeSimpleAbstract", "TupleType")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "id", "Int")
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, CMP), "id", "Int")
                 }
                 data("DataTypeSimple") {
                     supertypes("StructuredTypeSimpleAbstract", "DataType")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, CMP), "name", "String")
 
                     propertyOf(setOf(VAR, REF), "supertypes", "List") { typeArgument("DataType") }
                     propertyOf(setOf(VAR, REF), "subtypes", "List") { typeArgument("DataType") }
                 }
                 data("CollectionTypeSimple") {
                     supertypes("StructuredTypeSimpleAbstract", "CollectionType")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "namespace", "TypeNamespace")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeParameters", "String")
+                    propertyOf(setOf(CON, REF), "namespace", "TypeNamespace")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "typeParameters", "String")
 
                     propertyOf(setOf(VAR, REF), "supertypes", "List") { typeArgument("CollectionType") }
                 }
                 data("PropertyDeclarationPrimitive") {
-                    propertyOf(setOf(CONSTRUCTOR, REF), "owner", "StructuredType")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeInstance", "TypeInstance")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "description", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "index", "Int")
+                    propertyOf(setOf(CON, REF), "owner", "StructuredType")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "typeInstance", "TypeInstance")
+                    propertyOf(setOf(CON, CMP), "description", "String")
+                    propertyOf(setOf(CON, CMP), "index", "Int")
                 }
                 data("PropertyDeclarationDerived") {
-                    propertyOf(setOf(CONSTRUCTOR, REF), "owner", "StructuredType")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeInstance", "TypeInstance")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "description", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "expression", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "index", "Int")
+                    propertyOf(setOf(CON, REF), "owner", "StructuredType")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "typeInstance", "TypeInstance")
+                    propertyOf(setOf(CON, CMP), "description", "String")
+                    propertyOf(setOf(CON, CMP), "expression", "String")
+                    propertyOf(setOf(CON, CMP), "index", "Int")
                 }
                 data("PropertyDeclarationStored") {
-                    propertyOf(setOf(CONSTRUCTOR, REF), "owner", "StructuredType")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeInstance", "TypeInstance")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "characteristics", "Set") { typeArgument("PropertyCharacteristic") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "index", "Int")
+                    propertyOf(setOf(CON, REF), "owner", "StructuredType")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "typeInstance", "TypeInstance")
+                    propertyOf(setOf(CON, CMP), "characteristics", "Set") { typeArgument("PropertyCharacteristic") }
+                    propertyOf(setOf(CON, CMP), "index", "Int")
                 }
             }
             namespace("net.akehurst.language.typemodel.api", imports = mutableListOf("kotlin", "kotlin.collections")) {
@@ -1049,12 +1172,12 @@ object AglWorkerSerialisation {
             }
             namespace("net.akehurst.language.agl.language.style.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("AglStyleModelDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "rules", "List") { typeArgument("\"net.akehurst.language.api.style.AglStyleRule\"") }
+                    propertyOf(setOf(CON, CMP), "rules", "List") { typeArgument("\"net.akehurst.language.api.style.AglStyleRule\"") }
                 }
             }
             namespace("net.akehurst.language.api.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("AglStyleRule") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "selector", "AglStyleSelector")
+                    propertyOf(setOf(CON, CMP), "selector", "AglStyleSelector")
 
                     propertyOf(setOf(VAR, CMP), "styles", "Map") {
                         typeArgument("String")
@@ -1062,13 +1185,13 @@ object AglWorkerSerialisation {
                     }
                 }
                 data("AglStyleSelector") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "kind", "AglStyleSelectorKind")
+                    propertyOf(setOf(CON, CMP), "value", "String")
+                    propertyOf(setOf(CON, CMP), "kind", "AglStyleSelectorKind")
                 }
                 enum("AglStyleSelectorKind", listOf("LITERAL", "PATTERN", "RULE_NAME"))
                 data("AglStyle") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "String")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "value", "String")
                 }
             }
         })
@@ -1078,10 +1201,10 @@ object AglWorkerSerialisation {
         serialiser.configureFromTypeModel(typeModel("ExpressionsAsm", false) {
             namespace("net.akehurst.language.agl.language.expressions", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("RootExpressionDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "String")
+                    propertyOf(setOf(CON, CMP), "value", "String")
                 }
                 data("NavigationDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "value", "List") { typeArgument("String") }
                 }
             }
         })
@@ -1106,7 +1229,7 @@ object AglWorkerSerialisation {
                     }
                 }
                 data("DeclarationsForNamespaceDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedName", "String")
+                    propertyOf(setOf(CON, CMP), "qualifiedName", "String")
 
                     propertyOf(setOf(VAR, CMP), "scopeDefinition", "Map") {
                         typeArgument("String")
@@ -1115,31 +1238,31 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(VAR, CMP), "references", "List") { typeArgument("ReferenceDefinitionDefault") }
                 }
                 data("ScopeDefinitionDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "scopeForTypeName", "String")
+                    propertyOf(setOf(CON, CMP), "scopeForTypeName", "String")
 
                     propertyOf(setOf(VAR, CMP), "identifiables", "List") { typeArgument("IdentifiableDefault") }
                 }
                 data("IdentifiableDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "identifiedBy", "String")
+                    propertyOf(setOf(CON, CMP), "typeName", "String")
+                    propertyOf(setOf(CON, CMP), "identifiedBy", "String")
                 }
                 data("ReferenceDefinitionDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "inTypeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "referenceExpressionList", "List") { typeArgument("ReferenceExpressionAbstract") }
+                    propertyOf(setOf(CON, CMP), "inTypeName", "String")
+                    propertyOf(setOf(CON, CMP), "referenceExpressionList", "List") { typeArgument("ReferenceExpressionAbstract") }
                 }
                 data("ReferenceExpressionAbstract") {
 
                 }
                 data("PropertyReferenceExpressionDefault") {
                     supertypes("ReferenceExpressionAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "referringPropertyNavigation", "Navigation")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "refersToTypeName", "List") { typeArgument("String") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "fromNavigation", "Navigation", true)
+                    propertyOf(setOf(CON, CMP), "referringPropertyNavigation", "Navigation")
+                    propertyOf(setOf(CON, CMP), "refersToTypeName", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "fromNavigation", "Navigation", true)
                 }
                 data("CollectionReferenceExpressionDefault") {
                     supertypes("ReferenceExpressionAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "navigation", "Navigation")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "referenceExpressionList", "List") { typeArgument("ReferenceExpression") }
+                    propertyOf(setOf(CON, CMP), "navigation", "Navigation")
+                    propertyOf(setOf(CON, CMP), "referenceExpressionList", "List") { typeArgument("ReferenceExpression") }
                 }
 
             }
@@ -1152,9 +1275,9 @@ object AglWorkerSerialisation {
             namespace("net.akehurst.language.agl.scanner") {
                 enum("MatchableKind", emptyList())
                 data("Matchable") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "tag", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "expression", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "kind", "MatchableKind")
+                    propertyOf(setOf(CON, CMP), "tag", "String")
+                    propertyOf(setOf(CON, CMP), "expression", "String")
+                    propertyOf(setOf(CON, CMP), "kind", "MatchableKind")
 
                 }
             }
@@ -1162,33 +1285,35 @@ object AglWorkerSerialisation {
                 enum("ParseAction", emptyList())
             }
             namespace("net.akehurst.language.editor.api") {
-                data("EditorOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "parse", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "parseLineTokens", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "lineTokensChunkSize", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "parseTree", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "syntaxAnalysis", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "syntaxAnalysisAsm", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "semanticAnalysis", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "semanticAnalysisAsm", "Boolean")
+                value("RequestIdentity") {
                 }
-                enum("MessageStatus", emptyList())
+                enum("MessageResponseStatus", emptyList())
+                data("EditorOptionsDefault") {
+                    propertyOf(setOf(CON, CMP), "parse", "Boolean")
+                    propertyOf(setOf(CON, CMP), "parseLineTokens", "Boolean")
+                    propertyOf(setOf(CON, CMP), "lineTokensChunkSize", "Int")
+                    propertyOf(setOf(CON, CMP), "parseTree", "Boolean")
+                    propertyOf(setOf(CON, CMP), "syntaxAnalysis", "Boolean")
+                    propertyOf(setOf(CON, CMP), "syntaxAnalysisAsm", "Boolean")
+                    propertyOf(setOf(CON, CMP), "semanticAnalysis", "Boolean")
+                    propertyOf(setOf(CON, CMP), "semanticAnalysisAsm", "Boolean")
+                }
                 data("EndPointIdentity") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "editorId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "sessionId", "String")
+                    propertyOf(setOf(CON, CMP), "editorId", "String")
+                    propertyOf(setOf(CON, CMP), "sessionId", "String")
                 }
                 data("AglToken") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "styles", "List") { typeArgument("String") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "position", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "length", "Int")
+                    propertyOf(setOf(CON, CMP), "styles", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "position", "Int")
+                    propertyOf(setOf(CON, CMP), "length", "Int")
                 }
             }
             namespace("net.akehurst.language.editor.common") {
                 data("AglTokenDefault") {
                     supertypes("net.akehurst.language.editor.api.AglToken")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "styles", "List") { typeArgument("String") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "position", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "length", "Int")
+                    propertyOf(setOf(CON, CMP), "styles", "List") { typeArgument("String") }
+                    propertyOf(setOf(CON, CMP), "position", "Int")
+                    propertyOf(setOf(CON, CMP), "length", "Int")
                 }
             }
             namespace(
@@ -1202,105 +1327,109 @@ object AglWorkerSerialisation {
                 )
             ) {
                 data("MessageProcessorCreate") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "grammarStr", "String", true)
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "crossReferenceModelStr", "String", true)
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "editorOptions", "EditorOptionsDefault", false)
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "requestId", "RequestIdentity")
+                    propertyOf(setOf(CON, CMP), "languageId", "String")
+                    propertyOf(setOf(CON, CMP), "grammarStr", "String", true)
+                    propertyOf(setOf(CON, CMP), "typesModelStr", "String", true)
+                    propertyOf(setOf(CON, CMP), "transformStr", "String", true)
+                    propertyOf(setOf(CON, CMP), "crossReferenceStr", "String", true)
+                    propertyOf(setOf(CON, CMP), "editorOptions", "EditorOptionsDefault", false)
                 }
                 data("MessageProcessorCreateResponse") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "issues", "List") { typeArgument("LanguageIssue") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "scannerMatchables", "List") { typeArgument("Matchable") }
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "requestId", "RequestIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "issues", "List") { typeArgument("LanguageIssue") }
+                    propertyOf(setOf(CON, CMP), "scannerMatchables", "List") { typeArgument("Matchable") }
                 }
                 data("MessageProcessorDelete") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "languageId", "String")
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "languageId", "String")
                 }
                 data("MessageProcessorDeleteResponse") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
                 }
                 data("MessageProcessRequest") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "text", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "options", "ProcessOptionsDefault")
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "languageId", "String")
+                    propertyOf(setOf(CON, CMP), "text", "String")
+                    propertyOf(setOf(CON, CMP), "options", "ProcessOptionsDefault")
                 }
                 data("MessageParseResult") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "issues", "List") { typeArgument("LanguageIssue") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "treeSerialised", "String", true)
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "issues", "List") { typeArgument("LanguageIssue") }
+                    propertyOf(setOf(CON, CMP), "treeSerialised", "String", true)
                 }
 //FIXME
                 data("MessageParseResult2") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "issues", "List") { typeArgument("LanguageIssue") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "treeData", "TreeDataComplete", true)
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "issues", "List") { typeArgument("LanguageIssue") }
+                    propertyOf(setOf(CON, CMP), "treeData", "TreeDataComplete", true)
                 }
 
                 data("MessageSyntaxAnalysisResult") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "issues", "List") { typeArgument("LanguageIssue") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "asm", "Any", true)
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "issues", "List") { typeArgument("LanguageIssue") }
+                    propertyOf(setOf(CON, CMP), "asm", "Any", true)
                 }
                 data("MessageSemanticAnalysisResult") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "issues", "List") { typeArgument("LanguageIssue") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "asm", "Any", true)
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "issues", "List") { typeArgument("LanguageIssue") }
+                    propertyOf(setOf(CON, CMP), "asm", "Any", true)
                 }
                 data("MessageParserInterruptRequest") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "reason", "String")
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "languageId", "String")
+                    propertyOf(setOf(CON, CMP), "reason", "String")
                 }
                 data("MessageLineTokens") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "startLine", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "lineTokens", "List") {
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "startLine", "Int")
+                    propertyOf(setOf(CON, CMP), "lineTokens", "List") {
                         typeArgument("List") {
                             typeArgument("AglToken")
                         }
                     }
                 }
                 data("MessageSetStyle") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "styleStr", "String")
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "languageId", "String")
+                    propertyOf(setOf(CON, CMP), "styleStr", "String")
                 }
                 data("MessageSetStyleResponse") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "issues", "List") { typeArgument("LanguageIssue") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "styleModel", "AglStyleModelDefault", true)
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "issues", "List") { typeArgument("LanguageIssue") }
+                    propertyOf(setOf(CON, CMP), "styleModel", "AglStyleModelDefault", true)
                 }
                 data("MessageCodeCompleteRequest") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "languageId", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "text", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "position", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "options", "ProcessOptionsDefault")
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "languageId", "String")
+                    propertyOf(setOf(CON, CMP), "text", "String")
+                    propertyOf(setOf(CON, CMP), "position", "Int")
+                    propertyOf(setOf(CON, CMP), "options", "ProcessOptionsDefault")
                 }
                 data("MessageCodeCompleteResult") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "status", "MessageStatus")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "issues", "List") { typeArgument("LanguageIssue") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "completionItems", "Array") { typeArgument("CompletionItem") }
+                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
+                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "issues", "List") { typeArgument("LanguageIssue") }
+                    propertyOf(setOf(CON, CMP), "completionItems", "Array") { typeArgument("CompletionItem") }
                 }
             }
         })
@@ -1317,9 +1446,9 @@ object AglWorkerSerialisation {
             ) {
                 data("ScopeSimple") {
                     typeParameters("AsmElementIdType")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "parent", "ScopeSimple") { typeArgument("AsmElementIdType") }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "scopeIdentityInParent", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "forTypeName", "String")
+                    propertyOf(setOf(CON, REF), "parent", "ScopeSimple") { typeArgument("AsmElementIdType") }
+                    propertyOf(setOf(CON, CMP), "scopeIdentityInParent", "String")
+                    propertyOf(setOf(CON, CMP), "forTypeName", "String")
 
                     propertyOf(setOf(VAR, REF), "scopeMap", "Map") {
                         typeArgument("AsmElementIdType") //TODO: should really mark if key is composite or reference!
@@ -1341,15 +1470,15 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(VAR, CMP), "rootScope", "ScopeSimple") { typeArgument("E") }
                 }
                 data("ContextFromTypeModelReference") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "languageDefinitionId", "String")
+                    propertyOf(setOf(CON, CMP), "languageDefinitionId", "String")
                 }
                 data("ContextFromTypeModel") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "typeModel", "net.akehurst.language.typemodel.api.TypeModel")
+                    propertyOf(setOf(CON, CMP), "typeModel", "net.akehurst.language.typemodel.api.TypeModel")
                 }
             }
             namespace("net.akehurst.language.agl.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("AsmPathSimple") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "String")
+                    propertyOf(setOf(CON, CMP), "value", "String")
                 }
                 data("AsmSimple") {
                     propertyOf(setOf(VAR, CMP), "root", "List") { typeArgument("AsmValueAbstract") }
@@ -1360,18 +1489,18 @@ object AglWorkerSerialisation {
                 }
                 data("AsmPrimitiveSimple") {
                     supertypes("AsmValueAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedTypeName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "Any")
+                    propertyOf(setOf(CON, CMP), "qualifiedTypeName", "String")
+                    propertyOf(setOf(CON, CMP), "value", "Any")
                 }
                 data("AsmReferenceSimple") {
                     supertypes("AsmValueAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "reference", "String")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "value", "AsmElementSimple", true)
+                    propertyOf(setOf(CON, CMP), "reference", "String")
+                    propertyOf(setOf(CON, REF), "value", "AsmElementSimple", true)
                 }
                 data("AsmStructureSimple") {
                     supertypes("AsmValueAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "path", "AsmPathSimple")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedTypeName", "String")
+                    propertyOf(setOf(CON, CMP), "path", "AsmPathSimple")
+                    propertyOf(setOf(CON, CMP), "qualifiedTypeName", "String")
 
                     propertyOf(setOf(VAR, CMP), "property", "Map") {
                         typeArgument("String")
@@ -1380,17 +1509,17 @@ object AglWorkerSerialisation {
                 }
                 data("AsmStructurePropertySimple") {
                     supertypes("AsmValueAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "index", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "Any")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, REF), "index", "Int")
+                    propertyOf(setOf(CON, CMP), "value", "Any")
                 }
                 data("AsmListSimple") {
                     supertypes("AsmValueAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "elements", "AsmValueAbstract")
+                    propertyOf(setOf(CON, CMP), "elements", "AsmValueAbstract")
                 }
                 data("AsmListSeparatedSimple") {
                     supertypes("AsmValueAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "elements", "AsmValueAbstract")
+                    propertyOf(setOf(CON, CMP), "elements", "AsmValueAbstract")
                 }
             }
         })
@@ -1414,9 +1543,9 @@ object AglWorkerSerialisation {
                 data("AglGrammarGrammar") {
                     supertypes("GrammarAbstract")
                 }
-                data("ContextFromGrammar") {
-                    propertyOf(setOf(VAR, CMP), "rootScope", "ScopeSimple") { typeArgument("String") }
-                }
+//                data("ContextFromGrammar") {
+//                    propertyOf(setOf(VAR, CMP), "rootScope", "ScopeSimple") { typeArgument("String") }
+//                }
             }
             namespace("net.akehurst.language.agl.language.format", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("AglFormatGrammar") {
@@ -1428,29 +1557,29 @@ object AglWorkerSerialisation {
                 imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.api.language.grammar")
             ) {
                 data("NamespaceDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "qualifiedName", "String")
+                    propertyOf(setOf(CON, CMP), "qualifiedName", "String")
                 }
                 data("GrammarReferenceDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "localNamespace", "NamespaceDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "nameOrQName", " String")
+                    propertyOf(setOf(CON, CMP), "localNamespace", "NamespaceDefault")
+                    propertyOf(setOf(CON, CMP), "nameOrQName", " String")
 
                     propertyOf(setOf(VAR, REF), "resolved", "GrammarAbstract")
                 }
                 data("GrammarDefault") {
                     supertypes("GrammarAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "namespace", "NamespaceDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "options", "List") { typeArgument("GrammarOptionDefault") }
+                    propertyOf(setOf(CON, CMP), "namespace", "NamespaceDefault")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "options", "List") { typeArgument("GrammarOptionDefault") }
                 }
                 data("GrammarOptionDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "String")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "value", "String")
                 }
                 data("GrammarAbstract") {
                     supertypes("Grammar")
 
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "namespace", "NamespaceDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "namespace", "NamespaceDefault")
+                    propertyOf(setOf(CON, CMP), "name", "String")
 
                     propertyOf(setOf(VAR, CMP), "extends", "List") { typeArgument("GrammarReferenceDefault") }
                     propertyOf(setOf(VAR, CMP), "grammarRule", "List") { typeArgument("GrammarRuleAbstract") }
@@ -1458,21 +1587,21 @@ object AglWorkerSerialisation {
                 data("GrammarRuleAbstract")
                 data("NormalRuleDefault") {
                     supertypes("GrammarRuleAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "grammar", "GrammarDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isSkip", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isLeaf", "Boolean")
+                    propertyOf(setOf(CON, REF), "grammar", "GrammarDefault")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "isSkip", "Boolean")
+                    propertyOf(setOf(CON, CMP), "isLeaf", "Boolean")
 
                     propertyOf(setOf(VAR, CMP), "rhs", "RuleItemAbstract")
                 }
 
                 data("OverrideRuleDefault") {
                     supertypes("GrammarRuleAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, REF), "grammar", "GrammarDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isSkip", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isLeaf", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "overrideKind", "OverrideKind")
+                    propertyOf(setOf(CON, REF), "grammar", "GrammarDefault")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "isSkip", "Boolean")
+                    propertyOf(setOf(CON, CMP), "isLeaf", "Boolean")
+                    propertyOf(setOf(CON, CMP), "overrideKind", "OverrideKind")
 
                     propertyOf(setOf(VAR, CMP), "overridenRhs", "RuleItemAbstract")
                 }
@@ -1487,19 +1616,19 @@ object AglWorkerSerialisation {
                 }
                 data("ChoiceLongestDefault") {
                     supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "alternative", "List") { typeArgument("RuleItem") }
+                    propertyOf(setOf(CON, CMP), "alternative", "List") { typeArgument("RuleItem") }
                 }
                 data("ChoicePriorityDefault") {
                     supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "alternative", "List") { typeArgument("RuleItem") }
+                    propertyOf(setOf(CON, CMP), "alternative", "List") { typeArgument("RuleItem") }
                 }
                 data("ChoiceAmbiguousDefault") {
                     supertypes("ChoiceAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "alternative", "List") { typeArgument("RuleItem") }
+                    propertyOf(setOf(CON, CMP), "alternative", "List") { typeArgument("RuleItem") }
                 }
                 data("ConcatenationDefault") {
                     supertypes("RuleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "items", "List") { typeArgument("RuleItem") }
+                    propertyOf(setOf(CON, CMP), "items", "List") { typeArgument("RuleItem") }
                 }
                 data("ConcatenationItemAbstract") {
                     supertypes("RuleItemAbstract")
@@ -1509,37 +1638,37 @@ object AglWorkerSerialisation {
                 }
                 data("GroupDefault") {
                     supertypes("ConcatenationItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "groupedContent", "RuleItem")
+                    propertyOf(setOf(CON, CMP), "groupedContent", "RuleItem")
                 }
                 data("NonTerminalDefault") {
                     supertypes("RuleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "targetGrammar", "GrammarReference", true)
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "targetGrammar", "GrammarReference", true)
+                    propertyOf(setOf(CON, CMP), "name", "String")
                 }
                 data("TerminalDefault") {
                     supertypes("RuleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "value", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isPattern", "Boolean")
+                    propertyOf(setOf(CON, CMP), "value", "String")
+                    propertyOf(setOf(CON, CMP), "isPattern", "Boolean")
                 }
                 data("EmbeddedDefault") {
                     supertypes("RuleItemAbstract")
 
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "embeddedGoalName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "embeddedGrammarReference", "GrammarReferenceDefault")
+                    propertyOf(setOf(CON, CMP), "embeddedGoalName", "String")
+                    propertyOf(setOf(CON, CMP), "embeddedGrammarReference", "GrammarReferenceDefault")
                 }
                 data("SeparatedListDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "min", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "max", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "item", "SimpleItemAbstract")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "separator", "SimpleItem")
+                    propertyOf(setOf(CON, CMP), "min", "Int")
+                    propertyOf(setOf(CON, CMP), "max", "Int")
+                    propertyOf(setOf(CON, CMP), "item", "SimpleItemAbstract")
+                    propertyOf(setOf(CON, CMP), "separator", "SimpleItem")
                 }
                 data("SimpleListDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "min", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "max", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "item", "SimpleItemAbstract")
+                    propertyOf(setOf(CON, CMP), "min", "Int")
+                    propertyOf(setOf(CON, CMP), "max", "Int")
+                    propertyOf(setOf(CON, CMP), "item", "SimpleItemAbstract")
                 }
                 data("OptionalItemDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "item", "RuleItem")
+                    propertyOf(setOf(CON, CMP), "item", "RuleItem")
                 }
             }
         })
@@ -1549,22 +1678,22 @@ object AglWorkerSerialisation {
         serialiser.configureFromTypeModel(typeModel("SPPT", false) {
             namespace("net.akehurst.language.agl.runtime.structure", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("RuntimeRule") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "runtimeRuleSetNumber", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "ruleNumber", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "isSkip", "Boolean")
+                    propertyOf(setOf(CON, CMP), "runtimeRuleSetNumber", "Int")
+                    propertyOf(setOf(CON, CMP), "ruleNumber", "Int")
+                    propertyOf(setOf(CON, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "isSkip", "Boolean")
                 }
             }
             namespace("net.akehurst.language.agl.sppt", imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.runtime.structure")) {
                 data("CompleteTreeDataNode") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "rule", "RuntimeRule")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "startPosition", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "nextInputPosition", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "nextInputNoSkip", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "option", "Int")
+                    propertyOf(setOf(CON, CMP), "rule", "RuntimeRule")
+                    propertyOf(setOf(CON, CMP), "startPosition", "Int")
+                    propertyOf(setOf(CON, CMP), "nextInputPosition", "Int")
+                    propertyOf(setOf(CON, CMP), "nextInputNoSkip", "Int")
+                    propertyOf(setOf(CON, CMP), "option", "Int")
                 }
                 data("TreeDataComplete2") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "forStateSetNumber", "Int")
+                    propertyOf(setOf(CON, CMP), "forStateSetNumber", "Int")
 
                     propertyOf(setOf(VAR, CMP), "root", "CompleteTreeDataNode", true)
                     propertyOf(setOf(VAR, CMP), "initialSkip", "TreeDataComplete", true) { typeArgument("CompleteTreeDataNode") }
@@ -1590,10 +1719,10 @@ object AglWorkerSerialisation {
         serialiser.configureFromTypeModel(typeModel("ApiType", false) {
             namespace("net.akehurst.language.api.parser", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("InputLocation") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "position", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "column", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "line", "Int")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "length", "Int")
+                    propertyOf(setOf(CON, CMP), "position", "Int")
+                    propertyOf(setOf(CON, CMP), "column", "Int")
+                    propertyOf(setOf(CON, CMP), "line", "Int")
+                    propertyOf(setOf(CON, CMP), "length", "Int")
                 }
             }
             namespace("net.akehurst.language.api.processor", imports = mutableListOf("kotlin", "kotlin.collections")) {
@@ -1601,16 +1730,16 @@ object AglWorkerSerialisation {
                 enum("CompletionItemKind", emptyList())
                 enum("LanguageProcessorPhase", emptyList())
                 data("LanguageIssue") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "kind", "LanguageIssueKind")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "phase", "LanguageProcessorPhase")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "location", "InputLocation")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "message", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "data", "Any")
+                    propertyOf(setOf(CON, CMP), "kind", "LanguageIssueKind")
+                    propertyOf(setOf(CON, CMP), "phase", "LanguageProcessorPhase")
+                    propertyOf(setOf(CON, CMP), "location", "InputLocation")
+                    propertyOf(setOf(CON, CMP), "message", "String")
+                    propertyOf(setOf(CON, CMP), "data", "Any")
                 }
                 data("CompletionItem") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "kind", "CompletionItemKind")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "text", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "name", "String")
+                    propertyOf(setOf(CON, CMP), "kind", "CompletionItemKind")
+                    propertyOf(setOf(CON, CMP), "text", "String")
+                    propertyOf(setOf(CON, CMP), "name", "String")
                     propertyOf(setOf(VAR, CMP), "description", "String")
                 }
             }
@@ -1619,42 +1748,42 @@ object AglWorkerSerialisation {
 
                 }
                 data("ParseOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "goalRuleName", "String")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "reportErrors", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "reportGrammarAmbiguities", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "cacheSkip", "Boolean")
+                    propertyOf(setOf(CON, CMP), "goalRuleName", "String")
+                    propertyOf(setOf(CON, CMP), "reportErrors", "Boolean")
+                    propertyOf(setOf(CON, CMP), "reportGrammarAmbiguities", "Boolean")
+                    propertyOf(setOf(CON, CMP), "cacheSkip", "Boolean")
                 }
                 data("SyntaxAnalysisOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "active", "Boolean")
+                    propertyOf(setOf(CON, CMP), "active", "Boolean")
                 }
                 data("SemanticAnalysisOptionsDefault") {
                     typeParameters("AsmType", "ContextType")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "active", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "locationMap", "Map") {
+                    propertyOf(setOf(CON, CMP), "active", "Boolean")
+                    propertyOf(setOf(CON, CMP), "locationMap", "Map") {
                         typeArgument("Any")
                         typeArgument("InputLocation")
                     }
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "context", "ContextType")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "checkReferences", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "resolveReferences", "Boolean")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "other", "Map") {
+                    propertyOf(setOf(CON, CMP), "context", "ContextType")
+                    propertyOf(setOf(CON, CMP), "checkReferences", "Boolean")
+                    propertyOf(setOf(CON, CMP), "resolveReferences", "Boolean")
+                    propertyOf(setOf(CON, CMP), "other", "Map") {
                         typeArgument("String")
                         typeArgument("Any")
                     }
                 }
                 data("CompletionProviderOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "context", "ContextType")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "other", "Map") {
+                    propertyOf(setOf(CON, CMP), "context", "ContextType")
+                    propertyOf(setOf(CON, CMP), "other", "Map") {
                         typeArgument("String")
                         typeArgument("Any")
                     }
                 }
                 data("ProcessOptionsDefault") {
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "scan", "ScanOptionsDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "parse", "ParseOptionsDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "syntaxAnalysis", "SyntaxAnalysisOptionsDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "semanticAnalysis", "SemanticAnalysisOptionsDefault")
-                    propertyOf(setOf(CONSTRUCTOR, CMP), "completionProvider", "CompletionProviderOptionsDefault")
+                    propertyOf(setOf(CON, CMP), "scan", "ScanOptionsDefault")
+                    propertyOf(setOf(CON, CMP), "parse", "ParseOptionsDefault")
+                    propertyOf(setOf(CON, CMP), "syntaxAnalysis", "SyntaxAnalysisOptionsDefault")
+                    propertyOf(setOf(CON, CMP), "semanticAnalysis", "SemanticAnalysisOptionsDefault")
+                    propertyOf(setOf(CON, CMP), "completionProvider", "CompletionProviderOptionsDefault")
                 }
             }
         })

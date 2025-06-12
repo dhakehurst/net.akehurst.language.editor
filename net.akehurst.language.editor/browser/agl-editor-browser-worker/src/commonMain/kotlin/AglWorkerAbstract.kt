@@ -37,7 +37,6 @@ import net.akehurst.language.issues.ram.IssueHolder
 import net.akehurst.language.parser.api.ParseResult
 import net.akehurst.language.parser.leftcorner.ParseResultDefault
 import net.akehurst.language.reference.asm.CrossReferenceModelDefault
-import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sentence.common.SentenceDefault
 import net.akehurst.language.sppt.api.SharedPackedParseTree
@@ -125,8 +124,8 @@ abstract class AglWorkerAbstract {
                 val ld = createLanguageDefinition(
                     message.languageId,
                     GrammarString(message.grammarStr),
-                    message.typeModelStr?.let { TypesString(it) },
-                    message.asmTransformStr?.let { TransformString(it) },
+                    message.typesModelStr?.let { TypesString(it) },
+                    message.transformStr?.let { TransformString(it) },
                     message.crossReferenceStr?.let { CrossReferenceString(it) }
                 )
                 _languageDefinition[message.languageId] = ld
@@ -201,15 +200,15 @@ abstract class AglWorkerAbstract {
     /*
         protected fun scan(port: Any, endPoint: EndPointIdentity, proc: LanguageProcessor<AsmType, ContextType>, sentence: String): ScanResult {
             return try {
-                sendMessage(port, MessageScanResult(endPoint, MessageStatus.START, "Start", emptyList(), emptyList()))
+                sendMessage(port, MessageScanResult(endPoint, MessageResponseStatus.START, "Start", emptyList(), emptyList()))
                 val result = proc.scan(sentence)
-                sendMessage(port, MessageScanResult(endPoint, MessageStatus.SUCCESS, "Success", emptyList(), emptyList()))
+                sendMessage(port, MessageScanResult(endPoint, MessageResponseStatus.SUCCESS, "Success", emptyList(), emptyList()))
                 this.sendLineTokens(port, endPoint, result.tokens)
                 result
             } catch (t: Throwable) {
                 val st = t.stackTraceToString().substring(0, 100)
                 val msg = "Exception during 'parse' - ${t::class.simpleName} - ${t.message!!}\n$st"
-                sendMessage(port, MessageScanResult(endPoint, MessageStatus.FAILURE, msg, emptyList(), emptyList()))
+                sendMessage(port, MessageScanResult(endPoint, MessageResponseStatus.FAILURE, msg, emptyList(), emptyList()))
                 ScanResultDefault(emptyList(), IssueHolder(LanguageProcessorPhase.SCAN))
             }
         }
@@ -218,7 +217,7 @@ abstract class AglWorkerAbstract {
     protected fun parse(
         port: Any,
         endPoint: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<Any, Any>,
         processOptions: ProcessOptions<Any, Any>,
@@ -233,7 +232,7 @@ abstract class AglWorkerAbstract {
                 if (null == sppt) {
                     sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null))
                 } else {
-                    val sentenceObj = SentenceDefault(sentence, processOptions.parse.sentenceIdentity())
+                    val sentenceObj = SentenceDefault(sentence, processOptions.parse.sentenceIdentity.invoke())
                     this.sendLineTokens(port, endPoint, requestId, languageId, sentenceObj, sppt, editorOptions.lineTokensChunkSize)
                     if (editorOptions.parseTree) {
                         //TODO: send TreeData rather than encode parse tree...it should be faster
@@ -263,7 +262,7 @@ abstract class AglWorkerAbstract {
     private fun syntaxAnalysis(
         port: Any,
         endPoint: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         proc: LanguageProcessor<Any, Any>,
         options: ProcessOptions<Any, Any>,
         sppt: SharedPackedParseTree
@@ -312,7 +311,7 @@ abstract class AglWorkerAbstract {
     private fun semanticAnalysis(
         port: Any,
         endPoint: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<Any, Any>,
         options: ProcessOptions<Any, Any>,
@@ -393,7 +392,7 @@ abstract class AglWorkerAbstract {
     private fun sendLineTokens(
         port: Any,
         endPoint: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         sentence: Sentence,
         sppt: SharedPackedParseTree,

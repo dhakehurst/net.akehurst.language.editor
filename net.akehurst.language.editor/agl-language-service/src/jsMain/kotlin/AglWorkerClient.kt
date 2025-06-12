@@ -123,7 +123,7 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
 
     fun createProcessor(
         languageId: LanguageIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         editorId: String,
         sessionId: String,
         grammarStr: String,
@@ -135,15 +135,15 @@ class AglWorkerClient<AsmType : Any, ContextType : Any>(
         this.sendToWorker(MessageProcessorCreate(EndPointIdentity(editorId, sessionId), requestId, languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceStr, editorOptions))
     }
 
-    fun interrupt(languageId: LanguageIdentity, editorId: String, requestId: RequestIdentity<*>, sessionId: String) {
+    fun interrupt(languageId: LanguageIdentity, editorId: String, requestId: RequestIdentity, sessionId: String) {
         this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(editorId, sessionId), requestId, languageId, "New parse request"))
     }
 
-    fun processSentence(languageId: LanguageIdentity, requestId: RequestIdentity<*>, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
+    fun processSentence(languageId: LanguageIdentity, requestId: RequestIdentity, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
         this.sendToWorker(MessageProcessRequest(EndPointIdentity(editorId, sessionId), requestId, languageId, sentence, processOptions))
     }
 
-    fun setStyle(languageId: LanguageIdentity, requestId: RequestIdentity<*>, editorId: String, sessionId: String, css: String) {
+    fun setStyle(languageId: LanguageIdentity, requestId: RequestIdentity, editorId: String, sessionId: String, css: String) {
         this.sendToWorker(MessageSetStyle(EndPointIdentity(editorId, sessionId), requestId, languageId, css))
     }
 

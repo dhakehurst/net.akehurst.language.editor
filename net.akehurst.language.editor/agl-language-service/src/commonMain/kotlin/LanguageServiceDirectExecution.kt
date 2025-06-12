@@ -63,7 +63,7 @@ class LanguageServiceResponseDirectExecution(
 
     override fun processorCreateResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -73,14 +73,14 @@ class LanguageServiceResponseDirectExecution(
         responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, requestId, status, message, issues, scannerMatchables)
     }
 
-    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String) {
+    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String) {
         logger.logTrace { "processorDeleteResponse  $endPointIdentity, $requestId, $status, $message" }
         responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, requestId, status, message)
     }
 
     override fun processorSetStyleResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -90,19 +90,19 @@ class LanguageServiceResponseDirectExecution(
         responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, requestId, status, message, issues, styleModel)
     }
 
-    override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
+    override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
         logger.logTrace { "sentenceParseResponse $endPointIdentity, $requestId, $status, $message, $issues, <tree> " }
         responseObjects[endPointIdentity]?.sentenceScanResponse(endPointIdentity, requestId, status, message, issues)
     }
 
-    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
         logger.logTrace { "sentenceParseResponse $endPointIdentity, $requestId, $status, $message, $issues, <tree> " }
         responseObjects[endPointIdentity]?.sentenceParseResponse(endPointIdentity, requestId, status, message, issues, tree)
     }
 
     override fun sentenceLineTokensResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         startLine: Int,
@@ -114,7 +114,7 @@ class LanguageServiceResponseDirectExecution(
 
     override fun sentenceSyntaxAnalysisResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -126,7 +126,7 @@ class LanguageServiceResponseDirectExecution(
 
     override fun sentenceSemanticAnalysisResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -138,7 +138,7 @@ class LanguageServiceResponseDirectExecution(
 
     override fun sentenceCodeCompleteResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -159,7 +159,7 @@ open class LanguageServiceRequestDirectExecution(
     // --- LanguageServiceRequest ---
     override fun processorCreateRequest(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         grammarStr: GrammarString,
         typeModelStr: TypesString?,
@@ -195,12 +195,12 @@ open class LanguageServiceRequestDirectExecution(
         }
     }
 
-    override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity) {
+    override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity) {
         logger.logTrace { "processorDeleteRequest $endPointIdentity, $languageId" }
         //TODO("not implemented")
     }
 
-    override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, styleStr: StyleString) {
+    override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
         logger.logTrace { "processorSetStyleRequest $endPointIdentity, $languageId" }
         try {
             val styleHndlr = AglStyleHandlerCssClass(languageId)
@@ -218,14 +218,14 @@ open class LanguageServiceRequestDirectExecution(
         }
     }
 
-    override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, reason: String) {
+    override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, reason: String) {
         logger.logTrace { "interruptRequest $endPointIdentity, $languageId" }
         _languageDefinition[languageId]?.processor?.interrupt(reason)
     }
 
     override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         sentence: String,
         processOptions: ProcessOptions<AsmType, ContextType>
@@ -241,7 +241,7 @@ open class LanguageServiceRequestDirectExecution(
 
     override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         sentence: String,
         position: Int,
@@ -314,7 +314,7 @@ open class LanguageServiceRequestDirectExecution(
 
     protected fun <AsmType : Any, ContextType : Any> scan(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<AsmType, ContextType>,
         processOptions: ProcessOptions<AsmType, ContextType>,
@@ -343,7 +343,7 @@ open class LanguageServiceRequestDirectExecution(
 
     protected fun <AsmType : Any, ContextType : Any> parse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<AsmType, ContextType>,
         processOptions: ProcessOptions<AsmType, ContextType>,
@@ -385,7 +385,7 @@ open class LanguageServiceRequestDirectExecution(
 
     private fun sendLineTokens(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         source: String,
         tokens: List<List<LeafData>>,
@@ -433,7 +433,7 @@ open class LanguageServiceRequestDirectExecution(
 
     private fun <AsmType : Any, ContextType : Any> syntaxAnalysis(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<AsmType, ContextType>,
         options: ProcessOptions<AsmType, ContextType>,
@@ -483,7 +483,7 @@ open class LanguageServiceRequestDirectExecution(
 
     private fun <AsmType : Any, ContextType : Any> semanticAnalysis(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         languageId: LanguageIdentity,
         proc: LanguageProcessor<AsmType, ContextType>,
         options: ProcessOptions<AsmType, ContextType>,

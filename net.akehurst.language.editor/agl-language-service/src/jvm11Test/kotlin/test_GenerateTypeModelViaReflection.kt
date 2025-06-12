@@ -69,13 +69,14 @@ class test_GenerateTypeModelViaReflection {
         gen.include("net.akehurst.language.agl.processor.SemanticAnalysisOptionsDefault")
         gen.include("net.akehurst.language.agl.processor.CompletionProviderOptionsDefault")
         gen.include("net.akehurst.language.agl.processor.ProcessOptionsDefault")
-        gen.include("net.akehurst.language.agl.simple.ContextAsmSimple")
-        gen.include("net.akehurst.language.grammar.processor.ContextFromGrammar")
+        gen.include("net.akehurst.language.agl.simple.ContextWithScope")
+        gen.include("net.akehurst.language.api.syntaxAnalyser.LocationMap")
         gen.include("net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference")
         gen.include("net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel")
 
+        gen.include("net.akehurst.language.editor.api.RequestIdentity")
         gen.include("net.akehurst.language.editor.api.EndPointIdentity")
-        gen.include("net.akehurst.language.editor.api.MessageStatus")
+        gen.include("net.akehurst.language.editor.api.MessageResponseStatus")
         gen.include("net.akehurst.language.editor.api.EditorOptions")
         gen.include("net.akehurst.language.editor.api.AglToken")
 

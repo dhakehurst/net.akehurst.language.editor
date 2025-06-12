@@ -38,7 +38,7 @@ open class LanguageServiceByCoroutine(
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
         override fun processorCreateRequest(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             languageId: LanguageIdentity,
             grammarStr: GrammarString,
             typeModelStr: TypesString?,
@@ -54,21 +54,21 @@ open class LanguageServiceByCoroutine(
             }
         }
 
-        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity) {
+        override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity) {
             submit { direct.processorDeleteRequest(endPointIdentity, requestId, languageId) }
         }
 
-        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, styleStr: StyleString) {
+        override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
             submit { direct.processorSetStyleRequest(endPointIdentity, requestId, languageId, styleStr) }
         }
 
-        override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, languageId: LanguageIdentity, reason: String) {
+        override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, reason: String) {
             submit { direct.interruptRequest(endPointIdentity, requestId, languageId, "New parse request") }
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             languageId: LanguageIdentity,
             sentence: String,
             processOptions: ProcessOptions<AsmType, ContextType>
@@ -78,7 +78,7 @@ open class LanguageServiceByCoroutine(
 
         override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             languageId: LanguageIdentity,
             sentence: String,
             position: Int,
@@ -98,7 +98,7 @@ open class LanguageServiceByCoroutine(
     private val response = object : LanguageServiceResponse {
         override fun processorCreateResponse(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
@@ -107,13 +107,13 @@ open class LanguageServiceByCoroutine(
             responseObjects[endPointIdentity]?.processorCreateResponse(endPointIdentity, requestId, status, message, issues, scannerMatchables)
         }
 
-        override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String) {
+        override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String) {
             responseObjects[endPointIdentity]?.processorDeleteResponse(endPointIdentity, requestId, status, message)
         }
 
         override fun processorSetStyleResponse(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
@@ -122,17 +122,17 @@ open class LanguageServiceByCoroutine(
             responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, requestId, status, message, issues, styleModel)
         }
 
-        override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
+        override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
             responseObjects[endPointIdentity]?.sentenceScanResponse(endPointIdentity, requestId, status, message, issues)
         }
 
-        override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+        override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
             responseObjects[endPointIdentity]?.sentenceParseResponse(endPointIdentity, requestId, status, message, issues, tree)
         }
 
         override fun sentenceLineTokensResponse(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             status: MessageResponseStatus,
             message: String,
             startLine: Int,
@@ -141,13 +141,13 @@ open class LanguageServiceByCoroutine(
             responseObjects[endPointIdentity]?.sentenceLineTokensResponse(endPointIdentity, requestId, status, message, startLine, lineTokens)
         }
 
-        override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+        override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
             responseObjects[endPointIdentity]?.sentenceSyntaxAnalysisResponse(endPointIdentity, requestId, status, message, issues, asm)
         }
 
         override fun sentenceSemanticAnalysisResponse(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
@@ -158,7 +158,7 @@ open class LanguageServiceByCoroutine(
 
         override fun sentenceCodeCompleteResponse(
             endPointIdentity: EndPointIdentity,
-            requestId: RequestIdentity<*>,
+            requestId: RequestIdentity,
             status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,

@@ -16,41 +16,41 @@ class test_LanguageServiceDirectExecution {
     private companion object {
         //TODO: record response (rather than print), and test expected result
         val responseRecorder = object : LanguageServiceResponse {
-            override fun processorCreateResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
+            override fun processorCreateResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, scannerMatchables: List<Matchable>) {
                 println("processorCreateResponse: $endPointIdentity, $requestId, $status, $message, $issues, $scannerMatchables")
             }
 
-            override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String) {
+            override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String) {
                 println("processorDeleteResponse: $endPointIdentity, $requestId, $status, $message")
             }
 
-            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
+            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
                 println("processorSetStyleResponse: $endPointIdentity, $requestId, $status, $message, $issues, $styleModel")
             }
 
-            override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
+            override fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>) {
                 println("sentenceLineTokensResponse: $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens")
             }
 
-            override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
+            override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
                 println("sentenceScanResponse: $endPointIdentity, $requestId, $status, $message, $issues")
             }
 
-            override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+            override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
                 println("sentenceParseResponse: $endPointIdentity, $status, $requestId, $message, $issues, $tree")
             }
 
-            override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+            override fun sentenceSyntaxAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
                 println("sentenceSyntaxAnalysisResponse: $endPointIdentity, $requestId, $status, $message, $issues, $asm")
             }
 
-            override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
+            override fun sentenceSemanticAnalysisResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, asm: Any?) {
                 println("sentenceSemanticAnalysisResponse: $endPointIdentity, $requestId, $status, $message, $issues, $asm")
             }
 
             override fun sentenceCodeCompleteResponse(
                 endPointIdentity: EndPointIdentity,
-                requestId: RequestIdentity<*>,
+                requestId: RequestIdentity,
                 status: MessageResponseStatus,
                 message: String,
                 issues: List<LanguageIssue>,
@@ -74,7 +74,7 @@ class test_LanguageServiceDirectExecution {
         val sut = LanguageServiceDirectExecution(logFunction)
 
         val epi = EndPointIdentity("test-editor", "<nothing>")
-        val ri = RequestIdentity(1)
+        val ri = RequestIdentity("1")
         val li = LanguageIdentity("test-lang")
 
         sut.addResponseListener(epi, responseRecorder)
@@ -95,7 +95,7 @@ class test_LanguageServiceDirectExecution {
         val sut = LanguageServiceDirectExecution(logFunction)
 
         val epi = EndPointIdentity("test-editor", "<nothing>")
-        val ri = RequestIdentity(1)
+        val ri = RequestIdentity("1")
         val li = LanguageIdentity("test-lang")
 
         sut.addResponseListener(epi, responseRecorder)

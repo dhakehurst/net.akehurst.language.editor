@@ -226,7 +226,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         }
     }
 
-    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
         super.sentenceParseResponse(endPointIdentity, requestId, status, message, issues, tree)
         when (status) {
             MessageResponseStatus.FAILURE -> this.resetTokenization(0) // reset to trigger use of scan tokens

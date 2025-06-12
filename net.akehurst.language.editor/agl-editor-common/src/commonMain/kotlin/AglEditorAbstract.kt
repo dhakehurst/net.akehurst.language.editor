@@ -58,7 +58,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     //protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger, styleHandler)
     protected val agl = AglComponents<AsmType, ContextType>(languageDefinition, editorId, logger, styleHandler)
-    val nextRequestId get() = RequestIdentity(_nextRequestId)
+    val nextRequestId get() = RequestIdentity("$_nextRequestId")
 
     abstract val workerTokenizer: AglTokenizerByWorker<EditorStyleType>
     abstract val completionProvider: AglEditorCompletionProvider
@@ -265,7 +265,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     ///
     override fun processorCreateResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -299,14 +299,14 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         }
     }
 
-    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String) {
+    override fun processorDeleteResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String) {
         logger.logTrace { "processorDeleteResponse $endPointIdentity, $requestId, $status, $message " }
         TODO("not implemented")
     }
 
     override fun processorSetStyleResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -328,7 +328,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override fun sentenceLineTokensResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         startLine: Int,
@@ -344,12 +344,12 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         }
     }
 
-    override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
+    override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
         logger.logTrace { "sentenceScanResponse $endPointIdentity, $requestId, $status, $message, $issues" }
         receiveIssues(issues.toList())
     }
 
-    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity<*>, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
+    override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
         logger.logTrace { "sentenceParseResponse $endPointIdentity, $requestId, $status, $message, $issues, <tree>" }
         receiveIssues(issues.toList())
         when (status) {
@@ -375,7 +375,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override fun sentenceSyntaxAnalysisResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -393,7 +393,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override fun sentenceSemanticAnalysisResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
@@ -411,7 +411,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override fun sentenceCodeCompleteResponse(
         endPointIdentity: EndPointIdentity,
-        requestId: RequestIdentity<*>,
+        requestId: RequestIdentity,
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
