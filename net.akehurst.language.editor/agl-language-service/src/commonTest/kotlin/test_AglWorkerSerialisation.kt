@@ -24,6 +24,7 @@ import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.asm.api.Asm
 import net.akehurst.language.asm.builder.asmSimple
+import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageResponseStatus
@@ -31,6 +32,7 @@ import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.language.service.AglWorkerSerialisation
 import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.grammar.api.Grammar
+import net.akehurst.language.grammar.api.GrammarModel
 import net.akehurst.language.grammar.processor.contextFromGrammar
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
@@ -73,7 +75,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun Grammar_serialise_deserialise() {
-        val input: Grammar = Agl.registry.agl.grammar.processor!!.process(
+        val input: GrammarModel = Agl.registry.agl.grammar.processor!!.process(
             sentence = """
                 namespace test.test
                 grammar Test {
@@ -85,9 +87,9 @@ class test_AglWorkerSerialisation {
                     leaf b = 'b' 'b' ;
                 }
             """.trimIndent()
-        ).asm!!.primary!!
+        ).asm!!
 
-        test(input.namespace) { expected, actual ->
+        test(input) { expected, actual ->
             assertEquals(expected.asString(), actual.asString())
         }
     }
@@ -380,6 +382,9 @@ class test_AglWorkerSerialisation {
         """
         val grammar = Agl.registry.agl.grammar.processor!!.process(grammarStr).asm!!
         val context = contextFromGrammar(grammar)
+            // must add model to scope to that references can be resolved if serialising
+            context.addToScope(grammar.name.value, listOf(grammar.name.value), QualifiedName("net.akehurst.language.grammar.api.GrammarModel"), null, grammar)
+
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), RequestIdentity("1"),
             languageId,
@@ -393,6 +398,7 @@ class test_AglWorkerSerialisation {
         )
 
         val jsonStr = AglWorkerSerialisation.serialise(expected)
+        println(jsonStr)
         val actual = AglWorkerSerialisation.deserialise<MessageProcessRequest<Any, ContextWithScope<Any,Any>>>(jsonStr)
 
         assertEquals(expected.endPoint, actual.endPoint)

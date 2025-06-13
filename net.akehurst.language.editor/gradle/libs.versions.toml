@@ -1,5 +1,5 @@
 [versions]
-project = "2.1.21"
+project = "2.1.21-rc1"
 
 kotlin = "2.1.21"
 exportPublic = "2.1.21"

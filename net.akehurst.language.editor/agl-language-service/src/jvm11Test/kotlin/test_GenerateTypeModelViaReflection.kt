@@ -55,6 +55,7 @@ class test_GenerateTypeModelViaReflection {
         gen.include("net.akehurst.language.scanner.api.MatchableKind")
         gen.include("net.akehurst.language.scanner.api.ScanOptions")
         gen.include("net.akehurst.language.parser.api.ParseOptions")
+        gen.include("net.akehurst.language.parser.api.OptionNum")
         gen.include("net.akehurst.language.api.processor.LanguageIdentity")
         gen.include("net.akehurst.language.api.processor.ProcessOptions")
         gen.include("net.akehurst.language.api.processor.CompletionItem")
@@ -79,6 +80,7 @@ class test_GenerateTypeModelViaReflection {
         gen.include("net.akehurst.language.editor.api.MessageResponseStatus")
         gen.include("net.akehurst.language.editor.api.EditorOptions")
         gen.include("net.akehurst.language.editor.api.AglToken")
+        gen.include("net.akehurst.language.editor.api.EditorStyleIdentity")
 
         gen.include("net.akehurst.language.editor.common.AglTokenDefault")
         gen.include("net.akehurst.language.editor.common.EditorOptionsDefault")

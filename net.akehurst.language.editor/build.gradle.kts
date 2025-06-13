@@ -36,6 +36,7 @@ allprojects {
             }
         }
         mavenCentral()
+        gradlePluginPortal()
     }
 
     group = rootProject.name

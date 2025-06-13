@@ -103,7 +103,7 @@ enum class MessageResponseStatus {
 }
 
 @JvmInline
-value class EditorStyleIdentity(val value: String) {
+value class EditorStyleIdentity(override val value: String) : PublicValueType {
     companion object {
         val NO_STYLE = EditorStyleIdentity("nostyle")
     }

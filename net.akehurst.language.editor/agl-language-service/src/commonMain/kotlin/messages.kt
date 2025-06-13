@@ -86,6 +86,7 @@ namespace net.akehurst.language.api.processor
     }
     interface SemanticAnalysisOptions {
         cmp context
+        cmp locationMap
     }
 
 namespace net.akehurst.language.agl.simple

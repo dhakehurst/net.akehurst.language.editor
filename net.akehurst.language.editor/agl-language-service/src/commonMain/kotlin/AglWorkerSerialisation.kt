@@ -20,16 +20,14 @@ import net.akehurst.kotlin.json.JsonDocument
 import net.akehurst.kotlin.kserialisation.json.KSerialiserJson
 import net.akehurst.language.asm.simple.AglAsm
 import net.akehurst.language.base.processor.AglBase
-import net.akehurst.language.editor.api.RequestIdentity
-import net.akehurst.language.grammar.processor.AglGrammar
-import net.akehurst.language.typemodel.processor.AglTypes
 import net.akehurst.language.expressions.processor.AglExpressions
+import net.akehurst.language.grammar.processor.AglGrammar
 import net.akehurst.language.reference.processor.AglCrossReference
-import net.akehurst.language.style.processor.AglStyle
 import net.akehurst.language.scope.processor.AglScope
+import net.akehurst.language.style.processor.AglStyle
 import net.akehurst.language.typemodel.api.TypeModel
-import net.akehurst.language.typemodel.asm.StdLibDefault
 import net.akehurst.language.typemodel.builder.typeModel
+import net.akehurst.language.typemodel.processor.AglTypes
 
 //
 // This will only work if all classes are *public* (exported for JS) and *forReflection*
@@ -65,7 +63,6 @@ object AglWorkerSerialisation {
 //            initialiseMessages()
 //            initialiseAsmSimple()
             serialiser.registry.resolveImports()
-            serialiser.registerPrimitiveAsObject(RequestIdentity::class, { obj ->  },{json -> })
             initialised = true
         }
     }
@@ -535,6 +532,10 @@ object AglWorkerSerialisation {
                 }
             }
             namespace("net.akehurst.language.parser.api", listOf("std")) {
+                value("OptionNum") {
+                    constructor_ { parameter("value","Integer") }
+                    propertyOf(setOf(VAL, REF, STR), "value", "Integer", false)
+                }
                 interface_("Rule") {
 
                 }
@@ -697,6 +698,7 @@ object AglWorkerSerialisation {
                 }
             }
             namespace("net.akehurst.language.parser.leftcorner", listOf("net.akehurst.language.parser.api", "std")) {
+                singleton("SentenceIdentityFunctionNull")
                 data("ParseOptionsDefault") {
                     supertype("ParseOptions")
                     constructor_ {
@@ -753,7 +755,7 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(VAR, CMP, STR), "context", "ContextType", false)
                     propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "ifItemAlreadyExistsInScopeIssueKind", "LanguageIssueKind", false)
-                    propertyOf(setOf(VAR, REF, STR), "locationMap", "LocationMap", false)
+                    propertyOf(setOf(VAR, CMP, STR), "locationMap", "LocationMap", false)
                     propertyOf(setOf(VAR, REF, STR), "other", "Map", false) {
                         typeArgument("String")
                         typeArgument("Any")
@@ -809,8 +811,12 @@ object AglWorkerSerialisation {
             }
             namespace("net.akehurst.language.agl.simple", listOf("net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.scope.asm")) {
                 singleton("NULL_SENTENCE_IDENTIFIER")
-                singleton("CreateScopedItemDefault")
-                singleton("ResolveScopedItemDefault")
+                data("CreateScopedItemDefault") {
+                    constructor_ {  }
+                }
+                data("ResolveScopedItemDefault") {
+                    constructor_ {  }
+                }
                 data("ContextWithScope") {
                     typeParameters("ItemType", "ItemInScopeType")
                     supertype("SentenceContext")
@@ -867,9 +873,16 @@ object AglWorkerSerialisation {
                 value("RequestIdentity") {
                     supertype("PublicValueType")
                     constructor_ {
-                        parameter("value", "Any", false)
+                        parameter("value", "String", false)
                     }
-                    propertyOf(setOf(VAL, REF, STR), "value", "Any", false)
+                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
+                }
+                value("EditorStyleIdentity") {
+                    supertype("PublicValueType")
+                    constructor_ {
+                        parameter("value", "String", false)
+                    }
+                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
                 }
                 interface_("EditorOptions") {
 
@@ -930,6 +943,11 @@ object AglWorkerSerialisation {
                     }
                     propertyOf(setOf(VAR, REF, STR), "syntaxAnalysis", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "syntaxAnalysisAsm", "Boolean", false)
+                }
+            }
+            namespace("net.akehurst.language.agl.syntaxAnalyser", imports = mutableListOf("std")) {
+                data("LocationMapDefault") {
+                    constructor_ {  }
                 }
             }
         }

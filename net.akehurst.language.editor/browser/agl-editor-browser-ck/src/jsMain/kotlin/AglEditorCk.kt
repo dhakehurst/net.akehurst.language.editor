@@ -122,7 +122,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         _contextualBalloon = ckEditor.plugins.get(ck.ui.panel.balloon.ContextualBalloon::class.js)
         val styleCompleteItem = editorOptions.styleCompletionItem
             ?: { item ->
-                val senDef =SentenceDefault(item.text, agl.options.invoke().parse.sentenceIdentity())
+                val senDef =SentenceDefault(item.text, agl.options.invoke().parse.sentenceIdentity.invoke())
                 val scanRes = agl.simpleScanner.scan(senDef)
                 val aglTokens = agl.styleHandler.transformToTokens(scanRes.allTokens)
                 val html = _autocompleteLabelStyleHandler.applyHtmlStyling(senDef, aglTokens, emptyList())

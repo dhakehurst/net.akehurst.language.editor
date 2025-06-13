@@ -323,7 +323,7 @@ internal class AglEditorCodeMirror<AsmType : Any, ContextType : Any>(
 
     override fun createIssueMarkers(issues: List<LanguageIssue>) {
         val editorMarkers = issues.map { issue ->
-            val loc = issue.location ?: InputLocation(0, 1, 1, 1, agl.options.invoke().parse.sentenceIdentity() ?: editorId)
+            val loc = issue.location ?: InputLocation(0, 1, 1, 1, agl.options.invoke().parse.sentenceIdentity.invoke() ?: editorId)
             val errMsg = when (issue.phase) {
                 LanguageProcessorPhase.GRAMMAR -> "Grammar Error: ${issue.message}"
                 LanguageProcessorPhase.SCAN -> "Scan Error ${issue.message}"
