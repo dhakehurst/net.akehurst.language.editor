@@ -16,7 +16,7 @@
 
 package net.akehurst.language.editor.worker
 
-import net.akehurst.language.collections.mutableStackOf
+import net.akehurst.kotlinx.collections.mutableStackOf
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.language.service.AglWorkerSerialisation
 import net.akehurst.language.editor.language.service.messages.AglWorkerMessage

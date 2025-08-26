@@ -1,25 +1,25 @@
 [versions]
-project = "2.1.21-rc1"
+project = "2.2.0-SNAPSHOT"
 
-kotlin = "2.1.21"
-exportPublic = "2.1.21"
-reflect = "2.1.21"
+kotlin = "2.2.0"
+exportPublic = "2.2.0"
+reflect = "2.2.0-SNAPSHOT"
 dokka = "2.0.0"
 buildconfig = "5.5.1"
 credentials = "3.0"
 
-nal-agl = "4.2.1.21"
+nal-agl = "4.2.2.0-SNAPSHOT"
 
-nak-compose-code-editor = "2.1.21"
+nak-compose-code-editor = "2.2.0-SNAPSHOT"
 
-nak-serialisation = "2.1.21"
-nak-json = "2.1.21"
-nak-kotlinx = "2.1.21"
-nak-html-builder = "2.1.21"
+nak-serialisation = "2.2.0-SNAPSHOT"
+nak-json = "2.2.0"
+nak-kotlinx = "2.2.0-SNAPSHOT"
+nak-html-builder = "2.2.0"
 nak-codemirror-api = "2.1.21"
 
-kotlinx-coroutines = "1.10.1"
-compose = "1.8.0"
+kotlinx-coroutines = "1.10.2"
+compose = "1.9.0-beta03"
 
 [libraries]
 nal-agl-processor = { module = "net.akehurst.language:agl-processor", version.ref = "nal-agl" }

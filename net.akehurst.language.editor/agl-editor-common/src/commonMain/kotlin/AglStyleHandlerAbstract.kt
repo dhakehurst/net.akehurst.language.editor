@@ -58,7 +58,7 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
             }
 
             is AglStyleMetaRule -> {
-                val n = AglStyleSelector("\$\$" + sr.pattern.pattern, AglStyleSelectorKind.SPECIAL)
+                val n = AglStyleSelector("\$\$" + sr.pattern.value, AglStyleSelectorKind.SPECIAL)
                 val sn = convert(n)
                 _metaStyles[sn] = sr
                 _editorStyles[sn.identity] = sn
@@ -118,8 +118,8 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
         //val metaTagClasses = leaf.metaTags.mapNotNull { this.mapTokenTypeToClass(it) }
         val metaTagClasses = this._metaStyles.mapNotNull { (k, v) ->
             when {
-                v.pattern.matches(leaf.name) -> k
-                leaf.tagList.any { v.pattern.matches(it) } -> k
+                v.pattern.value.toRegex().matches(leaf.name) -> k
+                leaf.tagList.any { v.pattern.value.toRegex().matches(it) } -> k
                 else -> null
             }
         }

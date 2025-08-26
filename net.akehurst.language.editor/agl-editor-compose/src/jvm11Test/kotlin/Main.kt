@@ -27,7 +27,7 @@ import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import net.akehurst.kotlin.compose.editor.ComposableCodeEditor3
+import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.contextAsmSimple
@@ -250,7 +250,7 @@ styles SQL {
     @Test
     fun run_ComposableCodeEditor3b() = runBlocking {
 
-        var composeEditor = ComposableCodeEditor3(
+        val composeEditor = ComposableCodeEditor(
             initialText = INITIAL_TEXT,
         )
 

@@ -20,15 +20,16 @@ import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.kotlinx.logging.common.LoggerCommon
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
+import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.syntaxAnalyser.LocationMap
+import net.akehurst.language.asmTransform.asm.AsmTransformDomainDefault
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglStyleHandlerCssClass
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
-import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
@@ -37,11 +38,9 @@ import net.akehurst.language.parser.leftcorner.ParseResultDefault
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.scanner.api.ScanResult
 import net.akehurst.language.scanner.common.ScanResultDefault
-import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.sppt.api.SharedPackedParseTree
 import net.akehurst.language.style.api.AglStyleModel
-import net.akehurst.language.transform.asm.TransformDomainDefault
 
 class LanguageServiceDirectExecution(
     logFunction: LogFunction
@@ -299,7 +298,7 @@ open class LanguageServiceRequestDirectExecution(
             referenceStr = crossReferenceModelStr,
             grammarAglOptions = Agl.options {
                 semanticAnalysis {
-                    context(ContextFromGrammarRegistry(Agl.registry))
+                    context(contextFromGrammarRegistry(Agl.registry))
                     option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             },
@@ -501,12 +500,12 @@ open class LanguageServiceRequestDirectExecution(
                 //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefinition, get its typemodel and create ContextFromTypeModel
                 // }
                 val ctx = when (languageId) {
-                    Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: ContextFromGrammarRegistry(Agl.registry)
+                    Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: contextFromGrammarRegistry(Agl.registry)
                     Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
                         is ContextFromTypeModelReference -> {
                             val langId = LanguageIdentity((options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId.value)
                             val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                            val tm = TransformDomainDefault.fromGrammarModel(ld.grammarModel!!).asm!!.typeModel!!
+                            val tm = AsmTransformDomainDefault.fromGrammarModel(ld.grammarModel!!).asm!!.typeModel!!
                             ContextFromTypeModel(tm)
                         }
 

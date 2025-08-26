@@ -19,11 +19,13 @@ package net.akehurst.language.editor.worker
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
+import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.syntaxAnalyser.LocationMap
+import net.akehurst.language.asmTransform.asm.AsmTransformDomainDefault
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageResponseStatus
@@ -31,7 +33,6 @@ import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.common.AglStyleHandlerCssClass
 import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
-import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
 import net.akehurst.language.parser.api.ParseResult
@@ -40,7 +41,6 @@ import net.akehurst.language.reference.asm.CrossReferenceModelDefault
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sentence.common.SentenceDefault
 import net.akehurst.language.sppt.api.SharedPackedParseTree
-import net.akehurst.language.transform.asm.TransformDomainDefault
 
 
 abstract class AglWorkerAbstract {
@@ -92,7 +92,7 @@ abstract class AglWorkerAbstract {
             identity = languageId,
             aglOptions = Agl.options {
                 semanticAnalysis {
-                    context(ContextFromGrammarRegistry(Agl.registry))
+                    context(contextFromGrammarRegistry(Agl.registry))
                     option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             },
@@ -336,12 +336,12 @@ abstract class AglWorkerAbstract {
                     //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefinition, get its typemodel and create ContextFromTypeModel
                     // }
                     val ctx = when (languageId) {
-                        Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: ContextFromGrammarRegistry(Agl.registry)
+                        Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: contextFromGrammarRegistry(Agl.registry)
                         Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
                             is ContextFromTypeModelReference -> {
                                 val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId
                                 val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                                val res = TransformDomainDefault.fromGrammarModel(ld.grammarModel!!)
+                                val res = AsmTransformDomainDefault.fromGrammarModel(ld.grammarModel!!)
                                 val trfm = when {
                                     res.allIssues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
                                     else -> TODO()
@@ -437,7 +437,7 @@ abstract class AglWorkerAbstract {
 
             val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(proc.grammarModel!!, Agl.options {
                 semanticAnalysis {
-                    context(ContextFromGrammarRegistry(Agl.registry))
+                    context(contextFromGrammarRegistry(Agl.registry))
                     locationMap(proc.syntaxAnalyser!!.locationMap)
                     //context(message.context)
                 }
