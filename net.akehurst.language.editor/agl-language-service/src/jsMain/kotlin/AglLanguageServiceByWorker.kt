@@ -34,21 +34,22 @@ import kotlin.time.measureTimedValue
 
 class AglLanguageServiceByWorker(
     val worker: AbstractWorker,
-    logFunction: LogFunction
+    override val logFunction: LogFunction
 ) : LanguageService {
     val logger = LoggerCommon("AglLanguageServiceByWorker", logFunction)
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
-        override fun processorCreateRequest(
+        override fun <AsmType : Any, ContextType : Any> processorCreateRequest(
             endPointIdentity: EndPointIdentity,
             requestId: RequestIdentity,
-            languageId: LanguageIdentity,
-            grammarStr: GrammarString,
-            typeModelStr: TypesString?,
-            asmTransformStr: TransformString?,
-            crossReferenceModelStr: CrossReferenceString?,
+            languageDefinition: LanguageDefinition<AsmType, ContextType>,
             editorOptions: EditorOptions
         ) {
-            sendToWorker(MessageProcessorCreate(endPointIdentity, requestId, languageId, grammarStr.value, typeModelStr?.value, asmTransformStr?.value, crossReferenceModelStr?.value, editorOptions))
+            val languageId = languageDefinition.identity
+            val grammarStr = languageDefinition.grammarString
+            val typeModelStr = languageDefinition.typesString
+            val asmTransformStr = languageDefinition.asmTransformString
+            val crossReferenceModelStr = languageDefinition.crossReferenceString
+            sendToWorker(MessageProcessorCreate(endPointIdentity, requestId, languageId, grammarStr?.value?:"", typeModelStr?.value, asmTransformStr?.value, crossReferenceModelStr?.value, editorOptions))
         }
 
         override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity) {

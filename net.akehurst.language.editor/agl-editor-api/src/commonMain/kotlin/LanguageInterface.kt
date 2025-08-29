@@ -1,25 +1,33 @@
 package net.akehurst.language.editor.api
 
+import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.base.api.PublicValueType
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
-import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleDomain
 import kotlin.jvm.JvmInline
 
 interface LanguageService {
+    val logFunction: LogFunction // expose this because it is useful to be able to access it for reuse
     val request: LanguageServiceRequest
     fun addResponseListener(endPointIdentity: EndPointIdentity, response: LanguageServiceResponse)
 }
 
 interface LanguageServiceRequest {
-    fun processorCreateRequest(
+//    fun processorCreateRequest(
+//        endPointIdentity: EndPointIdentity, requestId: RequestIdentity,
+//        languageId: LanguageIdentity,
+//        grammarStr: GrammarString,
+//        typeModelStr: TypesString?,
+//        asmTransformStr: TransformString?,
+//        crossReferenceModelStr: CrossReferenceString?,
+//        editorOptions: EditorOptions
+//    )
+
+    fun <AsmType : Any, ContextType : Any> processorCreateRequest(
         endPointIdentity: EndPointIdentity, requestId: RequestIdentity,
-        languageId: LanguageIdentity,
-        grammarStr: GrammarString,
-        typeModelStr: TypesString?,
-        asmTransformStr: TransformString?,
-        crossReferenceModelStr: CrossReferenceString?,
+        languageDefinition: LanguageDefinition<AsmType, ContextType>,
         editorOptions: EditorOptions
     )
 
@@ -62,7 +70,7 @@ interface LanguageServiceResponse {
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
-        styleModel: AglStyleModel?
+        styleModel: AglStyleDomain?
     )
 
     fun sentenceLineTokensResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, startLine: Int, lineTokens: List<List<AglToken>>)

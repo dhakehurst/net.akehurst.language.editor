@@ -206,141 +206,148 @@ styles SQL {
         }
         defr.await()
     }
-/*
-    @Test
-    fun run_ComposableCodeEditor2() = runBlocking {
 
-        var composeEditor = ComposableCodeEditor2()
+    /*
+        @Test
+        fun run_ComposableCodeEditor2() = runBlocking {
 
-        val defr = async {
-            singleWindowApplication(
-                title = "Code Editor Test",
-            ) {
-                Surface {
-                    composeEditor.content()
+            var composeEditor = ComposableCodeEditor2()
+
+            val defr = async {
+                singleWindowApplication(
+                    title = "Code Editor Test",
+                ) {
+                    Surface {
+                        composeEditor.content()
+                    }
                 }
             }
+
+            val logFunction: LogFunction = { level, prefix, t, message -> println("$level - $prefix: ${message()}"); t?.printStackTrace() }
+            val editorOptions = aglEditorOptions() {
+            }
+            val editorId = "test"
+            val languageId = LanguageIdentity("test")
+            val languageDefinition = Agl.registry.findOrPlaceholder(
+                languageId,
+                aglOptions = Agl.options { },
+                configuration = Agl.configurationSimple()
+            )
+            val languageService = LanguageServiceDirectExecution(logFunction)
+
+            delay(1000) //wait for compose to start
+
+            val aglEditor = Agl.attachToComposeEditor(
+                languageService, languageDefinition,
+                { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
+                editorId, editorOptions, logFunction, composeEditor!!
+            )
+            println("Attached AGL")
+
+            defr.await()
+
         }
-
-        val logFunction: LogFunction = { level, prefix, t, message -> println("$level - $prefix: ${message()}"); t?.printStackTrace() }
-        val editorOptions = aglEditorOptions() {
-        }
-        val editorId = "test"
-        val languageId = LanguageIdentity("test")
-        val languageDefinition = Agl.registry.findOrPlaceholder(
-            languageId,
-            aglOptions = Agl.options { },
-            configuration = Agl.configurationSimple()
-        )
-        val languageService = LanguageServiceDirectExecution(logFunction)
-
-        delay(1000) //wait for compose to start
-
-        val aglEditor = Agl.attachToComposeEditor(
-            languageService, languageDefinition,
-            { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
-            editorId, editorOptions, logFunction, composeEditor!!
-        )
-        println("Attached AGL")
-
-        defr.await()
-
-    }
-*/
+    */
     @Test
     fun run_ComposableCodeEditor3b() = runBlocking {
+        try {
+            val composeEditor = ComposableCodeEditor(
+                initialText = INITIAL_TEXT,
+            )
 
-        val composeEditor = ComposableCodeEditor(
-            initialText = INITIAL_TEXT,
-        )
-
-        val defr = async {
-            singleWindowApplication(
-                title = "Code Editor Test",
-            ) {
-                Surface {
-                    composeEditor.content(autocompleteModifier = Modifier.widthIn(100.dp, 400.dp).heightIn(30.dp, 300.dp))
+            val defr = async {
+                try {
+                    singleWindowApplication(
+                        title = "Code Editor Test",
+                    ) {
+                        Surface {
+                            composeEditor.content(autocompleteModifier = Modifier.widthIn(100.dp, 400.dp).heightIn(30.dp, 300.dp))
+                        }
+                    }
+                } catch (t:Throwable) {
+                    t.printStackTrace()
                 }
             }
+
+            val logFunction: LogFunction = { level, prefix, t, message -> println("$level - $prefix: ${message()}"); t?.printStackTrace() }
+            val editorOptions = EditorOptionsDefault()
+            val editorId = "test"
+            val languageId = LanguageIdentity("test")
+            val languageDefinition = Agl.languageDefinitionFromStringSimple(
+                languageId,
+                grammarDefinitionStr = GrammarString(GRAMMAR),
+                referenceStr = CrossReferenceString(CROSS_REFERENCE),
+                styleStr = StyleString(STYLE)
+            )
+            val languageService = LanguageServiceDirectExecution(logFunction)
+
+            delay(1000) //wait for compose to start
+
+            val aglEditor = Agl.attachToComposeEditor(
+                languageService, languageDefinition,
+                { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
+                editorId, editorOptions, logFunction, composeEditor!!
+            )
+
+            println("Attached AGL")
+
+            defr.await()
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
-
-        val logFunction: LogFunction = { level, prefix, t, message -> println("$level - $prefix: ${message()}"); t?.printStackTrace() }
-        val editorOptions = EditorOptionsDefault()
-        val editorId = "test"
-        val languageId = LanguageIdentity("test")
-        val languageDefinition = Agl.languageDefinitionFromStringSimple(
-            languageId,
-            grammarDefinitionStr = GrammarString(GRAMMAR),
-            referenceStr = CrossReferenceString(CROSS_REFERENCE),
-            styleStr = StyleString(STYLE)
-        )
-        val languageService = LanguageServiceDirectExecution(logFunction)
-
-        delay(1000) //wait for compose to start
-
-        val aglEditor = Agl.attachToComposeEditor(
-            languageService, languageDefinition,
-            { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
-            editorId, editorOptions, logFunction, composeEditor!!
-        )
-
-        println("Attached AGL")
-
-        defr.await()
-
     }
-/*
-    @Test
-    fun run_ComposableCodeEditor2c() = runBlocking {
+    /*
+        @Test
+        fun run_ComposableCodeEditor2c() = runBlocking {
 
-        var composeEditor = ComposableCodeEditor2(
-            initialText = """
-                namespace test
-                grammar Test {
-                  S = 'a' ;
-                }
-            """.trimIndent(),
-        )
+            var composeEditor = ComposableCodeEditor2(
+                initialText = """
+                    namespace test
+                    grammar Test {
+                      S = 'a' ;
+                    }
+                """.trimIndent(),
+            )
 
-        val defr = async {
-            singleWindowApplication(
-                title = "Code Editor Test",
-            ) {
-                Surface {
-                    composeEditor.content(autocompleteModifier = Modifier.width(400.dp).height(300.dp))
+            val defr = async {
+                singleWindowApplication(
+                    title = "Code Editor Test",
+                ) {
+                    Surface {
+                        composeEditor.content(autocompleteModifier = Modifier.width(400.dp).height(300.dp))
+                    }
                 }
             }
+
+            val logFunction: LogFunction = { level, prefix, t, message -> println("$level - $prefix: ${message()}"); t?.printStackTrace() }
+            val editorOptions = aglEditorOptions() {
+            }
+            val editorId = "test"
+            val languageId = Agl.registry.agl.grammarLanguageIdentity
+            val languageDefinition = Agl.languageDefinitionFromString<Any, Any>(
+                languageId,
+                grammarDefinitionStr = GrammarString(GRAMMAR),
+                styleStr = StyleString(STYLE)
+            )
+            val languageService = LanguageServiceDirectExecution(logFunction)
+
+            delay(1000) //wait for compose to start
+
+            val aglEditor = Agl.attachToComposeEditor(
+                languageService, languageDefinition,
+                { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
+                editorId,
+                editorOptions, logFunction, composeEditor!!
+            )
+            println("Attached AGL")
+
+            aglEditor.updateLanguageDefinitionWith(
+                grammarStr = GrammarString(AglGrammar.grammarString),
+                styleStr = StyleString(AglGrammar.styleString)
+            )
+
+            defr.await()
+
         }
-
-        val logFunction: LogFunction = { level, prefix, t, message -> println("$level - $prefix: ${message()}"); t?.printStackTrace() }
-        val editorOptions = aglEditorOptions() {
-        }
-        val editorId = "test"
-        val languageId = Agl.registry.agl.grammarLanguageIdentity
-        val languageDefinition = Agl.languageDefinitionFromString<Any, Any>(
-            languageId,
-            grammarDefinitionStr = GrammarString(GRAMMAR),
-            styleStr = StyleString(STYLE)
-        )
-        val languageService = LanguageServiceDirectExecution(logFunction)
-
-        delay(1000) //wait for compose to start
-
-        val aglEditor = Agl.attachToComposeEditor(
-            languageService, languageDefinition,
-            { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
-            editorId,
-            editorOptions, logFunction, composeEditor!!
-        )
-        println("Attached AGL")
-
-        aglEditor.updateLanguageDefinitionWith(
-            grammarStr = GrammarString(AglGrammar.grammarString),
-            styleStr = StyleString(AglGrammar.styleString)
-        )
-
-        defr.await()
-
-    }
-*/
+    */
 }

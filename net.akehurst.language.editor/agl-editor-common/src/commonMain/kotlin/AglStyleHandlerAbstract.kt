@@ -22,7 +22,7 @@ import net.akehurst.language.editor.api.EditorStyle
 import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.style.api.*
-import net.akehurst.language.style.asm.AglStyleModelDefault
+import net.akehurst.language.style.asm.AglStyleDomainDefault
 
 abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
     languageId: LanguageIdentity
@@ -37,10 +37,10 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
     override val styleModel get() = _styleModel
 
     protected val _stylePrefix = "${AGL_STYLE_PREFIX}-${languageId.value}"
-    private var _styleModel: AglStyleModel = AglStyleModelDefault(SimpleName(languageId.last))
+    private var _styleModel: AglStyleDomain = AglStyleDomainDefault(SimpleName(languageId.last))
     private var _editorStyles = mutableMapOf<EditorStyleIdentity, EditorStyleType>()
     private var _metaStyles = mutableMapOf<EditorStyleType, AglStyleMetaRule>()
-    private val _selectorToEditorStyle = mutableMapOf<String, EditorStyleType>(AglStyleModelDefault.NO_STYLE_ID.value to EDITOR_NO_STYLE)
+    private val _selectorToEditorStyle = mutableMapOf<String, EditorStyleType>(AglStyleDomainDefault.NO_STYLE_ID.value to EDITOR_NO_STYLE)
     private var _nextEditorStyleNum = 1
 
     abstract fun createEditorStyleType(identity: EditorStyleIdentity):EditorStyleType
@@ -78,10 +78,10 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
         _metaStyles.clear()
         _nextEditorStyleNum = 1
         this._selectorToEditorStyle.clear()
-        this._selectorToEditorStyle[AglStyleModelDefault.NO_STYLE_ID.value] = EDITOR_NO_STYLE
+        this._selectorToEditorStyle[AglStyleDomainDefault.NO_STYLE_ID.value] = EDITOR_NO_STYLE
     }
 
-    override fun updateStyleModel(styleModel: AglStyleModel) {
+    override fun updateStyleModel(styleModel: AglStyleDomain) {
         _styleModel = styleModel // TODO: should not need to store this , need to modify 'updateEditorStyles' in editor specific code!
         styleModel.allDefinitions.forEach { ss ->
             ss.rules.forEach { sr ->

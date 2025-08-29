@@ -20,9 +20,8 @@ import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.ram.IssueHolder
-import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sppt.api.LeafData
-import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleDomain
 import net.akehurst.language.style.api.AglStyleSelector
 
 interface AglEditor<AsmType : Any, ContextType : Any> {
@@ -114,7 +113,7 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
     fun updateLanguageDefinitionWith(
         grammarStr: GrammarString?=null,
         typeModelStr: TypesString?=null,
-        asmTransformStr: TransformString?=null,
+        asmTransformStr: AsmTransformString?=null,
         crossReferenceStr: CrossReferenceString?=null,
         styleStr: StyleString?=null
     )
@@ -202,10 +201,10 @@ interface AglEditorCompletionProvider {
 }
 
 interface AglStyleHandler<EditorStyleType : Any> {
-    val styleModel: AglStyleModel
+    val styleModel: AglStyleDomain
 
     fun reset()
-    fun updateStyleModel(styleModel: AglStyleModel)
+    fun updateStyleModel(styleModel: AglStyleDomain)
     fun editorStyleFor(identity: EditorStyleIdentity): EditorStyleType?
     fun convert(selector: AglStyleSelector): EditorStyleType
 

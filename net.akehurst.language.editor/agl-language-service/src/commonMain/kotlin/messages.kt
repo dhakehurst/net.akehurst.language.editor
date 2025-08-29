@@ -24,7 +24,7 @@ import net.akehurst.language.editor.common.AglTokenDefault
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.sppt.api.TreeData
-import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleDomain
 import kotlin.math.min
 
 object EditorMessage {
@@ -295,7 +295,7 @@ data class MessageSetStyleResponse(
     override val status: MessageResponseStatus,
     val message: String,
     override val issues: List<LanguageIssue>,
-    val styleModel: AglStyleModel?
+    val styleModel: AglStyleDomain?
 ) : AglWorkerMessageResponse("MessageSetStyleResult")
 
 data class MessageCodeCompleteRequest<AsmType : Any, ContextType : Any>(

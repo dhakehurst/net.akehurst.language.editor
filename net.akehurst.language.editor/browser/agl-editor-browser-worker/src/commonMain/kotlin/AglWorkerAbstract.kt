@@ -20,8 +20,8 @@ import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomain
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomainReference
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.syntaxAnalyser.LocationMap
@@ -37,7 +37,7 @@ import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
 import net.akehurst.language.parser.api.ParseResult
 import net.akehurst.language.parser.leftcorner.ParseResultDefault
-import net.akehurst.language.reference.asm.CrossReferenceModelDefault
+import net.akehurst.language.reference.asm.CrossReferenceDomainDefault
 import net.akehurst.language.sentence.api.Sentence
 import net.akehurst.language.sentence.common.SentenceDefault
 import net.akehurst.language.sppt.api.SharedPackedParseTree
@@ -61,20 +61,20 @@ abstract class AglWorkerAbstract {
         ld: LanguageDefinition<Any, Any>,
         grammarStr: GrammarString?,
         typeModelStr: TypesString?,
-        asmTransformStr: TransformString?,
+        asmTransformStr: AsmTransformString?,
         crossReferenceModelStr: CrossReferenceString?
     ) {
         //style and format not handled here, handled separately
         // TODO: could be an argument
         ld.configuration = Agl.configuration(base = Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>) {
             if (null != crossReferenceModelStr) {
-                crossReferenceResolver { p -> CrossReferenceModelDefault.fromString(ContextFromTypeModel(p.typesModel), crossReferenceModelStr) }
+                crossReferenceResolver { p -> CrossReferenceDomainDefault.fromString(ContextFromTypesDomain(p.typesDomain), crossReferenceModelStr) }
             }
         }
         ld.update(
             grammarString = grammarStr,
             typesString = typeModelStr,
-            transformString = asmTransformStr,
+            asmTransformString = asmTransformStr,
             crossReferenceString = crossReferenceModelStr,
             styleString = null,
             formatString = null,
@@ -85,7 +85,7 @@ abstract class AglWorkerAbstract {
         languageId: LanguageIdentity,
         grammarStr: GrammarString?,
         typeModelStr: TypesString?,
-        asmTransformStr: TransformString?,
+        asmTransformStr: AsmTransformString?,
         crossReferenceModelStr: CrossReferenceString?
     ): LanguageDefinition<Any, Any> {
         val ld = Agl.registry.findOrPlaceholder<Any, Any>(
@@ -125,7 +125,7 @@ abstract class AglWorkerAbstract {
                     message.languageId,
                     GrammarString(message.grammarStr),
                     message.typesModelStr?.let { TypesString(it) },
-                    message.transformStr?.let { TransformString(it) },
+                    message.transformStr?.let { AsmTransformString(it) },
                     message.crossReferenceStr?.let { CrossReferenceString(it) }
                 )
                 _languageDefinition[message.languageId] = ld
@@ -338,17 +338,17 @@ abstract class AglWorkerAbstract {
                     val ctx = when (languageId) {
                         Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: contextFromGrammarRegistry(Agl.registry)
                         Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
-                            is ContextFromTypeModelReference -> {
-                                val langId = (options.semanticAnalysis.context as ContextFromTypeModelReference).languageDefinitionId
+                            is ContextFromTypesDomainReference -> {
+                                val langId = (options.semanticAnalysis.context as ContextFromTypesDomainReference).languageDefinitionId
                                 val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                                val res = AsmTransformDomainDefault.fromGrammarModel(ld.grammarModel!!)
+                                val res = AsmTransformDomainDefault.fromGrammarDomain(ld.grammarDomain!!)
                                 val trfm = when {
                                     res.allIssues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
                                     else -> TODO()
                                 }
-                                val tm = trfm.typeModel ?: error("No TypeModel found in TransformModel")
+                                val tm = trfm.typesDomain ?: error("No TypeModel found in TransformModel")
                                 //val tm = TypeModelFromGrammar.createFromGrammarList(ld.grammarList)
-                                ContextFromTypeModel(tm)
+                                ContextFromTypesDomain(tm)
                             }
 
                             else -> options.semanticAnalysis.context
@@ -435,7 +435,7 @@ abstract class AglWorkerAbstract {
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
 
-            val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(proc.grammarModel!!, Agl.options {
+            val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(proc.grammarDomain!!, Agl.options {
                 semanticAnalysis {
                     context(contextFromGrammarRegistry(Agl.registry))
                     locationMap(proc.syntaxAnalyser!!.locationMap)

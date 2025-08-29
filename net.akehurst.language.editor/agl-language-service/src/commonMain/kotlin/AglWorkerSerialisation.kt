@@ -25,9 +25,9 @@ import net.akehurst.language.grammar.processor.AglGrammar
 import net.akehurst.language.reference.processor.AglCrossReference
 import net.akehurst.language.scope.processor.AglScope
 import net.akehurst.language.style.processor.AglStyle
-import net.akehurst.language.typemodel.api.TypeModel
-import net.akehurst.language.typemodel.builder.typeModel
-import net.akehurst.language.typemodel.processor.AglTypes
+import net.akehurst.language.types.api.TypesDomain
+import net.akehurst.language.types.builder.typesDomain
+import net.akehurst.language.types.processor.AglTypes
 
 //
 // This will only work if all classes are *public* (exported for JS) and *forReflection*
@@ -50,11 +50,11 @@ object AglWorkerSerialisation {
             agl_editor_common_commonMain.KotlinxReflectForModule.registerUsedClasses()
             agl_language_service_commonMain.KotlinxReflectForModule.registerUsedClasses()
             //TODO: enable kserialisation/komposite/reflect to auto add these some how!!
-            initialiseAllTypemodels()
+            initialiseAlltypesDomains()
 //            initialiseBase()
 //            initialiseGrammarAsm()
 //            initialiseSPPT()
-//            initialiseTypeModel()
+//            initialisetypesDomain()
 //
 //            initialiseApiTypes()
 //            initialiseExpressionsAsm()
@@ -81,36 +81,36 @@ object AglWorkerSerialisation {
     agl.sppt --> api.sppt, api.runtime
      */
     /*
-    typemodel.api --> api.language.base
-    typemodel.simple --> typemodel.api, agl.language.base
-    api.grammarTypeModel --> typemodel.api, api.language.grammar
-    agl.grammarTypeModel -->api.grammarTypeModel, typemodel.simple,
+    typesDomain.api --> api.language.base
+    typesDomain.simple --> typesDomain.api, agl.language.base
+    api.grammartypesDomain --> typesDomain.api, api.language.grammar
+    agl.grammartypesDomain -->api.grammartypesDomain, typesDomain.simple,
      */
     /*
     api.language.style --> api.language.base
     agl.language.style.asm --> api.language.style, agl.language.base
      */
     /*
-    api.language.expressions --> typemodel.api, api.language.base
+    api.language.expressions --> typesDomain.api, api.language.base
     agl.language.expressions.asm --> api.language.expressions,
      */
     /*
     api.language.reference --> api.language.expressions
     agl.language.reference.asm --> api.language.reference, api.language.expressions
      */
-    private fun initialiseAllTypemodels() {
+    private fun initialiseAlltypesDomains() {
         val namespaces = (
-                AglBase.typesModel.namespace +
-                        AglGrammar.typesModel.namespace +
-                        AglTypes.typesModel.namespace +
-                        AglAsm.typeModel.namespace +
-                        AglExpressions.typesModel.namespace +
-                        AglCrossReference.typeModel.namespace +
-                        AglStyle.typesModel.namespace +
-                        AglScope.typeModel.namespace
+                AglBase.typesDomain.namespace +
+                        AglGrammar.typesDomain.namespace +
+                        AglTypes.typesDomain.namespace +
+                        AglAsm.typesDomain.namespace +
+                        AglExpressions.typesDomain.namespace +
+                        AglCrossReference.typesDomain.namespace +
+                        AglStyle.typesDomain.namespace +
+                        AglScope.typesDomain.namespace
                 ).toSet().toList()
         println(namespaces)
-        val tm = typeModel("Messages", true, namespaces) {
+        val tm = typesDomain("Messages", true, namespaces) {
             namespace(
                 "net.akehurst.language.editor.language.service.messages",
                 listOf(
@@ -845,21 +845,21 @@ object AglWorkerSerialisation {
             }
             namespace(
                 "net.akehurst.language.agl.semanticAnalyser",
-                listOf("net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.api.processor", "net.akehurst.language.typemodel.api")
+                listOf("net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.api.processor", "net.akehurst.language.typesDomain.api")
             ) {
-                data("ContextFromTypeModelReference") {
+                data("ContextFromtypesDomainReference") {
                     supertype("SentenceContext")
                     constructor_ {
                         parameter("languageDefinitionId", "LanguageIdentity", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "languageDefinitionId", "LanguageIdentity", false)
                 }
-                data("ContextFromTypeModel") {
+                data("ContextFromtypesDomain") {
                     supertype("SentenceContext")
                     constructor_ {
-                        parameter("typeModel", "TypeModel", false)
+                        parameter("typesDomain", "typesDomain", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STR), "typeModel", "TypeModel", false)
+                    propertyOf(setOf(VAL, CMP, STR), "typesDomain", "typesDomain", false)
                 }
             }
             namespace(
@@ -956,10 +956,10 @@ object AglWorkerSerialisation {
     }
 
     /*
-        namespace net.akehurst.language.agl.grammarTypeModel
+        namespace net.akehurst.language.agl.grammartypesDomain
           GrammarTypeNamespaceAbstract {  allRuleNameToType }
-        namespace net.akehurst.language.typemodel.simple
-          TypeModelSimpleAbstract {  namespace }
+        namespace net.akehurst.language.typesDomain.simple
+          typesDomainSimpleAbstract {  namespace }
           TypeInstanceSimple {  typeArguments }
           UnnamedSupertypeTypeInstance {  typeArguments  }
           TypeNamespaceAbstract { ownedUnnamedSupertypeType, ownedTupleTypes, ownedTypesByName }
@@ -969,11 +969,11 @@ object AglWorkerSerialisation {
           PropertyDeclarationDerived { typeInstance }
           PropertyDeclarationStored { typeInstance }
      */
-    private fun initialiseTypeModel() {
-        serialiser.configureFromTypeModel(typeModel("TypeModel", false) {
+    private fun initialisetypesDomain() {
+        serialiser.configureFromTypeModel(typesDomain("typesDomain", false) {
 /*            namespace(
                 "net.akehurst.language.agl.default",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.grammarTypeModel")
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.agl.grammartypesDomain")
             )
             {
                 data("GrammarTypeNamespaceFromGrammar") {
@@ -983,8 +983,8 @@ object AglWorkerSerialisation {
                 }
             }*/
             namespace(
-                "net.akehurst.language.agl.grammarTypeModel",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typemodel.simple")
+                "net.akehurst.language.agl.grammartypesDomain",
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typesDomain.simple")
             )
             {
                 data("GrammarTypeNamespaceSimple") {
@@ -1003,17 +1003,17 @@ object AglWorkerSerialisation {
                 }
             }
             namespace(
-                "net.akehurst.language.typemodel.simple",
-                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typemodel.api")
+                "net.akehurst.language.typesDomain.simple",
+                imports = mutableListOf("kotlin", "kotlin.collections", "net.akehurst.language.typesDomain.api")
             )
             {
-                singleton("SimpleTypeModelStdLib")
-                data("TypeModelSimple") {
-                    supertypes("TypeModelSimpleAbstract")
+                singleton("SimpletypesDomainStdLib")
+                data("typesDomainSimple") {
+                    supertypes("typesDomainSimpleAbstract")
                     propertyOf(setOf(CON, CMP), "name", "String")
                 }
-                data("TypeModelSimpleAbstract") {
-                    supertypes("TypeModel")
+                data("typesDomainSimpleAbstract") {
+                    supertypes("typesDomain")
                     propertyOf(setOf(CON, CMP), "name", "String")
 
                     propertyOf(setOf(VAR, CMP), "namespace", "Map") {
@@ -1021,7 +1021,7 @@ object AglWorkerSerialisation {
                         typeArgument("TypeNamespace")
                     }
                     propertyOf(setOf(VAR, REF), "allNamespace", "List") { typeArgument("TypeNamespace") }
-                    //propertyOf(setOf(VAR, CMP), "rules", "Map", listOf("String", "net.akehurst.language.api.typemodel.RuleType"))
+                    //propertyOf(setOf(VAR, CMP), "rules", "Map", listOf("String", "net.akehurst.language.api.typesDomain.RuleType"))
                 }
                 data("TypeInstanceAbstract") {
                     supertypes("TypeInstance")
@@ -1147,8 +1147,8 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CON, CMP), "index", "Int")
                 }
             }
-            namespace("net.akehurst.language.typemodel.api", imports = mutableListOf("kotlin", "kotlin.collections")) {
-                data("TypeModel") { }
+            namespace("net.akehurst.language.typesDomain.api", imports = mutableListOf("kotlin", "kotlin.collections")) {
+                data("typesDomain") { }
                 data("TypeNamespace") {}
                 data("TypeInstance") {}
                 data("TypeDeclaration") {}
@@ -1182,7 +1182,7 @@ object AglWorkerSerialisation {
 
     private fun initialiseStyleAsm() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("StyleAsm", false) {
+        serialiser.configureFromTypeModel(typesDomain("StyleAsm", false) {
             namespace("net.akehurst.language.agl.language.style", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("AglStyleGrammar") {
                     supertypes("GrammarAbstract")
@@ -1216,7 +1216,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseExpressionsAsm() {
-        serialiser.configureFromTypeModel(typeModel("ExpressionsAsm", false) {
+        serialiser.configureFromTypeModel(typesDomain("ExpressionsAsm", false) {
             namespace("net.akehurst.language.agl.language.expressions", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("RootExpressionDefault") {
                     propertyOf(setOf(CON, CMP), "value", "String")
@@ -1230,7 +1230,7 @@ object AglWorkerSerialisation {
 
     private fun initialiseCrossReferencesAsm() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("CrossReferencesAsm", false) {
+        serialiser.configureFromTypeModel(typesDomain("CrossReferencesAsm", false) {
             namespace("net.akehurst.language.agl.language.reference", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("ReferencesGrammar") {
                     supertypes("GrammarAbstract")
@@ -1289,7 +1289,7 @@ object AglWorkerSerialisation {
 
     private fun initialiseMessages() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("Messages", false) {
+        serialiser.configureFromTypeModel(typesDomain("Messages", false) {
             namespace("net.akehurst.language.agl.scanner") {
                 enum("MatchableKind", emptyList())
                 data("Matchable") {
@@ -1455,7 +1455,7 @@ object AglWorkerSerialisation {
 
     private fun initialiseAsmSimple() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("AsmSimple", false) {
+        serialiser.configureFromTypeModel(typesDomain("AsmSimple", false) {
             namespace("net.akehurst.language.agl.syntaxAnalyser", imports = mutableListOf("kotlin", "kotlin.collections")) {
             }
             namespace(
@@ -1487,11 +1487,11 @@ object AglWorkerSerialisation {
                 data("ContextSimple") {
                     propertyOf(setOf(VAR, CMP), "rootScope", "ScopeSimple") { typeArgument("E") }
                 }
-                data("ContextFromTypeModelReference") {
+                data("ContextFromtypesDomainReference") {
                     propertyOf(setOf(CON, CMP), "languageDefinitionId", "String")
                 }
-                data("ContextFromTypeModel") {
-                    propertyOf(setOf(CON, CMP), "typeModel", "net.akehurst.language.typemodel.api.TypeModel")
+                data("ContextFromtypesDomain") {
+                    propertyOf(setOf(CON, CMP), "typesDomain", "net.akehurst.language.typesDomain.api.typesDomain")
                 }
             }
             namespace("net.akehurst.language.agl.asm", imports = mutableListOf("kotlin", "kotlin.collections")) {
@@ -1545,7 +1545,7 @@ object AglWorkerSerialisation {
 
     private fun initialiseGrammarAsm() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("GrammarAsm", false) {
+        serialiser.configureFromTypeModel(typesDomain("GrammarAsm", false) {
             namespace(
                 "net.akehurst.language.api.language.grammar",
                 imports = mutableListOf("kotlin", "kotlin.collections")
@@ -1693,7 +1693,7 @@ object AglWorkerSerialisation {
     }
 
     private fun initialiseSPPT() {
-        serialiser.configureFromTypeModel(typeModel("SPPT", false) {
+        serialiser.configureFromTypeModel(typesDomain("SPPT", false) {
             namespace("net.akehurst.language.agl.runtime.structure", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("RuntimeRule") {
                     propertyOf(setOf(CON, CMP), "runtimeRuleSetNumber", "Int")
@@ -1734,7 +1734,7 @@ object AglWorkerSerialisation {
      */
     private fun initialiseApiTypes() {
         //classes registered with KotlinxReflect via gradle plugin
-        serialiser.configureFromTypeModel(typeModel("ApiType", false) {
+        serialiser.configureFromTypeModel(typesDomain("ApiType", false) {
             namespace("net.akehurst.language.api.parser", imports = mutableListOf("kotlin", "kotlin.collections")) {
                 data("InputLocation") {
                     propertyOf(setOf(CON, CMP), "position", "Int")
@@ -1812,12 +1812,12 @@ object AglWorkerSerialisation {
         check(issues.isEmpty()) { issues.joinToString(separator = "\n") }
     }
 
-    //fun configureFromKompositeString(datatypeModel: String) {
-    //    serialiser.configureFromKompositeString(datatypeModel)
+    //fun configureFromKompositeString(datatypesDomain: String) {
+    //    serialiser.configureFromKompositeString(datatypesDomain)
     //}
 
-    fun configureFromTypeModel(datatypeModel: TypeModel) {
-        serialiser.configureFromTypeModel(datatypeModel)
+    fun configureFromTypeModel(datatypesDomain: TypesDomain) {
+        serialiser.configureFromTypeModel(datatypesDomain)
     }
 
     // provided to make testing better

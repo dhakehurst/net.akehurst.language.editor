@@ -26,7 +26,7 @@ import net.akehurst.language.issues.ram.IssueHolder
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.sentence.common.SentenceAbstract
 import net.akehurst.language.sentence.common.SentenceDefault
-import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleDomain
 
 class SentenceFromEditor<AsmType : Any, ContextType : Any>(
     val editor: AglEditor<AsmType, ContextType>,
@@ -67,7 +67,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         this.agl.options = processOptions
         //this.agl.languageDefinition.processorObservers.add { _, _ -> this.updateProcessor(); this.updateStyle() }
         this.agl.languageDefinition.grammarStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
-        this.agl.languageDefinition.typeModelStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
+        this.agl.languageDefinition.typesStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
         this.agl.languageDefinition.asmTransformStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
         this.agl.languageDefinition.crossReferenceStrObservers.add { _, _ -> this.refreshProcessor(); this.refreshStyleHandler() }
         this.agl.languageDefinition.styleStrObservers.add { _, _ -> this.refreshStyleHandler() }
@@ -177,14 +177,14 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     protected abstract fun updateLanguage(oldId: LanguageIdentity?) //TODO: maybe not needed
     protected abstract fun updateEditorStyles()
 
-    protected open fun updateStyleModel(styleModel: AglStyleModel) {
+    protected open fun updateStyleModel(styleModel: AglStyleDomain) {
         this.agl.styleHandler.updateStyleModel(styleModel)
     }
 
     override fun updateLanguageDefinitionWith(
         grammarStr: GrammarString?,
         typeModelStr: TypesString?,
-        asmTransformStr: TransformString?,
+        asmTransformStr: AsmTransformString?,
         crossReferenceStr: CrossReferenceString?,
         styleStr: StyleString?
     ) {
@@ -203,11 +203,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
                 //do nothing
             } else {
                 this.languageServiceRequest.processorCreateRequest(
-                    this.endPointIdentity, nextRequestId, this.languageIdentity,
-                    grammarStr!!,
-                    this.agl.languageDefinition.typesString,
-                    this.agl.languageDefinition.transformString,
-                    this.agl.languageDefinition.crossReferenceString,
+                    this.endPointIdentity, nextRequestId,
+                    this.agl.languageDefinition,
                     this.editorOptions
                 )
             }
@@ -229,11 +226,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
             //do nothing
         } else {
             this.languageServiceRequest.processorCreateRequest(
-                this.endPointIdentity, nextRequestId, this.languageIdentity,
-                grammarStr!!,
-                this.agl.languageDefinition.typesString,
-                this.agl.languageDefinition.transformString,
-                this.agl.languageDefinition.crossReferenceString,
+                this.endPointIdentity, nextRequestId,
+                this.agl.languageDefinition,
                 this.editorOptions
             )
             this.workerTokenizer.reset()
@@ -310,7 +304,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         status: MessageResponseStatus,
         message: String,
         issues: List<LanguageIssue>,
-        styleModel: AglStyleModel?
+        styleModel: AglStyleDomain?
     ) {
         logger.logTrace { "processorSetStyleResponse $endPointIdentity, $requestId, $status, $message " }
         receiveIssues(issues)

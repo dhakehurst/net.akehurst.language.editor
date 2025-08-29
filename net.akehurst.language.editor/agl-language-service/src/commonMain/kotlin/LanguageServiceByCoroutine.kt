@@ -25,31 +25,28 @@ import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
-import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleDomain
 
 open class LanguageServiceByCoroutine(
     val scope: CoroutineScope,
-    logFunction: LogFunction
+    override val logFunction: LogFunction
 ) : LanguageService {
 
     private val _aglRegLock = Mutex()
 
     // --- LanguageService ---
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
-        override fun processorCreateRequest(
+
+        override fun <AsmType : Any, ContextType : Any> processorCreateRequest(
             endPointIdentity: EndPointIdentity,
             requestId: RequestIdentity,
-            languageId: LanguageIdentity,
-            grammarStr: GrammarString,
-            typeModelStr: TypesString?,
-            asmTransformStr: TransformString?,
-            crossReferenceModelStr: CrossReferenceString?,
+            languageDefinition: LanguageDefinition<AsmType, ContextType>,
             editorOptions: EditorOptions
         ) {
-            submit {
+             submit {
                 _aglRegLock.withLock {
                     // this calls createLanguageDefinition which uses the Agl.registry and could cause race conditions wrt registered languages
-                    direct.processorCreateRequest(endPointIdentity, requestId, languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceModelStr, editorOptions)
+                    direct.processorCreateRequest(endPointIdentity, requestId, languageDefinition, editorOptions)
                 }
             }
         }
@@ -117,7 +114,7 @@ open class LanguageServiceByCoroutine(
             status: MessageResponseStatus,
             message: String,
             issues: List<LanguageIssue>,
-            styleModel: AglStyleModel?
+            styleModel: AglStyleDomain?
         ) {
             responseObjects[endPointIdentity]?.processorSetStyleResponse(endPointIdentity, requestId, status, message, issues, styleModel)
         }

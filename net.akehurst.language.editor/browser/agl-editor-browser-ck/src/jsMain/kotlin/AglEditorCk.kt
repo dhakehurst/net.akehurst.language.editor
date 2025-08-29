@@ -30,7 +30,7 @@ import net.akehurst.language.editor.common.AglStyleHandlerAsHtml.Companion.encod
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.sentence.common.SentenceDefault
-import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleDomain
 import org.w3c.dom.Element
 
 fun <AsmType : Any, ContextType : Any> Agl.attachToCk(
@@ -155,7 +155,7 @@ private class AglEditorCk<AsmType : Any, ContextType : Any>(
         logger.logTrace { "updateLanguage $oldId" }
     }
 
-    override fun updateStyleModel(styleModel: AglStyleModel) {
+    override fun updateStyleModel(styleModel: AglStyleDomain) {
         super.updateStyleModel(styleModel)
         this._autocompleteLabelStyleHandler.updateStyleModel(styleModel)
     }
