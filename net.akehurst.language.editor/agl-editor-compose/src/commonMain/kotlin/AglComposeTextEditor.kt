@@ -19,7 +19,9 @@ package net.akehurst.language.editor.compose
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
+import net.akehurst.kotlin.compose.editor.CodeEditorState
+import net.akehurst.kotlin.compose.editor.CodeEditorStateHolder
+import net.akehurst.kotlin.compose.editor.CodeEditorView
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.contextAsmSimple
@@ -64,14 +66,14 @@ class AglComposeTextEditor(
     val logFunction: LogFunction = { lvl, prefix, msg, t -> println("$lvl: $prefix - $msg") }
     val languageService = LanguageServiceDirectExecution(logFunction)
 
-    val composableEditor = ComposableCodeEditor(
+    val editorState = CodeEditorStateHolder(
         initialText = initialText
     )
 
     val aglEditor = Agl.attachToComposeEditor(
         languageService, languageDefinition,
         { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
-        editorId, editorOptions, logFunction, composableEditor
+        editorId, editorOptions, logFunction, editorState
     )
 
     init {
@@ -82,14 +84,14 @@ class AglComposeTextEditor(
     @Composable
     fun content() {
         Surface {
-            composableEditor.content()
+            CodeEditorView(editorState)
         }
     }
 
     var text: String
-        get() = composableEditor.editorState.inputRawText.toString()
+        get() = editorState.rawText
         set(value) {
-            composableEditor.editorState.setNewText(value)
+            editorState.setNewText(value)
         }
 
     fun updateLanguageDefinition(

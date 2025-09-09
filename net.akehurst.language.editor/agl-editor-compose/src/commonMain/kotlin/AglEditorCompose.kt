@@ -146,7 +146,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         }
         composeEditor.onTextChange = { txt ->
             try {
-                onEditorTextChangeInternal(txt)
+                onEditorTextChangeInternal(txt.toString())
             } catch (t: Throwable) {
                 logger.logError(t) { "Failed to onTextChange" }
             }
@@ -168,7 +168,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     }
 
     override fun destroyBaseEditor() {
-        composeEditor.destroy()
+
     }
 
     override fun destroyAglEditor() {

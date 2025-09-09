@@ -27,6 +27,9 @@ import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import net.akehurst.kotlin.compose.editor.CodeEditorState
+import net.akehurst.kotlin.compose.editor.CodeEditorStateHolder
+import net.akehurst.kotlin.compose.editor.CodeEditorView
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
@@ -251,7 +254,7 @@ styles SQL {
     @Test
     fun run_ComposableCodeEditor3b() = runBlocking {
         try {
-            val composeEditor = ComposableCodeEditor(
+            val editorState = CodeEditorStateHolder(
                 initialText = INITIAL_TEXT,
             )
 
@@ -261,7 +264,10 @@ styles SQL {
                         title = "Code Editor Test",
                     ) {
                         Surface {
-                            composeEditor.content(autocompleteModifier = Modifier.widthIn(100.dp, 400.dp).heightIn(30.dp, 300.dp))
+                            CodeEditorView(
+                                editorState,
+                                autocompleteModifier = Modifier.widthIn(100.dp, 400.dp).heightIn(30.dp, 300.dp)
+                            )
                         }
                     }
                 } catch (t:Throwable) {
@@ -286,7 +292,7 @@ styles SQL {
             val aglEditor = Agl.attachToComposeEditor(
                 languageService, languageDefinition,
                 { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
-                editorId, editorOptions, logFunction, composeEditor!!
+                editorId, editorOptions, logFunction, editorState
             )
 
             println("Attached AGL")
