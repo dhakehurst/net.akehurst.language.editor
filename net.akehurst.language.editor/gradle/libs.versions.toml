@@ -1,22 +1,22 @@
 [versions]
-project = "2.2.0-SNAPSHOT"
+project = "2.2.20-SNAPSHOT"
 
-kotlin = "2.2.0"
-exportPublic = "2.2.0"
-reflect = "2.2.0-SNAPSHOT"
+kotlin = "2.2.20"
+exportPublic = "2.2.20-SNAPSHOT"
+reflect = "2.2.20-SNAPSHOT"
 dokka = "2.0.0"
-buildconfig = "5.5.1"
+buildconfig = "5.6.7"
 credentials = "3.0"
 
-nal-agl = "4.2.2.0-SNAPSHOT"
+nal-agl = "4.2.2.20-SNAPSHOT"
 
-nak-compose-code-editor = "2.2.0-SNAPSHOT"
+nak-compose-code-editor = "2.2.20-SNAPSHOT"
 
-nak-serialisation = "2.2.0-SNAPSHOT"
-nak-json = "2.2.0"
-nak-kotlinx = "2.2.0-SNAPSHOT"
-nak-html-builder = "2.2.0"
-nak-codemirror-api = "2.1.21"
+nak-serialisation = "2.2.20-SNAPSHOT"
+nak-json = "2.2.20-SNAPSHOT"
+nak-kotlinx = "2.2.20-SNAPSHOT"
+nak-html-builder = "2.2.20-SNAPSHOT"
+nak-codemirror-api = "2.2.20-SNAPSHOT"
 
 kotlinx-coroutines = "1.10.2"
 compose = "1.9.0-beta03"

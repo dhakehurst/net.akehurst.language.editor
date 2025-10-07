@@ -24,6 +24,7 @@ dependencies {
     commonTestImplementation(compose.ui)
     commonTestImplementation(compose.foundation)
     commonTestImplementation(libs.kotlinx.coroutines)
+    commonTestImplementation(libs.nak.kotlinx.logging.common)
     jvm11TestImplementation(compose.desktop.currentOs)
 }
 

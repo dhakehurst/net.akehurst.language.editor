@@ -17,29 +17,30 @@
 package net.akehurst.language.editor.worker
 
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
-import net.akehurst.language.agl.simple.ContextWithScope
+import net.akehurst.language.agl.processor.contextFromGrammarRegistry
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomain
+import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomainReference
+import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.asm.api.Asm
 import net.akehurst.language.asm.builder.asmSimple
+import net.akehurst.language.asmTransform.asm.AsmTransformDomainDefault
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageResponseStatus
 import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.common.EditorOptionsDefault
 import net.akehurst.language.editor.language.service.messages.*
-import net.akehurst.language.grammar.api.GrammarModel
-import net.akehurst.language.grammar.processor.ContextFromGrammarRegistry
+import net.akehurst.language.grammar.api.GrammarDomain
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageIssueKind
 import net.akehurst.language.issues.api.LanguageProcessorPhase
+import net.akehurst.language.regex.api.UnescapedLiteral
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.scanner.api.MatchableKind
 import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.sppt.api.SharedPackedParseTree
-import net.akehurst.language.transform.asm.TransformDomainDefault
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -97,14 +98,14 @@ class test_AglWorkerAbstract {
                     assertEquals(exp.endPoint, act.endPoint)
                     assertEquals(exp.status, act.status)
                     assertEquals(exp.issues, act.issues)
-                    assertEquals((exp.asm as Asm?)?.asString("  "), (act.asm as Asm?)?.asString("  "), "MessageSyntaxAnalysisResult")
+                    assertEquals((exp.asm as Asm?)?.asString(), (act.asm as Asm?)?.asString(), "MessageSyntaxAnalysisResult")
                 }
 
                 exp is MessageSemanticAnalysisResult && act is MessageSemanticAnalysisResult -> {
                     assertEquals(exp.endPoint, act.endPoint)
                     assertEquals(exp.status, act.status)
                     assertEquals(exp.issues, act.issues)
-                    assertEquals((exp.asm as Asm?)?.asString("  "), (act.asm as Asm?)?.asString("  "), "MessageSemanticAnalysisResult")
+                    assertEquals((exp.asm as Asm?)?.asString(), (act.asm as Asm?)?.asString(), "MessageSemanticAnalysisResult")
                 }
 
                 else -> assertEquals(exp, act)
@@ -145,7 +146,7 @@ class test_AglWorkerAbstract {
                     MessageResponseStatus.SUCCESS, "OK",
                     emptyList(),
                     listOf(
-                        Matchable(1, 1, "'a'", "a", MatchableKind.LITERAL)
+                        Matchable(1, 1, "'a'", UnescapedLiteral("a"), MatchableKind.LITERAL)
                     )
                 )
             ),
@@ -270,7 +271,7 @@ class test_AglWorkerAbstract {
         // <-- MessageSemanticAnalysisResult-START --
         // <-- MessageSemanticAnalysisResult-SUCCESS --
 
-        val grammarModel = (sut.sent[4] as MessageSyntaxAnalysisResult).asm as GrammarModel
+        val grammarModel = (sut.sent[4] as MessageSyntaxAnalysisResult).asm as GrammarDomain
 
         sut.sent.forEach {
             println(it)
@@ -345,7 +346,7 @@ class test_AglWorkerAbstract {
         sut.receive(
             port, MessageProcessRequest(
                 EndPointIdentity(editorId, sessionId), requestId, Agl.registry.agl.grammarLanguageIdentity,
-                userGrammar, Agl.options { semanticAnalysis { context(ContextFromGrammarRegistry(Agl.registry)) } }
+                userGrammar, Agl.options { semanticAnalysis { context(contextFromGrammarRegistry(Agl.registry)) } }
             )
         )
         // expect
@@ -357,7 +358,7 @@ class test_AglWorkerAbstract {
         // <-- MessageSemanticAnalysisResult-START --
         // <-- MessageSemanticAnalysisResult-SUCCESS --
 
-        val grammarModel = (sut.sent[4] as MessageSyntaxAnalysisResult).asm as GrammarModel
+        val grammarModel = (sut.sent[4] as MessageSyntaxAnalysisResult).asm as GrammarDomain
 
         sut.sent.forEach {
             println(it)
@@ -473,14 +474,14 @@ class test_AglWorkerAbstract {
             assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
         }
-        val trm = TransformDomainDefault.fromGrammarModel(expectedGrammarModel).let {
+        val trm = AsmTransformDomainDefault.fromGrammarDomain(expectedGrammarModel).let {
             assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
         }
-        val expectedTypeModel = trm.typeModel!!
+        val expectedTypeModel = trm.typesDomain!!
         val expectedScopeModel = Agl.registry.agl.crossReference.processor!!.process(
             crossReferenceStr,
-            Agl.options { semanticAnalysis { context(ContextFromTypeModel(expectedTypeModel)) } }
+            Agl.options { semanticAnalysis { context(ContextFromTypesDomain(expectedTypeModel)) } }
         ).let {
             assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
@@ -511,7 +512,7 @@ class test_AglWorkerAbstract {
                 }
             }
         }
-        val expectedAsmSem = asmSimple(typeModel = expectedTypeModel, crossReferenceModel = expectedScopeModel, context = contextAsmSimple(), resolveReferences = true, failIfIssues = true) {
+        val expectedAsmSem = asmSimple(typesDomain = expectedTypeModel, crossReferenceDomain = expectedScopeModel, context = contextAsmSimple(), resolveReferences = true, failIfIssues = true) {
             element("Unit") {
                 propertyListOfElement("declaration") {
                     element("Primitive") {
@@ -663,7 +664,7 @@ class test_AglWorkerAbstract {
         sut.receive(
             port, MessageProcessRequest(
                 EndPointIdentity(editorId, sessionId), RequestIdentity("process"), Agl.registry.agl.crossReferenceLanguageIdentity,
-                referencesStr, Agl.options { semanticAnalysis { context(ContextFromTypeModelReference(languageId)) } }
+                referencesStr, Agl.options { semanticAnalysis { context(ContextFromTypesDomainReference(languageId)) } }
             )
         )
 

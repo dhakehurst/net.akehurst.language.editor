@@ -32,6 +32,8 @@ import net.akehurst.kotlin.compose.editor.CodeEditorStateHolder
 import net.akehurst.kotlin.compose.editor.CodeEditorView
 import net.akehurst.kotlin.compose.editor.ComposableCodeEditor
 import net.akehurst.kotlinx.logging.api.LogFunction
+import net.akehurst.kotlinx.logging.api.LoggingManager
+import net.akehurst.kotlinx.logging.common.LoggingByConsole
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.CrossReferenceString
@@ -253,6 +255,7 @@ styles SQL {
     */
     @Test
     fun run_ComposableCodeEditor3b() = runBlocking {
+        LoggingManager.use(LoggingByConsole)
         try {
             val editorState = CodeEditorStateHolder(
                 initialText = INITIAL_TEXT,
