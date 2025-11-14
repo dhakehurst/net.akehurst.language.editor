@@ -11,20 +11,20 @@ import net.akehurst.language.base.api.SimpleName
 import net.akehurst.language.editor.language.service.messages.EditorMessage
 import net.akehurst.language.scope.processor.AglScope
 import net.akehurst.language.style.processor.AglStyle
-import net.akehurst.language.typemodel.api.TypeModel
-import net.akehurst.language.typemodel.processor.AglTypes
+import net.akehurst.language.types.api.TypesDomain
+import net.akehurst.language.types.processor.AglTypes
 import kotlin.test.Test
 
 class test_GenerateTypeModelViaReflection {
 
     //TODO: use a gradle-plugin when it is written ;-)
 
-    fun gen_messages(): Pair<TypeModel, List<QualifiedName>> {
+    fun gen_messages(): Pair<TypesDomain, List<QualifiedName>> {
         val added = (
-                AglStyle.typesModel.namespace +
-                        AglAsm.typeModel.namespace +
-                        AglScope.typeModel.namespace +
-                        AglTypes.typesModel.namespace
+                AglStyle.typesDomain.namespace +
+                        AglAsm.typesDomain.namespace +
+                        AglScope.typesDomain.namespace +
+                        AglTypes.typesDomain.namespace
                 ).toSet().toList()
         val gen = GenerateTypeModelViaReflection(
             SimpleName("Test"),

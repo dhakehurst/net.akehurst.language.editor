@@ -153,7 +153,17 @@ open class LanguageServiceRequestDirectExecution(
     val response: LanguageServiceResponse,
     logFunction: LogFunction
 ) : LanguageServiceRequest {
+
     val logger = LoggerCommon("LanguageServiceRequestDirectExecution", logFunction)
+
+    fun getLanguageDefinition(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity,):LanguageDefinition<Any,Any>? {
+        val ld = _languageDefinition[languageId]
+        if (null==ld) {
+            val msg = "LanguageDefinition '${languageId}' not found, was it created correctly?"
+            response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, msg, emptyList(), 0, emptyList())
+        }
+        return ld;
+    }
 
     // --- LanguageServiceRequest ---
     override fun <AsmType : Any, ContextType : Any> processorCreateRequest(
@@ -226,12 +236,13 @@ open class LanguageServiceRequestDirectExecution(
         processOptions: ProcessOptions<AsmType, ContextType>
     ) {
         logger.logTrace { "sentenceProcessRequest $endPointIdentity, $languageId" }
-        val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '${languageId}' not found, was it created correctly?")
-        val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
-        val scan = scan(endPointIdentity, requestId, languageId, proc, processOptions, sentence)
-        val parse = parse(endPointIdentity, requestId, languageId, proc, processOptions, sentence)
-        val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(endPointIdentity, requestId, languageId, proc, processOptions, it) }
-        val semanticAnalysis = syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(endPointIdentity, requestId, languageId, proc, processOptions, it, r.locationMap) } }
+        getLanguageDefinition(endPointIdentity, requestId, languageId)?.let { ld ->
+                val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
+                val scan = scan(endPointIdentity, requestId, languageId, proc, processOptions, sentence)
+                val parse = parse(endPointIdentity, requestId, languageId, proc, processOptions, sentence)
+                val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(endPointIdentity, requestId, languageId, proc, processOptions, it) }
+                val semanticAnalysis = syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(endPointIdentity, requestId, languageId, proc, processOptions, it, r.locationMap) } }
+            }
     }
 
     override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
@@ -244,10 +255,11 @@ open class LanguageServiceRequestDirectExecution(
     ) {
         logger.logTrace { "sentenceCodeCompleteRequest $endPointIdentity, $languageId" }
         try {
-            val ld = this._languageDefinition[languageId] ?: error("LanguageDefinition '${languageId}' not found, was it created correctly?")
+            getLanguageDefinition(endPointIdentity, requestId, languageId)?.let { ld ->
             val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
             val result = proc.expectedItemsAt(sentence, position, processOptions)
             response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.issues.all.toList(), result.offset, result.items)
+                }
         } catch (t: Throwable) {
             response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), 0, emptyList())
         }
@@ -500,7 +512,7 @@ open class LanguageServiceRequestDirectExecution(
                     Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
                         is ContextFromTypesDomainReference -> {
                             val langId = LanguageIdentity((options.semanticAnalysis.context as ContextFromTypesDomainReference).languageDefinitionId.value)
-                            val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
+                            val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined.")
                             val tm = AsmTransformDomainDefault.fromGrammarDomain(ld.grammarDomain!!).asm!!.typesDomain!!
                             ContextFromTypesDomain(tm)
                         }

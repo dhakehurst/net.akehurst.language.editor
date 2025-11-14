@@ -18,6 +18,7 @@ package net.akehurst.language.editor.common
 import net.akehurst.kotlinx.logging.common.LoggerConsole
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.ContextWithScope
+import net.akehurst.language.agl.simple.SentenceContextAny
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.asm.api.Asm
@@ -62,10 +63,10 @@ class test_AglTokenizer {
         )
 
         fun test_getLineTokensByScan(lineText: String, previousLineState: AglLineState, expected: Pair<AglLineState, List<AglToken>>) {
-            val agl = AglComponents<Asm, ContextWithScope<Any,Any>>(langDef, testEditorId, logger, AglStyleHandlerCssClass(testLangId))
+            val agl = AglComponents(langDef, testEditorId, logger, AglStyleHandlerCssClass(testLangId))
             agl.styleHandler.updateStyleModel(styleMdl)
             agl.scannerMatchables = agl.languageDefinition.processor!!.scanner!!.matchables
-            val sut = AglTokenizer<Asm, ContextWithScope<Any,Any>, CssClassStyle>(agl, agl.logger)
+            val sut = AglTokenizer<Asm, SentenceContextAny, CssClassStyle>(agl, agl.logger)
 
             val actual = sut.getLineTokensByScan(lineText, previousLineState)
 
@@ -76,9 +77,9 @@ class test_AglTokenizer {
         }
 
         fun test_getLineTokensByParse(fullText: String, row: Int, state: AglLineState, expected: Pair<AglLineState, List<AglToken>>) {
-            val agl = AglComponents<Asm, ContextWithScope<Any,Any>>(langDef, testEditorId, logger,AglStyleHandlerCssClass(testLangId))
+            val agl = AglComponents(langDef, testEditorId, logger,AglStyleHandlerCssClass(testLangId))
             agl.styleHandler.updateStyleModel(styleMdl)
-            val sut = AglTokenizer<Asm, ContextWithScope<Any,Any>, CssClassStyle>(agl, agl.logger)
+            val sut = AglTokenizer<Asm, SentenceContextAny, CssClassStyle>(agl, agl.logger)
             //sut.acceptingTokens = true
 
             val result = agl.languageDefinition.processor!!.parse(fullText, Agl.parseOptions { })

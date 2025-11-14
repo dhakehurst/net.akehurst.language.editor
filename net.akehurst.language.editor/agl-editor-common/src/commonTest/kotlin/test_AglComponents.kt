@@ -1,6 +1,9 @@
 package net.akehurst.language.editor.common
 
+import net.akehurst.kotlinx.logging.api.LoggingManager
+import net.akehurst.kotlinx.logging.api.logger
 import net.akehurst.kotlinx.logging.common.LoggerCommon
+import net.akehurst.kotlinx.logging.common.LoggingByConsole
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -10,12 +13,10 @@ import kotlin.test.assertEquals
 
 class test_AglComponents {
 
-    val logger = LoggerCommon("Log") { logLevel, prefix, throwable, msg ->
-        println("$logLevel: $prefix - ${msg()}")
-    }
 
     @BeforeTest
     fun before() {
+        LoggingManager.use(LoggingByConsole)
         // ensure grammar language is registered
         Agl.registry.agl.grammar
     }
@@ -44,6 +45,8 @@ class test_AglComponents {
 
     @Test
     fun modifyIdentity() {
+        val logger = logger("Log")
+
         val langId1 = LanguageIdentity("test1")
         val langId2 = Agl.registry.agl.grammarLanguageIdentity
         val def = Agl.registry.register(

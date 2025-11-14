@@ -1,6 +1,9 @@
 package net.akehurst.language.editor.common
 
 import net.akehurst.kotlinx.logging.api.LogLevel
+import net.akehurst.kotlinx.logging.api.LoggingManager
+import net.akehurst.kotlinx.logging.common.LoggingByConsole
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.CompletionItem
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
@@ -8,7 +11,8 @@ import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
-import net.akehurst.language.style.api.AglStyleModel
+import net.akehurst.language.style.api.AglStyleDomain
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 class test_LanguageServiceDirectExecution {
@@ -24,7 +28,7 @@ class test_LanguageServiceDirectExecution {
                 println("processorDeleteResponse: $endPointIdentity, $requestId, $status, $message")
             }
 
-            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleModel?) {
+            override fun processorSetStyleResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, styleModel: AglStyleDomain?) {
                 println("processorSetStyleResponse: $endPointIdentity, $requestId, $status, $message, $issues, $styleModel")
             }
 
@@ -64,6 +68,11 @@ class test_LanguageServiceDirectExecution {
         val logFunction = { level: LogLevel, prefix: String, t: Throwable?,message: ()->String, -> println("$level: $prefix - ${message()}, $t") }
     }
 
+    @BeforeTest
+    fun before() {
+        LoggingManager.use(LoggingByConsole)
+    }
+
     @Test
     fun construct() {
         val sut = LanguageServiceDirectExecution(logFunction)
@@ -87,7 +96,15 @@ class test_LanguageServiceDirectExecution {
             }
         """.trimIndent()
         )
-        sut.request.processorCreateRequest(epi, ri, li, gs, null, null, null, aglEditorOptions())
+        val ld = Agl.registry.register(
+            li,
+            Agl.options {},
+            false,
+            Agl.configuration(Agl.configurationSimple()) {
+                grammarString(gs)
+            }
+        )
+        sut.request.processorCreateRequest(epi, ri, ld, aglEditorOptions())
     }
 
     @Test
@@ -96,7 +113,7 @@ class test_LanguageServiceDirectExecution {
 
         val epi = EndPointIdentity("test-editor", "<nothing>")
         val ri = RequestIdentity("1")
-        val li = LanguageIdentity("test-lang")
+        val li = LanguageIdentity("test-lang2")
 
         sut.addResponseListener(epi, responseRecorder)
 
@@ -108,7 +125,15 @@ class test_LanguageServiceDirectExecution {
             }
         """.trimIndent()
         )
-        sut.request.processorCreateRequest(epi, ri, li, gs, null, null, null, aglEditorOptions())
+        val ld = Agl.registry.register(
+            li,
+            Agl.options {},
+            false,
+            Agl.configuration(Agl.configurationSimple()) {
+                grammarString(gs)
+            }
+        )
+        sut.request.processorCreateRequest(epi, ri, ld,  aglEditorOptions())
     }
 
 }

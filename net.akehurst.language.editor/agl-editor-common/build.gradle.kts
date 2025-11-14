@@ -1,4 +1,5 @@
 plugins {
+    id("project-conventions")
     alias(libs.plugins.reflect)
 }
 

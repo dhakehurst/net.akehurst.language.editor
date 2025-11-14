@@ -1,5 +1,6 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-
+plugins {
+    id("project-conventions")
+}
 //val version_kotlin:String by project
 val version_agl:String by project
 val version_coroutines:String by project

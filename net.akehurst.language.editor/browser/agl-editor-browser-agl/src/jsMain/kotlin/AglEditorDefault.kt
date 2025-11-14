@@ -18,7 +18,8 @@ package net.akehurst.language.editor.browser.agl
 
 import kotlinx.browser.document
 import kotlinx.browser.window
-import net.akehurst.kotlin.html5.elAppend
+import kotlinx.dom.addClass
+import kotlinx.dom.appendElement
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.LanguageDefinition
@@ -124,16 +125,14 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
     }
 
     private fun init_() {
-        containerElement.elAppend() {
-            class_.add("agl-editor")
-            textarea {
-                class_.add("editing")
-            }
-            htmlElement("pre") {
-                class_.add("highlighted-pre")
-                code {
-                    class_.add("highlighted-content")
-                }
+        containerElement.addClass("agl-editor")
+        containerElement.appendElement("textarea") {
+            addClass("editing")
+        }
+        containerElement.appendElement("pre") {
+            addClass("highlighted-pre")
+            appendElement("code") {
+                addClass("highlighted-content")
             }
         }
         val css = """
@@ -177,8 +176,8 @@ class AglEditorDefault<AsmType : Any, ContextType : Any>(
 
 }
 """
-        document.head?.elAppend {
-            htmlElement("style").textContent = css
+        document.head?.appendElement("style") {
+            textContent = css
         }
         editing = containerElement.querySelector(".editing") as HTMLTextAreaElement
         highlightedContent = containerElement.querySelector(".highlighted-content") as HTMLElement

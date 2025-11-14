@@ -6,7 +6,7 @@ val version_agl: String by project
 val version_coroutines: String by project
 
 plugins {
-    kotlin("multiplatform")
+    id("project-conventions")
 }
 
 

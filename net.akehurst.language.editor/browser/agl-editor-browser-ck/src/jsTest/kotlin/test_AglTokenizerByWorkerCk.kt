@@ -19,6 +19,7 @@ package net.akehurst.language.editor.browser.ck
 import net.akehurst.kotlinx.logging.common.LoggerJsConsole
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.ContextWithScope
+import net.akehurst.language.agl.simple.SentenceContextAny
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.asm.api.Asm
@@ -33,16 +34,16 @@ class test_AglTokenizerByWorkerCk {
     fun test() {
         // Given
         val languageId = LanguageIdentity("test-language")
-        val languageDef = Agl.languageDefinitionFromString<Asm, ContextWithScope<Any,Any>>(
+        val languageDef = Agl.languageDefinitionFromString<Asm, SentenceContextAny>(
             identity = languageId,
             grammarDefinitionStr = GrammarString("")
         )
         val editorId = "test-editor"
         val logger = LoggerJsConsole()
         val styleHandler = AglStyleHandlerCkStyle(languageId)
-        val agl = AglComponents<Asm, ContextWithScope<Any,Any>>(languageDef, editorId, logger, styleHandler)
+        val agl = AglComponents<Asm, SentenceContextAny>(languageDef, editorId, logger, styleHandler)
         val emi = EditorModelIndex()
-        val sut = AglTokenizerByWorkerCk<Asm, ContextWithScope<Any,Any>>(agl, emi, logger)
+        val sut = AglTokenizerByWorkerCk<Asm, SentenceContextAny>(agl, emi, logger)
 
         // When
         val tokens = listOf(listOf(AglTokenDefault(listOf(EditorStyleIdentity("style1")),0,5)))

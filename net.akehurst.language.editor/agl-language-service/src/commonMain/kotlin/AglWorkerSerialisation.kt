@@ -44,8 +44,8 @@ object AglWorkerSerialisation {
 
     private fun initialise() {
         if (!initialised) {
-            agl_parser_commonMain.KotlinxReflectForModule.registerUsedClasses()
-            agl_processor_commonMain.KotlinxReflectForModule.registerUsedClasses()
+            //agl_parser_commonMain.KotlinxReflectForModule.registerUsedClasses()
+            //agl_processor_commonMain.KotlinxReflectForModule.registerUsedClasses()
             agl_editor_api_commonMain.KotlinxReflectForModule.registerUsedClasses()
             agl_editor_common_commonMain.KotlinxReflectForModule.registerUsedClasses()
             agl_language_service_commonMain.KotlinxReflectForModule.registerUsedClasses()

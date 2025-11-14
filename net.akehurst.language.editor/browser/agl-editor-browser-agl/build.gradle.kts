@@ -7,7 +7,7 @@ val version_coroutines:String by project
 val version_html_builder:String by project
 
 plugins {
-    kotlin("multiplatform")
+    id("project-conventions")
 }
 
 
@@ -15,7 +15,6 @@ dependencies {
     "jsMainApi"(project(":agl-editor-common"))
 //    "jsMainApi"(project(":agl-language-service-serialisation"))
     "jsMainApi"(project(":agl-editor-browser-worker"))
-    "jsMainImplementation"(libs.nak.html.builder)
 }
 
 buildConfig {

@@ -1,4 +1,5 @@
 plugins {
+    id("project-conventions")
     alias(libs.plugins.compose)
     alias(libs.plugins.kotlin.compose)
 }
@@ -25,6 +26,7 @@ dependencies {
     commonTestImplementation(compose.foundation)
     commonTestImplementation(libs.kotlinx.coroutines)
     commonTestImplementation(libs.nak.kotlinx.logging.common)
-    jvm11TestImplementation(compose.desktop.currentOs)
+    jvmTestImplementation(compose.desktop.currentOs)
+
 }
 

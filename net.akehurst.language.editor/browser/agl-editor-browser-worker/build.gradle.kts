@@ -1,4 +1,7 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackOutput
+plugins {
+    id("project-conventions")
+}
 
 kotlin {
     js("js") {

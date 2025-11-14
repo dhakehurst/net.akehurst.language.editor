@@ -21,7 +21,7 @@ import net.akehurst.language.api.processor.ResolvedReference
 import net.akehurst.language.editor.api.EditorStyleIdentity
 import net.akehurst.language.sentence.api.InputLocation
 import net.akehurst.language.sentence.common.SentenceDefault
-import net.akehurst.language.style.builder.styleModel
+import net.akehurst.language.style.builder.styleDomain
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -75,7 +75,7 @@ class test_AglStyleHandlerAsHtml {
             when the event Thermostat Head&apos;s Valve Position &lt; Max Valve
             Position AND Thermostat Head&apos;s Valve Position &gt; Min Valve
             Position becomes true occurs.
-        """.trimIndent().replace("\n","&#13;")
+        """.trimIndent()//.replace("\n","&#13;")
 
         assertEquals(expected, actual)
     }
@@ -87,7 +87,7 @@ class test_AglStyleHandlerAsHtml {
         val tokens = listOf(
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 0, 5)
         )
-        val styleModel = styleModel("Test") {
+        val styleModel = styleDomain("Test") {
             namespace("test") {
                 styles("Test") {
                     tagRule("aaaaa") {
@@ -115,7 +115,7 @@ class test_AglStyleHandlerAsHtml {
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 0, 3),
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 3, 2)
         )
-        val styleModel = styleModel("Test") {
+        val styleModel = styleDomain("Test") {
             namespace("test") {
                 styles("Test") {
                     tagRule("aaaaa") {
@@ -155,7 +155,7 @@ class test_AglStyleHandlerAsHtml {
             AglTokenDefault(listOf(EditorStyleIdentity.NO_STYLE), 6, 1),
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test2")), 7, 6)
         )
-        val styleModel = styleModel("Test") {
+        val styleModel = styleDomain("Test") {
             namespace("test") {
                 styles("Test") {
                     tagRule("target") {
@@ -174,7 +174,10 @@ class test_AglStyleHandlerAsHtml {
         val actual = sut.applyHtmlStyling(sentence, tokens,references)
 
         // then
-        val expected = "<span style='color:red;'>target</span><span style=''>&#13;</span><span style='color:green;'>source</span>"
+        val expected = """
+            <span style='color:red;'>target</span><span style=''>
+            </span><span style='color:green;'>source</span>
+            """.trimIndent()
         assertEquals(expected, actual)
     }
 
