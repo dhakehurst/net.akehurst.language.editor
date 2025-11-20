@@ -102,6 +102,8 @@ interface AglEditor<AsmType : Any, ContextType : Any> {
 
     fun onIssues(handler: (List<LanguageIssue>) -> Unit)
 
+    fun onLineTokens(handler: (LineTokensEvent) -> Unit)
+
     fun onParse(handler: (ParseEvent) -> Unit)
 
     fun onSyntaxAnalysis(handler: (SyntaxAnalysisEvent) -> Unit)
@@ -144,6 +146,12 @@ interface EditorOptions {
 }
 
 enum class EventStatus { START, IGNORED, FAILURE, SUCCESS }
+
+class LineTokensEvent(
+    val status: EventStatus,
+    val message: String,
+    val lineTokens: List<List<AglToken>>
+)
 
 /**
  * Three kinds of event,

@@ -76,6 +76,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     private val _onTextChange = mutableListOf<(String) -> Unit>()
     private val _onIssues = mutableListOf<(List<LanguageIssue>) -> Unit>()
+    private val _onLineTokensHandler = mutableListOf<(LineTokensEvent) -> Unit>()
     private val _onParseHandler = mutableListOf<(ParseEvent) -> Unit>()
     private val _onSyntaxAnalysisHandler = mutableListOf<(SyntaxAnalysisEvent) -> Unit>()
     private val _onSemanticAnalysisHandler = mutableListOf<(SemanticAnalysisEvent) -> Unit>()
@@ -136,6 +137,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         this._onIssues.add(handler)
     }
 
+    override fun onLineTokens(handler: (LineTokensEvent) -> Unit) {
+        this._onLineTokensHandler.add(handler)
+    }
+
     override fun onParse(handler: (ParseEvent) -> Unit) {
         this._onParseHandler.add(handler)
     }
@@ -151,6 +156,12 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     protected fun notifyTextChange() {
         this._onTextChange.forEach {
             it.invoke(text)
+        }
+    }
+
+    protected fun notifyLineTokens(event: LineTokensEvent) {
+        this._onLineTokensHandler.forEach {
+            it.invoke(event)
         }
     }
 
@@ -329,12 +340,21 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         lineTokens: List<List<AglToken>>
     ) {
         logger.logTrace { "sentenceLineTokensResponse $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens" }
-        if (status == MessageResponseStatus.SUCCESS) {
-            logger.logDebug { "Debug: new line tokens from successful parse of ${editorId}" }
-            this.workerTokenizer.receiveTokens(startLine, lineTokens as List<List<AglToken>>)
-            this.resetTokenization(startLine)
-        } else {
-            logger.logError { "LineTokens - ${message}" }
+        when(status) {
+            MessageResponseStatus.RECEIVED -> {
+                this.notifyLineTokens(LineTokensEvent(EventStatus.START, message,  emptyList()))
+            }
+            MessageResponseStatus.IGNORED -> {
+                this.notifyLineTokens(LineTokensEvent(EventStatus.IGNORED, message,  emptyList()))
+            }
+            MessageResponseStatus.FAILURE -> {
+                this.notifyLineTokens(LineTokensEvent(EventStatus.FAILURE, message,  emptyList()))
+            }
+            MessageResponseStatus.SUCCESS -> {
+                this.workerTokenizer.receiveTokens(startLine, lineTokens)
+                this.resetTokenization(startLine)
+                this.notifyLineTokens(LineTokensEvent(EventStatus.SUCCESS, message,  lineTokens))
+            }
         }
     }
 

@@ -136,6 +136,38 @@ class test_AglStyleHandlerAsHtml {
     }
 
     @Test
+    fun applyHtmlStyling__The_SP_term() {
+        // given
+        val sentence = SentenceDefault("The term", 0)
+        val tokens = listOf(
+            AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 0, 3),
+            AglTokenDefault(listOf(EditorStyleIdentity("nostyle")), 3, 1),
+            AglTokenDefault(listOf(EditorStyleIdentity("agl-test2")), 4, 4)
+        )
+        val styleModel = styleDomain("Test") {
+            namespace("test") {
+                styles("Test") {
+                    tagRule("The") {
+                        declaration("foreground", "red")
+                    }
+                    tagRule("term") {
+                        declaration("foreground", "green")
+                    }
+                }
+            }
+        }
+
+        // when
+        val sut = AglStyleHandlerAsHtml(LanguageIdentity("test"))
+        sut.updateStyleModel(styleModel)
+        val actual = sut.applyHtmlStyling(sentence, tokens,emptyList())
+
+        // then
+        val expected = "<span style='color:red;'>The</span><span style=''> </span><span style='color:green;'>term</span>"
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun applyHtmlStyling__reference() {
         // given
         val sentence = SentenceDefault("""
