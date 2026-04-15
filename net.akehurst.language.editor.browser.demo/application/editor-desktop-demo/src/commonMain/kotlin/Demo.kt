@@ -19,25 +19,24 @@ package demo
 import korlibs.io.async.asyncImmediately
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import net.akehurst.kotlin.compose.editor.CodeEditorStateHolder
+import net.akehurst.kotlinx.logging.api.LogFunction
+import net.akehurst.kotlinx.logging.api.LogLevel
+import net.akehurst.kotlinx.logging.api.Logger
+import net.akehurst.kotlinx.logging.api.logger
+import net.akehurst.kotlinx.logging.common.LoggerConsole
+import net.akehurst.kotlinx.logging.common.LoggingByConsole
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.CrossReferenceString
-import net.akehurst.language.agl.GrammarString
-import net.akehurst.language.agl.StyleString
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModel
-import net.akehurst.language.agl.simple.ContextAsmSimple
-import net.akehurst.language.api.processor.CompletionItem
-import net.akehurst.language.api.processor.LanguageIdentity
-import net.akehurst.language.asm.api.Asm
+import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
+import net.akehurst.language.agl.simple.contextAsmSimple
+import net.akehurst.language.api.processor.*
+import net.akehurst.language.asmTransform.asm.AsmTransformDomainDefault
 import net.akehurst.language.editor.api.*
+import net.akehurst.language.editor.common.EditorOptionsDefault
+import net.akehurst.language.editor.compose.attachToComposeEditor
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
-import net.akehurst.language.grammar.api.GrammarModel
-import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
-import net.akehurst.language.grammar.processor.ContextFromGrammar
-import net.akehurst.language.issues.api.LanguageIssue
-import net.akehurst.language.reference.api.CrossReferenceModel
-import net.akehurst.language.scanner.api.Matchable
-import net.akehurst.language.style.api.AglStyleModel
-import net.akehurst.language.transform.asm.TransformModelDefault
+import net.akehurst.language.grammar.api.GrammarDomain
+import net.akehurst.language.grammar.processor.contextFromGrammar
 
 
 //external var aglScriptBasePath: dynamic = definedExternally
@@ -47,7 +46,7 @@ var demo: Demo? = null
 fun runDemo() {
 
     //createBaseDom("div#agl-demo")
-    val logger = DemoLogger(LogLevel.All)
+    val logger = logger("Demo")
 
     /*
         val loggingLevel = document.querySelector("#agl-demo-logging-level")!! as HTMLSelectElement
@@ -87,6 +86,11 @@ object Constants {
     val referencesLanguageId = Agl.registry.agl.crossReferenceLanguageIdentity
     val styleLanguageId = Agl.registry.agl.styleLanguageIdentity
     val formatLanguageId = Agl.registry.agl.formatLanguageIdentity
+
+    val sentenceProcessOptions = Agl.options<Any, Any> { semanticAnalysis { context(contextAsmSimple()) } }
+    val grammarProcessOptions = Agl.options<Any, Any> { semanticAnalysis { context(contextAsmSimple()) } }
+    val referencesProcessOptions = Agl.options<Any, Any> { semanticAnalysis { context(contextAsmSimple()) } }
+    val styleProcessOptions = Agl.options<Any, Any> { semanticAnalysis { context(contextAsmSimple()) } }
 }
 
 
@@ -276,7 +280,12 @@ fun initialiseExamples() {
     }
 }
 
-fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
+fun createDemo(editorChoice: AlternativeEditors, logger: Logger) {
+    val sentenceLanguage = Agl.registry.findOrPlaceholder<Any, Any>(Constants.sentenceLanguageId)
+    val grammarLanguage = Agl.registry.findOrPlaceholder<Any, Any>(Constants.grammarLanguageId)
+    val styleLanguage = Agl.registry.findOrPlaceholder<Any, Any>(Constants.styleLanguageId)
+    val referencesLanguage = Agl.registry.findOrPlaceholder<Any, Any>(Constants.referencesLanguageId)
+
     //if (null != demo) { demo!!.finalize() }
     /*
     val editorEls = document.querySelectorAll("agl-editor")
@@ -295,26 +304,33 @@ fun createDemo(editorChoice: AlternativeEditors, logger: DemoLogger) {
         Pair(element.id, ed)// (editorId)
     }
      */
-
+    val logFunction: LogFunction = { lvl, prefix, t, msg -> logger.log(lvl, t) { "$prefix - $msg" } }
+    val languageService = LanguageServiceDirectExecution(logFunction)
     val editors = mapOf<String, AglEditor<Any, Any>>(
-        Constants.sentenceEditorId to createDummyEditor(Constants.sentenceEditorId, Constants.sentenceLanguageId),
-        Constants.grammarEditorId to createDummyEditor(Constants.grammarEditorId, Constants.grammarLanguageId),
-        Constants.styleEditorId to createDummyEditor(Constants.styleEditorId, Constants.styleLanguageId),
-        Constants.referencesEditorId to createDummyEditor(Constants.referencesEditorId, Constants.referencesLanguageId)
+        Constants.sentenceEditorId to createComposeEditor(Constants.sentenceEditorId, logFunction, languageService, sentenceLanguage, Constants.sentenceProcessOptions),
+        Constants.grammarEditorId to createComposeEditor(Constants.grammarEditorId, logFunction, languageService, grammarLanguage, Constants.grammarProcessOptions),
+        Constants.styleEditorId to createComposeEditor(Constants.styleEditorId, logFunction, languageService, styleLanguage, Constants.referencesProcessOptions),
+        Constants.referencesEditorId to createComposeEditor(Constants.referencesEditorId, logFunction, languageService, referencesLanguage, Constants.styleProcessOptions)
     )
-    editors.forEach { (k, v) ->
-        v.logger.bind = { lvl, msg, t -> logger.log(lvl, msg, t) }
-    }
     demo = Demo(editors, logger)
     demo!!.configure()
 }
 
-fun createDummyEditor(editorId: String, languageId: LanguageIdentity): AglEditor<Any, Any> {
-    val logFunction: LogFunction = { _,_,_ -> }
-    val langServer = LanguageServiceDirectExecution()
-    return EditorDummy<Any, Any>(langServer.request,languageId,  editorId, logFunction)
-}
+fun createComposeEditor(editorId: String, logFunction: LogFunction, languageService: LanguageService, landDef: LanguageDefinition<Any, Any>, procOpts: ProcessOptions<Any, Any>): AglEditor<Any, Any> {
+    val editorState = CodeEditorStateHolder(
+        initialText = ""
+    )
 
+    return Agl.attachToComposeEditor(
+        languageService = languageService,
+        languageDefinition = landDef,
+        processOptions = { procOpts },
+        editorId = editorId,
+        editorOptions = EditorOptionsDefault(),
+        logFunction = logFunction,
+        composeEditor = editorState
+    )
+}
 
 //fun createFirepad(editorElement: Element): AglEditor<Any, Any> {
 //    val id = editorElement.id
@@ -323,15 +339,15 @@ fun createDummyEditor(editorId: String, languageId: LanguageIdentity): AglEditor
 
 class Demo(
     val editors: Map<String, AglEditor<*, *>>,
-    val logger: DemoLogger
+    val logger: Logger
 ) {
     //val trees = TreeView.initialise(document)
 
     //val exampleSelect = document.querySelector("select#example") as HTMLElement
-    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Asm, ContextAsmSimple>
+    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Any, Any>
     val grammarEditor = editors[Constants.grammarEditorId]!!
-    val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
-    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModel>
+    val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<Any, Any>
+    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<Any, Any>
     //val formatEditor = editors["language-format"]!!
 
     fun configure() {
@@ -341,55 +357,36 @@ class Demo(
     }
 
     private fun connectEditors() {
-        grammarEditor.languageIdentity = Constants.grammarLanguageId
-        styleEditor.languageIdentity = Constants.styleLanguageId
-        referencesEditor.languageIdentity = Constants.referencesLanguageId
-        Agl.registry.unregister(Constants.sentenceLanguageId)
-        sentenceEditor.languageIdentity = Agl.registry.register(
-            identity = Constants.sentenceLanguageId,
-            grammarStr = GrammarString(""),
-            buildForDefaultGoal = false,
-            aglOptions = Agl.options {
-                semanticAnalysis {
-                    option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
-                }
-            },
-            configuration = Agl.configurationDefault()
-        ).identity
-
-        grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleStr
-        styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
-        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.crossReference.styleStr
-
-
-        //var sentenceScopeModel: ScopeModel? = null
+        grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleString
+        styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleString
+        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.crossReference.styleString
 
         grammarEditor.onSemanticAnalysis { event ->
             when (event.status) {
                 EventStatus.START -> Unit
-
+                EventStatus.IGNORED -> Unit
                 EventStatus.FAILURE -> {
-                    referencesEditor.processOptions.semanticAnalysis.context = null
-                    styleEditor.processOptions.semanticAnalysis.context = null
-                    logger.logError(grammarEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.grammarStr = GrammarString("")
+                    referencesEditor.processOptions().semanticAnalysis.context = null
+                    styleEditor.processOptions().semanticAnalysis.context = null
+                    logger.logError { grammarEditor.endPointIdentity.editorId + ": " + event.message }
+                    sentenceEditor.languageDefinition.update(grammarString = GrammarString(""))
                 }
 
                 EventStatus.SUCCESS -> {
-                    val grammars = event.asm as GrammarModel? ?: error("should always be a List<Grammar> if success")
-                    val styleContext = ContextFromGrammar()
-                    val trm = TransformModelDefault.fromGrammarModel(grammars).let {
+                    val grammars = event.asm as GrammarDomain? ?: error("should always be a List<Grammar> if success")
+                    val styleContext = contextFromGrammar(grammars)
+                    val trm = AsmTransformDomainDefault.fromGrammarDomain(grammars).let {
                         it.asm!!
                     }
-                    val scopeContext = ContextFromTypeModel(trm.typeModel!!)
-                    referencesEditor.processOptions.semanticAnalysis.context = scopeContext
-                    styleEditor.processOptions.semanticAnalysis.context = styleContext
+                    val scopeContext = contextFromTypesDomain(trm.typesDomain!!)
+                    referencesEditor.processOptions().semanticAnalysis.context = scopeContext
+                    styleEditor.processOptions().semanticAnalysis.context = styleContext
                     try {
-                        logger.logDebug("Debug: Grammar parse success, resetting sentence processor")
-                        sentenceEditor.languageDefinition.grammarStr = GrammarString(grammarEditor.text)
+                        logger.logDebug { "Debug: Grammar parse success, resetting sentence processor" }
+                        sentenceEditor.languageDefinition.update(grammarString = GrammarString(grammarEditor.text))
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, grammarEditor.endPointIdentity.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.grammarStr = GrammarString("")
+                        logger.log(LogLevel.Error, t) { grammarEditor.endPointIdentity.editorId + ": " + t.message }
+                        sentenceEditor.languageDefinition.update(grammarString = GrammarString(""))
                     }
                 }
             }
@@ -399,18 +396,19 @@ class Demo(
         styleEditor.onSemanticAnalysis { event ->
             when (event.status) {
                 EventStatus.START -> Unit
+                EventStatus.IGNORED -> Unit
                 EventStatus.FAILURE -> {
-                    logger.logError(styleEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.styleStr = StyleString("")
+                    logger.logError { styleEditor.endPointIdentity.editorId + ": " + event.message }
+                    sentenceEditor.languageDefinition.update(styleString = StyleString(""))
                 }
 
                 EventStatus.SUCCESS -> {
                     try {
-                        logger.logDebug("Debug: Style parse success, resetting sentence style")
-                        sentenceEditor.languageDefinition.styleStr = StyleString( styleEditor.text)
+                        logger.logDebug { "Debug: Style parse success, resetting sentence style" }
+                        sentenceEditor.languageDefinition.update(styleString = StyleString(styleEditor.text))
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, styleEditor.endPointIdentity.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.styleStr = StyleString("")
+                        logger.log(LogLevel.Error, t) { styleEditor.endPointIdentity.editorId + ": " + t.message }
+                        sentenceEditor.languageDefinition.update(styleString = StyleString(""))
                     }
                 }
             }
@@ -418,19 +416,20 @@ class Demo(
         referencesEditor.onSemanticAnalysis { event ->
             when (event.status) {
                 EventStatus.START -> Unit
+                EventStatus.IGNORED -> Unit
                 EventStatus.FAILURE -> {
-                    logger.logError(referencesEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString( "")
+                    logger.logError { referencesEditor.endPointIdentity.editorId + ": " + event.message }
+                    sentenceEditor.languageDefinition.update(crossReferenceString = CrossReferenceString(""))
                 }
 
                 EventStatus.SUCCESS -> {
                     try {
                         //sentenceScopeModel = event.asm as ScopeModel?
-                        logger.logDebug("Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references")
-                        sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString( referencesEditor.text)
+                        logger.logDebug { "Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references" }
+                        sentenceEditor.languageDefinition.update(crossReferenceString = CrossReferenceString(referencesEditor.text))
                     } catch (t: Throwable) {
-                        logger.log(LogLevel.Error, referencesEditor.endPointIdentity.editorId + ": " + t.message, t)
-                        sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString( "")
+                        logger.log(LogLevel.Error, t) { referencesEditor.endPointIdentity.editorId + ": " + t.message }
+                        sentenceEditor.languageDefinition.update(crossReferenceString = CrossReferenceString(""))
                     }
                 }
             }

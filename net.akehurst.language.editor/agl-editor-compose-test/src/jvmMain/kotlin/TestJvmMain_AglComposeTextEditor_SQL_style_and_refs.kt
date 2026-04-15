@@ -53,7 +53,7 @@ suspend fun main() {
         val aglEditor = Agl.attachToComposeEditor(
             TestLanguageSql.languageService,
             TestLanguageSql.languageDefinition,
-            { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
+            { Agl.options { semanticAnalysis { sentenceContext(contextAsmSimple()) } } },
             TestLanguageSql.editorId,
             TestLanguageSql.editorOptions,
             TestLanguageSql.logFunction,

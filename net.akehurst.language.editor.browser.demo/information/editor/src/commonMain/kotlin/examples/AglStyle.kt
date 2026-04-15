@@ -39,16 +39,16 @@ styles {
     }
 }
     """.trimIndent()
-    val grammar = Agl.registry.agl.style.grammarStr!!
+    val grammar = Agl.registry.agl.style.grammarString!!
 
     val references = """
     """.trimIndent()
 
-    val style = Agl.registry.agl.style.styleStr!!
+    val style = Agl.registry.agl.style.styleString!!
     val format = """
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar.value, references, style.value, format,"")
+    val example = Example(id, label, sentence, grammar.value, "",references, style.value, format,"")
 
 }

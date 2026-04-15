@@ -85,7 +85,7 @@ namespace net.akehurst.language.api.processor
         cmp completionProvider
     }
     interface SemanticAnalysisOptions {
-        cmp context
+        cmp sentenceContext
         cmp locationMap
     }
 

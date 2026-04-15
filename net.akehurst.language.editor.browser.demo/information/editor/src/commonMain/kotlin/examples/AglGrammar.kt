@@ -17,7 +17,6 @@
 package net.akehurst.language.editor.information.examples
 
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.GrammarString
 import net.akehurst.language.editor.information.Example
 
 object AglGrammar {
@@ -50,7 +49,7 @@ grammar Test extends Common {
     leaf type = ID;
 }
     """.trimIndent()
-    val grammar = Agl.registry.agl.grammar.grammarStr!!
+    val grammar = Agl.registry.agl.grammar.grammarString!!
 
     val references = """
 namespace net.akehurst.language.agl.AglGrammar
@@ -71,11 +70,11 @@ namespace net.akehurst.language.agl.AglGrammar
     }
 """.trimIndent()
 
-    val style = Agl.registry.agl.grammar.styleStr!!
+    val style = Agl.registry.agl.grammar.styleString!!
     val format = """
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar.value, references, style.value, format,"")
+    val example = Example(id, label, sentence, grammar.value, "",references, style.value, format,"")
 
 }

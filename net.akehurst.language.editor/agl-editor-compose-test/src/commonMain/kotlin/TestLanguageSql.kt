@@ -136,6 +136,9 @@ object TestLanguageSql {
                         property ref refers-to ColumnDefinition from tableRef.ref
                     }
                 }
+                in Delete {
+                    property tableRef.ref refers-to TableDefinition
+                }
             }            
         """.trimIndent()
 

@@ -63,7 +63,7 @@ kotlin {
             val res = kotlinExtension.sourceSets.getByName("commonMain").resources
             resources.srcDir(res)
         }
-        val jvm11Main by getting {
+        val jvmMain by getting {
             resources.srcDir("$buildDir/dist/js/developmentExecutable")
         }
     }
@@ -110,8 +110,8 @@ tasks.getByName("jsProductionExecutableCompileSync").dependsOn(workerTask)
 //tasks.getByName("jsBrowserProductionExecutableDistributeResources").dependsOn(workerTask)
 tasks.getByName("jsJar").dependsOn(workerTask)
 
-tasks.getByName("jvm11ProcessResources").dependsOn("jsBrowserProductionWebpack")
-tasks.getByName("jvm11ProcessResources").dependsOn("jsBrowserDistribution")
+tasks.getByName("jvmProcessResources").dependsOn("jsBrowserProductionWebpack")
+tasks.getByName("jvmProcessResources").dependsOn("jsBrowserDistribution")
 
 
 val pythonServerDev = tasks.register<Exec>("pythonServerDev") {

@@ -1,0 +1,22 @@
+namespace net.akehurst.language.example
+styles Datatypes {
+    'primitive', 'collection', 'class' {
+      foreground: purple;
+      font-weight: bold;
+    }
+    ID {
+      foreground: blue;
+      font-style: italic;
+    }
+    '{', '}' {
+      foreground: darkgreen;
+      font-weight: bold;
+    }
+    property {
+      background: lightgray;
+    }
+    typeReference {
+      foreground: green;
+      background: lightblue;
+    }
+}

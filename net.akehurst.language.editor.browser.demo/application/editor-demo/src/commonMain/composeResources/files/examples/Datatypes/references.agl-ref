@@ -1,0 +1,10 @@
+namespace net.akehurst.language.example.Datatypes
+    identify Primitive by id
+    identify Datatype by id
+    identify Collection by id
+
+    references {
+        in TypeReference {
+            property type refers-to Primitive|Datatype|Collection
+        }
+    }

@@ -1,0 +1,4 @@
+$keyword {
+    foreground: blue;
+    font-weight: bold;
+}

@@ -31,12 +31,13 @@ object Examples {
             // do nothing
         } else {
             val grammarStr = dir["grammar.agl"].readStringIfExists() ?: ""
+            val types = "" //TODO?
             val styleStr = dir["style.agl"].readStringIfExists() ?: ""
             val scopes = dir["references.agl"].readStringIfExists() ?: ""
             val format = dir["format.agl"].readStringIfExists() ?: ""
             val sentence = dir["sentence.txt"].readStringIfExists() ?: ""
             val context = dir["context.agl"].readStringIfExists() ?: ""
-            val eg = Example(id, label, sentence, grammarStr, scopes, styleStr, format, context)
+            val eg = Example(id, label, sentence, grammarStr, types,scopes, styleStr, format, context)
             Examples.add(eg)
         }
     }
@@ -54,12 +55,13 @@ object Examples {
             label: String,
             sentence: String,
             grammar: String,
+            types:String,
             references:String,
             style: String,
             format: String,
             context:String
     ) {
-        this.map[id] = Example(id, label, sentence, grammar,  references, style, format, context)
+        this.map[id] = Example(id, label, sentence, grammar, types, references, style, format, context)
     }
 }
 
@@ -68,6 +70,7 @@ class Example(
         val label: String,
         val sentence: String,
         val grammar: String,
+        val types: String,
         val references:String,
         val style: String,
         val format: String,

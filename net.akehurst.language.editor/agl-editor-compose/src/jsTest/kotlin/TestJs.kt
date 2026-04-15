@@ -144,7 +144,7 @@ class test_AglEditorCompose {
             val aglEditor = Agl.attachToComposeEditor(
                 languageService,
                 languageDefinition,
-                { Agl.options { semanticAnalysis { context(contextAsmSimple()) } } },
+                { Agl.options { semanticAnalysis { sentenceContext(contextAsmSimple()) } } },
                 editorId, editorOptions, logFunction, editorState
             )
         }

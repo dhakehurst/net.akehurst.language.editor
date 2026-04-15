@@ -234,8 +234,8 @@ class test_AglWorkerSerialisation {
                 }
             }
         }
-        val context = SentenceContextAny()
-        val input: Asm = asmSimple(typesDomain = tm, crossReferenceDomain = result.asm!!, context = context) {
+        val sentenceContext = SentenceContextAny()
+        val input: Asm = asmSimple(typesDomain = tm, crossReferenceDomain = result.asm!!, sentenceContext = sentenceContext) {
             element("Root") {
                 propertyElementExplicitType("content", "Elem1") {
                     propertyString("propString", "stringValue")
@@ -357,7 +357,7 @@ class test_AglWorkerSerialisation {
             Agl.options {
                 parse { goalRuleName("rule1") }
                 semanticAnalysis {
-                    context(context)
+                    sentenceContext(context)
                 }
             },
         )
@@ -369,7 +369,7 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.options.semanticAnalysis.context, actual.options.semanticAnalysis.context)
+        assertEquals(expected.options.semanticAnalysis.sentenceContext, actual.options.semanticAnalysis.sentenceContext)
     }
 
     @Test
@@ -392,7 +392,7 @@ class test_AglWorkerSerialisation {
             Agl.options {
                 parse { goalRuleName("rule1") }
                 semanticAnalysis {
-                    context(context)
+                    sentenceContext(context)
                 }
             },
         )
@@ -404,7 +404,7 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.options.semanticAnalysis.context as SentenceContextAny, actual.options.semanticAnalysis.context as SentenceContextAny)
+        assertEquals(expected.options.semanticAnalysis.sentenceContext as SentenceContextAny, actual.options.semanticAnalysis.sentenceContext as SentenceContextAny)
     }
 
     @Test
@@ -424,7 +424,7 @@ class test_AglWorkerSerialisation {
             Agl.options {
                 parse { goalRuleName("rule1") }
                 semanticAnalysis {
-                    context(context)
+                    sentenceContext(context)
                 }
             },
         )
@@ -436,7 +436,7 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.options.semanticAnalysis.context as SentenceContextAny, actual.options.semanticAnalysis.context as SentenceContextAny)
+        assertEquals(expected.options.semanticAnalysis.sentenceContext as SentenceContextAny, actual.options.semanticAnalysis.sentenceContext as SentenceContextAny)
         //TODO: check typemodels match ?
     }
 
@@ -464,7 +464,7 @@ class test_AglWorkerSerialisation {
         assertEquals(expected.endPoint, actual.endPoint)
         assertEquals(expected.options.parse.goalRuleName, actual.options.parse.goalRuleName)
         assertEquals(expected.text, actual.text)
-        assertEquals(expected.options.semanticAnalysis.context, actual.options.semanticAnalysis.context)
+        assertEquals(expected.options.semanticAnalysis.sentenceContext, actual.options.semanticAnalysis.sentenceContext)
     }
 
     // --- MessageLineTokens ---
@@ -807,7 +807,7 @@ class test_AglWorkerSerialisation {
             Agl.options {
                 parse { goalRuleName("rule1") }
                 semanticAnalysis {
-                    context(context)
+                    sentenceContext(context)
                 }
             }
         )

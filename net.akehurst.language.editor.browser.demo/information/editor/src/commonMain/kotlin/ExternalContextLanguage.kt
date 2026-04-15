@@ -18,11 +18,12 @@ package net.akehurst.language.editor.information
 
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.processor.ProcessResultDefault
-import net.akehurst.language.agl.simple.ContextAsmSimple
+import net.akehurst.language.agl.simple.NULL_SENTENCE_IDENTIFIER
+import net.akehurst.language.agl.simple.SentenceContextAny
+import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserByMethodRegistrationAbstract
 import net.akehurst.language.api.processor.LanguageProcessor
 import net.akehurst.language.asm.api.AsmPath
-import net.akehurst.language.asm.simple.AsmPathSimple
 import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
@@ -47,18 +48,23 @@ object ExternalContextLanguage {
         }
     """.trimIndent()
 
-    val processor: LanguageProcessor<ContextAsmSimple, Unit> by lazy {
-        val result = Agl.processorFromString<ContextAsmSimple, Unit>(
+    val processor: LanguageProcessor<SentenceContextAny, Unit> by lazy {
+        val result = Agl.processorFromString<SentenceContextAny, Unit>(
             grammarDefinitionStr = grammarStr,
             configuration = Agl.configuration {
-                syntaxAnalyserResolver { ProcessResultDefault(ExternalContextSyntaxAnalyser(), IssueHolder(LanguageProcessorPhase.ALL)) }
+                syntaxAnalyserResolver {
+                    ProcessResultDefault(
+                        ExternalContextSyntaxAnalyser(),
+                        processIssues = IssueHolder(LanguageProcessorPhase.ALL)
+                    )
+                }
             }
         )
         result.processor ?: error("Internal Error: processor not created")
     }
 }
 
-class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract<ContextAsmSimple>() {
+class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract<SentenceContextAny>() {
     override fun registerHandlers() {
         register(this::context)
         register(this::item)
@@ -69,23 +75,23 @@ class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract
     }
 
     // context = item* ;
-    private fun context(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): ContextAsmSimple {
-        val ctx = ContextAsmSimple()
-        val itemList = children as List<(Scope<AsmPath>) -> Unit>
-        itemList.forEach { it.invoke(ctx.rootScope) }
+    private fun context(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): SentenceContextAny {
+        val ctx = contextAsmSimple {  }
+        val itemList = children as List<(Scope<Any>) -> Unit>
+        itemList.forEach { it.invoke(ctx.scopeForSentence[NULL_SENTENCE_IDENTIFIER]!!) }
         return ctx
     }
 
     // item = referableName ':' typeReference scope? ;
-    private fun item(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): (Scope<AsmPath>) -> Unit {
+    private fun item(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): (Scope<Any>) -> Unit {
         val referableName = children[0] as String
         val typeReference = children[2] as QualifiedName
-        val item = AsmPathSimple.EXTERNAL
-        val itemScope = children[3] as ((Scope<AsmPath>) -> Unit)?
-        return { scope: Scope<AsmPath> ->
-            scope.addToScope(referableName, typeReference, item)
+        val item = null
+        val itemScope = children[3] as ((Scope<Any>) -> Unit)?
+        return { scope: Scope<Any> ->
+            scope.addToScope(referableName, typeReference, item, "?", true)
             if (null != itemScope) {
-                val s = scope.createOrGetChildScope(referableName, typeReference, item)
+                val s = scope.createOrGetChildScope(referableName, typeReference)
                 itemScope.invoke(s)
             }
         }

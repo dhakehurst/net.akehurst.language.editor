@@ -1,28 +1,41 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+
 plugins {
-    application
-}
-
-application {
-    mainClass.set( "demo.MainKt")
-}
-
-dependencies {
-    // need this so that the gradle application-plugin can find the module built by the kotlin-plugin
-    "runtimeOnly"( project(path=":application-editor-desktop-demo", configuration="jvm8RuntimeElements") )
-
-    commonMainImplementation(project(":information-editor"))
-    commonMainImplementation(libs.nale.agl.editor.common)
-    commonMainImplementation(libs.nale.agl.language.service)
-
-    //jsMainImplementation(project(":technology-gui-widgets"))
-    //jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-ace:$version_agl_editor")
-    //jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-monaco:$version_agl_editor")
-    //jsMainImplementation("net.akehurst.language.editor:agl-editor-browser-codemirror:$version_agl_editor")
-
+    alias(libs.plugins.compose)
+    alias(libs.plugins.kotlin.compose)
 }
 
 kotlin {
+    jvm {
+        mainRun {
+            mainClass = "demo.MainKt"
+        }
+    }
     js {
         binaries.executable()
     }
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation(project(":information-editor"))
+                implementation(libs.nale.agl.editor.common)
+                implementation(libs.nale.agl.language.service)
+                implementation(libs.nale.agl.editor.compose)
+                implementation(libs.nak.compose.code.editor)
+                implementation(compose.ui)
+                implementation(compose.foundation)
+                implementation(libs.kotlinx.coroutines.core)
+                //implementation(libs.nak.kotlinx.logging.common)
+            }
+        }
+        jvmMain {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+            }
+        }
+    }
 }
+

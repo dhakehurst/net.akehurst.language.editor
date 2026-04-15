@@ -128,9 +128,9 @@ object AglWorkerSerialisation {
                 data("MessageProcessorDelete") {
                     supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("languageId", "LanguageIdentity", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"languageId", "LanguageIdentity", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
@@ -139,11 +139,11 @@ object AglWorkerSerialisation {
                 data("MessageGrammarAmbiguityAnalysisResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"status", "MessageResponseStatus", false)
+                        parameter(setOf(),"message", "String", false)
+                        parameter(setOf(),"issues", "List", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
@@ -156,9 +156,9 @@ object AglWorkerSerialisation {
                 data("MessageGrammarAmbiguityAnalysisRequest") {
                     supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("languageId", "LanguageIdentity", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"languageId", "LanguageIdentity", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
@@ -167,12 +167,12 @@ object AglWorkerSerialisation {
                 data("MessageSyntaxAnalysisResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("asm", "Any", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"status", "MessageResponseStatus", false)
+                        parameter(setOf(),"message", "String", false)
+                        parameter(setOf(),"issues", "List", false)
+                        parameter(setOf(),"asm", "Any", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "asm", "Any", false)
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
@@ -186,12 +186,12 @@ object AglWorkerSerialisation {
                 data("MessageLineTokens") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("startLine", "Integer", false)
-                        parameter("lineTokens", "List", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"status", "MessageResponseStatus", false)
+                        parameter(setOf(),"message", "String", false)
+                        parameter(setOf(),"startLine", "Integer", false)
+                        parameter(setOf(),"lineTokens", "List", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
@@ -208,12 +208,12 @@ object AglWorkerSerialisation {
                 data("MessageParseResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("treeSerialised", "String", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"status", "MessageResponseStatus", false)
+                        parameter(setOf(),"message", "String", false)
+                        parameter(setOf(),"issues", "List", false)
+                        parameter(setOf(),"treeSerialised", "String", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
@@ -227,10 +227,10 @@ object AglWorkerSerialisation {
                 data("MessageSetStyle") {
                     supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("languageId", "LanguageIdentity", false)
-                        parameter("styleStr", "String", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"languageId", "LanguageIdentity", false)
+                        parameter(setOf(),"styleStr", "String", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
@@ -240,10 +240,10 @@ object AglWorkerSerialisation {
                 data("MessageProcessorDeleteResponse") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"status", "MessageResponseStatus", false)
+                        parameter(setOf(),"message", "String", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
@@ -256,12 +256,12 @@ object AglWorkerSerialisation {
                 data("MessageProcessorCreateResponse") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("scannerMatchables", "List", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"status", "MessageResponseStatus", false)
+                        parameter(setOf(),"message", "String", false)
+                        parameter(setOf(),"issues", "List", false)
+                        parameter(setOf(),"scannerMatchables", "List", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
@@ -277,12 +277,12 @@ object AglWorkerSerialisation {
                 data("MessageSemanticAnalysisResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("asm", "Any", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"status", "MessageResponseStatus", false)
+                        parameter(setOf(),"message", "String", false)
+                        parameter(setOf(),"issues", "List", false)
+                        parameter(setOf(),"asm", "Any", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "asm", "Any", false)
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
@@ -296,7 +296,7 @@ object AglWorkerSerialisation {
                 data("AglWorkerMessageResponse") {
                     supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("action", "String", false)
+                        parameter(setOf(),"action", "String", false)
                     }
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
                         typeArgument("LanguageIssue")
@@ -305,10 +305,10 @@ object AglWorkerSerialisation {
                 data("MessageParserInterruptRequest") {
                     supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("languageId", "LanguageIdentity", false)
-                        parameter("reason", "String", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"languageId", "LanguageIdentity", false)
+                        parameter(setOf(),"reason", "String", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
@@ -318,13 +318,13 @@ object AglWorkerSerialisation {
                 data("MessageCodeCompleteResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("offset", "Integer", false)
-                        parameter("completionItems", "List", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"status", "MessageResponseStatus", false)
+                        parameter(setOf(),"message", "String", false)
+                        parameter(setOf(),"issues", "List", false)
+                        parameter(setOf(),"offset", "Integer", false)
+                        parameter(setOf(),"completionItems", "List", false)
                     }
                     propertyOf(setOf(VAR, CMP, STR), "completionItems", "List", false) {
                         typeArgument("CompletionItem")
@@ -341,14 +341,14 @@ object AglWorkerSerialisation {
                 data("MessageProcessorCreate") {
                     supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("languageId", "LanguageIdentity", false)
-                        parameter("grammarStr", "String", false)
-                        parameter("typesModelStr", "String", false)
-                        parameter("transformStr", "String", false)
-                        parameter("crossReferenceStr", "String", false)
-                        parameter("editorOptions", "EditorOptions", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"languageId", "LanguageIdentity", false)
+                        parameter(setOf(),"grammarStr", "String", false)
+                        parameter(setOf(),"typesModelStr", "String", false)
+                        parameter(setOf(),"transformStr", "String", false)
+                        parameter(setOf(),"crossReferenceStr", "String", false)
+                        parameter(setOf(),"editorOptions", "EditorOptions", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "crossReferenceStr", "String", false)
                     propertyOf(setOf(VAL, CMP, STR), "editorOptions", "EditorOptions", false)
@@ -363,12 +363,12 @@ object AglWorkerSerialisation {
                     typeParameters("AsmType", "ContextType")
                     supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("languageId", "LanguageIdentity", false)
-                        parameter("text", "String", false)
-                        parameter("position", "Integer", false)
-                        parameter("options", "ProcessOptions", false)
+                        parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                        parameter(setOf(),"requestId", "RequestIdentity", false)
+                        parameter(setOf(),"languageId", "LanguageIdentity", false)
+                        parameter(setOf(),"text", "String", false)
+                        parameter(setOf(),"position", "Integer", false)
+                        parameter(setOf(),"options", "ProcessOptions", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
@@ -384,11 +384,11 @@ object AglWorkerSerialisation {
                     typeParameters("AsmType", "ContextType")
                     supertype("AglWorkerMessage")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("languageId", "LanguageIdentity", false)
-                        parameter("text", "String", false)
-                        parameter("options", "ProcessOptions", false)
+                       parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                       parameter(setOf(),"requestId", "RequestIdentity", false)
+                       parameter(setOf(),"languageId", "LanguageIdentity", false)
+                       parameter(setOf(),"text", "String", false)
+                       parameter(setOf(),"options", "ProcessOptions", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAL, CMP, STR), "languageId", "LanguageIdentity", false)
@@ -402,12 +402,12 @@ object AglWorkerSerialisation {
                 data("MessageParseResult2") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("treeData", "TreeData", false)
+                       parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                       parameter(setOf(),"requestId", "RequestIdentity", false)
+                       parameter(setOf(),"status", "MessageResponseStatus", false)
+                       parameter(setOf(),"message", "String", false)
+                       parameter(setOf(),"issues", "List", false)
+                       parameter(setOf(),"treeData", "TreeData", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
@@ -421,12 +421,12 @@ object AglWorkerSerialisation {
                 data("MessageSetStyleResponse") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("styleModel", "AglStyleModel", false)
+                       parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                       parameter(setOf(),"requestId", "RequestIdentity", false)
+                       parameter(setOf(),"status", "MessageResponseStatus", false)
+                       parameter(setOf(),"message", "String", false)
+                       parameter(setOf(),"issues", "List", false)
+                       parameter(setOf(),"styleModel", "AglStyleModel", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
@@ -440,7 +440,7 @@ object AglWorkerSerialisation {
                 data("AglWorkerMessage") {
 
                     constructor_ {
-                        parameter("action", "String", false)
+                       parameter(setOf(),"action", "String", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "action", "String", false)
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
@@ -449,12 +449,12 @@ object AglWorkerSerialisation {
                 data("MessageScanResult") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
-                        parameter("endPoint", "EndPointIdentity", false)
-                        parameter("requestId", "RequestIdentity", false)
-                        parameter("status", "MessageResponseStatus", false)
-                        parameter("message", "String", false)
-                        parameter("issues", "List", false)
-                        parameter("lineTokens", "List", false)
+                       parameter(setOf(),"endPoint", "EndPointIdentity", false)
+                       parameter(setOf(),"requestId", "RequestIdentity", false)
+                       parameter(setOf(),"status", "MessageResponseStatus", false)
+                       parameter(setOf(),"message", "String", false)
+                       parameter(setOf(),"issues", "List", false)
+                       parameter(setOf(),"lineTokens", "List", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
                     propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
@@ -480,7 +480,7 @@ object AglWorkerSerialisation {
                 data("TreeDataComplete2") {
                     supertype("TreeData")
                     constructor_ {
-                        parameter("forStateSetNumber", "Integer", false)
+                       parameter(setOf(),"forStateSetNumber", "Integer", false)
                     }
                     propertyOf(setOf(VAR, CMP, STR), "_complete", "Map", false) {
                         typeArgument("SpptDataNode")
@@ -505,12 +505,12 @@ object AglWorkerSerialisation {
                 data("CompleteTreeDataNode") {
                     supertype("SpptDataNode")
                     constructor_ {
-                        parameter("rule", "Rule", false)
-                        parameter("startPosition", "Integer", false)
-                        parameter("nextInputPosition", "Integer", false)
-                        parameter("nextInputNoSkip", "Integer", false)
-                        parameter("option", "OptionNum", false)
-                        parameter("dynamicPriority", "List", false)
+                       parameter(setOf(),"rule", "Rule", false)
+                       parameter(setOf(),"startPosition", "Integer", false)
+                       parameter(setOf(),"nextInputPosition", "Integer", false)
+                       parameter(setOf(),"nextInputNoSkip", "Integer", false)
+                       parameter(setOf(),"option", "OptionNum", false)
+                       parameter(setOf(),"dynamicPriority", "List", false)
                     }
                     propertyOf(setOf(VAR, REF, STR), "dynamicPriority", "List", false) {
                         typeArgument("Integer")
@@ -524,8 +524,8 @@ object AglWorkerSerialisation {
                 data("PreferredNode") {
 
                     constructor_ {
-                        parameter("rule", "Rule", false)
-                        parameter("startPosition", "Integer", false)
+                       parameter(setOf(),"rule", "Rule", false)
+                       parameter(setOf(),"startPosition", "Integer", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "rule", "Rule", false)
                     propertyOf(setOf(VAL, REF, STR), "startPosition", "Integer", false)
@@ -533,7 +533,7 @@ object AglWorkerSerialisation {
             }
             namespace("net.akehurst.language.parser.api", listOf("std")) {
                 value("OptionNum") {
-                    constructor_ { parameter("value","Integer") }
+                    constructor_ {parameter(setOf(),"value","Integer") }
                     propertyOf(setOf(VAL, REF, STR), "value", "Integer", false)
                 }
                 interface_("Rule") {
@@ -547,11 +547,11 @@ object AglWorkerSerialisation {
                 data("RuntimeRule") {
                     supertype("Rule")
                     constructor_ {
-                        parameter("runtimeRuleSetNumber", "Integer", false)
-                        parameter("ruleNumber", "Integer", false)
-                        parameter("name", "String", false)
-                        parameter("isSkip", "Boolean", false)
-                        parameter("isPseudo", "Boolean", false)
+                       parameter(setOf(),"runtimeRuleSetNumber", "Integer", false)
+                       parameter(setOf(),"ruleNumber", "Integer", false)
+                       parameter(setOf(),"name", "String", false)
+                       parameter(setOf(),"isSkip", "Boolean", false)
+                       parameter(setOf(),"isPseudo", "Boolean", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "isPseudo", "Boolean", false)
                     propertyOf(setOf(VAL, REF, STR), "isSkip", "Boolean", false)
@@ -564,11 +564,11 @@ object AglWorkerSerialisation {
                 data("InputLocation") {
 
                     constructor_ {
-                        parameter("position", "Integer", false)
-                        parameter("column", "Integer", false)
-                        parameter("line", "Integer", false)
-                        parameter("length", "Integer", false)
-                        parameter("sentenceIdentity", "Any", false)
+                       parameter(setOf(),"position", "Integer", false)
+                       parameter(setOf(),"column", "Integer", false)
+                       parameter(setOf(),"line", "Integer", false)
+                       parameter(setOf(),"length", "Integer", false)
+                       parameter(setOf(),"sentenceIdentity", "Any", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "column", "Integer", false)
                     propertyOf(setOf(VAR, REF, STR), "length", "Integer", false)
@@ -583,11 +583,11 @@ object AglWorkerSerialisation {
                 data("LanguageIssue") {
 
                     constructor_ {
-                        parameter("kind", "LanguageIssueKind", false)
-                        parameter("phase", "LanguageProcessorPhase", false)
-                        parameter("location", "InputLocation", false)
-                        parameter("message", "String", false)
-                        parameter("data", "Any", false)
+                       parameter(setOf(),"kind", "LanguageIssueKind", false)
+                       parameter(setOf(),"phase", "LanguageProcessorPhase", false)
+                       parameter(setOf(),"location", "InputLocation", false)
+                       parameter(setOf(),"message", "String", false)
+                       parameter(setOf(),"data", "Any", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "data", "Any", false)
                     propertyOf(setOf(VAL, REF, STR), "kind", "LanguageIssueKind", false)
@@ -604,11 +604,11 @@ object AglWorkerSerialisation {
                 data("Matchable") {
 
                     constructor_ {
-                        parameter("ruleSetNumber", "Integer", false)
-                        parameter("ruleNumber", "Integer", false)
-                        parameter("tag", "String", false)
-                        parameter("expression", "String", false)
-                        parameter("kind", "MatchableKind", false)
+                       parameter(setOf(),"ruleSetNumber", "Integer", false)
+                       parameter(setOf(),"ruleNumber", "Integer", false)
+                       parameter(setOf(),"tag", "String", false)
+                       parameter(setOf(),"expression", "String", false)
+                       parameter(setOf(),"kind", "MatchableKind", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "expression", "String", false)
                     propertyOf(setOf(VAL, REF, STR), "kind", "MatchableKind", false)
@@ -631,7 +631,7 @@ object AglWorkerSerialisation {
                 value("LanguageIdentity") {
                     supertype("PublicValueType")
                     constructor_ {
-                        parameter("value", "String", false)
+                       parameter(setOf(),"value", "String", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "value", "String", false)
                 }
@@ -657,7 +657,7 @@ object AglWorkerSerialisation {
                 interface_("SemanticAnalysisOptions") {
                     typeParameters("ContextType")
 
-                    propertyOf(setOf(VAR, CMP, STR), "context", "ContextType", false)
+                    propertyOf(setOf(VAR, CMP, STR), "sentenceContext", "ContextType", false)
                 }
                 interface_("CompletionProviderOptions") {
                     typeParameters("ContextType")
@@ -666,9 +666,9 @@ object AglWorkerSerialisation {
                 data("CompletionItem") {
 
                     constructor_ {
-                        parameter("kind", "CompletionItemKind", false)
-                        parameter("label", "String", false)
-                        parameter("text", "String", false)
+                       parameter(setOf(),"kind", "CompletionItemKind", false)
+                       parameter(setOf(),"label", "String", false)
+                       parameter(setOf(),"text", "String", false)
                     }
                     propertyOf(setOf(VAR, REF, STR), "description", "String", false)
                     propertyOf(setOf(VAR, REF, STR), "id", "Integer", false)
@@ -686,10 +686,10 @@ object AglWorkerSerialisation {
                 data("ScanOptionsDefault") {
                     supertype("ScanOptions")
                     constructor_ {
-                        parameter("enabled", "Boolean", false)
-                        parameter("resultsByLine", "Boolean", false)
-                        parameter("startAtPosition", "Integer", false)
-                        parameter("offsetPosition", "Integer", false)
+                       parameter(setOf(),"enabled", "Boolean", false)
+                       parameter(setOf(),"resultsByLine", "Boolean", false)
+                       parameter(setOf(),"startAtPosition", "Integer", false)
+                       parameter(setOf(),"offsetPosition", "Integer", false)
                     }
                     propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "offsetPosition", "Integer", false)
@@ -702,12 +702,12 @@ object AglWorkerSerialisation {
                 data("ParseOptionsDefault") {
                     supertype("ParseOptions")
                     constructor_ {
-                        parameter("enabled", "Boolean", false)
-                        parameter("goalRuleName", "String", false)
-                        parameter("sentenceIdentity", "SentenceIdentityFunction", false)
-                        parameter("reportErrors", "Boolean", false)
-                        parameter("reportGrammarAmbiguities", "Boolean", false)
-                        parameter("cacheSkip", "Boolean", false)
+                       parameter(setOf(),"enabled", "Boolean", false)
+                       parameter(setOf(),"goalRuleName", "String", false)
+                       parameter(setOf(),"sentenceIdentity", "SentenceIdentityFunction", false)
+                       parameter(setOf(),"reportErrors", "Boolean", false)
+                       parameter(setOf(),"reportGrammarAmbiguities", "Boolean", false)
+                       parameter(setOf(),"cacheSkip", "Boolean", false)
                     }
                     propertyOf(setOf(VAR, REF, STR), "cacheSkip", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
@@ -732,7 +732,7 @@ object AglWorkerSerialisation {
                     typeParameters("AsmType")
                     supertype("SyntaxAnalysisOptions") { ref("AsmType") }
                     constructor_ {
-                        parameter("enabled", "Boolean", false)
+                       parameter(setOf(),"enabled", "Boolean", false)
                     }
                     propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
                 }
@@ -740,19 +740,19 @@ object AglWorkerSerialisation {
                     typeParameters("ContextType")
                     supertype("SemanticAnalysisOptions") { ref("ContextType") }
                     constructor_ {
-                        parameter("enabled", "Boolean", false)
-                        parameter("locationMap", "LocationMap", false)
-                        parameter("context", "ContextType", false)
-                        parameter("buildScope", "Boolean", false)
-                        parameter("replaceIfItemAlreadyExistsInScope", "Boolean", false)
-                        parameter("ifItemAlreadyExistsInScopeIssueKind", "LanguageIssueKind", false)
-                        parameter("checkReferences", "Boolean", false)
-                        parameter("resolveReferences", "Boolean", false)
-                        parameter("other", "Map", false)
+                       parameter(setOf(),"enabled", "Boolean", false)
+                       parameter(setOf(),"locationMap", "LocationMap", false)
+                       parameter(setOf(),"sentenceContext", "ContextType", false)
+                       parameter(setOf(),"buildScope", "Boolean", false)
+                       parameter(setOf(),"replaceIfItemAlreadyExistsInScope", "Boolean", false)
+                       parameter(setOf(),"ifItemAlreadyExistsInScopeIssueKind", "LanguageIssueKind", false)
+                       parameter(setOf(),"checkReferences", "Boolean", false)
+                       parameter(setOf(),"resolveReferences", "Boolean", false)
+                       parameter(setOf(),"other", "Map", false)
                     }
                     propertyOf(setOf(VAR, REF, STR), "buildScope", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "checkReferences", "Boolean", false)
-                    propertyOf(setOf(VAR, CMP, STR), "context", "ContextType", false)
+                    propertyOf(setOf(VAR, CMP, STR), "sentenceContext", "ContextType", false)
                     propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "ifItemAlreadyExistsInScopeIssueKind", "LanguageIssueKind", false)
                     propertyOf(setOf(VAR, CMP, STR), "locationMap", "LocationMap", false)
@@ -767,14 +767,14 @@ object AglWorkerSerialisation {
                     typeParameters("ContextType")
                     supertype("CompletionProviderOptions") { ref("ContextType") }
                     constructor_ {
-                        parameter("context", "ContextType", false)
-                        parameter("depth", "Integer", false)
-                        parameter("path", "List", false)
-                        parameter("showOptionalItems", "Boolean", false)
-                        parameter("provideValuesForPatternTerminals", "Boolean", false)
-                        parameter("other", "Map", false)
+                       parameter(setOf(),"sentenceContext", "ContextType", false)
+                       parameter(setOf(),"depth", "Integer", false)
+                       parameter(setOf(),"path", "List", false)
+                       parameter(setOf(),"showOptionalItems", "Boolean", false)
+                       parameter(setOf(),"provideValuesForPatternTerminals", "Boolean", false)
+                       parameter(setOf(),"other", "Map", false)
                     }
-                    propertyOf(setOf(VAR, REF, STR), "context", "ContextType", false)
+                    propertyOf(setOf(VAR, REF, STR), "sentenceContext", "ContextType", false)
                     propertyOf(setOf(VAR, REF, STR), "depth", "Integer", false)
                     propertyOf(setOf(VAR, REF, STR), "other", "Map", false) {
                         typeArgument("String")
@@ -790,11 +790,11 @@ object AglWorkerSerialisation {
                     typeParameters("AsmType", "ContextType")
                     supertype("ProcessOptions") { ref("AsmType"); ref("ContextType") }
                     constructor_ {
-                        parameter("scan", "ScanOptions", false)
-                        parameter("parse", "ParseOptions", false)
-                        parameter("syntaxAnalysis", "SyntaxAnalysisOptions", false)
-                        parameter("semanticAnalysis", "SemanticAnalysisOptions", false)
-                        parameter("completionProvider", "CompletionProviderOptions", false)
+                       parameter(setOf(),"scan", "ScanOptions", false)
+                       parameter(setOf(),"parse", "ParseOptions", false)
+                       parameter(setOf(),"syntaxAnalysis", "SyntaxAnalysisOptions", false)
+                       parameter(setOf(),"semanticAnalysis", "SemanticAnalysisOptions", false)
+                       parameter(setOf(),"completionProvider", "CompletionProviderOptions", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "completionProvider", "CompletionProviderOptions", false) {
                         typeArgument("ContextType")
@@ -821,8 +821,8 @@ object AglWorkerSerialisation {
                     typeParameters("ItemType", "ItemInScopeType")
                     supertype("SentenceContext")
                     constructor_ {
-                        parameter("createScopedItem", "CreateScopedItem", false)
-                        parameter("resolveScopedItem", "ResolveScopedItem", false)
+                       parameter(setOf(),"createScopedItem", "CreateScopedItem", false)
+                       parameter(setOf(),"resolveScopedItem", "ResolveScopedItem", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "createScopedItem", "CreateScopedItem", false) {
                         typeArgument("ItemType")
@@ -850,14 +850,14 @@ object AglWorkerSerialisation {
                 data("ContextFromtypesDomainReference") {
                     supertype("SentenceContext")
                     constructor_ {
-                        parameter("languageDefinitionId", "LanguageIdentity", false)
+                       parameter(setOf(),"languageDefinitionId", "LanguageIdentity", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "languageDefinitionId", "LanguageIdentity", false)
                 }
                 data("ContextFromtypesDomain") {
                     supertype("SentenceContext")
                     constructor_ {
-                        parameter("typesDomain", "typesDomain", false)
+                       parameter(setOf(),"typesDomain", "typesDomain", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "typesDomain", "typesDomain", false)
                 }
@@ -873,14 +873,14 @@ object AglWorkerSerialisation {
                 value("RequestIdentity") {
                     supertype("PublicValueType")
                     constructor_ {
-                        parameter("value", "String", false)
+                       parameter(setOf(),"value", "String", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "value", "String", false)
                 }
                 value("EditorStyleIdentity") {
                     supertype("PublicValueType")
                     constructor_ {
-                        parameter("value", "String", false)
+                       parameter(setOf(),"value", "String", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "value", "String", false)
                 }
@@ -893,8 +893,8 @@ object AglWorkerSerialisation {
                 data("EndPointIdentity") {
 
                     constructor_ {
-                        parameter("editorId", "String", false)
-                        parameter("sessionId", "String", false)
+                       parameter(setOf(),"editorId", "String", false)
+                       parameter(setOf(),"sessionId", "String", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "editorId", "String", false)
                     propertyOf(setOf(VAL, REF, STR), "sessionId", "String", false)
@@ -904,9 +904,9 @@ object AglWorkerSerialisation {
                 data("AglTokenDefault") {
                     supertype("AglToken")
                     constructor_ {
-                        parameter("styles", "List", false)
-                        parameter("position", "Integer", false)
-                        parameter("length", "Integer", false)
+                       parameter(setOf(),"styles", "List", false)
+                       parameter(setOf(),"position", "Integer", false)
+                       parameter(setOf(),"length", "Integer", false)
                     }
                     propertyOf(setOf(VAL, REF, STR), "length", "Integer", false)
                     propertyOf(setOf(VAL, REF, STR), "position", "Integer", false)
@@ -917,17 +917,17 @@ object AglWorkerSerialisation {
                 data("EditorOptionsDefault") {
                     supertype("EditorOptions")
                     constructor_ {
-                        parameter("scan", "Boolean", false)
-                        parameter("scanLineTokens", "Boolean", false)
-                        parameter("parse", "Boolean", false)
-                        parameter("parseLineTokens", "Boolean", false)
-                        parameter("lineTokensChunkSize", "Integer", false)
-                        parameter("parseTree", "Boolean", false)
-                        parameter("syntaxAnalysis", "Boolean", false)
-                        parameter("syntaxAnalysisAsm", "Boolean", false)
-                        parameter("semanticAnalysis", "Boolean", false)
-                        parameter("semanticAnalysisAsm", "Boolean", false)
-                        parameter("styleCompletionItem", "LambdaType", false)
+                       parameter(setOf(),"scan", "Boolean", false)
+                       parameter(setOf(),"scanLineTokens", "Boolean", false)
+                       parameter(setOf(),"parse", "Boolean", false)
+                       parameter(setOf(),"parseLineTokens", "Boolean", false)
+                       parameter(setOf(),"lineTokensChunkSize", "Integer", false)
+                       parameter(setOf(),"parseTree", "Boolean", false)
+                       parameter(setOf(),"syntaxAnalysis", "Boolean", false)
+                       parameter(setOf(),"syntaxAnalysisAsm", "Boolean", false)
+                       parameter(setOf(),"semanticAnalysis", "Boolean", false)
+                       parameter(setOf(),"semanticAnalysisAsm", "Boolean", false)
+                       parameter(setOf(),"styleCompletionItem", "LambdaType", false)
                     }
                     propertyOf(setOf(VAR, REF, STR), "lineTokensChunkSize", "Integer", false)
                     propertyOf(setOf(VAR, REF, STR), "parse", "Boolean", false)
@@ -1781,7 +1781,7 @@ object AglWorkerSerialisation {
                         typeArgument("Any")
                         typeArgument("InputLocation")
                     }
-                    propertyOf(setOf(CON, CMP), "context", "ContextType")
+                    propertyOf(setOf(CON, CMP), "sentenceContext", "ContextType")
                     propertyOf(setOf(CON, CMP), "checkReferences", "Boolean")
                     propertyOf(setOf(CON, CMP), "resolveReferences", "Boolean")
                     propertyOf(setOf(CON, CMP), "other", "Map") {
@@ -1790,7 +1790,7 @@ object AglWorkerSerialisation {
                     }
                 }
                 data("CompletionProviderOptionsDefault") {
-                    propertyOf(setOf(CON, CMP), "context", "ContextType")
+                    propertyOf(setOf(CON, CMP), "sentenceContext", "ContextType")
                     propertyOf(setOf(CON, CMP), "other", "Map") {
                         typeArgument("String")
                         typeArgument("Any")

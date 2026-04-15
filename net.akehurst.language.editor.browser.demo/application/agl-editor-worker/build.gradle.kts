@@ -6,12 +6,8 @@ dependencies {
 }
 
 kotlin {
-    js("js",IR) {
+    js {
         binaries.executable()
-        generateTypeScriptDefinitions()
-        compilerOptions {
-            target.set("es2015")
-        }
         browser {
             webpackTask {
                 output.libraryTarget = KotlinWebpackOutput.Target.SELF

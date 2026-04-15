@@ -30,7 +30,7 @@ import net.akehurst.language.style.api.AglStyleDomain
 
 class SentenceFromEditor<AsmType : Any, ContextType : Any>(
     val editor: AglEditor<AsmType, ContextType>,
-    identity:Any?
+    identity: Any?
 ) : SentenceAbstract(identity) {
     override val text: String get() = editor.text
     override var eolPositions: List<Int> = emptyList()//ScannerOnDemand.eolPositions(text)
@@ -124,7 +124,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     protected open fun onEditorTextChangeInternal(newText: String) {
         //if (doUpdate) {
-       //     this.sentence.textChanged(newText)
+        //     this.sentence.textChanged(newText)
         //}
         this.notifyTextChange()
     }
@@ -232,8 +232,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     override fun refreshProcessor() {
         logger.logTrace { "refreshProcessor" }
         clearIssues()
-        val grammarStr = this.agl.languageDefinition.grammarString
-        if (grammarStr?.value.isNullOrBlank()) {
+        if (null == this.languageDefinition.targetGrammar) {
             //do nothing
         } else {
             this.languageServiceRequest.processorCreateRequest(
@@ -260,7 +259,7 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override fun processSentence(text: String) {
         logger.logTrace { "processSentence" }
-        if (doUpdate) {
+        if (doUpdate && null != this.languageDefinition.targetGrammar) {
             clearIssues()
             this.languageServiceRequest.interruptRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, "process Sentence")
             this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, text, this.agl.options.invoke())
@@ -340,20 +339,23 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         lineTokens: List<List<AglToken>>
     ) {
         logger.logTrace { "sentenceLineTokensResponse $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens" }
-        when(status) {
+        when (status) {
             MessageResponseStatus.RECEIVED -> {
-                this.notifyLineTokens(LineTokensEvent(EventStatus.START, message,  emptyList()))
+                this.notifyLineTokens(LineTokensEvent(EventStatus.START, message, emptyList()))
             }
+
             MessageResponseStatus.IGNORED -> {
-                this.notifyLineTokens(LineTokensEvent(EventStatus.IGNORED, message,  emptyList()))
+                this.notifyLineTokens(LineTokensEvent(EventStatus.IGNORED, message, emptyList()))
             }
+
             MessageResponseStatus.FAILURE -> {
-                this.notifyLineTokens(LineTokensEvent(EventStatus.FAILURE, message,  emptyList()))
+                this.notifyLineTokens(LineTokensEvent(EventStatus.FAILURE, message, emptyList()))
             }
+
             MessageResponseStatus.SUCCESS -> {
                 this.workerTokenizer.receiveTokens(startLine, lineTokens)
                 this.resetTokenization(startLine)
-                this.notifyLineTokens(LineTokensEvent(EventStatus.SUCCESS, message,  lineTokens))
+                this.notifyLineTokens(LineTokensEvent(EventStatus.SUCCESS, message, lineTokens))
             }
         }
     }

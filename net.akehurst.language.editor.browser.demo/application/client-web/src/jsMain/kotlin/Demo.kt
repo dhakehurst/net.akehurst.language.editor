@@ -1,45 +1,53 @@
 package net.akehurst.language.editor.application.client.web
 
 import kotlinx.browser.document
+import net.akehurst.kotlinx.logging.api.LogLevel
+import net.akehurst.kotlinx.logging.api.Logger
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.CrossReferenceString
-import net.akehurst.language.agl.GrammarString
-import net.akehurst.language.agl.StyleString
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypeModelReference
-import net.akehurst.language.agl.simple.ContextAsmSimple
+import net.akehurst.language.agl.simple.SentenceContextAny
+import net.akehurst.language.api.processor.CrossReferenceString
+import net.akehurst.language.api.processor.GrammarString
+import net.akehurst.language.api.processor.StyleString
+
 import net.akehurst.language.asm.api.*
+import net.akehurst.language.asmTransform.api.AsmTransformDomain
+import net.akehurst.language.asmTransform.asm.AsmTransformDomainDefault
 import net.akehurst.language.editor.api.AglEditor
 import net.akehurst.language.editor.api.EventStatus
-import net.akehurst.language.editor.api.LogLevel
-import net.akehurst.language.editor.common.ConsoleLogger
 import net.akehurst.language.editor.information.Example
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.ExternalContextLanguage
 import net.akehurst.language.editor.information.examples.BasicTutorial
 import net.akehurst.language.editor.technology.gui.widgets.TreeView
 import net.akehurst.language.editor.technology.gui.widgets.TreeViewFunctions
-import net.akehurst.language.grammar.api.GrammarModel
-import net.akehurst.language.grammar.processor.ContextFromGrammar
-import net.akehurst.language.grammarTypemodel.api.GrammarTypeNamespace
-import net.akehurst.language.reference.api.CrossReferenceModel
-import net.akehurst.language.style.api.AglStyleModel
-import net.akehurst.language.transform.asm.TransformModelDefault
-import net.akehurst.language.typemodel.api.*
+import net.akehurst.language.grammar.api.GrammarDomain
+import net.akehurst.language.grammar.processor.contextFromGrammar
+import net.akehurst.language.grammarTypemodel.api.GrammarTypesNamespace
+import net.akehurst.language.reference.api.CrossReferenceDomain
+import net.akehurst.language.style.api.AglStyleDomain
+import net.akehurst.language.types.api.DataType
+import net.akehurst.language.types.api.PropertyDeclaration
+import net.akehurst.language.types.api.StructuredType
+import net.akehurst.language.types.api.TupleType
+import net.akehurst.language.types.api.TypeDefinition
+import net.akehurst.language.types.api.TypeInstance
+import net.akehurst.language.types.api.TypesDomain
+import net.akehurst.language.types.api.TypesNamespace
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.HTMLSelectElement
 
 class Demo(
     val editors: Map<String, AglEditor<*, *>>,
-    val logger: ConsoleLogger
+    val logger: Logger
 ) {
     var doUpdate = true
     val trees = TreeView.initialise(document)
 
     val exampleSelect = document.querySelector("select#example") as HTMLElement
-    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Asm, ContextAsmSimple>
+    val sentenceEditor = editors[Constants.sentenceEditorId]!! as AglEditor<Asm, SentenceContextAny>
     val grammarEditor = editors[Constants.grammarEditorId]!!
-    val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleModel, ContextFromGrammar>
-    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceModel, ContextFromTypeModelReference>
+    val styleEditor = editors[Constants.styleEditorId]!! as AglEditor<AglStyleDomain, SentenceContextAny>
+    val referencesEditor = editors[Constants.referencesEditorId]!! as AglEditor<CrossReferenceDomain, SentenceContextAny>
     //val formatEditor = editors["language-format"]!!
 
     fun configure() {
@@ -56,26 +64,26 @@ class Demo(
         referencesEditor.languageIdentity = Constants.referencesLanguageId
         //Agl.registry.unregister(Constants.sentenceLanguageId)
         sentenceEditor.languageIdentity = Constants.sentenceLanguageId
-        grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleStr
-        styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleStr
-        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.crossReference.styleStr
+        grammarEditor.editorSpecificStyleStr = Agl.registry.agl.grammar.styleString
+        styleEditor.editorSpecificStyleStr = Agl.registry.agl.style.styleString
+        referencesEditor.editorSpecificStyleStr = Agl.registry.agl.crossReference.styleString
 
         grammarEditor.onSemanticAnalysis { event ->
             when (event.status) {
                 EventStatus.START -> Unit
-
+                EventStatus.IGNORED -> Unit
                 EventStatus.FAILURE -> {
-                    styleEditor.processOptions.semanticAnalysis.context?.clear()
+                    styleEditor.processOptions().semanticAnalysis.context?.clear()
                     //referencesEditor.sentenceContext?.clear()
-                    logger.logError(grammarEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.grammarStr = GrammarString("")
+                    logger.logError{grammarEditor.endPointIdentity.editorId + ": " + event.message}
+                    sentenceEditor.languageDefinition.update(grammarString = GrammarString(""))
                 }
 
                 EventStatus.SUCCESS -> {
-                    logger.logDebug("Send grammarStr Semantic Analysis success")
-                    val grammars = event.asm as GrammarModel? ?: error("should always be a List<Grammar> if success")
-                    styleEditor.processOptions.semanticAnalysis.context = ContextFromGrammar.createContextFrom(grammars)
-                    referencesEditor.processOptions.semanticAnalysis.context = ContextFromTypeModelReference(sentenceEditor.languageIdentity)
+                    logger.logDebug{"Send grammarStr Semantic Analysis success"}
+                    val grammars = event.asm as GrammarDomain? ?: error("should always be a List<Grammar> if success")
+                    styleEditor.processOptions().semanticAnalysis.context = contextFromGrammar(grammars)
+                    referencesEditor.processOptions().semanticAnalysis.context = ContextFromTypeModelReference(sentenceEditor.languageIdentity)
                     try {
                         if (doUpdate) {
                             logger.logDebug("Send set sentenceEditor grammarStr")
@@ -92,17 +100,18 @@ class Demo(
         styleEditor.onSemanticAnalysis { event ->
             when (event.status) {
                 EventStatus.START -> Unit
+                EventStatus.IGNORED -> Unit
                 EventStatus.FAILURE -> {
-                    logger.logError(styleEditor.endPointIdentity.editorId + ": " + event.message)
-                    sentenceEditor.languageDefinition.styleStr = StyleString("")
+                    logger.logError{styleEditor.endPointIdentity.editorId + ": " + event.message}
+                    sentenceEditor.languageDefinition.update(styleString = StyleString(""))
                 }
 
                 EventStatus.SUCCESS -> {
                     try {
                         logger.logDebug("Style parse success")
                         if (doUpdate) {
-                            logger.logDebug("resetting sentence style")
-                            sentenceEditor.languageDefinition.styleStr = StyleString(styleEditor.text)
+                            logger.logDebug{"resetting sentence style"}
+                            sentenceEditor.languageDefinition.update(styleString = StyleString(styleEditor.text))
                         }
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, styleEditor.endPointIdentity.editorId + ": " + t.message, t)
@@ -114,6 +123,7 @@ class Demo(
         referencesEditor.onSemanticAnalysis { event ->
             when (event.status) {
                 EventStatus.START -> Unit
+                EventStatus.IGNORED -> Unit
                 EventStatus.FAILURE -> {
                     logger.logError(referencesEditor.endPointIdentity.editorId + ": " + event.message)
                     sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString("")
@@ -125,7 +135,7 @@ class Demo(
                         logger.logDebug("CrossReferences SyntaxAnalysis success")
                         if (doUpdate) {
                             logger.logDebug("Setting cross-reference model for sentenceEditor")
-                            sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString( referencesEditor.text)
+                            sentenceEditor.languageDefinition.crossReferenceModelStr = CrossReferenceString(referencesEditor.text)
                         }
                     } catch (t: Throwable) {
                         logger.log(LogLevel.Error, referencesEditor.endPointIdentity.editorId + ": " + t.message, t)
@@ -147,11 +157,11 @@ class Demo(
                 when (it) {
                     is String -> it
                     is List<*> -> "List"
-                    is TypeModel -> "model ${it.name}"
-                    is GrammarTypeNamespace -> "namespace ${it.qualifiedName}"
-                    is TypeNamespace -> "namespace ${it.qualifiedName}"
+                    is TypesDomain -> "model ${it.name}"
+                    is GrammarTypesNamespace -> "namespace ${it.qualifiedName}"
+                    is TypesNamespace -> "namespace ${it.qualifiedName}"
                     is Pair<String, TypeInstance> -> {
-                        val type = it.second.declaration
+                        val type = it.second.resolvedDeclaration
                         val ruleName = it.first
                         when (type) {
                             is DataType -> when {
@@ -163,7 +173,7 @@ class Demo(
                         }
                     }
 
-                    is Map.Entry<String, TypeDeclaration> -> {
+                    is Map.Entry<String, TypeDefinition> -> {
                         val type = it.value
                         val typeName = it.key
                         when (type) {
@@ -184,11 +194,11 @@ class Demo(
                 when (it) {
                     is String -> false
                     is List<*> -> true
-                    is TypeModel -> it.namespace.isNotEmpty()
-                    is GrammarTypeNamespace -> it.allTypesByRuleName.isNotEmpty()
-                    is TypeNamespace -> it.ownedTypesByName.isNotEmpty()
+                    is TypesDomain -> it.namespace.isNotEmpty()
+                    is GrammarTypesNamespace -> it.allTypesByRuleName.isNotEmpty()
+                    is TypesNamespace -> it.ownedTypesByName.isNotEmpty()
                     is Pair<String, TypeInstance> -> {
-                        val type = it.second.declaration
+                        val type = it.second.resolvedDeclaration
                         when (type) {
                             is TupleType -> type.property.isNotEmpty()
                             is DataType -> type.property.isNotEmpty()
@@ -196,7 +206,7 @@ class Demo(
                         }
                     }
 
-                    is Map.Entry<String, TypeDeclaration> -> when (it.value) {
+                    is Map.Entry<String, TypeDefinition> -> when (it.value) {
                         is StructuredType -> (it.value as StructuredType).property.isNotEmpty()
                         else -> false
                     }
@@ -209,18 +219,18 @@ class Demo(
                 when (it) {
                     is String -> emptyArray<Any>()
                     is List<*> -> it.toArray()
-                    is TypeModel -> it.namespace.toTypedArray()
-                    is GrammarTypeNamespace -> it.allTypesByRuleName.toTypedArray()
-                    is TypeNamespace -> it.ownedTypesByName.entries.toTypedArray()
+                    is TypesDomain -> it.namespace.toTypedArray()
+                    is GrammarTypesNamespace -> it.allTypesByRuleName.toTypedArray()
+                    is TypesNamespace -> it.ownedTypesByName.entries.toTypedArray()
                     is Pair<String, TypeInstance> -> {
-                        val type = it.second.declaration
+                        val type = it.second.resolvedDeclaration
                         when (type) {
                             is StructuredType -> type.property.toTypedArray()
                             else -> emptyArray<Any>()
                         }
                     }
 
-                    is Map.Entry<String, TypeDeclaration> -> when (it.value) {
+                    is Map.Entry<String, TypeDefinition> -> when (it.value) {
                         is StructuredType -> (it.value as StructuredType).property.toTypedArray()
                         else -> emptyArray<Any>()
                     }
@@ -233,11 +243,12 @@ class Demo(
         grammarEditor.onSemanticAnalysis { event ->
             when (event.status) {
                 EventStatus.START -> trees["typemodel"]!!.loading = true
+                EventStatus.IGNORED -> trees["typemodel"]!!.loading = false
                 EventStatus.FAILURE -> trees["typemodel"]!!.loading = false
                 EventStatus.SUCCESS -> {
-                    val gm = event.asm as GrammarModel
-                    val trm = TransformModelDefault.fromGrammarModel(gm).let { it.asm!! }
-                    val tm = trm.typeModel!!
+                    val gm = event.asm as GrammarDomain
+                    val trm = AsmTransformDomainDefault.fromGrammarDomain(gm).let { it.asm!! }
+                    val tm = trm.typesDomain!!
                     trees["typemodel"]!!.loading = false
                     trees["typemodel"]!!.setRoots(listOf(tm))
                 }
@@ -260,6 +271,7 @@ class Demo(
             when (event.status) {
                 EventStatus.START -> loading(true, true)
                 EventStatus.FAILURE -> loading(false, false)
+                EventStatus.IGNORED -> loading(false, false)
                 EventStatus.SUCCESS -> {
                     loading(false, null)
                     trees["parse"]!!.setRoots(event.tree?.let { listOf(it) } ?: emptyList())
@@ -288,7 +300,7 @@ class Demo(
                             is AsmStructure -> "${it.name} : ${v.typeName}"
                             is AsmReference -> when (v.value) {
                                 null -> "${it.name} = &'${v.reference}' - <unresolved reference>"
-                                else -> "${it.name} = &'${v.reference}' : ${v.value?.typeName} - ${v.value?.path?.value}"
+                                else -> "${it.name} = &'${v.reference}' : ${v.value?.typeName} - ${v.value?.semanticQualifiedPath}"
                             }
                             //it.name == "'${v}'" -> "${it.name}"
                             else -> "${it.name} = ${v}"
@@ -344,8 +356,12 @@ class Demo(
                     //trees["ast"]!!.loading = true
                 }
 
+                EventStatus.IGNORED -> {
+                    logger.logError() { event.message }
+                }
+
                 EventStatus.FAILURE -> {//Failure
-                    logger.logError(event.message)
+                    logger.logError() { event.message }
                     loading(null, false)
                     when (event.asm) {
                         is Asm -> trees["ast"]!!.setRoots((event.asm as Asm).root)
@@ -369,8 +385,12 @@ class Demo(
                     //trees["ast"]!!.loading = true
                 }
 
+                EventStatus.IGNORED -> {
+                    logger.logError() { event.message }
+                }
+
                 EventStatus.FAILURE -> {//Failure
-                    logger.logError(event.message)
+                    logger.logError() { event.message }
                     loading(null, false)
                     //when(event.asm) {
                     //    is AsmSimple -> trees["ast"]!!.setRoots((event.asm as AsmSimple).rootElements)
@@ -413,13 +433,19 @@ class Demo(
         referencesEditor.text = eg.references
         //formatEditor.text = eg.format
         sentenceEditor.doUpdate = false
-        sentenceEditor.processOptions.semanticAnalysis.context = ExternalContextLanguage.processor.process(eg.context).asm
-        logger.log(LogLevel.Trace, "Update sentenceEditor with grammar, refs, style", null)
-        sentenceEditor.languageDefinition.update(GrammarString(grammarEditor.text), CrossReferenceString(referencesEditor.text), StyleString(styleEditor.text))
+        sentenceEditor.processOptions().semanticAnalysis.context = ExternalContextLanguage.processor.process(eg.context).asm
+        logger.log(LogLevel.Trace){ "Update sentenceEditor with grammar, refs, style"}
+        sentenceEditor.languageDefinition.update(
+            GrammarString(grammarEditor.text),
+            null,
+            null,
+            CrossReferenceString(referencesEditor.text),
+            StyleString(styleEditor.text)
+        )
         sentenceEditor.text = eg.sentence
         sentenceEditor.doUpdate = true
         this.doUpdate = true
-        logger.log(LogLevel.Information, "Finished setting example", null)
+        logger.log(LogLevel.Information, null) { "Finished setting example" }
     }
 
     fun finalize() {

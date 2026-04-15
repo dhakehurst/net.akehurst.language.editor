@@ -35,9 +35,15 @@ import monaco.languages.ILanguageExtensionPoint
 import monaco.languages.TokensProvider
 import net.akehurst.kotlin.compose.editor.ComposeCodeEditorJs
 import net.akehurst.kotlin.html5.elCreate
+import net.akehurst.kotlinx.logging.api.LogFunction
+import net.akehurst.kotlinx.logging.api.LogLevel
+import net.akehurst.kotlinx.logging.api.Logger
+import net.akehurst.kotlinx.logging.api.LoggingManager
+import net.akehurst.kotlinx.logging.common.LoggerConsole
 import net.akehurst.language.agl.Agl
-import net.akehurst.language.agl.GrammarString
+import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.browser.ace.IAce
@@ -48,11 +54,10 @@ import net.akehurst.language.editor.browser.codemirror.attachToCodeMirror
 import net.akehurst.language.editor.browser.demo.BuildConfig
 import net.akehurst.language.editor.browser.monaco.Monaco
 import net.akehurst.language.editor.browser.monaco.attachToMonaco
-import net.akehurst.language.editor.common.ConsoleLogger
 import net.akehurst.language.editor.common.EditorOptionsDefault
-import net.akehurst.language.editor.common.compose.attachToComposeEditor
 import net.akehurst.language.editor.common.objectJS
 import net.akehurst.language.editor.common.objectJSTyped
+import net.akehurst.language.editor.compose.attachToComposeEditor
 import net.akehurst.language.editor.information.Examples
 import net.akehurst.language.editor.information.examples.AglGrammar
 import net.akehurst.language.editor.information.examples.AglStyle
@@ -102,27 +107,26 @@ interface DemoInterface {
 
 suspend fun main() {
     try {
-        val logger = ConsoleLogger(Constants.initialLogLevel)
+        val logger = LoggerConsole("Demo")
 
         //define this before editors are created
         // need to register this so that we can set the configuration and get the default completion-provider
         Agl.registry.register(
             identity = Constants.sentenceLanguageId,
-            grammarStr = GrammarString(""),
             buildForDefaultGoal = false,
             aglOptions = Agl.options {
                 semanticAnalysis {
-                    context(ContextFromGrammarRegistry(Agl.registry))
+                    context(contextFromGrammarRegistry(Agl.registry))
                     option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             },
-            configuration = Agl.configurationDefault()
+            configuration = Agl.configurationSimple()
         )
 
         val demoIf = object : DemoInterface {
             override val logLevel: LogLevel get() = logger.outputLevel
             override fun changeLoggingLevel(level: LogLevel) {
-                logger.outputLevel = level
+                LoggingManager.rootLoggingLevel = level
             }
 
             override fun changeEditor() {
@@ -421,7 +425,7 @@ fun initialiseExamples() {
     }
 }
 
-suspend fun createDemo(editorChoice: EditorKind, logger: ConsoleLogger) {
+suspend fun createDemo(editorChoice: EditorKind, logger: Logger) {
     if (null != demo) {
         demo!!.finalize()
     }
@@ -429,8 +433,8 @@ suspend fun createDemo(editorChoice: EditorKind, logger: ConsoleLogger) {
     val w = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
     w.port.close()
     val worker = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
-    val logFunction: LogFunction = { lvl, prefix, msg, t -> logger.log(lvl, "$prefix - $msg", t) }
-    val languageService = AglLanguageServiceByWorker(worker, AglEditorLogger("AglLanguageServiceByWorker", logFunction))
+    val logFunction: LogFunction = { lvl, prefix,  t, msg -> logger.log(lvl,t ){"$prefix - $msg"} }
+    val languageService = AglLanguageServiceByWorker(worker, logFunction)
 
     val editorEls = document.querySelectorAll("agl-editor")
     val editors = editorEls.asList().associate { node ->
@@ -664,7 +668,6 @@ fun createCompose(editorElement: Element, logFunction: LogFunction, languageServ
 
     return Agl.attachToComposeEditor(
         languageService = languageService,
-        languageId = languageId,
         editorId = editorId,
         editorOptions = EditorOptionsDefault(),
         logFunction = logFunction,

@@ -24,6 +24,7 @@ import net.akehurst.language.sppt.api.PathFunction
 import net.akehurst.language.sppt.api.SharedPackedParseTree
 import net.akehurst.language.sppt.api.SpptDataNodeInfo
 import net.akehurst.language.sppt.api.SpptWalker
+import net.akehurst.language.sppt.api.TreeData
 import org.w3c.dom.MessageEvent
 
 abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorkerAbstract() {
@@ -75,7 +76,9 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                 val stack = mutableStackOf<dynamic>()
                 stack.push(root)
                 val walker = object : SpptWalker {
-                    override fun skip(startPosition: Int, nextInputPosition: Int) {
+                    override fun skip(skipData: TreeData) {
+                        val startPosition= skipData.root?.startPosition ?: error("Should not happen")
+                        val nextInputPosition= skipData.root?.nextInputPosition ?: error("Should not happen")
                         val parent = stack.peek()
                         val matchedText = sentence.substring(startPosition, nextInputPosition)
                         val node = objectJS {
@@ -166,7 +169,9 @@ abstract class AglWorkerJsAbstract<AsmType : Any, ContextType : Any> : AglWorker
                 //TODO, try serialising just the TreeData, because main knows the sentence already
                 val sb = StringBuilder()
                 val walker = object : SpptWalker {
-                    override fun skip(startPosition: Int, nextInputPosition: Int) {
+                    override fun skip(skipData: TreeData) {
+                        val startPosition= skipData.root?.startPosition ?: error("Should not happen")
+                        val nextInputPosition= skipData.root?.nextInputPosition ?: error("Should not happen")
                         val matchedText = sentence.substring(startPosition, nextInputPosition)
                         sb.append("<SKIP>:'${escapeCtrlCodes(matchedText)}'")
                     }

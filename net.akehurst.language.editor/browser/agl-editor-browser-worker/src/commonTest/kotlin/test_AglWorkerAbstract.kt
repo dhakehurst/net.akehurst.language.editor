@@ -198,7 +198,7 @@ class test_AglWorkerAbstract {
         sut.receive(
             port, MessageProcessRequest(
                 EndPointIdentity(editorId, sessionId), requestId, languageId,
-                "", Agl.options { semanticAnalysis { context(contextAsmSimple()) } }
+                "", Agl.options { semanticAnalysis { sentenceContext(contextAsmSimple()) } }
             )
         )
 
@@ -346,7 +346,7 @@ class test_AglWorkerAbstract {
         sut.receive(
             port, MessageProcessRequest(
                 EndPointIdentity(editorId, sessionId), requestId, Agl.registry.agl.grammarLanguageIdentity,
-                userGrammar, Agl.options { semanticAnalysis { context(contextFromGrammarRegistry(Agl.registry)) } }
+                userGrammar, Agl.options { semanticAnalysis { sentenceContext(contextFromGrammarRegistry(Agl.registry)) } }
             )
         )
         // expect
@@ -459,7 +459,7 @@ class test_AglWorkerAbstract {
             port, MessageProcessRequest(
                 EndPointIdentity(editorId, sessionId), requestId, languageId,
                 sentence,
-                Agl.options { semanticAnalysis { context(contextAsmSimple()) } }
+                Agl.options { semanticAnalysis { sentenceContext(contextAsmSimple()) } }
             ))
 
         sut.sent.forEach {
@@ -481,7 +481,7 @@ class test_AglWorkerAbstract {
         val expectedTypeModel = trm.typesDomain!!
         val expectedScopeModel = Agl.registry.agl.crossReference.processor!!.process(
             crossReferenceStr,
-            Agl.options { semanticAnalysis { context(ContextFromTypesDomain(expectedTypeModel)) } }
+            Agl.options { semanticAnalysis { sentenceContext(ContextFromTypesDomain(expectedTypeModel)) } }
         ).let {
             assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
@@ -512,7 +512,7 @@ class test_AglWorkerAbstract {
                 }
             }
         }
-        val expectedAsmSem = asmSimple(typesDomain = expectedTypeModel, crossReferenceDomain = expectedScopeModel, context = contextAsmSimple(), resolveReferences = true, failIfIssues = true) {
+        val expectedAsmSem = asmSimple(typesDomain = expectedTypeModel, crossReferenceDomain = expectedScopeModel, sentenceContext = contextAsmSimple(), resolveReferences = true, failIfIssues = true) {
             element("Unit") {
                 propertyListOfElement("declaration") {
                     element("Primitive") {
@@ -664,7 +664,7 @@ class test_AglWorkerAbstract {
         sut.receive(
             port, MessageProcessRequest(
                 EndPointIdentity(editorId, sessionId), RequestIdentity("process"), Agl.registry.agl.crossReferenceLanguageIdentity,
-                referencesStr, Agl.options { semanticAnalysis { context(ContextFromTypesDomainReference(languageId)) } }
+                referencesStr, Agl.options { semanticAnalysis { sentenceContext(ContextFromTypesDomainReference(languageId)) } }
             )
         )
 

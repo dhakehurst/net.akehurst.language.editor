@@ -22,6 +22,7 @@ import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomain
 import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomainReference
+import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.syntaxAnalyser.LocationMap
@@ -68,7 +69,7 @@ abstract class AglWorkerAbstract {
         // TODO: could be an argument
         ld.configuration = Agl.configuration(base = Agl.configurationSimple() as LanguageProcessorConfiguration<Any, Any>) {
             if (null != crossReferenceModelStr) {
-                crossReferenceResolver { p -> CrossReferenceDomainDefault.fromString(ContextFromTypesDomain(p.typesDomain), crossReferenceModelStr) }
+                crossReferenceResolver { p -> CrossReferenceDomainDefault.fromString(contextFromTypesDomain(p.typesDomain), crossReferenceModelStr) }
             }
         }
         ld.update(
@@ -92,7 +93,7 @@ abstract class AglWorkerAbstract {
             identity = languageId,
             aglOptions = Agl.options {
                 semanticAnalysis {
-                    context(contextFromGrammarRegistry(Agl.registry))
+                    sentenceContext(contextFromGrammarRegistry(Agl.registry))
                     option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                 }
             },
@@ -336,10 +337,10 @@ abstract class AglWorkerAbstract {
                     //  is Agl CrossReferences -> context should be a reference to a diff LanguageDefinition, get its typemodel and create ContextFromTypeModel
                     // }
                     val ctx = when (languageId) {
-                        Agl.registry.agl.grammar.identity -> options.semanticAnalysis.context ?: contextFromGrammarRegistry(Agl.registry)
-                        Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.context) {
+                        Agl.registry.agl.grammar.identity -> options.semanticAnalysis.sentenceContext ?: contextFromGrammarRegistry(Agl.registry)
+                        Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.sentenceContext) {
                             is ContextFromTypesDomainReference -> {
-                                val langId = (options.semanticAnalysis.context as ContextFromTypesDomainReference).languageDefinitionId
+                                val langId = (options.semanticAnalysis.sentenceContext as ContextFromTypesDomainReference).languageDefinitionId
                                 val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
                                 val res = AsmTransformDomainDefault.fromGrammarDomain(ld.grammarDomain!!)
                                 val trfm = when {
@@ -351,15 +352,15 @@ abstract class AglWorkerAbstract {
                                 ContextFromTypesDomain(tm)
                             }
 
-                            else -> options.semanticAnalysis.context
+                            else -> options.semanticAnalysis.sentenceContext
                         }
 
-                        else -> options.semanticAnalysis.context
+                        else -> options.semanticAnalysis.sentenceContext
                     }
                     val opts = Agl.options(options) {
                         semanticAnalysis {
                             locationMap(locationMap)
-                            context(ctx as Any?)
+                            sentenceContext(ctx as Any?)
                             option(AglGrammarSemanticAnalyser.OPTIONS_KEY_AMBIGUITY_ANALYSIS, false)
                         }
                     }
@@ -437,7 +438,7 @@ abstract class AglWorkerAbstract {
 
             val result = Agl.registry.agl.grammar.processor!!.semanticAnalysis(proc.grammarDomain!!, Agl.options {
                 semanticAnalysis {
-                    context(contextFromGrammarRegistry(Agl.registry))
+                    sentenceContext(contextFromGrammarRegistry(Agl.registry))
                     locationMap(proc.syntaxAnalyser!!.locationMap)
                     //context(message.context)
                 }

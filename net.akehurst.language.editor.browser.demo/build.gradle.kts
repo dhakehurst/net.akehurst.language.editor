@@ -53,6 +53,7 @@ subprojects {
             }
         }
         mavenCentral()
+        google()
     }
 
     configure<BuildConfigExtension> {
@@ -71,7 +72,7 @@ subprojects {
     }
 
     configure<KotlinMultiplatformExtension> {
-        jvm("jvm11") {
+        jvm {
             compilations {
                 val main by getting {
                     compileTaskProvider.configure {

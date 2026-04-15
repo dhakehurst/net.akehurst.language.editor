@@ -1,0 +1,14 @@
+$keyword {
+    foreground: blue;
+    font-weight: bold;
+}
+TYPED_BY, SPECIALIZES, SUBSETS, REFERENCES, REDEFINES, CONJUGATES {
+    foreground: blue;
+    font-weight: bold;
+}
+
+SINGLE_LINE_NOTE, MULTILINE_NOTE {
+  foreground: gray;
+  font-style: italic;
+}
+

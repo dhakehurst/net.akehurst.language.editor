@@ -84,7 +84,7 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
     override fun updateStyleModel(styleModel: AglStyleDomain) {
         _styleModel = styleModel // TODO: should not need to store this , need to modify 'updateEditorStyles' in editor specific code!
         styleModel.allDefinitions.forEach { ss ->
-            ss.rules.forEach { sr ->
+            ss.allRules.forEach { sr ->
                 updateStyleRule(sr)
             }
         }
