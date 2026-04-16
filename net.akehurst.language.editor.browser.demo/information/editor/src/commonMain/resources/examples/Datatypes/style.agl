@@ -2,7 +2,7 @@ namespace net.akehurst.language.example
 styles Datatypes {
     'primitive', 'collection', 'class' {
       foreground: purple;
-      font-style: bold;
+      font-weight: bold;
     }
     ID {
       foreground: blue;
@@ -10,7 +10,7 @@ styles Datatypes {
     }
     '{', '}' {
       foreground: darkgreen;
-      font-style: bold;
+      font-weight: bold;
     }
     property {
       background: lightgray;

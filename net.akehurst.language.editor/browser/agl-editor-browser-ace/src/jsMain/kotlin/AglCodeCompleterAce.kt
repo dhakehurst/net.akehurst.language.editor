@@ -64,15 +64,15 @@ class AglCodeCompleterAce<AsmType : Any, ContextType : Any>(
         val proc = this.agl.languageDefinition.processor
         return if (null != proc) {
             val goalRule = this.agl.goalRule
-            val context = this.agl.context
-            if (null == context) {
-                this.agl.logger.logDebug { "context is null for code completion." }
+            val sentenceContext = this.agl.sentenceContext
+            if (null == sentenceContext) {
+                this.agl.logger.logDebug { "sentence context is null for code completion." }
             }
             val result = proc.expectedItemsAt(
                 editor.getValue(), pos,
                 Agl.options {
                     parse { goalRuleName(goalRule?.value) }
-                    completionProvider { context(context) }
+                    completionProvider { sentenceContext(sentenceContext) }
                 })
             result.items
         } else {

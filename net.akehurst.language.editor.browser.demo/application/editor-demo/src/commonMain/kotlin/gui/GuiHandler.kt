@@ -5,12 +5,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import net.akehurst.kotlin.compose.components.tree.TreeViewNode
 import net.akehurst.kotlinx.collections.mutableStackOf
 import net.akehurst.kotlinx.logging.api.LogLevel
 import net.akehurst.kotlinx.logging.api.logger
+import net.akehurst.kotlinx.utils.UniqueIdentityGenerator
 import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
+import net.akehurst.language.api.processor.AsmTransformString
 import net.akehurst.language.api.processor.CrossReferenceString
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.StyleString
@@ -30,7 +31,6 @@ import net.akehurst.language.grammar.processor.contextFromGrammar
 import net.akehurst.language.sentence.common.SentenceDefault
 import net.akehurst.language.sppt.api.PathFunction
 import net.akehurst.language.sppt.api.SharedPackedParseTree
-import net.akehurst.language.sppt.api.SpptDataNode
 import net.akehurst.language.sppt.api.SpptDataNodeInfo
 import net.akehurst.language.sppt.api.SpptWalker
 import net.akehurst.language.sppt.api.TreeData
@@ -54,24 +54,20 @@ class GuiHandler(
                     EventStatus.START -> Unit
                     EventStatus.IGNORED -> Unit
                     EventStatus.FAILURE -> {
-                        this.updateStyleEditor(null)
-                        this.updateReferenceEditor(null)
-
+                        this.updatesFromGrammar(null)
                         LOGGER.logError { gui.grammarEditor.endPointIdentity.editorId + ": " + event.message }
-                        gui.sentenceEditor.languageDefinition.update(grammarString = GrammarString(""))
+                        gui.sentenceEditor.languageDefinition.update(grammarString = null)
                     }
 
                     EventStatus.SUCCESS -> {
-                        val grammars = event.asm as GrammarDomain? ?: error("should always be a List<Grammar> if success")
-                        this.updateStyleEditor(grammars)
-                        this.updateReferenceEditor(grammars)
-
+                        val grammars = event.asm as GrammarDomain? ?: error("should always be a GrammarDomain if success")
+                        this.updatesFromGrammar(grammars)
                         try {
-                            LOGGER.logDebug { "Debug: Grammar parse success, resetting sentence processor" }
+                            LOGGER.logDebug { "Debug: Grammar SemanticAnalysis success, resetting sentence processor" }
                             gui.sentenceEditor.languageDefinition.update(grammarString = GrammarString(gui.grammarEditor.text))
                         } catch (t: Throwable) {
                             LOGGER.log(LogLevel.Error, t) { gui.grammarEditor.endPointIdentity.editorId + ": " + t.message }
-                            gui.sentenceEditor.languageDefinition.update(grammarString = GrammarString(""))
+                            gui.sentenceEditor.languageDefinition.update(grammarString = null)
                         }
                     }
                 }
@@ -84,16 +80,38 @@ class GuiHandler(
                     EventStatus.IGNORED -> Unit
                     EventStatus.FAILURE -> {
                         LOGGER.logError { gui.styleEditor.endPointIdentity.editorId + ": " + event.message }
-                        gui.sentenceEditor.languageDefinition.update(styleString = StyleString(""))
+                        gui.sentenceEditor.languageDefinition.update(styleString = null)
                     }
 
                     EventStatus.SUCCESS -> {
                         try {
-                            LOGGER.logDebug { "Debug: Style parse success, resetting sentence style" }
+                            LOGGER.logDebug { "Debug: Style SemanticAnalysis success, resetting sentence style" }
                             gui.sentenceEditor.languageDefinition.update(styleString = StyleString(gui.styleEditor.text))
                         } catch (t: Throwable) {
                             LOGGER.log(LogLevel.Error, t) { gui.styleEditor.endPointIdentity.editorId + ": " + t.message }
-                            gui.sentenceEditor.languageDefinition.update(styleString = StyleString(""))
+                            gui.sentenceEditor.languageDefinition.update(styleString = null)
+                        }
+                    }
+                }
+            }
+        }
+        gui.typesEditor.onSemanticAnalysis { event ->
+            if (doUpdates) {
+                when (event.status) {
+                    EventStatus.START -> Unit
+                    EventStatus.IGNORED -> Unit
+                    EventStatus.FAILURE -> {
+                        LOGGER.logError { gui.typesEditor.endPointIdentity.editorId + ": " + event.message }
+                        gui.sentenceEditor.languageDefinition.update(typesString = null)
+                    }
+
+                    EventStatus.SUCCESS -> {
+                        try {
+                            LOGGER.logDebug { "Debug: Types SemanticAnalysis success, resetting sentence types" }
+                            gui.sentenceEditor.languageDefinition.update(typesString = TypesString(gui.typesEditor.text))
+                        } catch (t: Throwable) {
+                            LOGGER.log(LogLevel.Error, t) { gui.typesEditor.endPointIdentity.editorId + ": " + t.message }
+                            gui.sentenceEditor.languageDefinition.update(typesString = null)
                         }
                     }
                 }
@@ -106,17 +124,38 @@ class GuiHandler(
                     EventStatus.IGNORED -> Unit
                     EventStatus.FAILURE -> {
                         LOGGER.logError { gui.referencesEditor.endPointIdentity.editorId + ": " + event.message }
-                        gui.sentenceEditor.languageDefinition.update(crossReferenceString = CrossReferenceString(""))
+                        gui.sentenceEditor.languageDefinition.update(crossReferenceString = null)
                     }
 
                     EventStatus.SUCCESS -> {
                         try {
-                            //sentenceScopeModel = event.asm as ScopeModel?
-                            LOGGER.logDebug { "Debug: CrossReferences SyntaxAnalysis success, resetting scopes and references" }
+                            LOGGER.logDebug { "Debug: CrossReferences SemanticAnalysis success, resetting scopes and references" }
                             gui.sentenceEditor.languageDefinition.update(crossReferenceString = CrossReferenceString(gui.referencesEditor.text))
                         } catch (t: Throwable) {
                             LOGGER.log(LogLevel.Error, t) { gui.referencesEditor.endPointIdentity.editorId + ": " + t.message }
-                            gui.sentenceEditor.languageDefinition.update(crossReferenceString = CrossReferenceString(""))
+                            gui.sentenceEditor.languageDefinition.update(crossReferenceString = null)
+                        }
+                    }
+                }
+            }
+        }
+        gui.asmTransEditor.onSemanticAnalysis { event ->
+            if (doUpdates) {
+                when (event.status) {
+                    EventStatus.START -> Unit
+                    EventStatus.IGNORED -> Unit
+                    EventStatus.FAILURE -> {
+                        LOGGER.logError { gui.asmTransEditor.endPointIdentity.editorId + ": " + event.message }
+                        gui.sentenceEditor.languageDefinition.update(asmTransformString = null)
+                    }
+
+                    EventStatus.SUCCESS -> {
+                        try {
+                            LOGGER.logDebug { "Debug: AsmTransform SemanticAnalysis success, updating sentence language" }
+                            gui.sentenceEditor.languageDefinition.update(asmTransformString = AsmTransformString(gui.asmTransEditor.text))
+                        } catch (t: Throwable) {
+                            LOGGER.log(LogLevel.Error, t) { gui.asmTransEditor.endPointIdentity.editorId + ": " + t.message }
+                            gui.sentenceEditor.languageDefinition.update(asmTransformString = null)
                         }
                     }
                 }
@@ -163,7 +202,10 @@ class GuiHandler(
         //doUpdates = false
         gui.grammarEditor.text = eg.grammar
         gui.styleEditor.text = eg.style
+        gui.typesEditor.text = eg.types
+        gui.asmTransEditor.text = eg.asmTransform
         gui.referencesEditor.text = eg.references
+        gui.formatEditor.text = eg.format
 
         gui.sentenceEditor.processOptions().semanticAnalysis.sentenceContext = ExternalContextLanguage.processor.process(eg.context).asm
         gui.sentenceEditor.languageDefinition.update(
@@ -211,33 +253,23 @@ class GuiHandler(
         }
     }
 
-    fun updateStyleEditor(grammars: GrammarDomain?) {
+    fun updatesFromGrammar(grammars: GrammarDomain?) {
         when (grammars) {
             null -> {
                 gui.styleEditor.processOptions().semanticAnalysis.sentenceContext = null
-            }
-
-            else -> {
-                gui.styleEditor.processOptions().semanticAnalysis.sentenceContext = contextFromGrammar(grammars)
-            }
-        }
-    }
-
-    fun updateReferenceEditor(grammars: GrammarDomain?) {
-        when (grammars) {
-            null -> {
                 gui.referencesEditor.processOptions().semanticAnalysis.sentenceContext = null
+                gui.formatEditor.processOptions().semanticAnalysis.sentenceContext = null
                 updateTypesTree(null)
             }
 
             else -> {
-                val trm = AsmTransformDomainDefault.fromGrammarDomain(grammars).let {
-                    it.asm!!
-                }
-
+                val trm = AsmTransformDomainDefault.fromGrammarDomain(grammars).let { it.asm!! }
                 trm.typesDomain?.let { td ->
                     updateTypesTree(td)
-                    gui.referencesEditor.processOptions().semanticAnalysis.sentenceContext = contextFromTypesDomain(td)
+                    val ctx = contextFromTypesDomain(td)
+                    gui.styleEditor.processOptions().semanticAnalysis.sentenceContext = contextFromGrammar(grammars)
+                    gui.referencesEditor.processOptions().semanticAnalysis.sentenceContext = ctx
+                    gui.formatEditor.processOptions().semanticAnalysis.sentenceContext = ctx
                 }
             }
         }
@@ -262,8 +294,8 @@ class GuiHandler(
                                 val nextInputPosition = skipRoot.nextInputPosition
                                 val parent = stack.peek()
                                 val matchedText = sentence.text.substring(startPosition, nextInputPosition)
-                                val nd = treeNode(skipRoot.rule.tag, skipRoot.rule.tag+" '$matchedText'")
-                                parent.children.update { it+nd }
+                                val nd = treeNode(skipRoot.rule.tag, skipRoot.rule.tag + " '$matchedText'")
+                                parent.children.update { it + nd }
                             }
                         }
 
@@ -274,9 +306,9 @@ class GuiHandler(
                         override fun leaf(nodeInfo: SpptDataNodeInfo) {
                             val parent = stack.peek()
                             val matchedText = sentence.matchedTextNoSkip(nodeInfo.node)//  substring(nodeInfo.node.startPosition, nodeInfo.node.nextInputNoSkip)
-                            val nd = treeNode(nodeInfo.node.rule.tag, nodeInfo.node.rule.tag+" '$matchedText'")
+                            val nd = treeNode(nodeInfo.node.rule.tag, nodeInfo.node.rule.tag + " '$matchedText'")
                             if (nodeInfo.alt.index == 0) {
-                                parent.children.update { it+nd }
+                                parent.children.update { it + nd }
                             } else {
                                 //TODO:
                             }
@@ -290,7 +322,7 @@ class GuiHandler(
                             val node = stack.pop()
                             val parent = stack.peek()
                             if (nodeInfo.alt.index == 0) {
-                                parent.children.update { it+node }
+                                parent.children.update { it + node }
                             } else {
                                 //TODO:
                             }
@@ -307,13 +339,13 @@ class GuiHandler(
                         override fun treeError(msg: String, path: PathFunction) {
                             val parent = stack.peek()
                             val node = treeNode("ERROR", msg)
-                            parent.children.update { it+node }
+                            parent.children.update { it + node }
                         }
                     }
 
                     tree.traverseTreeDepthFirst(walker, true)
 
-                    val items = tree.treeData.root?.let { listOf(treeNode(it.rule.tag, it.rule.tag)) } ?: emptyList()
+                    val items = tree.treeData.root?.let { listOf(root) } ?: emptyList()
 
                     gui.stateHolder.sentenceMode.parseTreeState.updateItems(items)
                 } ?: gui.stateHolder.sentenceMode.parseTreeState.updateItems(emptyList())
@@ -327,26 +359,34 @@ class GuiHandler(
     fun updateAsmTree(asm: Any?) {
         when {
             asm is Asm -> {
-                fun treeNode(id: String, asm: AsmValue): TreeViewNode = when (asm) {
-                    is AsmNothing -> TreeViewNode(id)
-                    is AsmPrimitive -> TreeViewNode(id)
-                    is AsmStructure -> TreeViewNode(id).apply {
+                fun treeNode(label: String, asm: AsmValue): TreeViewNode = when (asm) {
+                    is AsmNothing -> TreeViewNode(UniqueIdentityGenerator.generate("nothing")).apply { content = { Text(text = $$"$$label = $nothing") } }
+                    is AsmPrimitive -> TreeViewNode(UniqueIdentityGenerator.generate("primitive")).apply { content = { Text(text = "$label  = ${asm.asString()}") } }
+                    is AsmStructure -> TreeViewNode(UniqueIdentityGenerator.generate("structure")).apply {
+                        content = { Text(text = label) }
                         hasChildren = asm.property.isNotEmpty()
                         fetchChildren = {
                             asm.property.map { (k, v) ->
-                                treeNode("${k.value}: ${v.value.typeName.value}", v.value)
+                                if (v.isReference) {
+                                    TreeViewNode(UniqueIdentityGenerator.generate("ref")).apply { content = { Text(text = "$label = ${v.value}") } }
+                                } else {
+                                    treeNode("${k.value}: ${v.value.typeName.value}", v.value)
+                                }
                             }
                         }
                     }
 
-                    is AsmCollection -> TreeViewNode(id).apply {
+                    is AsmCollection -> TreeViewNode(UniqueIdentityGenerator.generate("col")).apply {
+                        content = { Text(text = label) }
                         hasChildren = asm.elements.isNotEmpty()
                         fetchChildren = {
-                            asm.elements.map { treeNode(" :${asm.typeName.value}", it) }
+                            asm.elements.map { treeNode(" :${it.typeName.value}", it) }
                         }
                     }
 
-                    else -> TreeViewNode("TODO :${asm.typeName.value} ${asm::class.simpleName}").apply {}
+                    else -> TreeViewNode("TODO :${asm.typeName.value} ${asm::class.simpleName}").apply {
+                        content = { Text(text = label) }
+                    }
                 }
 
                 val items = asm.root.map { treeNode(" :${it.typeName.value}", it) }

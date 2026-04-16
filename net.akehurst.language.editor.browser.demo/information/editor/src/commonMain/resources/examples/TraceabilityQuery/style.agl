@@ -1,14 +1,14 @@
 $keyword {
     foreground: green;
-    font-style: bold;
+    font-weight: bold;
 }
 compositionOperator {
     foreground: green;
-    font-style: bold;
+    font-weight: bold;
 }
 logicalOperator {
     foreground: green;
-    font-style: bold;
+    font-weight: bold;
 }
 NAME {
   foreground: blue;

@@ -1,0 +1,34 @@
+// use this editor to enter the grammar for your language
+
+// each set of grammars must be defined in a namespace
+// one namespace is given for the whole file/grammar-definition
+namespace net.akehurst.language.example
+
+// multiple grammars can be defined,
+// the last grammar defined is the 'target grammar' - see other examples that illustrate this
+
+grammar BasicTutorial {
+
+    // the default goal/start rule can be defined explicitly,
+    // if not defined, the first non skip rule in the last grammar definition is used.
+    #defaultGoalRule: document
+
+    // skip rules define text that can appear at any point, such as whitespace and comments
+    skip leaf WS = "\s+";
+    skip leaf COMMENT = "//[^\r\n]*" ;
+
+    // a document is a (possibly empty) list of target definitions,
+    // followed by a list of (at least one) greeting(s).
+    document = targetDefList* greeting+ ;
+	greeting = hello greetingTargetList '!' ;
+
+    // a greeting target is a list of one or more target references separated by commas (',').
+    greetingTargetList = [targetRefOrWorld / ',']+ ;
+
+    targetDefList = targetDef ;
+    targetDef = 'target' NAME ;
+    leaf hello = 'Hello' ;
+    targetRefOrWorld = targetRef | 'World' ;
+    targetRef = NAME ;
+    leaf NAME = "[a-zA-Z]+" ;
+}

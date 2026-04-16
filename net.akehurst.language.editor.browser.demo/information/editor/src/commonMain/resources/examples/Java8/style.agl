@@ -1,14 +1,14 @@
 $keyword {
   foreground: purple;
-  font-style: bold;
+  font-weight: bold;
 }
 'class' {
   foreground: purple;
-  font-style: bold;
+  font-weight: bold;
 }
 CLASS_MODIFIER, FIELD_MODIFIER, METHOD_MODIFIER, CONSTRUCTOR_MODIFIER, INTERFACE_MODIFIER {
   foreground: darkred;
-  font-style: bold;
+  font-weight: bold;
 }
 IDENTIFIER {
   foreground: blue;
@@ -19,5 +19,5 @@ IDENTIFIER {
 }
 Literal {
   foreground: darkblue;
-  font-style: bold;
+  font-weight: bold;
 }

@@ -349,7 +349,7 @@ class test_AglWorkerSerialisation {
     // --- MessageProcessRequest ---
     @Test
     fun MessageProcessRequest_com_empty_ContextSimple() {
-        val context = SentenceContextAny()
+        val sentenceContext = SentenceContextAny()
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), RequestIdentity("1"),
             languageId,
@@ -357,7 +357,7 @@ class test_AglWorkerSerialisation {
             Agl.options {
                 parse { goalRuleName("rule1") }
                 semanticAnalysis {
-                    sentenceContext(context)
+                    sentenceContext(sentenceContext)
                 }
             },
         )
@@ -381,9 +381,9 @@ class test_AglWorkerSerialisation {
             }
         """
         val grammar = Agl.registry.agl.grammar.processor!!.process(grammarStr).asm!!
-        val context = contextFromGrammar(grammar)
+        val sentenceContext = contextFromGrammar(grammar)
             // must add model to scope to that references can be resolved if serialising
-            context.addToScope(grammar.name.value, listOf(grammar.name.value), QualifiedName("net.akehurst.language.grammar.api.GrammarModel"), null, grammar)
+        sentenceContext.addToScope(grammar.name.value, listOf(grammar.name.value), QualifiedName("net.akehurst.language.grammar.api.GrammarModel"), null, grammar)
 
         val expected = MessageProcessRequest(
             EndPointIdentity(editorId, sessionId), RequestIdentity("1"),
@@ -392,7 +392,7 @@ class test_AglWorkerSerialisation {
             Agl.options {
                 parse { goalRuleName("rule1") }
                 semanticAnalysis {
-                    sentenceContext(context)
+                    sentenceContext(sentenceContext)
                 }
             },
         )

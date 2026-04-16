@@ -58,7 +58,7 @@ class AglComponents<AsmType : Any, ContextType : Any>(
 
     val styleHandler get() = _styleHandler
 
-    var context: ContextType? = null
+    var sentenceContext: ContextType? = null
     //var sppt: SharedPackedParseTree? = null
 
     // provided by worker when processor created

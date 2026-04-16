@@ -114,11 +114,11 @@ styles BasicTutorial {
     }
     ${"$"}keyword {
       foreground: blue;
-      font-style: bold;
+      font-weight: bold;
     }
     hello {
       foreground: green;
-      font-style: bold;
+      font-weight: bold;
     }
 }
 """.trimIndent()
@@ -128,6 +128,6 @@ styles BasicTutorial {
 
 """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, "",references, style, format,"")
+    val example = Example(id, label, sentence, grammar, "","",references, style, format,"")
 
 }

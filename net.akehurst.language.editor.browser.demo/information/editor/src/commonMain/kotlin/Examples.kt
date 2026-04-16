@@ -22,6 +22,7 @@ object Examples {
 
     val map = mutableMapOf<String, Example>()
 
+    @Deprecated("")
     suspend fun read(resources: VfsFile, id:String) {
         suspend fun VfsFile.readStringIfExists() : String? = if(this.exists()) this.readString() else null
         suspend fun VfsFile.readLinesIfExists() : List<String>? = if(this.exists()) this.readLines().toList() else null
@@ -32,12 +33,13 @@ object Examples {
         } else {
             val grammarStr = dir["grammar.agl"].readStringIfExists() ?: ""
             val types = "" //TODO?
+            val asmTransform = "" //TODO?
             val styleStr = dir["style.agl"].readStringIfExists() ?: ""
             val scopes = dir["references.agl"].readStringIfExists() ?: ""
             val format = dir["format.agl"].readStringIfExists() ?: ""
             val sentence = dir["sentence.txt"].readStringIfExists() ?: ""
             val context = dir["context.agl"].readStringIfExists() ?: ""
-            val eg = Example(id, label, sentence, grammarStr, types,scopes, styleStr, format, context)
+            val eg = Example(id, label, sentence, grammarStr, types,asmTransform,scopes, styleStr, format, context)
             Examples.add(eg)
         }
     }
@@ -56,12 +58,13 @@ object Examples {
             sentence: String,
             grammar: String,
             types:String,
+            asmTransform:String,
             references:String,
             style: String,
             format: String,
             context:String
     ) {
-        this.map[id] = Example(id, label, sentence, grammar, types, references, style, format, context)
+        this.map[id] = Example(id, label, sentence, grammar, types, asmTransform,references, style, format, context)
     }
 }
 
@@ -71,6 +74,7 @@ class Example(
         val sentence: String,
         val grammar: String,
         val types: String,
+        val asmTransform: String,
         val references:String,
         val style: String,
         val format: String,

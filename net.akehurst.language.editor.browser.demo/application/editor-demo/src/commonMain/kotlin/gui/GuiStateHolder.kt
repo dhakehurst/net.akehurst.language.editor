@@ -59,7 +59,12 @@ class LanguageModeStateHolder() {
 
     val grammareEditorState = CodeEditorStateHolder()
     val styleEditorState = CodeEditorStateHolder()
+    val typesEditorState = CodeEditorStateHolder()
+    val asmTransEditorState = CodeEditorStateHolder()
     val refsEditorState = CodeEditorStateHolder()
+    val formatEditorState = CodeEditorStateHolder()
+    val m2mEditorState = CodeEditorStateHolder()
+
     val typesTreeStateHolder = TreeViewStateHolder()
 
     val layout by mutableStateOf(MultiPaneLayoutState(layoutNode {
@@ -71,8 +76,17 @@ class LanguageModeStateHolder() {
                 pane("style", "Style") {
                     CodeEditorView(styleEditorState)
                 }
+                pane("types", "Types") {
+                    CodeEditorView(typesEditorState)
+                }
+                pane("asmTrans", "Asm Transform") {
+                    CodeEditorView(asmTransEditorState)
+                }
                 pane("refs", "References") {
                     CodeEditorView(refsEditorState)
+                }
+                pane("format", "Format") {
+                    CodeEditorView(formatEditorState)
                 }
             }
             tabbed(1f) {

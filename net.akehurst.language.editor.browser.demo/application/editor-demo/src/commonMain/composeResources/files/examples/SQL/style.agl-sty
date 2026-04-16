@@ -1,11 +1,18 @@
 namespace net.akehurst.language.example
 styles SQL {
-    ID {
-      foreground: blue;
-      font-style: italic;
-    }
-    CREATE,TABLE,SELECT,UPDATE,DELETE,INSERT,INTO,FROM,VALUES,SET {
-      foreground: chocolate;
-      font-weight: bold;
-    }
+  table-id,column-id {
+    foreground: blue;
+    font-style: italic;
+  }
+
+  tableRef, columnRef {
+    foreground: darkblue;
+    font-style: italic;
+    text-decoration: underline;
+  }
+
+  CREATE,TABLE,SELECT,UPDATE,DELETE,INSERT,INTO,FROM,VALUES,SET {
+    foreground: chocolate;
+    font-weight: bold;
+  }
 }

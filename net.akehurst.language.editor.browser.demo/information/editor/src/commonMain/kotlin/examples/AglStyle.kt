@@ -27,15 +27,15 @@ namespace test
 styles {
     ${'$'}keyword {
       foreground: purple;
-      font-style: bold;
+      font-weight: bold;
     }
     'xyz','abc' {
       foreground: blue;
-      font-style: bold;
+      font-weight: bold;
     }
     "'([^'\\]|\\.)*'" {
       foreground: green;
-      font-style: italic;
+      font-weight: italic;
     }
 }
     """.trimIndent()
@@ -49,6 +49,6 @@ styles {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar.value, "",references, style.value, format,"")
+    val example = Example(id, label, sentence, grammar.value, "","",references, style.value, format,"")
 
 }

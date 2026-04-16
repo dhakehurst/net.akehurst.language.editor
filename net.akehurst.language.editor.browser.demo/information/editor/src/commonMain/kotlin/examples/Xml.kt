@@ -96,7 +96,7 @@ grammar Xml {
             }
             NAME {
               foreground: red;
-              font-style: bold; 
+              font-weight: bold; 
             }
             
             CHARDATA {
@@ -117,6 +117,6 @@ grammar Xml {
         
     """.trimIndent()
 
-    val example = Example(id, label, sentence, grammar, "",references, style, format,"")
+    val example = Example(id, label, sentence, grammar, "","",references, style, format,"")
 
 }

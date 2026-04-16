@@ -1,6 +1,6 @@
 NAME {
   foreground: red;
-  font-style: bold;
+  font-weight: bold;
 }
 SINGLE_LINE_COMMENT {
   foreground: green;

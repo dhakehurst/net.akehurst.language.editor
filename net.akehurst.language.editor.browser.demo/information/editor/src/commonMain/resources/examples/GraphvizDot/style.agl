@@ -15,7 +15,7 @@ styles Dot {
     }
     STRICT, GRAPH, DIGRAPH, SUBGRAPH, NODE, EDGE {
       foreground: purple;
-      font-style: bold;
+      font-weight: bold;
     }
     ALPHABETIC_ID {
       foreground: red;

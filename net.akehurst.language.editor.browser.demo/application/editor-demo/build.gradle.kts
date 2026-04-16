@@ -1,5 +1,7 @@
-import org.gradle.kotlin.dsl.project
+@file:OptIn(ExperimentalWasmDsl::class)
+
 import org.jetbrains.compose.ExperimentalComposeLibrary
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.compose)
@@ -11,6 +13,10 @@ repositories {
 }
 
 kotlin {
+    wasmJs {
+        binaries.executable()
+    }
+
     sourceSets {
         commonMain {
             dependencies {
