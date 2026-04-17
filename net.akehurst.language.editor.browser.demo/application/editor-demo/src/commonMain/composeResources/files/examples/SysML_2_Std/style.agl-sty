@@ -1,4 +1,4 @@
-$keyword, DEFINED_BY, SPECIALIZES, SUBSETS, REFERENCES, REDEFINES {
+$$ "'(\'|[^'])+'", DEFINED_BY, SPECIALIZES, SUBSETS, REFERENCES, REDEFINES {
     foreground: blue;
     font-weight: bold;
 }

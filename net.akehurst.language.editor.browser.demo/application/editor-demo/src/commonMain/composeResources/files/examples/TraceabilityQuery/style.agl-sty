@@ -1,7 +1,7 @@
 namespace query
 
 styles All {
-    $keyword {
+    $$ "'(\'|[^'])+'" {
         foreground: green;
         font-weight: bold;
     }

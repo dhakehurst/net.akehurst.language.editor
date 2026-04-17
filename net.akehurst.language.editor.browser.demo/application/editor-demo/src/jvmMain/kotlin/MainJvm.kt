@@ -14,6 +14,7 @@ import java.io.File
 suspend fun main() {
     println("PWD: ${File(".").absolutePath}")
     LoggingManager.use(LoggingByConsole)
+    LoggingManager.rootLoggingLevel = LogLevel.All
     val logFunction: LogFunction = { logLevel, prefix, t, msg ->
         when {
             logLevel <= LogLevel.All -> {

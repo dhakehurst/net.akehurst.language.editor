@@ -14,6 +14,7 @@ class EditorDemoApplication(
     companion object {
         val LOGGER = logger(EditorDemoApplication::class.simpleName!!)
     }
+
     val gui = Gui(languageService)
 
     private suspend fun initialiseExamples() {
@@ -29,7 +30,7 @@ class EditorDemoApplication(
             "XML",
         )
         for (path in examples) {
-            val info = readContent("files/examples/$path/info.txt")
+            val info = readContent("files/examples/$path/info.txt") ?: path
             val sentence = readContent("files/examples/$path/sentence.txt")
             val grammar = readContent("files/examples/$path/grammar.agl-grm")
             val style = readContent("files/examples/$path/style.agl-sty")
@@ -42,7 +43,7 @@ class EditorDemoApplication(
         }
 
         Agl.registry.initialise()
-        for((id,lang) in Agl.registry.languages) {
+        for ((id, lang) in Agl.registry.languages) {
             val grammar = lang.grammarString?.value ?: ""
             val style = lang.styleString?.value ?: ""
             val asmTransform = lang.asmTransformString?.value ?: ""
@@ -53,20 +54,25 @@ class EditorDemoApplication(
             Examples.add(id.value, id.value, "", grammar, types, asmTransform, references, style, format, context)
         }
     }
-    private suspend fun readContent(path:String):String {
+
+    private suspend fun readContent(path: String): String? {
         try {
             val bytes = Res.readBytes(path)
             return bytes.decodeToString()
         } catch (e: Exception) {
-            LOGGER.logError { e.message ?: "Error in readContent ${e::class.simpleName}" }
-            return ""
+            LOGGER.logInformation { e.message ?: "Error in readContent ${e::class.simpleName}" }
+            return null
         }
     }
 
     suspend fun start(guiStart: suspend (Gui) -> Deferred<Unit>) {
-        initialiseExamples()
-        val guiJob = guiStart.invoke(gui)
-        guiJob.join()
+        try {
+            initialiseExamples()
+            val guiJob = guiStart.invoke(gui)
+            guiJob.join()
+        } catch (t: Throwable) {
+            t.printStackTrace()
+        }
     }
 
 }

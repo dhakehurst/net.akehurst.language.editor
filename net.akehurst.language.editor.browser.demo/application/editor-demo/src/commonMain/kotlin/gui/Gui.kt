@@ -109,40 +109,46 @@ class Gui(
     }
 
     val stateHolder = GuiStateHolder(this)
-    lateinit var sentenceEditor: AglEditor<Asm, SentenceContextAny>
-    lateinit var grammarEditor: AglEditor<GrammarDomain, SentenceContextAny>
-    lateinit var styleEditor: AglEditor<AglStyleDomain, SentenceContextAny>
-    lateinit var typesEditor: AglEditor<TypesDomain, SentenceContextAny>
-    lateinit var asmTransEditor: AglEditor<AsmTransformDomain, SentenceContextAny>
-    lateinit var referencesEditor: AglEditor<CrossReferenceDomain, SentenceContextAny>
-    lateinit var formatEditor: AglEditor<AglFormatDomain, SentenceContextAny>
+    val sentenceEditor by lazy {
+        createComposeEditor(
+            stateHolder.sentenceMode.editorState, Constants.sentenceEditorId, logFunction, languageService, sentenceLanguage, Constants.sentenceProcessOptions
+        )
+    }
+    val grammarEditor by lazy {
+        createComposeEditor(
+            stateHolder.languageMode.grammareEditorState, Constants.grammarEditorId, logFunction, languageService, grammarLanguage, Constants.grammarProcessOptions
+        )
+    }
+    val styleEditor by lazy {
+        createComposeEditor(
+            stateHolder.languageMode.styleEditorState, Constants.styleEditorId, logFunction, languageService, styleLanguage, Constants.styleProcessOptions
+        )
+    }
+    val typesEditor by lazy {
+        createComposeEditor(
+            stateHolder.languageMode.typesEditorState, Constants.typesEditorId, logFunction, languageService, typesLanguage, Constants.typesProcessOptions
+        )
+    }
+    val asmTransEditor by lazy {
+        createComposeEditor(
+            stateHolder.languageMode.asmTransEditorState, Constants.asmTransEditorId, logFunction, languageService, asmTransLanguage, Constants.asmTransProcessOptions
+        )
+    }
+    val referencesEditor by lazy {
+        createComposeEditor(
+            stateHolder.languageMode.refsEditorState, Constants.referencesEditorId, logFunction, languageService, referencesLanguage, Constants.referencesProcessOptions
+        )
+    }
+    val formatEditor by lazy {
+        createComposeEditor(
+            stateHolder.languageMode.formatEditorState, Constants.formatEditorId, logFunction, languageService, formatLanguage, Constants.formatProcessOptions
+        )
+    }
 
     val handler = GuiHandler(this)
     val view = GuiView()
 
     fun doStart() {
-        // create AGL Editors
-        sentenceEditor = createComposeEditor(
-            stateHolder.sentenceMode.editorState, Constants.sentenceEditorId, logFunction, languageService, sentenceLanguage, Constants.sentenceProcessOptions
-        )
-        grammarEditor = createComposeEditor(
-            stateHolder.languageMode.grammareEditorState, Constants.grammarEditorId, logFunction, languageService, grammarLanguage, Constants.grammarProcessOptions
-        )
-        styleEditor = createComposeEditor(
-            stateHolder.languageMode.styleEditorState, Constants.styleEditorId, logFunction, languageService, styleLanguage, Constants.styleProcessOptions
-        )
-        typesEditor = createComposeEditor(
-            stateHolder.languageMode.typesEditorState, Constants.typesEditorId, logFunction, languageService, typesLanguage, Constants.typesProcessOptions
-        )
-        asmTransEditor = createComposeEditor(
-            stateHolder.languageMode.asmTransEditorState, Constants.asmTransEditorId, logFunction, languageService, asmTransLanguage, Constants.asmTransProcessOptions
-        )
-        referencesEditor = createComposeEditor(
-            stateHolder.languageMode.refsEditorState, Constants.referencesEditorId, logFunction, languageService, referencesLanguage, Constants.referencesProcessOptions
-        )
-        formatEditor = createComposeEditor(
-            stateHolder.languageMode.formatEditorState, Constants.formatEditorId, logFunction, languageService, formatLanguage, Constants.formatProcessOptions
-        )
         handler.connectEditors()
     }
 

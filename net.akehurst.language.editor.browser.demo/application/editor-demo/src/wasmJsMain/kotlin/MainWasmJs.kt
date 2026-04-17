@@ -9,12 +9,15 @@ import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.kotlinx.logging.api.LogLevel
 import net.akehurst.kotlinx.logging.api.LoggingManager
 import net.akehurst.kotlinx.logging.common.LoggingByConsole
+import net.akehurst.language.agl.Agl
 import net.akehurst.language.editor.demo.EditorDemoApplication
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 
 @OptIn(ExperimentalComposeUiApi::class)
 suspend fun main() {
+    Agl.registry.initialise() // init this first it needs doing
     LoggingManager.use(LoggingByConsole)
+    LoggingManager.rootLoggingLevel = LogLevel.All
     val logFunction: LogFunction = { logLevel, prefix, t, msg ->
         when {
             logLevel <= LogLevel.All -> {
@@ -29,12 +32,17 @@ suspend fun main() {
 //    )
     val app = EditorDemoApplication(languageService)
     app.start({gui ->
+
         CoroutineScope(Dispatchers.Default).async {
-            ComposeViewport(viewportContainerId = "ComposeTarget") {
-                LaunchedEffect(Unit) {
-                    document.getElementById("loading-indicator")?.remove()
+            try {
+                ComposeViewport(viewportContainerId = "ComposeTarget") {
+                    LaunchedEffect(Unit) {
+                        document.getElementById("loading-indicator")?.remove()
+                    }
+                    gui.content()
                 }
-                gui.content()
+            } catch (t:Throwable) {
+                t.printStackTrace()
             }
         }
     })

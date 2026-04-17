@@ -1,4 +1,4 @@
-$keyword {
+$$ "'(\'|[^'])+'" {
     foreground: green;
     font-weight: bold;
 }

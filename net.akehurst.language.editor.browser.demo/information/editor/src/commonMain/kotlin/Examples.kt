@@ -55,14 +55,14 @@ object Examples {
     fun add(
             id: String,
             label: String,
-            sentence: String,
-            grammar: String,
-            types:String,
-            asmTransform:String,
-            references:String,
-            style: String,
-            format: String,
-            context:String
+            sentence: String?,
+            grammar: String?,
+            types:String?,
+            asmTransform:String?,
+            references:String?,
+            style: String?,
+            format: String?,
+            context:String?
     ) {
         this.map[id] = Example(id, label, sentence, grammar, types, asmTransform,references, style, format, context)
     }
@@ -71,12 +71,12 @@ object Examples {
 class Example(
         val id: String,
         val label: String,
-        val sentence: String,
-        val grammar: String,
-        val types: String,
-        val asmTransform: String,
-        val references:String,
-        val style: String,
-        val format: String,
-        val context: String
+        val sentence: String?,
+        val grammar: String?,
+        val types: String?,
+        val asmTransform: String?,
+        val references:String?,
+        val style: String?,
+        val format: String?,
+        val context: String?
 )

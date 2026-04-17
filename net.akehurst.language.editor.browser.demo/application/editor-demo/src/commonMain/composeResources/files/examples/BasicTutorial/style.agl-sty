@@ -9,7 +9,7 @@ styles BasicTutorial {
       foreground: red;
       font-style: italic;
     }
-    $keyword {
+    $$ "'(\'|[^'])+'" {
       foreground: blue;
       font-weight: bold;
     }

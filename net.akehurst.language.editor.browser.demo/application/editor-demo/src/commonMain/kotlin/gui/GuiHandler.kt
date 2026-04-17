@@ -13,6 +13,7 @@ import net.akehurst.kotlinx.utils.UniqueIdentityGenerator
 import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.api.processor.AsmTransformString
 import net.akehurst.language.api.processor.CrossReferenceString
+import net.akehurst.language.api.processor.FormatString
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.StyleString
 import net.akehurst.language.api.processor.TypesString
@@ -200,23 +201,24 @@ class GuiHandler(
 
     fun loadExample(eg: Example) {
         //doUpdates = false
-        gui.grammarEditor.text = eg.grammar
-        gui.styleEditor.text = eg.style
-        gui.typesEditor.text = eg.types
-        gui.asmTransEditor.text = eg.asmTransform
-        gui.referencesEditor.text = eg.references
-        gui.formatEditor.text = eg.format
+        gui.grammarEditor.text = eg.grammar ?: ""
+        gui.styleEditor.text = eg.style ?: ""
+        gui.typesEditor.text = eg.types ?: ""
+        gui.asmTransEditor.text = eg.asmTransform ?: ""
+        gui.referencesEditor.text = eg.references ?: ""
+        gui.formatEditor.text = eg.format ?: ""
 
-        gui.sentenceEditor.processOptions().semanticAnalysis.sentenceContext = ExternalContextLanguage.processor.process(eg.context).asm
+        gui.sentenceEditor.processOptions().semanticAnalysis.sentenceContext = eg.context?.let { ExternalContextLanguage.processor.process(it).asm }
         gui.sentenceEditor.languageDefinition.update(
-            GrammarString(eg.grammar),
-            TypesString(eg.types),
-            null,
-            CrossReferenceString(eg.references),
-            StyleString(eg.style)
+            GrammarString(eg.grammar ?: ""),
+            TypesString(eg.types?: ""),
+            AsmTransformString(eg.asmTransform ?: ""),
+            CrossReferenceString(eg.references?: ""),
+            StyleString(eg.style?: ""),
+            FormatString(eg.format ?: ""),
         )
         //doUpdates = true
-        gui.sentenceEditor.text = eg.sentence
+        gui.sentenceEditor.text = eg.sentence ?: ""
     }
 
     fun updateTypesTree(typesDomain: TypesDomain?) {
