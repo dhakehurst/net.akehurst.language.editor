@@ -22,13 +22,10 @@ import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.agl.processor.contextFromLanguageDefinition
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomainReference
-import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
-import net.akehurst.language.agl.simple.SentenceContextAny
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
+import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.api.syntaxAnalyser.LocationMap
-import net.akehurst.language.asmTransform.asm.AsmTransformDomainDefault
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglStyleHandlerCssClass
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
@@ -243,7 +240,7 @@ open class LanguageServiceRequestDirectExecution(
             val langDef = getLanguageDefinition(endPointIdentity, requestId, languageId)
             val grmDom = langDef?.grammarDomain
             if (null != langDef && null != grmDom) {
-                val opts = Agl.options<AglStyleDomain, SentenceContextAny> {
+                val opts = Agl.options<AglStyleDomain, SentenceContext> {
                     semanticAnalysis {
                         sentenceContext(
                             contextFromGrammar(grmDom)
@@ -554,12 +551,12 @@ open class LanguageServiceRequestDirectExecution(
                 val ctx = when (languageId) {
                     Agl.registry.agl.grammar.identity -> options.semanticAnalysis.sentenceContext ?: contextFromGrammarRegistry(Agl.registry)
                     Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.sentenceContext) {
-                        is ContextFromTypesDomainReference -> {
-                            val langId = LanguageIdentity((options.semanticAnalysis.sentenceContext as ContextFromTypesDomainReference).languageDefinitionId.value)
-                            val ld = getLanguageDefinition(endPointIdentity, requestId, languageId) ?: error("Language '$langId' not defined.")
-                            val tm = AsmTransformDomainDefault.fromGrammarDomain(ld.grammarDomain!!).asm!!.typesDomain!!
-                            contextFromTypesDomain(tm)
-                        }
+//                        is ContextFromTypesDomainReference -> {
+//                            val langId = LanguageIdentity((options.semanticAnalysis.sentenceContext as ContextFromTypesDomainReference).languageDefinitionId.value)
+//                            val ld = getLanguageDefinition(endPointIdentity, requestId, languageId) ?: error("Language '$langId' not defined.")
+//                            val tm = AsmTransformDomainDefault.fromGrammarDomain(ld.grammarDomain!!).asm!!.typesDomain!!
+//                            contextFromTypesDomain(tm)
+//                        }
 
                         else -> options.semanticAnalysis.sentenceContext
                     }

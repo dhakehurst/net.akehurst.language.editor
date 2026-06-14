@@ -20,13 +20,10 @@ import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomain
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomainReference
 import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.api.syntaxAnalyser.LocationMap
-import net.akehurst.language.asmTransform.asm.AsmTransformDomainDefault
 import net.akehurst.language.editor.api.EditorOptions
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageResponseStatus
@@ -339,18 +336,18 @@ abstract class AglWorkerAbstract {
                     val ctx = when (languageId) {
                         Agl.registry.agl.grammar.identity -> options.semanticAnalysis.sentenceContext ?: contextFromGrammarRegistry(Agl.registry)
                         Agl.registry.agl.crossReference.identity -> when (options.semanticAnalysis.sentenceContext) {
-                            is ContextFromTypesDomainReference -> {
-                                val langId = (options.semanticAnalysis.sentenceContext as ContextFromTypesDomainReference).languageDefinitionId
-                                val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
-                                val res = AsmTransformDomainDefault.fromGrammarDomain(ld.grammarDomain!!)
-                                val trfm = when {
-                                    res.allIssues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
-                                    else -> TODO()
-                                }
-                                val tm = trfm.typesDomain ?: error("No TypeModel found in TransformModel")
-                                //val tm = TypeModelFromGrammar.createFromGrammarList(ld.grammarList)
-                                ContextFromTypesDomain(tm)
-                            }
+//                            is ContextFromTypesDomainReference -> {
+//                                val langId = (options.semanticAnalysis.sentenceContext as ContextFromTypesDomainReference).languageDefinitionId
+//                                val ld = _languageDefinition[langId] ?: error("Language '$langId' not defined in worker")
+//                                val res = AsmTransformDomainDefault.fromGrammarDomain(ld.grammarDomain!!)
+//                                val trfm = when {
+//                                    res.allIssues.errors.isEmpty() -> res.asm ?: error("No error creating TransformModel from GrammarModel, but asm is null!")
+//                                    else -> TODO()
+//                                }
+//                                val tm = trfm.typesDomain ?: error("No TypeModel found in TransformModel")
+//                                //val tm = TypeModelFromGrammar.createFromGrammarList(ld.grammarList)
+//                                ContextFromTypesDomain(tm)
+//                            }
 
                             else -> options.semanticAnalysis.sentenceContext
                         }

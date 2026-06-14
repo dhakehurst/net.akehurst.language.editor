@@ -18,12 +18,11 @@ package net.akehurst.language.editor.information
 
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.processor.ProcessResultDefault
-import net.akehurst.language.agl.simple.NULL_SENTENCE_IDENTIFIER
 import net.akehurst.language.agl.simple.SentenceContextAny
 import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.agl.syntaxAnalyser.SyntaxAnalyserByMethodRegistrationAbstract
 import net.akehurst.language.api.processor.LanguageProcessor
-import net.akehurst.language.asm.api.AsmPath
+import net.akehurst.language.api.semanticAnalyser.SentenceContext
 import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
@@ -66,7 +65,7 @@ object ExternalContextLanguage {
 
 class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract<SentenceContextAny>() {
     override fun registerHandlers() {
-        register(this::context)
+        register(this::sentenceContext)
         register(this::item)
         register(this::scope)
         register(this::referableName)
@@ -75,20 +74,20 @@ class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract
     }
 
     // context = item* ;
-    private fun context(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): SentenceContextAny {
+    private fun sentenceContext(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): SentenceContext {
         val ctx = contextAsmSimple {  }
-        val itemList = children as List<(Scope<Any>) -> Unit>
-        itemList.forEach { it.invoke(ctx.scopeForSentence[NULL_SENTENCE_IDENTIFIER]!!) }
+        val itemList = children as List<(Scope) -> Unit>
+        itemList.forEach { it.invoke(ctx.scopeForSentence[SentenceContextAny.Companion.NULL_SENTENCE_IDENTIFIER]!!) }
         return ctx
     }
 
     // item = referableName ':' typeReference scope? ;
-    private fun item(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): (Scope<Any>) -> Unit {
+    private fun item(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): (Scope) -> Unit {
         val referableName = children[0] as String
         val typeReference = children[2] as QualifiedName
         val item = null
-        val itemScope = children[3] as ((Scope<Any>) -> Unit)?
-        return { scope: Scope<Any> ->
+        val itemScope = children[3] as ((Scope) -> Unit)?
+        return { scope: Scope ->
             scope.addToScope(referableName, typeReference, item, "?", true)
             if (null != itemScope) {
                 val s = scope.createOrGetChildScope(referableName, typeReference)
@@ -98,9 +97,9 @@ class ExternalContextSyntaxAnalyser : SyntaxAnalyserByMethodRegistrationAbstract
     }
 
     // scope = '{' item* '}' ;
-    private fun scope(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): (Scope<AsmPath>) -> Unit {
+    private fun scope(target: SpptDataNodeInfo, children: List<Any?>, sentence: Sentence): (Scope) -> Unit {
         return { scope ->
-            val itemList = children[1] as List<(Scope<AsmPath>) -> Unit>
+            val itemList = children[1] as List<(Scope) -> Unit>
             itemList.forEach { it.invoke(scope) }
         }
     }
