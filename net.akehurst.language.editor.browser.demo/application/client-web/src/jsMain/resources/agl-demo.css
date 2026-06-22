@@ -1,0 +1,370 @@
+/* ----------  tabview ---------- */
+div#agl-demo tabview {
+    margin: 5px;
+
+    /*layout-children*/
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+    grid-auto-rows: 1fr;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+}
+
+div#agl-demo tabview > tab-nav {
+    display: flex;
+    flex-direction: row;
+    justify-items: left;
+}
+
+div#agl-demo tab {
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+    overflow: hidden;
+}
+
+div#agl-demo tabview > tab-nav > tab-header {
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+    /* style */
+    border: solid;
+    border-width: 1px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    padding: 5px;
+    background-color: #e0e0e0;
+}
+
+div#agl-demo tabview > tab-nav > tab-header:hover {
+    background-color: white;
+}
+
+div#agl-demo tabview > tab-nav > tab-header.tab-active {
+    background-color: #f0f0f0;
+    border-bottom: none;
+}
+
+div#agl-demo tabview > tab {
+    margin: 0;
+    grid-row: 2;
+    grid-column-start: 1;
+    grid-column-end: span all;
+    display: none;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+    background-color: #f0f0f0;
+}
+
+div#agl-demo tabview > tab:first-of-type {
+    display: grid;
+}
+
+/* ----------  treeview ---------- */
+
+div#agl-demo treeview > .treeview-loading {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+div#agl-demo treeview {
+    --spacing : 0.7rem;
+    --radius  : 7px;
+    --text-height: 1.4em;
+
+    font-size: 1em;
+    line-height: var(--text-height);
+    overflow: auto;
+}
+div#agl-demo treeview treeview-children {
+    padding: 0;
+    display: none; /* hide children when closed/default */
+    margin-left  : 0;
+}
+
+div#agl-demo treeview treeview-leaf {
+    display      : block;
+    position     : relative;
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
+}
+
+div#agl-demo treeview treeview-leaf span {
+    display      : block;
+    position     : relative;
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
+}
+
+div#agl-demo treeview treeview-branch {
+    cursor: pointer;
+    user-select: none;
+    display: block;
+    position     : relative;
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
+}
+
+div#agl-demo treeview treeview-branch span {
+    display      : block;
+    position     : relative;
+    padding-left : calc(2 * var(--radius));
+}
+
+div#agl-demo treeview treeview-branch span:hover {
+    background-color: azure;
+}
+
+/* vertical lines */
+div#agl-demo treeview treeview-children > *  {
+    padding-left : calc(2 * var(--spacing) - var(--radius) - 2px);
+    border-left : 2px solid #ddd;
+    position: relative;
+}
+
+div#agl-demo treeview treeview-children  > *:last-child {
+    border-color : transparent;
+}
+
+/* horizontal lines */
+div#agl-demo treeview treeview-children treeview-branch:before {
+    content      : '';
+    display      : block;
+    position     : absolute;
+    top          : calc(var(--text-height)/-2);
+    left         : -2px;
+    width        : calc(var(--spacing));
+    height       : calc(var(--text-height));
+    border       : solid #ddd;
+    border-width : 0 0 2px 2px;
+}
+
+div#agl-demo treeview treeview-children treeview-leaf:before {
+    content      : '';
+    display      : block;
+    position     : absolute;
+    top          : calc(var(--text-height)/-2);
+    left         : -2px;
+    width        : calc(var(--spacing));
+    height       : calc(var(--text-height));
+    border       : solid #ddd;
+    border-width : 0 0 2px 2px;
+}
+
+/* Markers */
+div#agl-demo treeview treeview-leaf > span:before {
+    content: " ";
+    text-align: center;
+    line-height : calc(2 * var(--radius) - 2px);
+    z-index: 1;
+
+    display       : block;
+    position      : absolute;
+    top           : calc( (var(--text-height) - var(--radius)*2)/2 );
+    left          : calc(-1 * var(--radius) );
+    width         : calc(2 * var(--radius));
+    height        : calc(2 * var(--radius));
+    border-radius : 50%;
+    background    : #ddd;
+}
+
+div#agl-demo treeview treeview-branch > span:before {
+    content: "+";
+    text-align: center;
+    line-height : calc(2*var(--radius) - 2px);
+    z-index: 1;
+
+    display       : block;
+    position      : absolute;
+    top           : calc( (var(--text-height) - var(--radius)*2)/2 );
+    left          : calc(-1 * var(--radius) );
+    width         : calc(2 * var(--radius));
+    height        : calc(2 * var(--radius));
+    border-radius : 50%;
+    background    : #ddd;
+
+}
+
+div#agl-demo treeview treeview-branch[open] > span:before {
+    content: "-";
+}
+
+div#agl-demo treeview treeview-branch[open] > treeview-children {
+    display: block; /* show children when open */
+}
+
+/* ----------  demo ---------- */
+div#agl-demo {
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+div#agl-demo dialog {
+    z-index: 99;
+    max-width: 800px;
+}
+
+div#agl-demo dialog article section {
+    display: flex;
+    flex-direction: column;
+}
+
+div#agl-demo dialog::backdrop {
+    background-color: #e0e0e099;
+}
+
+div#agl-demo dialog p {
+    margin: 5px;
+}
+
+div#agl-demo > article {
+    /*layout-children*/
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas: "header" "section";
+}
+
+div#agl-demo > article > header {
+    grid-area: header;
+    display: flex;
+    flex-direction: column;
+}
+
+div#agl-demo > article > header > section.agl-menubar {
+    background-color: aliceblue;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+div#agl-demo > article > header > section.agl-menubar > h1 {
+    margin: 5px;
+    font-size: 1.5em;
+    flex-basis: content;
+}
+
+div#agl-demo > article > header > section.agl-menubar  h2 {
+    margin: 5px;
+    font-size: 1em;
+    flex-basis: content;
+}
+
+div#agl-demo > article > header > section.agl-menubar > nav {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+div#agl-demo > article > header > section.agl-menubar > nav > a:hover {
+    background-color: aqua;
+}
+
+div#agl-demo > article > header   section.agl-options {
+    display: flex;
+    flex-direction: column;
+}
+
+div#agl-demo > article > header   section.agl-options div {
+    display: flex;
+    flex-direction: row;
+}
+
+div#agl-demo > article > header   section.agl-options select {
+    height: inherit;
+    padding: 1px;
+}
+
+div#agl-demo > article > header   section.agl-options div * {
+
+}
+
+div#agl-demo > article > header   section.agl-options label {
+    margin: 5px;
+    font-size: 1em;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+div#agl-demo > article > section {
+    grid-area: section;
+}
+
+div#agl-demo section {
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+    overflow: hidden;
+}
+
+div#agl-demo tab#Sentence {
+    grid-template-columns: 5fr 4fr;
+    grid-template-areas: "sentence trees";
+}
+
+div#agl-demo tab#Sentence section.sentence {
+    grid-area: sentence;
+}
+
+div#agl-demo tab#Sentence section.trees {
+    grid-area: trees;
+    background-color: blanchedalmond;
+}
+
+div#agl-demo tab#parse {
+    background-color: #f0f0f0;;
+}
+
+div#agl-demo tab#ast {
+    background-color: #f0f0f0;;
+}
+
+div#agl-demo agl-editor {
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+div#agl-demo tab#Grammar {
+    grid-template-columns: 5fr 4fr;
+    grid-template-areas: "grammar typemodel";
+}
+
+div#agl-demo tab#Grammar section.grammar {
+    grid-area: grammar;
+}
+
+div#agl-demo tab#Grammar article.typemodel {
+    grid-area: typemodel;
+    background-color: blanchedalmond;
+    display: flex;
+    flex-direction: column;
+}
+
+div#agl-demo tab#Grammar article > header {
+    display: flex;
+    flex-direction: row;
+}
+
+div#agl-demo tab#Grammar article > header > p {
+    margin: 0.5em;
+}
+
+div#agl-demo tab#Configuration > div {
+    display: flex;
+    flex-direction: column;
+}
+
+div#agl-demo section.configuration {
+    margin: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.ace_marker_text_error {
+    position: absolute;
+    border-bottom: 1px solid red;
+}

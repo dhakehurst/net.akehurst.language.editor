@@ -1,7 +1,24 @@
-
-val version_agl:String by project
+plugins {
+    id("project-conventions")
+    alias(libs.plugins.reflect)
+}
 
 dependencies {
+    commonMainApi(project(":agl-editor-api"))
+    commonMainImplementation(libs.nak.kotlinx.logging.common)
+    commonMainImplementation(libs.nak.kotlinx.reflect)
+}
 
-    commonMainApi("net.akehurst.language:agl-processor:$version_agl")
+exportPublic {
+    exportPatterns.set(listOf(
+        "net.akehurst.language.editor.common.*"
+    ))
+}
+
+kotlinxReflect {
+    forReflectionMain.set(
+        listOf(
+            "net.akehurst.language.editor.common.*"
+        )
+    )
 }

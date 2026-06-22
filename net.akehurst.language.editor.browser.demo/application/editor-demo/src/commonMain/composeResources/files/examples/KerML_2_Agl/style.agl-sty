@@ -1,0 +1,4 @@
+$$ "'(\'|[^'])+'" {
+    foreground: blue;
+    font-weight: bold;
+}

@@ -1,0 +1,153 @@
+/**
+ * Copyright (C) 2020 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.akehurst.language.editor.language.service
+
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.editor.api.EditorOptions
+import net.akehurst.language.editor.api.EndPointIdentity
+import net.akehurst.language.editor.api.RequestIdentity
+import net.akehurst.language.editor.common.AglComponents
+import net.akehurst.language.editor.common.objectJS
+import net.akehurst.language.editor.language.service.messages.*
+import org.w3c.dom.*
+import org.w3c.dom.events.EventTarget
+import kotlin.time.DurationUnit
+import kotlin.time.measureTimedValue
+
+class AglWorkerClient<AsmType : Any, ContextType : Any>(
+    val agl: AglComponents<AsmType, ContextType>,
+    val worker: AbstractWorker
+) {
+
+    companion object {
+        fun terminateSharedWorker(workerScriptName: String) {
+            val w = SharedWorker(workerScriptName, options = WorkerOptions(type = WorkerType.MODULE))
+            w.port.close()
+        }
+    }
+
+    //lateinit var worker: AbstractWorker
+    val sharedWorker: Boolean = this.worker is SharedWorker
+    var setStyleResult: (message: MessageSetStyleResponse) -> Unit = { _ -> }
+    var processorCreateResult: (message: MessageProcessorCreateResponse) -> Unit = { _ -> }
+    var parseResult: (message: MessageParseResult) -> Unit = { _ -> }
+    var lineTokens: (message: MessageLineTokens) -> Unit = { _ -> }
+    var syntaxAnalysisResult: (message: MessageSyntaxAnalysisResult) -> Unit = { _ -> }
+    var semanticAnalysisResult: (message: MessageSemanticAnalysisResult) -> Unit = { _ -> }
+    var codeCompleteResult: (message: MessageCodeCompleteResult) -> Unit = { _ -> }
+
+    fun initialise() {
+        this.worker.onerror = {
+            this.agl.logger.logError { it.toString() }
+        }
+        val tgt: EventTarget = if (this.sharedWorker) (this.worker as SharedWorker).port else this.worker as Worker
+        tgt.addEventListener("message", { ev ->
+            try {
+                val data = (ev as MessageEvent).data
+                if (data is String) {
+                    val str = ev.data as String
+                    when {
+                        str.startsWith("Error:") -> this.agl.logger.logError { str.substringAfter("Error:") }
+                        str.startsWith("Info:") -> this.agl.logger.logInformation { str.substringAfter("Info:") }
+
+                        else -> {
+                            val tv = measureTimedValue {
+                                AglWorkerSerialisation.deserialise<AglWorkerMessage>(str)
+                            }
+                            this.agl.logger.logDebug { "Deserialisation of worker message (length=${str.length}) took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
+                            val msg: AglWorkerMessage = tv.value
+                            this.receiveMessageFromWorker(msg)
+                        }
+                    }
+                } else {
+                    this.agl.logger.logError { "Handling message from Worker, data content should be a String, got - '${ev.data}'" }
+                }
+            } catch (e: Throwable) {
+                this.agl.logger.logError(e) { "Handling message from Worker" }
+            }
+        }, objectJS { })
+        //need to explicitly start because used addEventListener
+        if (this.sharedWorker) {
+            (this.worker as SharedWorker).port.start()
+        } else {
+            this.worker as Worker
+        }
+    }
+
+    private fun receiveMessageFromWorker(msg: AglWorkerMessage) {
+        this.agl.logger.logTrace { "Received message: $msg" }
+        if (this.agl.editorId == msg.endPoint.editorId) { //TODO: should  test for sessionId also
+            when (msg) {
+                is MessageSetStyleResponse -> this.setStyleResult(msg)
+                is MessageProcessorCreateResponse -> this.processorCreateResult(msg)
+                is MessageParseResult -> this.parseResult(msg)
+                is MessageLineTokens -> this.lineTokens(msg)
+                is MessageSyntaxAnalysisResult -> this.syntaxAnalysisResult(msg)
+                is MessageSemanticAnalysisResult -> this.semanticAnalysisResult(msg)
+                is MessageCodeCompleteResult -> this.codeCompleteResult(msg)
+                else -> error("Unknown Message type")
+            }
+        } else {
+            //msg for different editor or language changed and no longer relevant
+        }
+    }
+
+    fun sendToWorker(msg: AglWorkerMessage, transferables: Array<dynamic> = emptyArray()) {
+        //val jsObj = msg.toJsObject()
+        //val str = AglWorkerMessage.serialise(msg)
+        this.agl.logger.logTrace { "Sending message: $msg" }
+        val tv = measureTimedValue { AglWorkerSerialisation.serialise(msg) }
+        this.agl.logger.logTrace { "Serialisation took ${tv.duration.toString(DurationUnit.MILLISECONDS)}" }
+        val str = tv.value
+        if (this.sharedWorker) {
+            (this.worker as SharedWorker).port.postMessage(str, transferables)
+        } else {
+            (this.worker as Worker).postMessage(str, transferables)
+        }
+    }
+
+    fun createProcessor(
+        languageId: LanguageIdentity,
+        requestId: RequestIdentity,
+        editorId: String,
+        sessionId: String,
+        grammarStr: String,
+        typeModelStr: String?,
+        asmTransformStr: String?,
+        crossReferenceStr: String?,
+        editorOptions: EditorOptions
+    ) {
+        this.sendToWorker(MessageProcessorCreate(EndPointIdentity(editorId, sessionId), requestId, languageId, grammarStr, typeModelStr, asmTransformStr, crossReferenceStr, editorOptions))
+    }
+
+    fun interrupt(languageId: LanguageIdentity, editorId: String, requestId: RequestIdentity, sessionId: String) {
+        this.sendToWorker(MessageParserInterruptRequest(EndPointIdentity(editorId, sessionId), requestId, languageId, "New parse request"))
+    }
+
+    fun processSentence(languageId: LanguageIdentity, requestId: RequestIdentity, editorId: String, sessionId: String, sentence: String, processOptions: ProcessOptions<AsmType, ContextType>) {
+        this.sendToWorker(MessageProcessRequest(EndPointIdentity(editorId, sessionId), requestId, languageId, sentence, processOptions))
+    }
+
+    fun setStyle(languageId: LanguageIdentity, requestId: RequestIdentity, editorId: String, sessionId: String, css: String) {
+        this.sendToWorker(MessageSetStyle(EndPointIdentity(editorId, sessionId), requestId, languageId, css))
+    }
+
+    fun getCompletionItems() {
+
+    }
+}

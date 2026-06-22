@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Agl Editor Example (Ace)</title>
+    <link rel="stylesheet" type="text/css" href="./ace-builds/ace.css">
+    <link rel="stylesheet" type="text/css" href="./index.css">
+</head>
+<body>
+
+<main>
+        <textarea id='grammar'>
+namespace test
+grammar Test {
+    skip WS = "\s+" ;
+    greeting = 'Hello' 'World!' ;
+}
+        </textarea>
+    
+    <div id="editor" style="height:600px"> </div>
+
+    <script src="./ace-builds/src-noconflict/ace.js"></script>
+    <script src="./kotlin-ace-loader/net.akehurst.language.editor-kotlin-ace-loader.js"></script>
+    <script src="./agl-editor-ace/net.akehurst.language.editor-agl-editor-ace.js"></script>
+    <script>
+        
+    </script>
+</main>
+
+</body>
+
+</html>

@@ -16,14 +16,29 @@
 
 package net.akehurst.language.editor.common
 
+import org.w3c.dom.Document
+import org.w3c.dom.css.CSSStyleSheet
+
 inline fun objectJS(init: dynamic.() -> Unit): dynamic {
     val o:dynamic = js("{}")
     init(o)
     return o
 }
 
-inline  fun <T> objectJSTyped(init: T.() -> Unit): dynamic {
+inline fun <T:Any> objectJSTyped(init: T.() -> Unit): T {
     val o:dynamic =  js("{}")
     init(o)
-    return o
+    return o as T
+}
+
+fun <T : Any> T.set(key: String, value: Any): T {
+    val self = this
+    js("self[key] = value")
+    return self
+}
+
+fun Document.adoptCss(css: String) {
+    val sheet = object : CSSStyleSheet() {}
+    sheet.asDynamic().replace(css)
+    this.asDynamic().adoptedStyleSheets.push(sheet)
 }

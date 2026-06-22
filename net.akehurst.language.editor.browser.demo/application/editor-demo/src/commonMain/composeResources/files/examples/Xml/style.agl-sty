@@ -1,0 +1,24 @@
+namespace net.akehurst.language.xml
+styles Xml {
+    comment {
+      foreground: gray;
+      font-style: italic;
+    }
+    NAME {
+      foreground: red;
+      font-weight: bold;
+    }
+
+    CHARDATA {
+      foreground: green;
+    }
+    attribute {
+      foreground: blue;
+    }
+    VALUE {
+    foreground: green;
+    }
+    '<','/>','=' {
+      foreground: purple;
+    }
+}

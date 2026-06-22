@@ -1,0 +1,334 @@
+/**
+ * Copyright (C) 2020 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.akehurst.language.editor.language.service.messages
+
+import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.api.processor.LanguageIdentity
+import net.akehurst.language.api.processor.ProcessOptions
+import net.akehurst.language.editor.api.*
+import net.akehurst.language.editor.common.AglTokenDefault
+import net.akehurst.language.issues.api.LanguageIssue
+import net.akehurst.language.scanner.api.Matchable
+import net.akehurst.language.sppt.api.TreeData
+import net.akehurst.language.style.api.AglStyleDomain
+import kotlin.math.min
+
+object EditorMessage {
+    const val komposite = """namespace net.akehurst.language.editor.language.service.messages
+    class AglWorkerMessage {
+        cmp endPoint
+        cmp requestId
+    }
+    class AglWorkerMessageResponse {
+        cmp issues
+    }
+    class MessageProcessorCreate {
+        cmp editorOptions
+    }
+    class MessageSyntaxAnalysisResult {
+        cmp asm
+    }
+    class MessageLineTokens {
+        cmp lineTokens
+    }
+    class MessageProcessorCreateResponse {
+        cmp scannerMatchables
+    }
+    class MessageSemanticAnalysisResult {
+        cmp asm
+    }
+    class MessageCodeCompleteResult {
+        cmp completionItems
+    }
+
+    class MessageCodeCompleteRequest {
+        cmp options
+    }
+    class MessageProcessRequest {
+        cmp options
+    }
+    class MessageParseResult2 {
+        cmp treeData
+    }
+    class MessageSetStyleResponse {
+        cmp styleModel
+    }
+    class MessageScanResult {
+        cmp lineTokens
+    }
+
+namespace net.akehurst.language.issues.api
+    class LanguageIssue {
+        cmp location
+    }
+
+namespace net.akehurst.language.api.processor
+    interface ProcessOptions {
+        cmp scan
+        cmp parse
+        cmp syntaxAnalysis
+        cmp semanticAnalysis
+        cmp completionProvider
+    }
+    interface SemanticAnalysisOptions {
+        cmp sentenceContext
+        cmp locationMap
+    }
+
+namespace net.akehurst.language.agl.simple
+    interface ContextWithScope {
+        cmp scopeForSentence
+    }
+
+namespace net.akehurst.language.agl.semanticAnalyser
+    interface ContextFromTypeModel {
+        cmp typeModel
+    }
+    
+namespace net.akehurst.language.sppt.treedata
+interface TreeDataComplete2 {
+    cmp initialSkip
+    cmp _complete
+    cmp _preferred
+    cmp _skipDataAfter
+    cmp _embeddedFor
+}
+interface SpptDataNode {
+    cmp rule
+}
+"""
+}
+
+abstract class AglWorkerMessage(
+    val action: String
+) {
+    abstract val endPoint: EndPointIdentity
+    abstract val requestId: RequestIdentity
+}
+
+abstract class AglWorkerMessageResponse(action: String) : AglWorkerMessage(action) {
+    abstract val status: MessageResponseStatus
+    abstract val issues: List<LanguageIssue>
+}
+
+data class MessageProcessorCreate(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    val languageId:LanguageIdentity,
+    val grammarStr: String,
+    val typesModelStr: String?,
+    val transformStr: String?,
+    val crossReferenceStr: String?,
+    val editorOptions: EditorOptions
+) : AglWorkerMessage("MessageProcessorCreate") {
+    override fun toString(): String {
+        val gs = when {
+            //null == grammarStr -> "null"
+            grammarStr.isBlank() -> "''"
+            else -> "'...'"
+        }
+        val tm = when {
+            null == typesModelStr -> "null"
+            typesModelStr.isBlank() -> "''"
+            else -> "'...'"
+        }
+        val tr = when {
+            null == transformStr -> "null"
+            transformStr.isBlank() -> "''"
+            else -> "'...'"
+        }
+        val cr = when {
+            null == crossReferenceStr -> "null"
+            crossReferenceStr.isBlank() -> "''"
+            else -> "'...'"
+        }
+        return "${super.action}(endPoint=$endPoint, grammarStr=$gs, typeModelStr=$tm, asmTransformStr=$tr, crossReferenceStr=$cr)"
+    }
+}
+
+data class MessageProcessorCreateResponse(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    override val issues: List<LanguageIssue>,
+    val scannerMatchables: List<Matchable>
+) : AglWorkerMessageResponse("MessageProcessorCreateResponse")
+
+data class MessageProcessorDelete(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    val languageId:LanguageIdentity
+) : AglWorkerMessage("MessageProcessorDelete") {
+}
+
+data class MessageProcessorDeleteResponse(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String
+) : AglWorkerMessageResponse("MessageProcessorDeleteResponse") {
+    override val issues: List<LanguageIssue> = mutableListOf()
+}
+
+data class MessageProcessRequest<AsmType : Any, ContextType : Any>(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    val languageId: LanguageIdentity,
+    val text: String,
+    val options: ProcessOptions<AsmType,ContextType>
+) : AglWorkerMessage("MessageProcessRequest") {
+    override fun toString(): String = "${super.action}(endPoint=$endPoint, text='${
+        text.substring(
+            0,
+            min(10, text.length)
+        )
+    }')"
+}
+
+data class MessageScanResult(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    override val issues: List<LanguageIssue>,
+    val lineTokens: List<AglTokenDefault>
+) : AglWorkerMessageResponse("MessageScanResult") {
+    override fun toString(): String =
+        "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, lineTokens='...')"
+}
+
+data class MessageParseResult(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    override val issues: List<LanguageIssue>,
+    val treeSerialised: String? // custom serialisation because auto serialisation of SPPT impl classes is too complex
+) : AglWorkerMessageResponse("MessageParseResult") {
+    override fun toString(): String =
+        "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, treeSerialised='...')"
+}
+
+data class MessageParseResult2(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    override val issues: List<LanguageIssue>,
+    val treeData: TreeData
+) : AglWorkerMessageResponse("MessageParseResult") {
+    override fun toString(): String =
+        "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, treeData='...')"
+}
+
+data class MessageSyntaxAnalysisResult(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    override  val issues: List<LanguageIssue>,
+    val asm: Any?
+) : AglWorkerMessageResponse("MessageSyntaxAnalysisResult") {
+    override fun toString(): String =
+        "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, asm='...')"
+}
+
+data class MessageSemanticAnalysisResult(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    override val issues: List<LanguageIssue>,
+    val asm: Any?
+) : AglWorkerMessageResponse("MessageSemanticAnalysisResult") {
+    override fun toString(): String =
+        "${super.action}(languageId=$endPoint=$endPoint, status=$status, message=$message, issues=$issues, asm='...'))"
+}
+
+data class MessageParserInterruptRequest(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    val languageId:LanguageIdentity,
+    val reason: String
+) : AglWorkerMessage("MessageParserInterruptRequest")
+
+data class MessageLineTokens(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    val startLine:Int,
+    val lineTokens: List<List<AglToken>>,
+) : AglWorkerMessageResponse("MessageLineTokens") {
+    override val issues: List<LanguageIssue> = mutableListOf()
+
+    override fun toString(): String = "${super.action}(endPoint=$endPoint, status=$status, message=$message, lineTokens='...'))"
+}
+
+data class MessageSetStyle(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    val languageId:LanguageIdentity,
+    val styleStr: String
+) : AglWorkerMessage("MessageSetStyle") {
+    override fun toString(): String = "${super.action}(endPoint=$endPoint, styleStr='...')"
+}
+
+data class MessageSetStyleResponse(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    override val issues: List<LanguageIssue>,
+    val styleModel: AglStyleDomain?
+) : AglWorkerMessageResponse("MessageSetStyleResult")
+
+data class MessageCodeCompleteRequest<AsmType : Any, ContextType : Any>(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    val languageId:LanguageIdentity,
+    val text: String,
+    val position: Int,
+    val options: ProcessOptions<AsmType,ContextType>
+) : AglWorkerMessage("MessageCodeCompleteRequest")
+
+data class MessageCodeCompleteResult(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String,
+    override val issues: List<LanguageIssue>,
+    val offset: Int,
+    val completionItems: List<CompletionItem>
+) : AglWorkerMessageResponse("MessageCodeCompleteResult")
+
+data class MessageGrammarAmbiguityAnalysisRequest(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    val languageId:LanguageIdentity,
+) : AglWorkerMessage("MessageGrammarAmbiguityAnalysisRequest") {
+    override fun toString(): String = "${super.action}(endPoint=$endPoint)"
+}
+
+data class MessageGrammarAmbiguityAnalysisResult(
+    override val endPoint: EndPointIdentity,
+    override val requestId: RequestIdentity,
+    override val status: MessageResponseStatus,
+    val message: String?,
+    override val issues: List<LanguageIssue>
+) : AglWorkerMessageResponse("MessageGrammarAmbiguityAnalysisResult")

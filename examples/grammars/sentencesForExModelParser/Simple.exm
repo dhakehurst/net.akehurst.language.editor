@@ -1,0 +1,13 @@
+model Simple {
+    Entity ent1 {
+        myTextAttribute : String
+        method meth56 ( ): Integer { 
+            "45" 
+        }
+    }
+
+model wide Methods: 
+    method meth21 ( ): Integer { 
+        "786" 
+    }
+}

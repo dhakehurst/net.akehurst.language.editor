@@ -1,0 +1,60 @@
+namespace com.itemis.create.Global {
+    import external  //imports types AnnotationType, RegularState, BuiltInType
+
+    identify Interface by id
+    identify ImportedName by string
+    identify VariableDeclaration by id
+    identify EventDeclaration by id
+    identify AliasDeclaration by id
+    identify OperationDeclaration by id
+    scope Interface {
+        identify VariableDeclaration by id
+        identify EventDeclaration by id
+        identify AliasDeclaration by id
+        identify OperationDeclaration by id
+    }
+    scope OperationDeclaration {
+        identify Parameter by id
+    }
+    references {
+        in Annotation {
+            property fqn refers-to AnnotationType
+        }
+        in ActiveStateReferenceExpression {
+            property fqn refers-to RegularState
+        }
+        in TypeCastExpression {
+            property typeSpecifier.fqn refers-to BuiltInType
+        }
+        in FunctionCall {
+            property id refers-to OperationDeclaration
+            forall argumentList.arguments {
+                property argumentId.id refers-to Parameter from id  // id should be a reference to an OperationDeclaration at this point
+            }
+        }
+        in TypeSpecifier {
+            property fqn refers-to BuiltInType
+        }
+    }
+}
+
+namespace com.itemis.create.States {
+}
+
+namespace com.itemis.create.Transitions {
+
+
+
+}
+
+namespace com.itemis.create.Statechart {
+    identify State by name
+    references {
+        in Statechart {
+            forall transitions.transition {
+                property name refers-to State //from regions->{name=='main region'}
+                property name2 refers-to State
+            }
+        }
+    }
+}

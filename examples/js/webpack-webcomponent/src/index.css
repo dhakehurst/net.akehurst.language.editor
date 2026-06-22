@@ -1,0 +1,49 @@
+html {
+    /*layout-self*/
+    height: 100vh;
+    width: 100vw;
+
+    /*layout-children*/
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+
+    /* style */
+    background-color: burlywood;
+}
+
+body {
+    /*layout-self*/
+
+    /*layout-children*/
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+main {
+    display: grid;
+    grid-template-areas:
+        "grammar style"
+        "sentence result"
+    ;
+    
+}
+
+agl-editor-ace {
+    border: 1px solid black;
+}
+
+main > #grammarEditor {
+    grid-area: grammar;
+}
+
+main > #styleEditor {
+    grid-area: style;
+}
+
+main > #sentenceEditor {
+    grid-area: sentence;
+}
+
+main > #result {
+    grid-area: result;
+}

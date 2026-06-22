@@ -1,0 +1,34 @@
+html {
+    /*layout-self*/
+    height: 100vh;
+    width: 100vw;
+
+    /*layout-children*/
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+
+    /* style */
+    background-color: burlywood;
+}
+
+body {
+    /*layout-self*/
+
+    /*layout-children*/
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+main {
+    display: grid;
+    grid: auto-flow minmax(0, 1fr) / minmax(0, 1fr);
+}
+
+/* hide the annoying bit CK puts at the bottom of body*/
+.ck-body-wrapper {
+    display:none;
+}
+/* set line height fr ck editor */
+.ck.ck-content p {
+    margin: 0;
+}

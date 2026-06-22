@@ -1,0 +1,80 @@
+@startuml
+!pragma layout smetana
+
+title Scenario: Start Up
+hide footbox
+
+actor user
+participant demo
+participant grammarEditor
+participant styleEditor
+participant refsEditor
+participant sencEditor
+participant worker
+
+grammarEditor -> worker
+grammarEditor -> worker: setStyle()
+
+demo -> demo: loadExamples
+demo -> grammarEditor: set sentence to initial example grammarStr
+demo -> styleEditor:
+demo -> refsEditor:
+demo -> sencEditor: set sentenceContext
+demo -> sencEditor: update(grammar, refs, style)
+demo -> sencEditor: set sentence
+
+grammarEditor -> worker: createProcessor(AglGrammar)
+grammarEditor -> worker: setStyle()
+styleEditor -> worker: createProcessor(AglStyle)
+styleEditor -> worker: setStyle()
+refsEditor -> worker: createProcessor(AglStyle)
+refsEditor -> worker: setStyle()
+grammarEditor -> worker: interrupt()
+grammarEditor -> worker: processRequest("")
+grammarEditor -> worker: setStyle()
+styleEditor -> worker: setStyle()
+refsEditor -> worker: setStyle()
+sencEditor -> worker: createProcessor(grammarEditor.sentence, refsEditor.sentence)
+sencEditor -> worker: setStyle(styleEditor.sentence)
+grammarEditor -> worker: interrupt()
+grammarEditor -> worker: processRequest(grammarEditor.sentence)
+styleEditor -> worker: interrupt()
+styleEditor -> worker: processRequest(styleEditor.sentence)
+refsEditor -> worker: interrupt()
+refsEditor -> worker: processRequest(refsEditor.sentence)
+worker -> sencEditor: SUCCESS createProcessor(matchables)
+sencEditor -> worker: interrupt()
+sencEditor -> worker: processRequest(grammarEditor.sentence)
+worker -> grammarEditor: SUCCESS createProcessor(matchables)
+grammarEditor -> worker: interrupt()
+grammarEditor -> worker: processRequest(grammarEditor.sentence)
+worker --> styleEditor: SUCCESS createProcessor(matchables)
+styleEditor --> worker: interrupt()
+styleEditor --> worker: processRequest(styleEditor.sentence)
+worker --> refsEditor: SUCCESS createProcessor(matchables)
+refsEditor --> worker: interrupt()
+refsEditor --> worker: processRequest(refsEditor.sentence)
+worker --> sencEditor: SUCCESS setStyle
+sencEditor --> user: colour text
+worker --> grammarEditor: SUCCESS setStyle
+grammarEditor --> user: colour text
+worker --> grammarEditor: START parse
+worker --> grammarEditor: FAILURE parse
+worker --> grammarEditor: SUCCESS setStyle
+worker --> grammarEditor: START parse
+worker --> grammarEditor: lineTokens(...)
+grammarEditor --> user: colour text
+worker --> grammarEditor: SUCCESS parse(pt)
+worker --> grammarEditor: START syntaxAnalysis()
+worker --> grammarEditor: SUCCESS syntaxAnalysis()
+worker --> grammarEditor: START semanticAnalysis()
+worker --> grammarEditor: SUCCESS semanticAnalysis(grammar issues)
+grammarEditor --> user: grammar issues
+styleEditor --> worker: interrupt()
+styleEditor --> worker: processRequest(styleEditor.sentence)
+refsEditor --> worker: interrupt()
+refsEditor --> worker: processRequest(refsEditor.sentence)
+worker --> styleEditor: SUCCESS setStyle
+worker --> styleEditor: SUCCESS setStyle
+
+@enduml

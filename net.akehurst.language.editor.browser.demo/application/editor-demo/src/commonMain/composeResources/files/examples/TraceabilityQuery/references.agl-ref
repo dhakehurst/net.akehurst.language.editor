@@ -1,0 +1,20 @@
+namespace query.TIM
+    identify NodeType by name
+    identify LinkType by linkTypeId.name
+
+    references {
+        in LinkType {
+            property name refers-to NodeType
+            property name2 refers-to NodeType
+        }
+    }
+
+
+namespace query.GraphPathExpressions
+    import query.TIM
+
+    references {
+        in NodeTypeReference {
+            property name refers-to NodeType
+        }
+    }

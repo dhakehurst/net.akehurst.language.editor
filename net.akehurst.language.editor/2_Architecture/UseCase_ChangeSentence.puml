@@ -1,0 +1,9 @@
+@startuml
+!pragma layout smetana
+
+user ----> editor: change text
+editor --> worker: process(text)
+worker --> editor: TODO
+
+
+@enduml

@@ -1,0 +1,26 @@
+$$ "'(\'|[^'])+'" {
+    foreground: green;
+    font-weight: bold;
+}
+compositionOperator {
+    foreground: green;
+    font-weight: bold;
+}
+logicalOperator {
+    foreground: green;
+    font-weight: bold;
+}
+NAME {
+  foreground: blue;
+  font-style: italic;
+}
+SINGLE_QUOTE_STRING {
+    foreground: purple;
+}
+range {
+    foreground: orange;
+}
+timestamp {
+  foreground: red;
+  font-style: italic;
+}

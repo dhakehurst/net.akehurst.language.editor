@@ -1,0 +1,57 @@
+[versions]
+project = "2.2.21"
+
+kotlin = "2.2.21"
+dokka = "2.1.0"
+buildconfig = "6.0.7"
+exportPublic = "2.2.21"
+reflect = "2.2.21"
+vanniktech = "0.35.0"
+
+nal-agl = "4.2.2.21"
+
+nak-compose-code-editor = "2.2.21"
+
+nak-kserialisation = "2.2.21"
+nak-kotlinx = "2.2.21"
+#nak-html-builder = "2.2.21-SNAPSHOT"
+#nak-codemirror-api = "2.2.20"
+kotlinx-coroutines = "1.10.2"
+compose = "1.9.3"
+
+kotest = "5.9.1"
+
+[libraries]
+nal-agl-processor = { module = "net.akehurst.language:agl-processor", version.ref = "nal-agl" }
+nal-agl-generators = { module = "net.akehurst.language:agl-generators", version.ref = "nal-agl" }
+nal-kotlinx-komposite = { module = "net.akehurst.language:kotlinx-komposite", version.ref = "nal-agl" }
+
+nak-compose-code-editor-api = { module = "net.akehurst.kotlin.compose:code-editor-api", version.ref = "nak-compose-code-editor" }
+nak-compose-code-editor = {module="net.akehurst.kotlin.compose:code-editor",version.ref = "nak-compose-code-editor" }
+
+nak-kserialisation-json = { module = "net.akehurst.kotlin.kserialisation:kserialisation-json", version.ref = "nak-kserialisation" }
+nak-json = { module = "net.akehurst.kotlin.kserialisation:json", version.ref = "nak-kserialisation" }
+nak-kotlinx-logging-api = { module = "net.akehurst.kotlinx:kotlinx-logging-api", version.ref = "nak-kotlinx" }
+nak-kotlinx-logging-common = { module = "net.akehurst.kotlinx:kotlinx-logging-common", version.ref = "nak-kotlinx" }
+nak-kotlinx-collections = { module = "net.akehurst.kotlinx:kotlinx-collections", version.ref = "nak-kotlinx" }
+nak-kotlinx-reflect = { module = "net.akehurst.kotlinx:kotlinx-reflect", version.ref = "nak-kotlinx" }
+#nak-html-builder = { module = "net.akehurst.kotlin.html5:html-builder", version.ref = "nak-html-builder" }
+#nak-codemirror-api = { module = "net.akehurst.kotlin.editor:codemirror-api", version.ref = "nak-codemirror-api" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+exportPublic =  { id = "net.akehurst.kotlin.gradle.plugin.exportPublic", version.ref = "exportPublic" }
+reflect =  { id = "net.akehurst.kotlinx.kotlinx-reflect-gradle-plugin", version.ref = "reflect" }
+buildconfig =  { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
+vanniktech-maven-publish = { id="com.vanniktech.maven.publish", version.ref="vanniktech" }
+
+compose = { id="org.jetbrains.compose", version.ref="compose" }
+kotlin-compose = { id="org.jetbrains.kotlin.plugin.compose", version.ref="kotlin" }

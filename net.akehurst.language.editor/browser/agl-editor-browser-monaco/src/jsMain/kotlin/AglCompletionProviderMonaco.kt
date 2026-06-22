@@ -1,0 +1,66 @@
+/**
+ * Copyright (C) 2020 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.akehurst.language.editor.browser.monaco
+
+import monaco.CancellationToken
+import monaco.IPosition
+import monaco.editor.ITextModel
+import net.akehurst.language.agl.Agl
+import net.akehurst.language.api.processor.CompletionItem
+import net.akehurst.language.editor.common.AglComponents
+
+class AglCompletionProviderMonaco<AsmType : Any, ContextType : Any>(
+    val monaco: Monaco,
+    val agl: AglComponents<AsmType, ContextType>
+) : monaco.languages.CompletionItemProvider {
+    override val triggerCharacters: Array<String>? = null
+
+    override fun provideCompletionItems(
+        model: ITextModel,
+        position: IPosition,
+        context: monaco.languages.CompletionContext,
+        token: CancellationToken
+    ): monaco.languages.CompletionList {
+        val posn = model.getOffsetAt(position)
+        val wordList = this.getCompletionItems(model, posn);
+        val cil = wordList.map { ci -> monaco.createCompletionItem(position, ci) }
+        return object : monaco.languages.CompletionList {
+            override val incomplete = false
+            override val suggestions: Array<monaco.languages.CompletionItem> = cil.toTypedArray()
+        }
+    }
+
+    override fun resolveCompletionItem(item: monaco.languages.CompletionItem, token: CancellationToken): monaco.languages.CompletionItem? {
+        return null
+    }
+
+    private fun getCompletionItems(model: ITextModel, offset: Int): List<CompletionItem> {
+        val text = model.getValue()
+        val proc = this.agl.languageDefinition.processor
+        val goalRule = this.agl.goalRule
+        return if (null == proc) {
+            emptyList()
+        } else {
+            val result = proc.expectedItemsAt(text, offset,
+                Agl.options {
+                    parse { goalRuleName(goalRule?.value) }
+                }
+            )
+            result.items
+        }
+    }
+}

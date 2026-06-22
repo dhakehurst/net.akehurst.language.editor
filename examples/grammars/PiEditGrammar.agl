@@ -1,0 +1,122 @@
+namespace test
+grammar PiExample {
+
+Editor_Definition
+  = "editor" variable "for" "language" variable (conceptEditor)* ;
+
+conceptEditor =
+            conceptRef curly_begin
+                projection?
+                trigger?
+                symbol?
+            curly_end ;
+
+projection = "@projection" variable? projection_begin
+                   line*
+              projection_end ;
+
+templateSpace = "[ ]+" ;
+
+property_projection =
+                propProjectionStart
+                    expression listJoin? keywordDecl?
+                propProjectionEnd ;
+
+keywordDecl = "@keyword" joinText ;
+
+listJoin = listJoinSimple+ ;
+
+listJoinSimple =      direction
+                    | (listJoinType )
+                    | (joinText     ) ;
+
+joinText = "[" anythingButEndBracket* "]" ;
+
+direction = ("@horizontal" | "@vertical") ;
+
+listJoinType = ("@separator" | "@terminator") ;
+
+propProjectionStart = "${" ;
+propProjectionEnd = "}" ;
+
+text        = anythingBut+ ;
+
+anythingButEndBracket = "[^\]]" sourceChar ;
+
+anythingBut = !("${" | newline | "]" | "[" ) char ;
+
+sourceChar = . ;
+
+newline     = "\r"? "\n" ;
+
+line        = (templateSpace | text | property_projection | subProjection | newline )+ ;
+
+subProjection = projection_begin
+                    "?"?
+                    (templateSpace | text | property_projection )+
+                projection_end ;
+
+conceptReference = variable ;
+
+trigger = "@trigger" "\"" string "\"" ;
+
+symbol = "@symbol"   "\"" string "\"" ;
+
+priority = "priority"      ":"      "\"" string "\"" ;
+
+projection_begin    =      "[" ;
+projection_end      = "]" ;
+
+// These are the parsing rules for the expressions over the language structure,
+// as defined in meta/src/languagedef/metalanguage/PiLangExpressions.ts
+// They are not meant to be used separately, they should be used in the parser for 
+// projectIt parts that use the language expressions.
+// Because they are common they are developed and tested separately, together with the
+// creator functions in LanguageExpressionCreators.ts.
+
+// the following rules should be part of a parser that wants to use PiLangExpressions.ts
+
+conceptRef = variable ;
+
+langExpression = functionExpression
+               | instanceExpression
+               | expression
+               | simpleExpression ;
+
+instanceExpression = variable ':' variable ;
+
+expression = variable dotExpression
+            | variable ;
+
+dotExpression = '.' variable dotExpression? ;
+
+functionExpression =
+    variable round_begin
+        [ langExpression / ',']*
+    round_end ;
+
+simpleExpression = numberliteral ;
+
+// This is a partial grammar file for re-use in other grammars
+
+// the following is basic stuff
+
+curly_begin    =      "{" ;
+curly_end      =      "}" ;
+round_begin    =      "(" ;
+round_end      =      ")" ;
+comma_separator =      "," ;
+semicolon_separator =      ";" ;
+colon_separator  =      ":" ;
+equals_separator  =      "=" ;
+plus_separator =      "+" ;
+
+anyChar             = "[a-zA-Z0-9' ]";
+number              = "[0-9]";
+
+leaf variable            = "[a-zA-Z_][a-zA-Z0-9_]*" ;
+leaf stringLiteral       = '"' anyChar* '"';
+leaf numberLiteral       = number+;
+leaf booleanLiteral      = 'false' | 'true';
+
+}

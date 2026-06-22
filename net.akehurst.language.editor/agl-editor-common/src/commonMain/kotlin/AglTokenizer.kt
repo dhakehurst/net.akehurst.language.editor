@@ -15,113 +15,193 @@
  */
 package net.akehurst.language.editor.common
 
-import net.akehurst.language.api.processor.LanguageProcessor
-import net.akehurst.language.api.sppt.SPPTLeaf
-import net.akehurst.language.api.sppt.SharedPackedParseTree
+import net.akehurst.kotlinx.logging.api.Logger
+import net.akehurst.language.editor.api.AglToken
+import net.akehurst.language.editor.api.EditorStyleIdentity
+import net.akehurst.language.scanner.common.ScanOptionsDefault
+import net.akehurst.language.sentence.common.SentenceDefault
+import kotlin.time.measureTimedValue
 
-open class AglComponents(
-        val languageId: String
-) {
-    val styleHandler = AglStyleHandler(languageId)
-    var processor: LanguageProcessor? = null
-    var goalRule: String? = null
-    var sppt: SharedPackedParseTree? = null
-    var asm: Any? = null
+interface AglTokenizerByWorker<EditorStyleType : Any> {
+
+//    var acceptingTokens: Boolean
+    //val tokensByLine: Map<Int, List<AglToken>>
+
+    fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>)
+    fun reset()
+
 }
 
-class AglLineState(
-        val lineNumber: Int,
-        val leftOverText: String,
-        val tokens: List<AglToken>
-) {
-}
-
-class AglToken(
-        val styles: Array<String>,
-        val value: String,
-        val line: Int,
-        val column: Int
+data class LineTokensResult(
+    val tokens: List<AglTokenDefault>,
+    val state: AglLineState
 )
 
-class AglTokenizer(
-        val agl: AglComponents
+class AglLineState(
+    val lineNumber: Int,
+    val nextLineStartPosition: Int,
+    val leftOverText: String
+) {
+}
+
+class AglTokenDefault(
+    override val styles: List<EditorStyleIdentity>,
+    override val position: Int,
+    override val length: Int
+) : AglToken {
+    override fun toString(): String = "AglToken($position,$length,[${styles.joinToString { it.toString() }}])"
+    override fun hashCode(): Int = arrayOf(styles, position, length).contentDeepHashCode()
+    override fun equals(other: Any?): Boolean = when {
+        other !is AglTokenDefault -> false
+        other.position != this.position -> false
+        other.length != this.length -> false
+        other.styles != this.styles -> false
+        else -> true
+    }
+}
+
+class AglTokenizer<AsmType : Any, ContextType : Any, EditorStyleType : Any>(
+    val agl: AglComponents<AsmType, ContextType>,
+    val logger: Logger
 ) {
 
-    fun getLineTokens(lineText: String, pState: AglLineState, line: Int): AglLineState {
-        val sppt = this.agl.sppt
-        return if (null == sppt) {
-            this.getLineTokensByScan(lineText, pState, line)
-        } else {
-            this.getLineTokensByParse(lineText, pState, line)
+    val tokensByLine = mutableMapOf<Int, List<AglToken>>()
+
+    fun reset() {
+        this.tokensByLine.clear()
+    }
+
+    fun receiveTokens(startLine: Int, tokensForLines: List<List<AglToken>>) {
+        tokensForLines.forEachIndexed { index, tokens ->
+            this.tokensByLine[startLine + index] = tokens
         }
     }
 
-    private fun mapTokenTypeToClass(tokenType: String): String? {
-        var cssClass = this.agl.styleHandler.tokenToClassMap.get(tokenType)
-        return cssClass
-    }
-
-    private fun mapToCssClasses(leaf: SPPTLeaf): List<String> {
-        val metaTagClasses = leaf.metaTags.mapNotNull { this.mapTokenTypeToClass(it) }
-        val otherClasses = if (!leaf.tagList.isEmpty()) {
-            leaf.tagList.mapNotNull { this.mapTokenTypeToClass(it) }
-        } else {
-            listOf(this.mapTokenTypeToClass(leaf.name)).mapNotNull { it }
-        }
-        val classes = metaTagClasses + otherClasses
-        return if (classes.isEmpty()) {
-            listOf("nostyle")
-        } else {
-            classes.toSet().toList()
-        }
-    }
-
-    fun transformToTokens(leafs: List<SPPTLeaf>): List<AglToken> {
-        return leafs.map { leaf ->
-            val cssClasses = this.mapToCssClasses(leaf)
-            var beforeEOL = leaf.matchedText
-            val eolIndex = leaf.matchedText.indexOf('\n');
-            if (-1 != eolIndex) {
-                beforeEOL = leaf.matchedText.substring(0, eolIndex);
+    fun getAllTokensByLine(text: String): Map<Int,List<AglToken>> {
+        return if (tokensByLine.isEmpty()) {
+            val scanToksByLine = mutableMapOf<Int, List<AglToken>>()
+            val lines = text.lines()
+            var prevState = AglLineState(-1, 0, "")
+            for(i in lines.indices) {
+                val line = lines[i]
+                val (s, lineToks) = getLineTokensByScan(line, prevState)
+                scanToksByLine[i] = lineToks
+                prevState = s
             }
-            AglToken(
-                    cssClasses.toSet().toTypedArray(),
-                    beforeEOL,
-                    leaf.location.line, //ace first line is 0
-                    leaf.location.column
-            )
+            return scanToksByLine
+        } else {
+            tokensByLine
         }
     }
 
-    fun getLineTokensByScan(lineText: String, state: AglLineState, row: Int): AglLineState {
-        val proc = this.agl.processor
-        return if (null != proc) {
-            val text = state.leftOverText + lineText
-            val leafs = proc.scan(text);
-            val tokens = transformToTokens(leafs)
-            val endState = if (leafs.isEmpty()) {
-                AglLineState(row, "", emptyList())
+    fun getAllTokens(text: String): List<AglToken> {
+        return if (tokensByLine.isEmpty()) {
+            return getAllTokensByScan(text)
+        } else {
+            tokensByLine.values.flatten()
+        }
+    }
+
+    fun getAllTokensByScan(text: String): List<AglToken> {
+        return try {
+            val scanner = agl.simpleScanner
+            val offset = 0
+            val sentence = SentenceDefault(text,agl.options().parse.sentenceIdentity.invoke())
+            val tv = measureTimedValue {
+                scanner.scan(sentence, ScanOptionsDefault(true, false, 0, offset))
+            }
+            //logger.logTrace { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
+            val leafs = tv.value.allTokens
+            val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
+            //val tokens = transformToTokens(leafs)
+            if (leafs.isEmpty()) {
+                emptyList()
+            } else {
+                tokens
+            }
+        } catch (t: Throwable) {
+            logger.logError(t) { "Unable to getLineTokensByScan" }
+            val tokens = when {
+                text.isEmpty() -> emptyList()
+                else -> listOf(AglTokenDefault(emptyList(), 0, text.length))
+            }
+            tokens
+        }
+    }
+
+    /**
+     * row - 0 indexed line number
+     * lineText should end with EOL, unless it's the last line.
+     */
+    fun getLineTokens(lineText: String, previousLineState: AglLineState): Pair<AglLineState, List<AglToken>> {
+        val tokens = this.tokensByLine[previousLineState.lineNumber + 1]
+        return when {
+            null == tokens -> this.getLineTokensByScan(lineText, previousLineState)
+            tokens.isEmpty() -> this.getLineTokensByScan(lineText, previousLineState)
+            else -> {
+                val fstTok = tokens.first()
+                val lstTok = tokens.last()
+                val toksStart = fstTok.position
+                val toksLength = (lstTok.position + lstTok.length) - toksStart
+                // NO - last token should be length 1 and an eol, so only need its position as linesText does not include the eol
+                val validStart = toksStart == previousLineState.nextLineStartPosition
+                val validEnd = toksLength == lineText.length
+
+                if (validStart && validEnd) {
+                    this.useCachedTokens(tokens, lineText, previousLineState)
+                } else {
+                    this.getLineTokensByScan(lineText, previousLineState)
+                }
+            }
+        }
+    }
+
+    /**
+     * row assumed to start at 0
+     * lineText should end with EOL, unless it's the last line.
+     */
+    fun getLineTokensByScan(lineText: String, previousLineState: AglLineState): Pair<AglLineState, List<AglToken>> {
+        return try {
+            val scanner = agl.simpleScanner
+            val text = previousLineState.leftOverText + lineText
+            val offset = previousLineState.nextLineStartPosition - previousLineState.leftOverText.length
+            val sentence = SentenceDefault(text,agl.options().parse.sentenceIdentity.invoke())
+            val tv = measureTimedValue {
+                scanner.scan(sentence, ScanOptionsDefault(true, false, 0, offset))
+            }
+            //logger.logDebug { "Scanning on main thread text took ${tv.duration.toString(DurationUnit.MILLISECONDS)} ms" }
+            val leafs = tv.value.allTokens
+            val tokens = this.agl.styleHandler.transformToTokens(leafs) as List<AglToken>
+            //val tokens = transformToTokens(leafs)
+            if (leafs.isEmpty()) {
+                val state = AglLineState(previousLineState.lineNumber + 1, previousLineState.nextLineStartPosition, "")
+                Pair(state, emptyList())
             } else {
                 val lastLeaf = leafs.last()
-                val endOfLastLeaf = lastLeaf.location.column + lastLeaf.location.length
+                val endOfLastLeaf = lastLeaf.position - offset + lastLeaf.length
                 val leftOverText = lineText.substring(endOfLastLeaf, lineText.length)
-                AglLineState(row, leftOverText, tokens)
+                val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length
+                val state = AglLineState(previousLineState.lineNumber + 1, nextLineStartPosition, leftOverText)
+                Pair(state, tokens)
             }
-            return endState
-        } else {
-            AglLineState(row, "", listOf(AglToken(emptyArray(), lineText, row, 0)))
+        } catch (t: Throwable) {
+            logger.logError(t) { "Unable to getLineTokensByScan" }
+            val tokens = when {
+                lineText.isEmpty() -> emptyList()
+                else -> listOf(AglTokenDefault(emptyList(), previousLineState.nextLineStartPosition, lineText.length))
+            }
+            val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length
+            val state = AglLineState(previousLineState.lineNumber + 1, nextLineStartPosition, "")
+            Pair(state, tokens)
         }
     }
 
-    fun getLineTokensByParse(lineText: String, state: AglLineState, row: Int): AglLineState {
-        val sppt = this.agl.sppt!!
-        val leafs = sppt.tokensByLine(row) //TODO: find more efficient way to do this, i.e. using lineText and state
-        //return if (null != leafs) {
-            val tokens = transformToTokens(leafs)
-            val endState = AglLineState(row, "", tokens)
-            return endState
-        //} else {
-        //    AglLineState(row, "", emptyList())
-        //}
+    /**
+     * row assumed to start at 0
+     */
+    fun useCachedTokens(tokens: List<AglToken>, lineText: String, previousLineState: AglLineState): Pair<AglLineState, List<AglToken>> {
+        val nextLineStartPosition = previousLineState.nextLineStartPosition + lineText.length
+        val endState = AglLineState(previousLineState.lineNumber + 1, nextLineStartPosition, "")
+        return Pair(endState, tokens)
     }
 }

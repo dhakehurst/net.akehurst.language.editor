@@ -15,95 +15,206 @@
  */
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import com.github.gmazzo.gradle.plugins.BuildConfigExtension
+import com.github.gmazzo.buildconfig.BuildConfigExtension
+import org.gradle.kotlin.dsl.kotlin
 
 plugins {
-    kotlin("multiplatform") version("1.5.10") apply false
-    id("com.github.gmazzo.buildconfig") version("3.0.0") apply false
+    alias(libs.plugins.kotlin) apply false
+    alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.buildconfig) apply false
+    alias(libs.plugins.exportPublic) apply false
+    alias(libs.plugins.reflect) apply false
+    alias(libs.plugins.vanniktech.maven.publish) apply false
 }
+project.layout.buildDirectory = File(rootProject.projectDir, ".gradle-build/${project.name}")
 
+/*
 allprojects {
 
-    val version_project: String by project
-    val group_project = "${rootProject.name}"
+    repositories {
+        mavenLocal {
+            content {
+                includeGroupByRegex("net\\.akehurst.+")
+            }
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
 
-    group = group_project
-    version = version_project
+    group = rootProject.name
+    version = rootProject.libs.versions.project.get()
 
-    buildDir = File(rootProject.projectDir, ".gradle-build/${project.name}")
+    project.layout.buildDirectory = File(rootProject.projectDir, ".gradle-build/${project.name}")
 
 }
 
 subprojects {
+    val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1
+    val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1
+    val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
 
-    apply(plugin="org.jetbrains.kotlin.multiplatform")
+    apply(plugin = "org.jetbrains.kotlin.multiplatform")
     apply(plugin = "maven-publish")
+    apply(plugin = "signing")
+    apply(plugin = "org.jetbrains.dokka")
     apply(plugin = "com.github.gmazzo.buildconfig")
-
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
-        }
-    }
+    apply(plugin = "net.akehurst.kotlin.gradle.plugin.exportPublic")
 
     configure<BuildConfigExtension> {
+        useKotlinOutput {
+            this.internalVisibility = false
+        }
         val now = java.time.Instant.now()
         fun fBbuildStamp(): String = java.time.format.DateTimeFormatter.ISO_DATE_TIME.withZone(java.time.ZoneId.of("UTC")).format(now)
         fun fBuildDate(): String = java.time.format.DateTimeFormatter.ofPattern("yyyy-MMM-dd").withZone(java.time.ZoneId.of("UTC")).format(now)
-        fun fBuildTime(): String= java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss z").withZone(java.time.ZoneId.of("UTC")).format(now)
+        fun fBuildTime(): String = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss z").withZone(java.time.ZoneId.of("UTC")).format(now)
 
-        packageName("${project.group}.editor")
+        packageName("${project.group}.${project.name.replace("-", ".")}")
         buildConfigField("String", "version", "\"${project.version}\"")
         buildConfigField("String", "buildStamp", "\"${fBbuildStamp()}\"")
         buildConfigField("String", "buildDate", "\"${fBuildDate()}\"")
         buildConfigField("String", "buildTime", "\"${fBuildTime()}\"")
     }
 
+    project.ext.set("jvmTarget", true)
+    project.ext.set("jsTarget", true)
+    project.ext.set("macosArm64Target", true)
+
     configure<KotlinMultiplatformExtension> {
-        jvm("jvm8") {
-            val main by compilations.getting {
-                kotlinOptions {
-                    languageVersion = "1.5"
-                    apiVersion = "1.5"
-                    jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvm("jvm11") {
+            compilations {
+                val main by getting {
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            languageVersion.set(kotlin_languageVersion)
+                            apiVersion.set(kotlin_apiVersion)
+                            jvmTarget.set(jvmTargetVersion)
+                        }
+                    }
                 }
-            }
-            val test by compilations.getting {
-                kotlinOptions {
-                    languageVersion = "1.5"
-                    apiVersion = "1.5"
-                    jvmTarget = JavaVersion.VERSION_1_8.toString()
+                val test by getting {
+                    compileTaskProvider.configure {
+                        compilerOptions {
+                            languageVersion.set(kotlin_languageVersion)
+                            apiVersion.set(kotlin_apiVersion)
+                            jvmTarget.set(jvmTargetVersion)
+                        }
+                    }
                 }
             }
         }
-        js("js") {
+
+        js {
+            binaries.library()
+            generateTypeScriptDefinitions()
+            compilerOptions {
+                target.set("es2015")
+            }
             nodejs()
             browser {
                 webpackTask {
-                    //outputFileName = "${project.group}-${project.name}.js"
+                    mainOutputFileName = "${project.group}-${project.name}.js"
                 }
             }
         }
-        //macosX64("macosX64") {
-        // uncomment stuff below too
-        //}
+
+        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+        wasmJs() {
+            binaries.library()
+            browser()
+        }
+
         sourceSets {
             val commonMain by getting {
-                kotlin.srcDir("$buildDir/generated/kotlin")
+                kotlin.srcDir("${project.layout.buildDirectory}/generated/kotlin")
+            }
+            all {
+                languageSettings.optIn("kotlin.ExperimentalStdlibApi")
             }
         }
     }
-
 
     dependencies {
         "commonTestImplementation"(kotlin("test"))
         "commonTestImplementation"(kotlin("test-annotations-common"))
-
-        "jvm8TestImplementation"(kotlin("test-junit"))
-
-        "jsTestImplementation"(kotlin("test-js"))
     }
 
+    val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
+
+    val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
+        dependsOn(dokkaHtml)
+        archiveClassifier.set("javadoc")
+        from(dokkaHtml.outputDirectory)
+    }
+    tasks.named("publish").get().dependsOn("javadocJar")
+
+    fun getProjectProperty(s: String) = project.findProperty(s) as String?
+
+    val creds = project.properties["credentials"] as nu.studer.gradle.credentials.domain.CredentialsContainer
+    val sonatype_pwd = creds.forKey("SONATYPE_PASSWORD") as String?
+        ?: getProjectProperty("SONATYPE_PASSWORD")
+        ?: error("Must set project property with Sonatype Password (-P SONATYPE_PASSWORD=<...> or set in ~/.gradle/gradle.properties)")
+    project.ext.set("signing.password", sonatype_pwd)
+
+    configure<PublishingExtension> {
+        repositories {
+            maven {
+                name = "sonatype"
+                setUrl("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                credentials {
+                    username = getProjectProperty("SONATYPE_USERNAME")
+                        ?: error("Must set project property with Sonatype Username (-P SONATYPE_USERNAME=<...> or set in ~/.gradle/gradle.properties)")
+                    password = sonatype_pwd
+                }
+            }
+            maven {
+                name = "Other"
+                setUrl(getProjectProperty("PUB_URL")?: "<use -P PUB_URL=<...> to set>")
+                credentials {
+                    username = getProjectProperty("PUB_USERNAME")
+                        ?: error("Must set project property with Username (-P PUB_USERNAME=<...> or set in ~/.gradle/gradle.properties)")
+                    password = getProjectProperty("PUB_PASSWORD")?: creds.forKey(getProjectProperty("PUB_USERNAME"))
+                }
+            }
+        }
+        publications.withType<MavenPublication> {
+//            artifact(javadocJar.get())
+
+            pom {
+                name.set("AGL Processor integration with Editor")
+                description.set("Dynamic, scan-on-demand, parsing; when a regular expression is just not enough")
+                url.set("https://medium.com/@dr.david.h.akehurst/a-kotlin-multi-platform-parser-usable-from-a-jvm-or-javascript-59e870832a79")
+
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        name.set("Dr. David H. Akehurst")
+                        email.set("dr.david.h@akehurst.net")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/dhakehurst/net.akehurst.language.editor")
+                }
+            }
+        }
+    }
+
+    configure<SigningExtension> {
+        useGpgCmd()
+        val publishing = project.properties["publishing"] as PublishingExtension
+        sign(publishing.publications)
+    }
+
+
+    configurations.all {
+        // Check for updates every build
+        resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+    }
 }
+
+ */
