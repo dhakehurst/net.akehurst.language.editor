@@ -362,15 +362,15 @@ class GuiHandler(
         when {
             asm is Asm -> {
                 fun treeNode(label: String, asm: AsmValue): TreeViewNode = when (asm) {
-                    is AsmNothing -> TreeViewNode(UniqueIdentityGenerator.generate("nothing")).apply { content = { Text(text = $$"$$label = $nothing") } }
-                    is AsmPrimitive -> TreeViewNode(UniqueIdentityGenerator.generate("primitive")).apply { content = { Text(text = "$label  = ${asm.asString()}") } }
-                    is AsmStructure -> TreeViewNode(UniqueIdentityGenerator.generate("structure")).apply {
+                    is AsmNothing -> TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("nothing")).apply { content = { Text(text = $$"$$label = $nothing") } }
+                    is AsmPrimitive -> TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("primitive")).apply { content = { Text(text = "$label  = ${asm.asString()}") } }
+                    is AsmStructure -> TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("structure")).apply {
                         content = { Text(text = label) }
                         hasChildren = asm.property.isNotEmpty()
                         fetchChildren = {
                             asm.property.map { (k, v) ->
                                 if (v.isReference) {
-                                    TreeViewNode(UniqueIdentityGenerator.generate("ref")).apply { content = { Text(text = "$label = ${v.value}") } }
+                                    TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("ref")).apply { content = { Text(text = "$label = ${v.value}") } }
                                 } else {
                                     treeNode("${k.value}: ${v.value.typeName.value}", v.value)
                                 }
@@ -378,7 +378,7 @@ class GuiHandler(
                         }
                     }
 
-                    is AsmCollection -> TreeViewNode(UniqueIdentityGenerator.generate("col")).apply {
+                    is AsmCollection -> TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("col")).apply {
                         content = { Text(text = label) }
                         hasChildren = asm.elements.isNotEmpty()
                         fetchChildren = {

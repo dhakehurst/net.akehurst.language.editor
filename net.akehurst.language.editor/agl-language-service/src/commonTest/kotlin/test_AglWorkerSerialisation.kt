@@ -149,6 +149,7 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun Asm_serialise_deserialise() {
+
         val input: Asm = asmSimple() {
             element("Root") {
                 propertyElementExplicitType("content", "Elem1") {

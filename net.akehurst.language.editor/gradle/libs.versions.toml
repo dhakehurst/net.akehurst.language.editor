@@ -5,16 +5,16 @@ kotlin = "2.2.21"
 dokka = "2.1.0"
 buildconfig = "6.0.7"
 exportPublic = "2.2.21"
-reflect = "2.2.21-SNAPSHOT"
+reflect = "2.2.21"
 vanniktech = "0.35.0"
 
-nal-agl = "4.2.2.21-SNAPSHOT"
+nal-agl = "4.2.2.21"
 
-nak-compose-code-editor = "2.2.21-SNAPSHOT"
+nak-compose-code-editor = "2.2.21"
 
-nak-serialisation = "2.2.21-SNAPSHOT"
-nak-kotlinx = "2.2.21-SNAPSHOT"
-nak-html-builder = "2.2.21-SNAPSHOT"
+nak-kserialisation = "2.2.21"
+nak-kotlinx = "2.2.21"
+#nak-html-builder = "2.2.21-SNAPSHOT"
 #nak-codemirror-api = "2.2.20"
 kotlinx-coroutines = "1.10.2"
 compose = "1.9.3"
@@ -29,13 +29,13 @@ nal-kotlinx-komposite = { module = "net.akehurst.language:kotlinx-komposite", ve
 nak-compose-code-editor-api = { module = "net.akehurst.kotlin.compose:code-editor-api", version.ref = "nak-compose-code-editor" }
 nak-compose-code-editor = {module="net.akehurst.kotlin.compose:code-editor",version.ref = "nak-compose-code-editor" }
 
-nak-kserialisation-json = { module = "net.akehurst.kotlin.kserialisation:kserialisation-json", version.ref = "nak-serialisation" }
-nak-json = { module = "net.akehurst.kotlin.kserialisation:json", version.ref = "nak-serialisation" }
+nak-kserialisation-json = { module = "net.akehurst.kotlin.kserialisation:kserialisation-json", version.ref = "nak-kserialisation" }
+nak-json = { module = "net.akehurst.kotlin.kserialisation:json", version.ref = "nak-kserialisation" }
 nak-kotlinx-logging-api = { module = "net.akehurst.kotlinx:kotlinx-logging-api", version.ref = "nak-kotlinx" }
 nak-kotlinx-logging-common = { module = "net.akehurst.kotlinx:kotlinx-logging-common", version.ref = "nak-kotlinx" }
 nak-kotlinx-collections = { module = "net.akehurst.kotlinx:kotlinx-collections", version.ref = "nak-kotlinx" }
 nak-kotlinx-reflect = { module = "net.akehurst.kotlinx:kotlinx-reflect", version.ref = "nak-kotlinx" }
-nak-html-builder = { module = "net.akehurst.kotlin.html5:html-builder", version.ref = "nak-html-builder" }
+#nak-html-builder = { module = "net.akehurst.kotlin.html5:html-builder", version.ref = "nak-html-builder" }
 #nak-codemirror-api = { module = "net.akehurst.kotlin.editor:codemirror-api", version.ref = "nak-codemirror-api" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }

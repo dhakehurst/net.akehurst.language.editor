@@ -1,11 +1,11 @@
 package net.akehurst.language.editor.language.service
 
+import net.akehurst.kotlinx.utils.Indent
 import net.akehurst.language.agl.generators.FormatTypeModelAsKotlinTypeModelBuilder
 import net.akehurst.language.agl.generators.GenerateTypeModelViaReflection
 import net.akehurst.language.agl.generators.PropertiesTypeModelFormatConfiguration
 import net.akehurst.language.agl.generators.TypeModelFormatConfiguration
 import net.akehurst.language.asm.simple.AglAsm
-import net.akehurst.language.base.api.Indent
 import net.akehurst.language.base.api.QualifiedName
 import net.akehurst.language.base.api.SimpleName
 import net.akehurst.language.editor.language.service.messages.EditorMessage

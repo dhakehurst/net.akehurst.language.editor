@@ -42,16 +42,37 @@ class Gui(
             const val formatEditorId = "editor-format"
             const val m2mEditorId = "editor-m2m"
 
+            const val CP_DEPTH = 1
+
             val sentenceLanguageId = LanguageIdentity("language-user")
 
-            val sentenceProcessOptions = Agl.options<Asm, SentenceContext> { semanticAnalysis { sentenceContext(contextAsmSimple()) } }
-            val grammarProcessOptions = Agl.options<GrammarDomain, SentenceContext> { semanticAnalysis { sentenceContext(contextAsmSimple()) } }
-            val styleProcessOptions = Agl.options<AglStyleDomain, SentenceContext> { semanticAnalysis { sentenceContext(contextAsmSimple()) } }
-            val typesProcessOptions = Agl.options<TypesDomain, SentenceContext> { }
-            val asmTransProcessOptions = Agl.options<AsmTransformDomain, SentenceContext> { }
-            val referencesProcessOptions = Agl.options<CrossReferenceDomain, SentenceContext> { }
-            val formatProcessOptions = Agl.options<AglFormatDomain, SentenceContext> { }
-            val m2mProcessOptions = Agl.options<M2mTransformDomain, SentenceContext> { }
+            val sentenceProcessOptions = Agl.options<Asm, SentenceContext> {
+                semanticAnalysis { sentenceContext(contextAsmSimple()) }
+                completionProvider { depth(CP_DEPTH) }
+            }
+            val grammarProcessOptions = Agl.options<GrammarDomain, SentenceContext> {
+                semanticAnalysis { sentenceContext(contextAsmSimple()) }
+                completionProvider { depth(CP_DEPTH) }
+            }
+            val styleProcessOptions = Agl.options<AglStyleDomain, SentenceContext> {
+                semanticAnalysis { sentenceContext(contextAsmSimple()) }
+                completionProvider { depth(CP_DEPTH) }
+            }
+            val typesProcessOptions = Agl.options<TypesDomain, SentenceContext> {
+                completionProvider { depth(CP_DEPTH) }
+            }
+            val asmTransProcessOptions = Agl.options<AsmTransformDomain, SentenceContext> {
+                completionProvider { depth(CP_DEPTH) }
+            }
+            val referencesProcessOptions = Agl.options<CrossReferenceDomain, SentenceContext> {
+                completionProvider { depth(CP_DEPTH) }
+            }
+            val formatProcessOptions = Agl.options<AglFormatDomain, SentenceContext> {
+                completionProvider { depth(CP_DEPTH) }
+            }
+            val m2mProcessOptions = Agl.options<M2mTransformDomain, SentenceContext> {
+                completionProvider { depth(CP_DEPTH) }
+            }
         }
 
         val sentenceLanguage = Agl.registry.register(

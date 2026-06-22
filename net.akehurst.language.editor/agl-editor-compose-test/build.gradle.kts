@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// do not publish
+tasks.withType<AbstractPublishToMaven> { onlyIf { false } }
+
 repositories {
     google()
 }
@@ -26,8 +29,4 @@ kotlin {
             }
         }
     }
-}
-
-tasks.withType<AbstractPublishToMaven> {
-    onlyIf { false }
 }

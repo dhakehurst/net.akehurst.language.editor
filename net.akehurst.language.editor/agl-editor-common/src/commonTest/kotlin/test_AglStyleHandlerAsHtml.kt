@@ -16,6 +16,7 @@
 
 package net.akehurst.language.editor.common
 
+import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.LanguageIdentity
 import net.akehurst.language.api.processor.ResolvedReference
 import net.akehurst.language.editor.api.EditorStyleIdentity
@@ -87,7 +88,8 @@ class test_AglStyleHandlerAsHtml {
         val tokens = listOf(
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 0, 5)
         )
-        val styleModel = styleDomain("Test") {
+        val ctx = contextAsmSimple {  }
+        val styleModel = styleDomain("Test", sentenceContext = ctx) {
             namespace("test") {
                 styles("Test") {
                     tagRule("aaaaa") {
@@ -115,7 +117,8 @@ class test_AglStyleHandlerAsHtml {
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 0, 3),
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test1")), 3, 2)
         )
-        val styleModel = styleDomain("Test") {
+        val ctx = contextAsmSimple {  }
+        val styleModel = styleDomain("Test", sentenceContext = ctx) {
             namespace("test") {
                 styles("Test") {
                     tagRule("aaaaa") {
@@ -144,7 +147,8 @@ class test_AglStyleHandlerAsHtml {
             AglTokenDefault(listOf(EditorStyleIdentity("nostyle")), 3, 1),
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test2")), 4, 4)
         )
-        val styleModel = styleDomain("Test") {
+        val ctx = contextAsmSimple {  }
+        val styleModel = styleDomain("Test", sentenceContext = ctx) {
             namespace("test") {
                 styles("Test") {
                     tagRule("The") {
@@ -187,7 +191,8 @@ class test_AglStyleHandlerAsHtml {
             AglTokenDefault(listOf(EditorStyleIdentity.NO_STYLE), 6, 1),
             AglTokenDefault(listOf(EditorStyleIdentity("agl-test2")), 7, 6)
         )
-        val styleModel = styleDomain("Test") {
+        val ctx = contextAsmSimple {  }
+        val styleModel = styleDomain("Test", sentenceContext = ctx) {
             namespace("test") {
                 styles("Test") {
                     tagRule("target") {

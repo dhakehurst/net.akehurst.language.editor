@@ -18,8 +18,7 @@ package net.akehurst.language.editor.worker
 
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomain
-import net.akehurst.language.agl.semanticAnalyser.ContextFromTypesDomainReference
+import net.akehurst.language.agl.processor.contextFromRegistryTypes
 import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.api.processor.GrammarString
@@ -481,7 +480,7 @@ class test_AglWorkerAbstract {
         val expectedTypeModel = trm.typesDomain!!
         val expectedScopeModel = Agl.registry.agl.crossReference.processor!!.process(
             crossReferenceStr,
-            Agl.options { semanticAnalysis { sentenceContext(ContextFromTypesDomain(expectedTypeModel)) } }
+            Agl.options { semanticAnalysis { sentenceContext(contextFromTypesDomain(expectedTypeModel)) } }
         ).let {
             assertTrue(it.allIssues.errors.isEmpty(), it.allIssues.toString())
             it.asm!!
@@ -664,7 +663,7 @@ class test_AglWorkerAbstract {
         sut.receive(
             port, MessageProcessRequest(
                 EndPointIdentity(editorId, sessionId), RequestIdentity("process"), Agl.registry.agl.crossReferenceLanguageIdentity,
-                referencesStr, Agl.options { semanticAnalysis { sentenceContext(ContextFromTypesDomainReference(languageId)) } }
+                referencesStr, Agl.options { semanticAnalysis { sentenceContext(contextFromRegistryTypes(Agl.registry)) } }
             )
         )
 
