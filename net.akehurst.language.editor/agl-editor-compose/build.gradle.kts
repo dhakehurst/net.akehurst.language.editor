@@ -18,12 +18,12 @@ dependencies {
 
     // for AglComposeTextEditor
     commonMainApi(libs.nak.compose.code.editor)
-    commonMainApi(compose.material3)
+    commonMainApi(libs.bundles.compose)
 
     // to test it
     commonTestImplementation(libs.nak.compose.code.editor)
-    commonTestImplementation(compose.ui)
-    commonTestImplementation(compose.foundation)
+    commonTestImplementation(libs.compose.ui)
+    commonTestImplementation(libs.compose.foundation)
     commonTestImplementation(libs.kotlinx.coroutines)
     commonTestImplementation(libs.nak.kotlinx.logging.common)
     jvmTestImplementation(compose.desktop.currentOs)

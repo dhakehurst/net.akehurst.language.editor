@@ -1,25 +1,24 @@
 [versions]
-project = "2.2.21"
+project = "2.3.21"
 
-kotlin = "2.2.21"
+kotlin = "2.3.21"
 dokka = "2.1.0"
-buildconfig = "6.0.7"
-exportPublic = "2.2.21"
-reflect = "2.2.21"
-vanniktech = "0.35.0"
+buildconfig = "6.0.10"
+exportPublic = "2.3.21"
+reflect = "2.3.21"
+vanniktech = "0.37.0"
 
-nal-agl = "4.2.2.21"
+nal-agl = "4.2.3.21"
+nak-compose-code-editor = "2.3.21"
+nak-kserialisation = "2.3.21"
+nak-kotlinx = "2.3.21"
 
-nak-compose-code-editor = "2.2.21"
+kotlinx-coroutines = "1.11.0"
+compose = "1.11.1"
+compose-material3 = "1.11.0-alpha07"
+material = "1.7.3"
 
-nak-kserialisation = "2.2.21"
-nak-kotlinx = "2.2.21"
-#nak-html-builder = "2.2.21-SNAPSHOT"
-#nak-codemirror-api = "2.2.20"
-kotlinx-coroutines = "1.10.2"
-compose = "1.9.3"
-
-kotest = "5.9.1"
+kotest = "6.1.11"
 
 [libraries]
 nal-agl-processor = { module = "net.akehurst.language:agl-processor", version.ref = "nal-agl" }
@@ -28,6 +27,11 @@ nal-kotlinx-komposite = { module = "net.akehurst.language:kotlinx-komposite", ve
 
 nak-compose-code-editor-api = { module = "net.akehurst.kotlin.compose:code-editor-api", version.ref = "nak-compose-code-editor" }
 nak-compose-code-editor = {module="net.akehurst.kotlin.compose:code-editor",version.ref = "nak-compose-code-editor" }
+
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
 
 nak-kserialisation-json = { module = "net.akehurst.kotlin.kserialisation:kserialisation-json", version.ref = "nak-kserialisation" }
 nak-json = { module = "net.akehurst.kotlin.kserialisation:json", version.ref = "nak-kserialisation" }
@@ -43,6 +47,11 @@ kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.
 kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotest-framework-datatest = { module = "io.kotest:kotest-framework-datatest", version.ref = "kotest" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+compose-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
+material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "material" }
+
+[bundles]
+compose = ["compose-material3", "compose-runtime", "compose-foundation", "compose-ui", "material-icons-core", "compose-resources"]
 
 
 [plugins]

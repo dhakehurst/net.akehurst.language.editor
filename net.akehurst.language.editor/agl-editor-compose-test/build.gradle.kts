@@ -17,8 +17,8 @@ kotlin {
             dependencies {
                 implementation(project(":agl-editor-compose"))
                 implementation(libs.nak.compose.code.editor)
-                implementation(compose.ui)
-                implementation(compose.foundation)
+                implementation(libs.compose.ui)
+                implementation(libs.compose.foundation)
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.nak.kotlinx.logging.common)
             }
