@@ -211,10 +211,10 @@ class GuiHandler(
         gui.sentenceEditor.processOptions().semanticAnalysis.sentenceContext = eg.context?.let { ExternalContextLanguage.processor.process(it).asm }
         gui.sentenceEditor.languageDefinition.update(
             GrammarString(eg.grammar ?: ""),
-            TypesString(eg.types?: ""),
+            TypesString(eg.types ?: ""),
             AsmTransformString(eg.asmTransform ?: ""),
-            CrossReferenceString(eg.references?: ""),
-            StyleString(eg.style?: ""),
+            CrossReferenceString(eg.references ?: ""),
+            StyleString(eg.style ?: ""),
             FormatString(eg.format ?: ""),
         )
         //doUpdates = true
@@ -361,7 +361,7 @@ class GuiHandler(
     fun updateAsmTree(asm: Any?) {
         when {
             asm is Asm -> {
-                fun treeNode(label: String, asm: AsmValue): TreeViewNode = when (asm) {
+                fun treeNode(label: String, asm: Any): TreeViewNode = when (asm) {
                     is AsmNothing -> TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("nothing")).apply { content = { Text(text = $$"$$label = $nothing") } }
                     is AsmPrimitive -> TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("primitive")).apply { content = { Text(text = "$label  = ${asm.asString()}") } }
                     is AsmStructure -> TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("structure")).apply {
@@ -372,7 +372,11 @@ class GuiHandler(
                                 if (v.isReference) {
                                     TreeViewNode(UniqueIdentityGenerator.GLOBAL.generate("ref")).apply { content = { Text(text = "$label = ${v.value}") } }
                                 } else {
-                                    treeNode("${k.value}: ${v.value.typeName.value}", v.value)
+                                    val value = v.value
+                                    when (value) {
+                                        is AsmStructure -> treeNode("${k.value}: ${value.typeName.value}", v.value)
+                                        else -> treeNode("${k.value}: ${value::class.simpleName}", v.value)
+                                    }
                                 }
                             }
                         }
@@ -382,16 +386,26 @@ class GuiHandler(
                         content = { Text(text = label) }
                         hasChildren = asm.elements.isNotEmpty()
                         fetchChildren = {
-                            asm.elements.map { treeNode(" :${it.typeName.value}", it) }
+                            asm.elements.map {
+                                when (it) {
+                                    is AsmStructure ->  treeNode(" :${it.typeName.value}", it)
+                                    else -> treeNode(": ${it::class.simpleName}", it)
+                                }
+                            }
                         }
                     }
 
-                    else -> TreeViewNode("TODO :${asm.typeName.value} ${asm::class.simpleName}").apply {
+                    else -> TreeViewNode("TODO :${asm::class.simpleName}").apply {
                         content = { Text(text = label) }
                     }
                 }
 
-                val items = asm.root.map { treeNode(" :${it.typeName.value}", it) }
+                val items = asm.root.map {
+                    when (it) {
+                        is AsmStructure ->  treeNode(" :${it.typeName.value}", it)
+                        else -> treeNode(": ${it::class.simpleName}", it)
+                    }
+                }
                 gui.stateHolder.sentenceMode.asmTreeState.updateItems(items)
             }
 

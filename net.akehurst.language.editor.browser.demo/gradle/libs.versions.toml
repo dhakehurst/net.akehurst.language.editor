@@ -1,25 +1,27 @@
 [versions]
-project = "2.2.21-SNAPSHOT"
+project = "2.3.21-SNAPSHOT"
 
-kotlin = "2.2.21"
+kotlin = "2.3.21"
 dokka = "2.1.0"
 buildconfig = "6.0.7"
-exportPublic = "2.2.21"
+exportPublic = "2.3.21-SNAPSHOT"
 credentials = "3.0"
-compose = "1.9.3"
+compose = "1.11.1"
 
-nal-agl = "4.2.2.21-SNAPSHOT"
-nal-editor = "2.2.21-SNAPSHOT"
+nal-agl = "4.2.3.21-SNAPSHOT"
+nal-editor = "2.3.21-SNAPSHOT"
 
-nak-compose = "2.2.21-SNAPSHOT"
+nak-compose = "2.3.21-SNAPSHOT"
 nak-codemirror-editor = "6.0.1"
 
-nak-html-builder = "2.2.21-SNAPSHOT"
-material-icons = "1.7.3"
-compose-navigation = "2.9.1"
-kotlinx-coroutines = "1.10.2"
+nak-html-builder = "2.3.21-SNAPSHOT"
 
-ktor = "3.3.3"
+compose-material3 = "1.11.0-alpha07"
+material = "1.7.3"
+compose-navigation = "2.9.2"
+kotlinx-coroutines = "1.11.0"
+
+ktor = "3.5.1"
 slf4j="2.0.16"
 
 korlibs = "6.0.1"
@@ -45,8 +47,12 @@ nak-compose-code-editor = {module="net.akehurst.kotlin.compose:code-editor",vers
 nak-compose-components = { module = "net.akehurst.kotlin.compose:components", version.ref = "nak-compose" }
 nak-compose-layout-multipane = { module = "net.akehurst.kotlin.compose:layout-multipane", version.ref = "nak-compose" }
 
-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "material-icons" }
-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "material-icons" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
+compose-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
+material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "material" }
 compose-navigation = {module="org.jetbrains.androidx.navigation:navigation-compose", version.ref = "compose-navigation"}
 
 ktor-websockets = { module="io.ktor:ktor-websockets", version.ref = "ktor" }
@@ -57,6 +63,9 @@ ktor-server-jetty = { module="io.ktor:ktor-server-jetty", version.ref = "ktor" }
 slf4j-simple = {module="org.slf4j:slf4j-simple", version.ref="slf4j"}
 
 korlibs-io = {module="com.soywiz:korlibs-io", version.ref="korlibs"}
+
+[bundles]
+compose = ["compose-material3", "compose-runtime", "compose-foundation", "compose-ui", "material-icons-core", "compose-resources","compose-navigation"]
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

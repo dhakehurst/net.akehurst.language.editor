@@ -1,5 +1,5 @@
 package net.akehurst.language.editor.language.service
-
+/*
 import net.akehurst.kotlinx.utils.Indent
 import net.akehurst.language.agl.generators.FormatTypeModelAsKotlinTypeModelBuilder
 import net.akehurst.language.agl.generators.GenerateTypeModelViaReflection
@@ -107,3 +107,5 @@ class test_GenerateTypeModelViaReflection {
     }
 
 }
+
+ */

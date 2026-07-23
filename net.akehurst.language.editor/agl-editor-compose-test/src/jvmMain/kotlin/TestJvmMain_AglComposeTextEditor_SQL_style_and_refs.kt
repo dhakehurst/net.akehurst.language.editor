@@ -30,6 +30,7 @@ import net.akehurst.kotlinx.logging.common.LoggingByConsole
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.contextAsmSimple
 import net.akehurst.language.editor.compose.attachToComposeEditor
+import kotlin.time.Duration.Companion.seconds
 
 suspend fun main() {
     LoggingManager.use(LoggingByConsole)
@@ -49,7 +50,7 @@ suspend fun main() {
                 }
             }
         }
-        delay(1000) //wait for compose to start
+        delay(1.seconds) //wait for compose to start
         val aglEditor = Agl.attachToComposeEditor(
             TestLanguageSql.languageService,
             TestLanguageSql.languageDefinition,

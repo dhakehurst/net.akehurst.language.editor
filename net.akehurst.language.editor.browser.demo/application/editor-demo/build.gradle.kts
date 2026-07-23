@@ -22,11 +22,7 @@ kotlin {
             dependencies {
                 implementation(project(":information-editor"))
 
-                implementation(libs.material.icons.core)
-                implementation(libs.material.icons.extended)
-                implementation(libs.compose.navigation)
-                @OptIn(ExperimentalComposeLibrary::class)
-                implementation(compose.components.resources)
+                implementation(libs.bundles.compose)
 
                 implementation(libs.nak.compose.components)
                 implementation(libs.nak.compose.layout.multipane)
@@ -40,9 +36,9 @@ dependencies {
     commonMainImplementation(libs.nale.agl.editor.compose)
     commonMainImplementation(libs.nale.agl.language.service)
 
-    commonMainImplementation(compose.ui)
-    commonMainImplementation(compose.foundation)
-    commonMainImplementation(compose.material3)
+//    commonMainImplementation(compose.ui)
+//    commonMainImplementation(compose.foundation)
+//    commonMainImplementation(compose.material3)
     commonMainApi(libs.nak.compose.code.editor)
 
     jvmMainImplementation(compose.desktop.currentOs)

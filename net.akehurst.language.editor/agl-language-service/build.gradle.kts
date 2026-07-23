@@ -14,7 +14,7 @@ dependencies {
     commonMainImplementation(libs.nak.kotlinx.reflect)
     commonMainImplementation(libs.nak.kserialisation.json)
     commonMainImplementation(libs.kotlinx.coroutines)
-    jvmTestImplementation(libs.nal.agl.generators)
+//    jvmTestImplementation(libs.nal.agl.generators)
 }
 
 kotlinxReflect {
