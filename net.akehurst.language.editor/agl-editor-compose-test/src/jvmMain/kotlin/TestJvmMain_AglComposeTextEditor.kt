@@ -22,7 +22,7 @@ import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import net.akehurst.kotlinx.logging.api.LoggingManager
-import net.akehurst.kotlinx.logging.common.LoggingByConsole
+import net.akehurst.kotlinx.logging.api.LoggingByConsole
 import net.akehurst.language.editor.compose.AglComposeTextEditor
 
 suspend fun main() {

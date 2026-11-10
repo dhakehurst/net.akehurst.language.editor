@@ -1,23 +1,53 @@
-$$ "'(\'|[^'])+'" {
-  foreground: purple;
-  font-weight: bold;
+namespace net.akehurst.language.java8
+
+styles Base {
+
+    $$ "'(\'|[^'])+'" {
+      foreground: purple;
+      font-weight: bold;
+    }
+
+
+    IDENTIFIER {
+      foreground: blue;
+      font-style: italic;
+    }
+    '{', '}' {
+      foreground: darkgreen;
+    }
 }
-'class' {
-  foreground: purple;
-  font-weight: bold;
+
+styles Literals {
+    Literal {
+      foreground: darkblue;
+      font-weight: bold;
+    }
+
 }
-CLASS_MODIFIER, FIELD_MODIFIER, METHOD_MODIFIER, CONSTRUCTOR_MODIFIER, INTERFACE_MODIFIER {
-  foreground: darkred;
-  font-weight: bold;
+
+styles Expressions {
+
+    'class' {
+      foreground: purple;
+      font-weight: bold;
+    }
+
 }
-IDENTIFIER {
-  foreground: blue;
-  font-style: italic;
+
+styles Classes {
+
+    CLASS_MODIFIER, FIELD_MODIFIER, METHOD_MODIFIER, CONSTRUCTOR_MODIFIER, INTERFACE_MODIFIER {
+      foreground: darkred;
+      font-weight: bold;
+    }
+
 }
-'{', '}' {
-  foreground: darkgreen;
-}
-Literal {
-  foreground: darkblue;
-  font-weight: bold;
+
+styles Interfaces {
+
+    INTERFACE_MODIFIER {
+      foreground: darkred;
+      font-weight: bold;
+    }
+
 }

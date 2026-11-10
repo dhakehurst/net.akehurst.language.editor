@@ -3,6 +3,8 @@ package net.akehurst.language.editor.demo.gui
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.onKeyEvent
 import net.akehurst.kotlin.compose.components.ModalDialog
 import net.akehurst.kotlin.compose.components.SplitOrientation
 import net.akehurst.kotlin.compose.components.tree.TreeView

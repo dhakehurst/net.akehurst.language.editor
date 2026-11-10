@@ -1,22 +1,22 @@
 [versions]
-project = "2.3.21-SNAPSHOT"
+project = "2.4.0-SNAPSHOT"
 
-kotlin = "2.3.21"
-dokka = "2.1.0"
-buildconfig = "6.0.7"
-exportPublic = "2.3.21-SNAPSHOT"
+kotlin = "2.4.0"
+dokka = "2.2.0"
+buildconfig = "6.1.2"
+exportPublic = "2.4.0-SNAPSHOT"
 credentials = "3.0"
-compose = "1.11.1"
+compose = "1.12.2"
 
-nal-agl = "4.2.3.21-SNAPSHOT"
-nal-editor = "2.3.21-SNAPSHOT"
+nal-agl = "4.2.4.0-SNAPSHOT"
+nal-editor = "2.4.0-SNAPSHOT"
 
-nak-compose = "2.3.21-SNAPSHOT"
+nak-compose = "2.4.0-SNAPSHOT"
 nak-codemirror-editor = "6.0.1"
 
-nak-html-builder = "2.3.21-SNAPSHOT"
+nak-html-builder = "2.4.0-SNAPSHOT"
 
-compose-material3 = "1.11.0-alpha07"
+compose-material3 = "1.12.0-alpha03"
 material = "1.7.3"
 compose-navigation = "2.9.2"
 kotlinx-coroutines = "1.11.0"

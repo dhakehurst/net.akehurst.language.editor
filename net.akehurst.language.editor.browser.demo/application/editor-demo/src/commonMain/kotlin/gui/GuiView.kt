@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
@@ -73,39 +75,48 @@ class GuiView {
                 drawerState = drawState,
                 drawerContent = {
                     ModalDrawerSheet {
-                        NavigationDrawerItem(
-                            label = { Text(text = "Open") },
-                            selected = false,
-                            icon = {
-                                Icon(
-                                    imageVector = GuiTheme.Icons.FOLDER,
-                                    contentDescription = "Open"
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(vertical = 16.dp)
+                        ) {
+                            item {
+                                NavigationDrawerItem(
+                                    label = { Text(text = "Open") },
+                                    selected = false,
+                                    icon = {
+                                        Icon(
+                                            imageVector = GuiTheme.Icons.FOLDER,
+                                            contentDescription = "Open"
+                                        )
+                                    },
+                                    onClick = {
+                                        scope.launch {
+                                            stateHolder.handler_openLanguageDirectory()
+                                            drawState.close()
+                                        }
+                                    }
                                 )
-                            },
-                            onClick = {
-                                scope.launch {
-                                    stateHolder.handler_openLanguageDirectory()
-                                    drawState.close()
+                            }
+                            for (eg in Examples.map) {
+                                item {
+                                    NavigationDrawerItem(
+                                        label = { Text(text = eg.value.label) },
+                                        selected = false,
+                                        icon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Edit,
+                                                contentDescription = "Example"
+                                            )
+                                        },
+                                        onClick = {
+                                            scope.launch {
+                                                stateHolder.handler_loadExample(eg.value)
+                                                drawState.close()
+                                            }
+                                        }
+                                    )
                                 }
                             }
-                        )
-                        for (eg in Examples.map) {
-                            NavigationDrawerItem(
-                                label = { Text(text = eg.value.label) },
-                                selected = false,
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Edit,
-                                        contentDescription = "Example"
-                                    )
-                                },
-                                onClick = {
-                                    scope.launch {
-                                        stateHolder.handler_loadExample(eg.value)
-                                        drawState.close()
-                                    }
-                                }
-                            )
                         }
                     }
                 }
@@ -133,11 +144,23 @@ class GuiView {
                                 }
                             },
                             actions = {
-                                button(navController, GuiStateHolder.Companion.ViewMode.SENTENCE.name, GuiStateHolder.Companion.ViewMode.SENTENCE)
+                                button(
+                                    navController,
+                                    GuiStateHolder.Companion.ViewMode.SENTENCE.name,
+                                    GuiStateHolder.Companion.ViewMode.SENTENCE
+                                )
                                 Spacer(modifier = Modifier.width(5.dp))
-                                button(navController, GuiStateHolder.Companion.ViewMode.LANGUAGE.name, GuiStateHolder.Companion.ViewMode.LANGUAGE)
+                                button(
+                                    navController,
+                                    GuiStateHolder.Companion.ViewMode.LANGUAGE.name,
+                                    GuiStateHolder.Companion.ViewMode.LANGUAGE
+                                )
                                 Spacer(modifier = Modifier.width(5.dp))
-                                button(navController, GuiStateHolder.Companion.ViewMode.CONFIGURE.name, GuiStateHolder.Companion.ViewMode.CONFIGURE)
+                                button(
+                                    navController,
+                                    GuiStateHolder.Companion.ViewMode.CONFIGURE.name,
+                                    GuiStateHolder.Companion.ViewMode.CONFIGURE
+                                )
                             }
                         )
                     },

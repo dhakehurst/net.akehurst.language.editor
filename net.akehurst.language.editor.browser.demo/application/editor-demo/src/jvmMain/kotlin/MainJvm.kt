@@ -6,22 +6,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.kotlinx.logging.api.LogLevel
+import net.akehurst.kotlinx.logging.api.LogThreshold
 import net.akehurst.kotlinx.logging.api.LoggingManager
-import net.akehurst.kotlinx.logging.common.LoggingByConsole
+import net.akehurst.kotlinx.logging.api.LoggingByConsole
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 import java.io.File
 
 suspend fun main() {
     println("PWD: ${File(".").absolutePath}")
     LoggingManager.use(LoggingByConsole)
-    LoggingManager.rootLoggingLevel = LogLevel.All
+    LoggingManager.rootLoggingLevel = LogThreshold.All
     val logFunction: LogFunction = { logLevel, prefix, t, msg ->
-        when {
-            logLevel <= LogLevel.All -> {
                 println("$logLevel: $prefix - ${msg.invoke()}")
                 t?.let { println("$logLevel: $t") }
-            }
-        }
     }
     val languageService = LanguageServiceDirectExecution(logFunction)
 //    val languageService = LanguageServiceByCoroutine(

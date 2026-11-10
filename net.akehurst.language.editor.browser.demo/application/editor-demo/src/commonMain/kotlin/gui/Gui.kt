@@ -1,7 +1,13 @@
 package net.akehurst.language.editor.demo.gui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import net.akehurst.kotlin.compose.editor.CodeEditorStateHolder
+import net.akehurst.kotlin.compose.editor.isCtrlEnter
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.kotlinx.logging.api.logger
 import net.akehurst.language.agl.Agl
@@ -50,9 +56,14 @@ class Gui(
                 semanticAnalysis { sentenceContext(contextAsmSimple()) }
                 completionProvider { depth(CP_DEPTH) }
             }
+
+            val grammarContext = contextAsmSimple {  }
             val grammarProcessOptions = Agl.options<GrammarDomain, SentenceContext> {
-                semanticAnalysis { sentenceContext(contextAsmSimple()) }
-                completionProvider { depth(CP_DEPTH) }
+                semanticAnalysis { sentenceContext(grammarContext) }
+                completionProvider {
+                    //depth(CP_DEPTH)
+                    sentenceContext(grammarContext)
+                }
             }
             val styleProcessOptions = Agl.options<AglStyleDomain, SentenceContext> {
                 semanticAnalysis { sentenceContext(contextAsmSimple()) }
@@ -126,7 +137,8 @@ class Gui(
     }
     val grammarEditor by lazy {
         createComposeEditor(
-            stateHolder.languageMode.grammareEditorState, Constants.grammarEditorId, logFunction, languageService, grammarLanguage, Constants.grammarProcessOptions
+            stateHolder.languageMode.grammareEditorState, Constants.grammarEditorId, logFunction, languageService,
+            grammarLanguage, Constants.grammarProcessOptions
         )
     }
     val styleEditor by lazy {
