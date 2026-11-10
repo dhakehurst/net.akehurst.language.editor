@@ -602,30 +602,6 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(VAL, REF, STR), "phase", "LanguageProcessorPhase", false)
                 }
             }
-            namespace("net.akehurst.language.regex.api", listOf("std")) {
-                interface_("EscapedValue") {}
-                interface_("UnescapedValue") {}
-                data("EscapedPattern") {
-                    supertype("EscapedValue")
-                    constructor_ { parameter(setOf(), "value", "String", false) }
-                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
-                }
-                data("UnescapedPattern") {
-                    supertype("UnescapedValue")
-                    constructor_ { parameter(setOf(), "value", "String", false) }
-                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
-                }
-                data("EscapedLiteral") {
-                    supertype("EscapedValue")
-                    constructor_ { parameter(setOf(), "value", "String", false) }
-                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
-                }
-                data("UnescapedLiteral") {
-                    supertype("UnescapedValue")
-                    constructor_ { parameter(setOf(), "value", "String", false) }
-                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
-                }
-            }
             namespace("net.akehurst.language.scanner.api", listOf("std", "net.akehurst.language.regex.api")) {
                 enum("MatchableKind", listOf("EOT", "LITERAL", "REGEX"))
                 interface_("ScanOptions") {
