@@ -36,9 +36,16 @@ class test_AglComponents {
             modified = s2
         }
 
-        def.configuration = Agl.configuration(Agl.configurationSimple()){
-            grammarString(GrammarString( "something new"))
-        }
+        // setting 'configuration' no longer notifies the observers, 'update' does
+        def.update(
+            grammarString = GrammarString("something new"),
+            typesString = null,
+            asmTransformString = null,
+            crossReferenceString = null,
+            styleString = null,
+            formatString = null,
+            completionString = null
+        )
 
         assertEquals("something new", modified?.value)
     }

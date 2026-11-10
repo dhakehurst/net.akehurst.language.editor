@@ -502,7 +502,7 @@ class test_AglWorkerAbstract {
                             element("Property") {
                                 propertyString("id", "a")
                                 propertyElementExplicitType("typeReference", "TypeReference") {
-                                    reference("type", "String")
+                                    propertyString("type", "String") // not yet a reference before semantic analysis
                                     propertyString("typeArguments", null)
                                 }
                             }
@@ -539,10 +539,8 @@ class test_AglWorkerAbstract {
             MessageLineTokens(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", 0, emptyList()),
             MessageParseResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), "serialised sppt"),
             MessageSyntaxAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), null),
-            // because LanguageService is in same mem space, no serialisation occurs,
-            // hence same ASM is returned for Syntax and Semantic analysis, and the Semantic analysis resolves the references.
-            // TODO: could make test better by cloning the asm !
-            MessageSyntaxAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSem),// expectedAsmSyn),
+            // the syntax analysis ASM is no longer resolved in place by the semantic analysis
+            MessageSyntaxAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSyn),
             MessageSemanticAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), null),
             MessageSemanticAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSem)
         )
