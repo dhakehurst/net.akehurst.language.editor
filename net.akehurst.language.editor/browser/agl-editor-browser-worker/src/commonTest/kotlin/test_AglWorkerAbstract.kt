@@ -145,7 +145,7 @@ class test_AglWorkerAbstract {
                     MessageResponseStatus.SUCCESS, "OK",
                     emptyList(),
                     listOf(
-                        Matchable(1, 1, "'a'", UnescapedLiteral("a"), MatchableKind.LITERAL)
+                        Matchable(2, 1, "'a'", UnescapedLiteral("a"), MatchableKind.LITERAL)
                     )
                 )
             ),

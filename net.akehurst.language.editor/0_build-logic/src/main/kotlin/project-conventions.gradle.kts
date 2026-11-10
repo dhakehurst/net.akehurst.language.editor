@@ -132,6 +132,8 @@ tasks.named("publish").get().dependsOn("javadocJar")
 
 tasks.named<Test>("jvmTest") {
     useJUnitPlatform()
+    // several modules have no JVM tests; Gradle 9 fails jvmTest by default when none are discovered
+    failOnNoDiscoveredTests = false
     filter {
         isFailOnNoMatchingTests = false
     }

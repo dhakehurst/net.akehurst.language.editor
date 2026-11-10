@@ -3,7 +3,7 @@ package net.akehurst.language.editor.common
 import net.akehurst.kotlinx.logging.api.LoggingManager
 import net.akehurst.kotlinx.logging.api.logger
 import net.akehurst.kotlinx.logging.common.LoggerCommon
-import net.akehurst.kotlinx.logging.common.LoggingByConsole
+import net.akehurst.kotlinx.logging.api.LoggingByConsole
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.LanguageIdentity
