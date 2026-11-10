@@ -490,7 +490,7 @@ class test_AglWorkerAbstract {
         // because LanguageService is in same mem space, no serialisation occurs,
         // hence same ASM is returned for Syntax and Semantic analysis, and the Semantic analysis resolves the references.
         // TODO: could make test better by cloning the asm !
-        val expectedAsmSyn = asmSimple() {
+        val expectedAsmSyn = asmSimple(typesDomain = expectedTypeModel) { // asmSimple now needs the element types to exist in the types domain
             element("Unit") {
                 propertyListOfElement("declaration") {
                     element("Primitive") {

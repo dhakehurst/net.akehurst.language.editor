@@ -484,7 +484,10 @@ object AglWorkerSerialisation {
                     }
                     propertyOf(setOf(VAR, CMP, STR), "_complete", "Map", false) {
                         typeArgument("SpptDataNode")
-                        typeArgument("Map")
+                        typeArgument("Map") {
+                            typeArgument("OptionNum")
+                            typeArgument("List") { typeArgument("SpptDataNode") }
+                        }
                     }
                     propertyOf(setOf(VAR, CMP, STR), "_embeddedFor", "Map", false) {
                         typeArgument("SpptDataNode")
@@ -532,7 +535,7 @@ object AglWorkerSerialisation {
                 }
             }
             namespace("net.akehurst.language.parser.api", listOf("std")) {
-                value("OptionNum") {
+                data("OptionNum") {
                     constructor_ {parameter(setOf(),"value","Integer") }
                     propertyOf(setOf(VAL, REF, STR), "value", "Integer", false)
                 }
@@ -540,6 +543,9 @@ object AglWorkerSerialisation {
 
                 }
                 interface_("ParseOptions") {
+
+                }
+                interface_("ParseStreamListener") {
 
                 }
             }
@@ -596,7 +602,31 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(VAL, REF, STR), "phase", "LanguageProcessorPhase", false)
                 }
             }
-            namespace("net.akehurst.language.scanner.api", listOf("std")) {
+            namespace("net.akehurst.language.regex.api", listOf("std")) {
+                interface_("EscapedValue") {}
+                interface_("UnescapedValue") {}
+                data("EscapedPattern") {
+                    supertype("EscapedValue")
+                    constructor_ { parameter(setOf(), "value", "String", false) }
+                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
+                }
+                data("UnescapedPattern") {
+                    supertype("UnescapedValue")
+                    constructor_ { parameter(setOf(), "value", "String", false) }
+                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
+                }
+                data("EscapedLiteral") {
+                    supertype("EscapedValue")
+                    constructor_ { parameter(setOf(), "value", "String", false) }
+                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
+                }
+                data("UnescapedLiteral") {
+                    supertype("UnescapedValue")
+                    constructor_ { parameter(setOf(), "value", "String", false) }
+                    propertyOf(setOf(VAL, REF, STR), "value", "String", false)
+                }
+            }
+            namespace("net.akehurst.language.scanner.api", listOf("std", "net.akehurst.language.regex.api")) {
                 enum("MatchableKind", listOf("EOT", "LITERAL", "REGEX"))
                 interface_("ScanOptions") {
 
@@ -607,10 +637,10 @@ object AglWorkerSerialisation {
                        parameter(setOf(),"ruleSetNumber", "Integer", false)
                        parameter(setOf(),"ruleNumber", "Integer", false)
                        parameter(setOf(),"tag", "String", false)
-                       parameter(setOf(),"expression", "String", false)
+                       parameter(setOf(),"expression", "UnescapedValue", false)
                        parameter(setOf(),"kind", "MatchableKind", false)
                     }
-                    propertyOf(setOf(VAL, REF, STR), "expression", "String", false)
+                    propertyOf(setOf(VAL, CMP, STR), "expression", "UnescapedValue", false)
                     propertyOf(setOf(VAL, REF, STR), "kind", "MatchableKind", false)
                     propertyOf(setOf(VAL, REF, STR), "ruleNumber", "Integer", false)
                     propertyOf(setOf(VAL, REF, STR), "ruleSetNumber", "Integer", false)
@@ -663,6 +693,9 @@ object AglWorkerSerialisation {
                     typeParameters("ContextType")
 
                 }
+                interface_("FormatOptions") {
+                    typeParameters("SelfType")
+                }
                 data("CompletionItem") {
 
                     constructor_ {
@@ -708,7 +741,17 @@ object AglWorkerSerialisation {
                        parameter(setOf(),"reportErrors", "Boolean", false)
                        parameter(setOf(),"reportGrammarAmbiguities", "Boolean", false)
                        parameter(setOf(),"cacheSkip", "Boolean", false)
+                       parameter(setOf(),"reverseFindWordStartRegex", "String", true)
+                       parameter(setOf(),"reverseFindWordStartBySkipRules", "Boolean", false)
+                       parameter(setOf(),"expectedAtFromAllTokenStarts", "Boolean", false)
+                       parameter(setOf(),"streamListener", "ParseStreamListener", true)
+                       parameter(setOf(),"streamLagWarningLimit", "Integer", false)
                     }
+                    propertyOf(setOf(VAR, REF, STR), "reverseFindWordStartRegex", "String", true)
+                    propertyOf(setOf(VAR, REF, STR), "reverseFindWordStartBySkipRules", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "expectedAtFromAllTokenStarts", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "streamListener", "ParseStreamListener", true)
+                    propertyOf(setOf(VAR, REF, STR), "streamLagWarningLimit", "Integer", false)
                     propertyOf(setOf(VAR, REF, STR), "cacheSkip", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "goalRuleName", "String", false)
@@ -733,8 +776,10 @@ object AglWorkerSerialisation {
                     supertype("SyntaxAnalysisOptions") { ref("AsmType") }
                     constructor_ {
                        parameter(setOf(),"enabled", "Boolean", false)
+                       parameter(setOf(),"streaming", "Boolean", false)
                     }
                     propertyOf(setOf(VAR, REF, STR), "enabled", "Boolean", false)
+                    propertyOf(setOf(VAR, REF, STR), "streaming", "Boolean", false)
                 }
                 data("SemanticAnalysisOptionsDefault") {
                     typeParameters("ContextType")
@@ -773,6 +818,11 @@ object AglWorkerSerialisation {
                        parameter(setOf(),"showOptionalItems", "Boolean", false)
                        parameter(setOf(),"provideValuesForPatternTerminals", "Boolean", false)
                        parameter(setOf(),"other", "Map", false)
+                       parameter(setOf(),"ruleDepth", "Map", false)
+                    }
+                    propertyOf(setOf(VAR, REF, STR), "ruleDepth", "Map", false) {
+                        typeArgument("String")
+                        typeArgument("Integer")
                     }
                     propertyOf(setOf(VAR, REF, STR), "sentenceContext", "ContextType", false)
                     propertyOf(setOf(VAR, REF, STR), "depth", "Integer", false)
@@ -786,6 +836,19 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(VAR, REF, STR), "provideValuesForPatternTerminals", "Boolean", false)
                     propertyOf(setOf(VAR, REF, STR), "showOptionalItems", "Boolean", false)
                 }
+                data("FormatOptionsDefault") {
+                    typeParameters("SelfType")
+                    supertype("FormatOptions") { ref("SelfType") }
+                    constructor_ {
+                       parameter(setOf(),"locationMap", "LocationMap", true)
+                       parameter(setOf(),"environment", "Map", false)
+                    }
+                    propertyOf(setOf(VAR, REF, STR), "locationMap", "LocationMap", true)
+                    propertyOf(setOf(VAL, CMP, STR), "environment", "Map", false) {
+                        typeArgument("String")
+                        typeArgument("SelfType")
+                    }
+                }
                 data("ProcessOptionsDefault") {
                     typeParameters("AsmType", "ContextType")
                     supertype("ProcessOptions") { ref("AsmType"); ref("ContextType") }
@@ -795,6 +858,10 @@ object AglWorkerSerialisation {
                        parameter(setOf(),"syntaxAnalysis", "SyntaxAnalysisOptions", false)
                        parameter(setOf(),"semanticAnalysis", "SemanticAnalysisOptions", false)
                        parameter(setOf(),"completionProvider", "CompletionProviderOptions", false)
+                       parameter(setOf(),"format", "FormatOptions", false)
+                    }
+                    propertyOf(setOf(VAL, CMP, STR), "format", "FormatOptions", false) {
+                        typeArgument("AsmType")
                     }
                     propertyOf(setOf(VAL, CMP, STR), "completionProvider", "CompletionProviderOptions", false) {
                         typeArgument("ContextType")
@@ -817,22 +884,15 @@ object AglWorkerSerialisation {
                 data("ResolveScopedItemDefault") {
                     constructor_ {  }
                 }
-                data("ContextWithScope") {
-                    typeParameters("ItemType", "ItemInScopeType")
+                data("SentenceContextAny") {
                     supertype("SentenceContext")
                     constructor_ {
                        parameter(setOf(),"createScopedItem", "CreateScopedItem", false)
                        parameter(setOf(),"resolveScopedItem", "ResolveScopedItem", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STR), "createScopedItem", "CreateScopedItem", false) {
-                        typeArgument("ItemType")
-                        typeArgument("ItemInScopeType")
-                    }
-                    propertyOf(setOf(VAL, CMP, STR), "resolveScopedItem", "ResolveScopedItem", false) {
-                        typeArgument("ItemType")
-                        typeArgument("ItemInScopeType")
-                    }
-                    propertyOf(setOf(VAR, CMP, STR), "scopeForSentence", "Map", false) {
+                    propertyOf(setOf(VAL, CMP, STR), "createScopedItem", "CreateScopedItem", false)
+                    propertyOf(setOf(VAL, CMP, STR), "resolveScopedItem", "ResolveScopedItem", false)
+                    propertyOf(setOf(VAL, CMP, STR), "scopeForSentence", "Map", false) {
                         typeArgument("Any")
                         typeArgument("ScopeSimple")
                     }
@@ -845,7 +905,7 @@ object AglWorkerSerialisation {
             }
             namespace(
                 "net.akehurst.language.agl.semanticAnalyser",
-                listOf("net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.api.processor", "net.akehurst.language.typesDomain.api")
+                listOf("net.akehurst.language.api.semanticAnalyser", "std", "net.akehurst.language.api.processor", "net.akehurst.language.types.api")
             ) {
                 data("ContextFromtypesDomainReference") {
                     supertype("SentenceContext")
@@ -857,9 +917,9 @@ object AglWorkerSerialisation {
                 data("ContextFromtypesDomain") {
                     supertype("SentenceContext")
                     constructor_ {
-                       parameter(setOf(),"typesDomain", "typesDomain", false)
+                       parameter(setOf(),"typesDomain", "TypesDomain", false)
                     }
-                    propertyOf(setOf(VAL, CMP, STR), "typesDomain", "typesDomain", false)
+                    propertyOf(setOf(VAL, CMP, STR), "typesDomain", "TypesDomain", false)
                 }
             }
             namespace(
