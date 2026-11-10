@@ -450,7 +450,7 @@ class test_AglWorkerAbstract {
         """.trimIndent()
 
         // create userGrammar
-        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), requestId, languageId, userGrammar, crossReferenceStr, null, null, EditorOptionsDefault()))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), requestId, languageId, userGrammar, typesModelStr = null, transformStr = null, crossReferenceStr = crossReferenceStr, editorOptions = EditorOptionsDefault()))
         // set style for agl grammar (is this needed?)
         sut.receive(port, MessageSetStyle(EndPointIdentity(editorId, sessionId), requestId, languageId, styleStr))
         // process the userGrammar sentence
@@ -502,7 +502,7 @@ class test_AglWorkerAbstract {
                             element("Property") {
                                 propertyString("id", "a")
                                 propertyElementExplicitType("typeReference", "TypeReference") {
-                                    propertyString("type", "String") // not yet a reference before semantic analysis
+                                    reference("type", "String")
                                     propertyString("typeArguments", null)
                                 }
                             }
@@ -539,8 +539,10 @@ class test_AglWorkerAbstract {
             MessageLineTokens(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", 0, emptyList()),
             MessageParseResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), "serialised sppt"),
             MessageSyntaxAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), null),
-            // the syntax analysis ASM is no longer resolved in place by the semantic analysis
-            MessageSyntaxAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSyn),
+            // because LanguageService is in same mem space, no serialisation occurs,
+            // hence same ASM is returned for Syntax and Semantic analysis, and the Semantic analysis resolves the references.
+            // TODO: could make test better by cloning the asm !
+            MessageSyntaxAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSem),// expectedAsmSyn),
             MessageSemanticAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), null),
             MessageSemanticAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSem)
         )
@@ -650,11 +652,11 @@ class test_AglWorkerAbstract {
                 identify S by a
         """.trimIndent()
 
-        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(languageId.value), languageId, grammarStr, referencesStr, null, null, EditorOptionsDefault()))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(languageId.value), languageId, grammarStr, typesModelStr = null, transformStr = null, crossReferenceStr = referencesStr, editorOptions = EditorOptionsDefault()))
 
         sut.receive(
             port,
-            MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(Agl.registry.agl.crossReferenceLanguageIdentity.value), Agl.registry.agl.crossReferenceLanguageIdentity, grammarStr, referencesStr, null, null, EditorOptionsDefault())
+            MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(Agl.registry.agl.crossReferenceLanguageIdentity.value), Agl.registry.agl.crossReferenceLanguageIdentity, grammarStr, typesModelStr = null, transformStr = null, crossReferenceStr = referencesStr, editorOptions = EditorOptionsDefault())
         )
         sut.receive(port, MessageSetStyle(EndPointIdentity(editorId, sessionId), RequestIdentity(Agl.registry.agl.crossReferenceLanguageIdentity.value), Agl.registry.agl.crossReferenceLanguageIdentity, styleStr))
 
