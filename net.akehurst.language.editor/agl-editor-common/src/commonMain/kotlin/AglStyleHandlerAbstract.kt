@@ -24,12 +24,30 @@ import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.style.api.*
 import net.akehurst.language.style.asm.AglStyleDomainDefault
 
+/**
+ * Applies an AGL style model to tokens, with the semantics of the AGL style DSL
+ * (net.akehurst.language 5_Documentation/dsl/style.md):
+ *
+ *  - selectors 'literal', "pattern" (as written in the grammar) and RULE_NAME match a token by its terminal or rule name,
+ *  - `$nostyle` is the default style, the base of every token,
+ *  - `$keyword` is every word-like literal, the same as the meta rule `$$ "'[a-zA-Z_][a-zA-Z0-9_-]*'"`,
+ *  - a meta rule `$$ "regex"` matches every terminal whose text as written in the grammar (quotes included) matches the regex,
+ *  - when several rules match a token they combine like CSS: start from `$nostyle`, then apply each matching rule
+ *    in the order written; a later rule overrides only the declarations it sets,
+ *  - `styles B : A` extends A, A's rules come first.
+ *
+ * Each rule gives one editor style, numbered in rule order; a token gets the editor styles of the rules
+ * that apply to it, in the order they are to be applied (the editor merges them in that order).
+ */
 abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
     languageId: LanguageIdentity
 ) : AglStyleHandler<EditorStyleType> {
 
     companion object {
         const val AGL_STYLE_PREFIX = "agl"
+
+        /** the regex of the `$keyword` selector, matched against the terminal's text as written in the grammar */
+        val KEYWORD_REGEX = Regex("'[a-zA-Z_][a-zA-Z0-9_-]*'")
     }
 
     abstract val EDITOR_NO_STYLE: EditorStyleType
@@ -39,68 +57,91 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
     protected val _stylePrefix = "${AGL_STYLE_PREFIX}-${languageId.value}"
     private var _styleModel: AglStyleDomain = AglStyleDomainDefault(SimpleName(languageId.last))
     private var _editorStyles = mutableMapOf<EditorStyleIdentity, EditorStyleType>()
-    private var _metaStyles = mutableMapOf<EditorStyleType, AglStyleMetaRule>()
-    private val _selectorToEditorStyle = mutableMapOf<String, EditorStyleType>(AglStyleDomainDefault.NO_STYLE_ID.value to EDITOR_NO_STYLE)
+
+    // rule order of each editor style
+    private val _ruleOrder = mutableMapOf<EditorStyleType, Int>()
+
+    // editor styles of the $nostyle rules, in rule order
+    private val _baseStyles = mutableListOf<EditorStyleType>()
+
+    // selector value ('literal', "pattern", RULE_NAME) -> editor styles of the rules with that selector
+    private val _selectorToEditorStyles = mutableMapOf<String, MutableList<EditorStyleType>>()
+
+    // meta rules (and $keyword): regex -> editor style
+    private val _metaStyles = mutableListOf<Pair<Regex, EditorStyleType>>()
     private var _nextEditorStyleNum = 1
 
-    abstract fun createEditorStyleType(identity: EditorStyleIdentity):EditorStyleType
+    abstract fun createEditorStyleType(identity: EditorStyleIdentity): EditorStyleType
 
     open fun updateEditorStyles(editorStyles: List<EditorStyleType>, sr: AglStyleRule) {}
 
-    open fun updateStyleRule(sr:AglStyleRule): List<EditorStyleType> {
-        val editorStyles = when (sr) {
-            is AglStyleTagRule -> {
-                sr.selector.map { sel ->
-                    val sn = convert(sel)
-                    _editorStyles[sn.identity] = sn
-                    sn
-                }
-            }
-
-            is AglStyleMetaRule -> {
-                val n = AglStyleSelector("\$\$" + sr.pattern.value, AglStyleSelectorKind.SPECIAL)
-                val sn = convert(n)
-                _metaStyles[sn] = sr
-                _editorStyles[sn.identity] = sn
-                listOf(sn)
-            }
-
+    open fun updateStyleRule(sr: AglStyleRule): List<EditorStyleType> {
+        // one editor style per rule, numbered in rule order
+        val editorStyle = createEditorStyleType(EditorStyleIdentity(_stylePrefix + this._nextEditorStyleNum))
+        _ruleOrder[editorStyle] = this._nextEditorStyleNum
+        this._nextEditorStyleNum++
+        _editorStyles[editorStyle.identity] = editorStyle
+        when (sr) {
+            is AglStyleTagRule -> sr.selector.forEach { sel -> addSelector(sel, editorStyle) }
+            is AglStyleMetaRule -> _metaStyles.add(Pair(Regex(sr.pattern.value), editorStyle))
             else -> error("Unsupported")
         }
+        val editorStyles = listOf(editorStyle)
         updateEditorStyles(editorStyles, sr)
         return editorStyles
+    }
+
+    private fun addSelector(sel: AglStyleSelector, editorStyle: EditorStyleType) {
+        when {
+            sel.value == AglStyleDomainDefault.NO_STYLE_ID.value -> _baseStyles.add(editorStyle)
+            sel.value == AglStyleDomainDefault.KEYWORD_STYLE_ID.value -> _metaStyles.add(Pair(KEYWORD_REGEX, editorStyle))
+            sel.kind == AglStyleSelectorKind.SPECIAL -> Unit // unknown special selector, styles nothing
+            else -> _selectorToEditorStyles.getOrPut(sel.value) { mutableListOf() }.add(editorStyle)
+        }
     }
 
     // --- AglStyleHandler ---
 
     override fun reset() {
         _editorStyles.clear()
+        _ruleOrder.clear()
+        _baseStyles.clear()
+        _selectorToEditorStyles.clear()
         _metaStyles.clear()
         _nextEditorStyleNum = 1
-        this._selectorToEditorStyle.clear()
-        this._selectorToEditorStyle[AglStyleDomainDefault.NO_STYLE_ID.value] = EDITOR_NO_STYLE
     }
 
     override fun updateStyleModel(styleModel: AglStyleDomain) {
         _styleModel = styleModel // TODO: should not need to store this , need to modify 'updateEditorStyles' in editor specific code!
+        // allRules gives the rules of extended style sets first,
+        // a rule that is in more than one style set (via extends) is applied once, at its first position
+        val done = mutableSetOf<AglStyleRule>()
         styleModel.allDefinitions.forEach { ss ->
             ss.allRules.forEach { sr ->
-                updateStyleRule(sr)
+                if (done.none { it === sr }) {
+                    done.add(sr)
+                    updateStyleRule(sr)
+                }
             }
         }
     }
 
     override fun editorStyleFor(identity: EditorStyleIdentity): EditorStyleType? =
-        _editorStyles[identity]
+        _editorStyles[identity] ?: if (identity == EDITOR_NO_STYLE.identity) EDITOR_NO_STYLE else null
 
-    override fun convert(selector: AglStyleSelector): EditorStyleType {
-        var editorStyle = this._selectorToEditorStyle[selector.value]
-        if (null == editorStyle) {
-            // the number help preserve the precedence ordering of the styles
-            editorStyle = createEditorStyleType(EditorStyleIdentity(_stylePrefix + this._nextEditorStyleNum++))
-            this._selectorToEditorStyle[selector.value] = editorStyle
+    /**
+     * the editor style of the first rule with the given selector, or a new (unstyled) editor style
+     */
+    override fun convert(selector: AglStyleSelector): EditorStyleType = when {
+        selector.value == AglStyleDomainDefault.NO_STYLE_ID.value -> _baseStyles.firstOrNull() ?: EDITOR_NO_STYLE
+        else -> _selectorToEditorStyles[selector.value]?.firstOrNull() ?: let {
+            val editorStyle = createEditorStyleType(EditorStyleIdentity(_stylePrefix + this._nextEditorStyleNum))
+            _ruleOrder[editorStyle] = this._nextEditorStyleNum
+            this._nextEditorStyleNum++
+            _editorStyles[editorStyle.identity] = editorStyle
+            _selectorToEditorStyles.getOrPut(selector.value) { mutableListOf() }.add(editorStyle)
+            editorStyle
         }
-        return editorStyle
     }
 
     override fun transformToTokens(leafs: List<LeafData>): List<AglTokenDefault> {
@@ -114,38 +155,20 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
         }
     }
 
-    private fun mapToEditorStyle(leaf: LeafData): List<EditorStyleType> {
-        //val metaTagClasses = leaf.metaTags.mapNotNull { this.mapTokenTypeToClass(it) }
-        val metaTagClasses = this._metaStyles.mapNotNull { (k, v) ->
-            when {
-                v.pattern.value.toRegex().matches(leaf.name) -> k
-                leaf.tagList.any { v.pattern.value.toRegex().matches(it) } -> k
-                else -> null
-            }
-        }
-
-        val kind = when {
-            leaf.isPattern -> AglStyleSelectorKind.PATTERN
-            else -> AglStyleSelectorKind.LITERAL
-        }
-        val otherClasses = if (leaf.tagList.isNotEmpty()) {
-            leaf.tagList.mapNotNull {
-                //val sel = AglStyleSelector(it, kind)
-                this._selectorToEditorStyle[it]
-            }
-        } else {
-            listOf(this._selectorToEditorStyle[AglStyleSelector(leaf.name, AglStyleSelectorKind.RULE_NAME).value]).filterNotNull()
-        }
-        val classes = metaTagClasses + otherClasses
-        return if (classes.isEmpty()) {
-            listOf(EDITOR_NO_STYLE)
-        } else {
-            // The order of the styles matters, last style should take precedence
-            // the agl-style names are mapped to a css compatible name starting with a prefix + a number
-            // the numbers provide a way to order the styles, due to the way they are created.
-            // (also need to remove duplicates)
-            classes.toSet().sortedBy { it.identity.value }
-        }
+    /**
+     * the editor styles to apply to the leaf, in the order to apply them:
+     * the $nostyle rules, then each matching rule in the order written
+     */
+    fun mapToEditorStyle(leaf: LeafData): List<EditorStyleType> {
+        // a leaf from the parse tree has the names of its enclosing rules and its own name as tags,
+        // a leaf from the scanner has only its name
+        val names = leaf.tagList.ifEmpty { listOf(leaf.name) }
+        val bySelector = names.flatMap { this._selectorToEditorStyles[it] ?: emptyList() }
+        // meta rules match the terminal's text as written in the grammar, which is the leaf's name
+        val byMeta = this._metaStyles.mapNotNull { (regex, style) -> if (regex.matches(leaf.name)) style else null }
+        val matched = (bySelector + byMeta).toSet().sortedBy { _ruleOrder[it] ?: Int.MAX_VALUE }
+        val classes = (_baseStyles + matched).distinct()
+        return classes.ifEmpty { listOf(EDITOR_NO_STYLE) }
     }
 
 }
