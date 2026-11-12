@@ -40,6 +40,8 @@ object AglWorkerSerialisation {
     private var initialised = false
     private val serialiser = KSerialiserJson().also {
         it.registerKotlinStdPrimitives()
+        // e.g. std lib (StdLibDefault) definitions are sent by name and found in the receiver's own StdLibDefault
+        it.registry.registerLookupForDefinitionsOfSingletonNamespaces()
     }
 
     private fun initialise() {
@@ -865,6 +867,7 @@ object AglWorkerSerialisation {
                     constructor_ {
                        parameter(setOf(),"createScopedItem", "CreateScopedItem", false)
                        parameter(setOf(),"resolveScopedItem", "ResolveScopedItem", false)
+                       parameter(setOf(),"scopeForSentence", "Map", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "createScopedItem", "CreateScopedItem", false)
                     propertyOf(setOf(VAL, CMP, STR), "resolveScopedItem", "ResolveScopedItem", false)
