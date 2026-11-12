@@ -865,6 +865,7 @@ object AglWorkerSerialisation {
                     constructor_ {
                        parameter(setOf(),"createScopedItem", "CreateScopedItem", false)
                        parameter(setOf(),"resolveScopedItem", "ResolveScopedItem", false)
+                       parameter(setOf(),"scopeForSentence", "Map", false)
                     }
                     propertyOf(setOf(VAL, CMP, STR), "createScopedItem", "CreateScopedItem", false)
                     propertyOf(setOf(VAL, CMP, STR), "resolveScopedItem", "ResolveScopedItem", false)
