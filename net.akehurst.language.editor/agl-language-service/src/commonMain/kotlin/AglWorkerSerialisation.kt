@@ -401,25 +401,6 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
                     propertyOf(setOf(VAL, REF, STR), "text", "String", false)
                 }
-                data("MessageParseResult2") {
-                    supertype("AglWorkerMessageResponse")
-                    constructor_ {
-                       parameter(setOf(),"endPoint", "EndPointIdentity", false)
-                       parameter(setOf(),"requestId", "RequestIdentity", false)
-                       parameter(setOf(),"status", "MessageResponseStatus", false)
-                       parameter(setOf(),"message", "String", false)
-                       parameter(setOf(),"issues", "List", false)
-                       parameter(setOf(),"treeData", "TreeData", false)
-                    }
-                    propertyOf(setOf(VAL, CMP, STR), "endPoint", "EndPointIdentity", false)
-                    propertyOf(setOf(VAR, CMP, STR), "issues", "List", false) {
-                        typeArgument("LanguageIssue")
-                    }
-                    propertyOf(setOf(VAL, REF, STR), "message", "String", false)
-                    propertyOf(setOf(VAL, CMP, STR), "requestId", "RequestIdentity", false)
-                    propertyOf(setOf(VAL, REF, STR), "status", "MessageResponseStatus", false)
-                    propertyOf(setOf(VAL, CMP, STR), "treeData", "TreeData", false)
-                }
                 data("MessageSetStyleResponse") {
                     supertype("AglWorkerMessageResponse")
                     constructor_ {
@@ -1424,13 +1405,6 @@ object AglWorkerSerialisation {
                     propertyOf(setOf(CON, CMP), "treeSerialised", "String", true)
                 }
 //FIXME
-                data("MessageParseResult2") {
-                    propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
-                    propertyOf(setOf(CON, CMP), "status", "MessageResponseStatus")
-                    propertyOf(setOf(CON, CMP), "message", "String")
-                    propertyOf(setOf(CON, CMP), "issues", "List") { typeArgument("LanguageIssue") }
-                    propertyOf(setOf(CON, CMP), "treeData", "TreeDataComplete", true)
-                }
 
                 data("MessageSyntaxAnalysisResult") {
                     propertyOf(setOf(CON, CMP), "endPoint", "EndPointIdentity")
