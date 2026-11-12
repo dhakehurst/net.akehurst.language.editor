@@ -40,6 +40,8 @@ object AglWorkerSerialisation {
     private var initialised = false
     private val serialiser = KSerialiserJson().also {
         it.registerKotlinStdPrimitives()
+        // e.g. std lib (StdLibDefault) definitions are sent by name and found in the receiver's own StdLibDefault
+        it.registry.registerLookupForDefinitionsOfSingletonNamespaces()
     }
 
     private fun initialise() {
