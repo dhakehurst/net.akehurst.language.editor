@@ -42,18 +42,25 @@ class AglStyleHandlerComposeStyle(
 
     override fun createEditorStyleType(identity: EditorStyleIdentity) = ComposeStyle(identity)
 
+    /**
+     * Properties not given by the rule are left unspecified (Color.Unspecified / null),
+     * so that the editor's own text style applies, and so that merging the styles of
+     * several rules for one token does not overwrite a property set by another rule.
+     */
     override fun updateEditorStyles(editorStyles: List<ComposeStyle>, sr: AglStyleRule) {
-        var foreground = Color.Black
-        var background = Color.Transparent
-        var fontWeight = FontWeight.Normal
-        var fontStyle = FontStyle.Normal
-        var textDecoration = TextDecoration.None
+        var foreground = Color.Unspecified
+        var background = Color.Unspecified
+        var fontWeight: FontWeight? = null
+        var fontStyle: FontStyle? = null
+        var textDecoration: TextDecoration? = null
         sr.declaration.values.forEach { oldStyle ->
             when (oldStyle.name) {
                 "foreground" -> foreground = oldStyle.value.toComposeColor()
                 "background" -> background = oldStyle.value.toComposeColor()
                 "text-decoration" -> when (oldStyle.value) {
                     "underline" -> textDecoration = TextDecoration.Underline
+                    "line-through" -> textDecoration = TextDecoration.LineThrough
+                    "none" -> textDecoration = TextDecoration.None
                     else -> Unit
                 }
 
@@ -83,19 +90,27 @@ class AglStyleHandlerComposeStyle(
         }
     }
 
-    fun String.toComposeColor(alpha: Int = 0xFF, defaultColor: Color = Color.Black): Color {
+    fun String.toComposeColor(alpha: Int = 0xFF, defaultColor: Color = Color.Unspecified): Color {
+        // a quoted value, e.g. '#82AAFF', is accepted as well
+        val value = this.trim().removeSurrounding("'").removeSurrounding("\"")
         return when {
-            this.startsWith("#") -> {
-                val digits = this.removePrefix("#")
-                val num = when (digits.length) {
-                    8 -> digits.toLong(16)
-                    else -> digits.toLong(16) or 0x00000000FF000000
+            value.startsWith("#") -> {
+                val digits = value.removePrefix("#").let {
+                    when (it.length) {
+                        3 -> it.map { c -> "$c$c" }.joinToString("") // #RGB
+                        else -> it
+                    }
                 }
-                Color(num)
+                val num = when (digits.length) {
+                    8 -> digits.toLongOrNull(16)
+                    6 -> digits.toLongOrNull(16)?.let { it or 0x00000000FF000000 }
+                    else -> null
+                }
+                num?.let { Color(it) } ?: defaultColor
             }
 
             else -> {
-                val lower = this.lowercase()
+                val lower = value.lowercase()
                 CssColours.NAME_to_HEX[lower]?.let {
                     val num = it.toLong()
                     Color(num)

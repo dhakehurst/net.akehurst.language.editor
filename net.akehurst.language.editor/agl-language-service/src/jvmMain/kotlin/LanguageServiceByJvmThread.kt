@@ -20,15 +20,38 @@ import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.api.processor.*
 import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.language.service.LanguageServiceRequestDirectExecution
+import net.akehurst.language.editor.language.service.ProcessRequestTracker
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.style.api.AglStyleDomain
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 open class LanguageServiceByJvmThread(
     val executorService: ExecutorService,
     override val logFunction: LogFunction
 ) : LanguageService {
+
+    // guards _tracker and _languageLocks
+    private val _stateLock = ReentrantLock()
+    private val _tracker = ProcessRequestTracker()
+
+    // a LanguageProcessor is shared by all editors of a language and is not thread safe,
+    // so requests that use the processor of one language are executed one at a time
+    private val _languageLocks = mutableMapOf<LanguageIdentity, ReentrantLock>()
+
+    private fun <T> withLanguageLock(languageId: LanguageIdentity, action: () -> T): T =
+        _stateLock.withLock { _languageLocks.getOrPut(languageId) { ReentrantLock() } }.withLock { action() }
+
+    /** interrupt the processing for [languageId] only if it is an older request from the same endPoint */
+    private fun interruptIfOlder(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, reason: String) {
+        _stateLock.withLock {
+            if (_tracker.shouldInterrupt(languageId, endPointIdentity, requestId)) {
+                direct.interruptRequest(endPointIdentity, requestId, languageId, reason)
+            }
+        }
+    }
 
     // --- LanguageService ---
     override val request: LanguageServiceRequest = object : LanguageServiceRequest {
@@ -39,7 +62,7 @@ open class LanguageServiceByJvmThread(
             languageDefinition: LanguageDefinition<AsmType, ContextType>,
             editorOptions: EditorOptions
         ) {
-            submit { direct.processorCreateRequest(endPointIdentity, requestId, languageDefinition, editorOptions) }
+            submit { withLanguageLock(languageDefinition.identity) { direct.processorCreateRequest(endPointIdentity, requestId, languageDefinition, editorOptions) } }
         }
 
         override fun processorDeleteRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity) {
@@ -47,11 +70,11 @@ open class LanguageServiceByJvmThread(
         }
 
         override fun processorSetStyleRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, styleStr: StyleString) {
-            submit { direct.processorSetStyleRequest(endPointIdentity, requestId, languageId, styleStr) }
+            submit { withLanguageLock(languageId) { direct.processorSetStyleRequest(endPointIdentity, requestId, languageId, styleStr) } }
         }
 
         override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, reason: String) {
-            submit { direct.interruptRequest(endPointIdentity, requestId, languageId, "New parse request") }
+            submit { interruptIfOlder(endPointIdentity, requestId, languageId, "New parse request") }
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
@@ -61,7 +84,25 @@ open class LanguageServiceByJvmThread(
             sentence: String,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            submit { direct.sentenceProcessRequest(endPointIdentity, requestId, languageId, sentence, processOptions) }
+            submit {
+                val isLatest = _stateLock.withLock { _tracker.received(endPointIdentity, requestId) }
+                if (isLatest) {
+                    // an older request from the same editor is no longer needed
+                    interruptIfOlder(endPointIdentity, requestId, languageId, "New parse request")
+                    withLanguageLock(languageId) {
+                        val stillLatest = _stateLock.withLock {
+                            _tracker.isLatest(endPointIdentity, requestId).also { if (it) _tracker.start(languageId, endPointIdentity, requestId) }
+                        }
+                        if (stillLatest) {
+                            try {
+                                direct.sentenceProcessRequest(endPointIdentity, requestId, languageId, sentence, processOptions)
+                            } finally {
+                                _stateLock.withLock { _tracker.finish(languageId, endPointIdentity, requestId) }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         override fun <AsmType : Any, ContextType : Any> sentenceCodeCompleteRequest(
@@ -72,7 +113,7 @@ open class LanguageServiceByJvmThread(
             position: Int,
             processOptions: ProcessOptions<AsmType, ContextType>
         ) {
-            submit { direct.sentenceCodeCompleteRequest(endPointIdentity, requestId, languageId, sentence, position, processOptions) }
+            submit { withLanguageLock(languageId) { direct.sentenceCodeCompleteRequest(endPointIdentity, requestId, languageId, sentence, position, processOptions) } }
         }
     }
 

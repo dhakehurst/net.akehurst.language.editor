@@ -58,7 +58,8 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     //protected val agl = AglComponents<AsmType, ContextType>(languageId, editorId, logger, styleHandler)
     protected val agl = AglComponents<AsmType, ContextType>(languageDefinition, editorId, logger, styleHandler)
-    val nextRequestId get() = RequestIdentity("$_nextRequestId")
+    /** a new, unique, identity for each request, so that responses to old requests can be recognised */
+    val nextRequestId: RequestIdentity get() = RequestIdentity("${_nextRequestId++}")
 
     abstract val workerTokenizer: AglTokenizerByWorker<EditorStyleType>
     abstract val completionProvider: AglEditorCompletionProvider
@@ -82,6 +83,14 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
     private val _onSemanticAnalysisHandler = mutableListOf<(SemanticAnalysisEvent) -> Unit>()
     private var _editorSpecificStyleStr: StyleString? = null
     private var _nextRequestId: Int = 0
+
+    /**
+     * identity of the latest sentenceProcessRequest,
+     * responses for an older request (e.g. one that was interrupted by a newer request) are ignored
+     */
+    private var _currentProcessRequestId: RequestIdentity? = null
+
+    protected fun isCurrentProcessRequest(requestId: RequestIdentity): Boolean = requestId == _currentProcessRequestId
 
 //    override var sentence = SentenceFromEditor(this)
 
@@ -261,8 +270,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         logger.logTrace { "processSentence" }
         if (doUpdate && null != this.languageDefinition.targetGrammar) {
             clearIssues()
-            this.languageServiceRequest.interruptRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, "process Sentence")
-            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, nextRequestId, this.languageIdentity, text, this.agl.options.invoke())
+            val requestId = nextRequestId
+            _currentProcessRequestId = requestId
+            this.languageServiceRequest.interruptRequest(this.endPointIdentity, requestId, this.languageIdentity, "process Sentence")
+            this.languageServiceRequest.sentenceProcessRequest(this.endPointIdentity, requestId, this.languageIdentity, text, this.agl.options.invoke())
         }
     }
 
@@ -339,6 +350,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         lineTokens: List<List<AglToken>>
     ) {
         logger.logTrace { "sentenceLineTokensResponse $endPointIdentity, $requestId, $status, $message, $startLine, $lineTokens" }
+        if (isCurrentProcessRequest(requestId).not()) {
+            logger.logTrace { "sentenceLineTokensResponse ignored, $requestId is not the current request" }
+            return
+        }
         when (status) {
             MessageResponseStatus.RECEIVED -> {
                 this.notifyLineTokens(LineTokensEvent(EventStatus.START, message, emptyList()))
@@ -362,11 +377,19 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
 
     override fun sentenceScanResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>) {
         logger.logTrace { "sentenceScanResponse $endPointIdentity, $requestId, $status, $message, $issues" }
+        if (isCurrentProcessRequest(requestId).not()) {
+            logger.logTrace { "sentenceScanResponse ignored, $requestId is not the current request" }
+            return
+        }
         receiveIssues(issues.toList())
     }
 
     override fun sentenceParseResponse(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, status: MessageResponseStatus, message: String, issues: List<LanguageIssue>, tree: Any?) {
         logger.logTrace { "sentenceParseResponse $endPointIdentity, $requestId, $status, $message, $issues, <tree>" }
+        if (isCurrentProcessRequest(requestId).not()) {
+            logger.logTrace { "sentenceParseResponse ignored, $requestId is not the current request" }
+            return
+        }
         receiveIssues(issues.toList())
         when (status) {
             MessageResponseStatus.RECEIVED -> {
@@ -398,6 +421,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         asm: Any?
     ) {
         logger.logTrace { "sentenceSyntaxAnalysisResponse $endPointIdentity, $requestId, $status, $message, $issues, <asm>" }
+        if (isCurrentProcessRequest(requestId).not()) {
+            logger.logTrace { "sentenceSyntaxAnalysisResponse ignored, $requestId is not the current request" }
+            return
+        }
         this.receiveIssues(issues.toList())
         when (status) {
             MessageResponseStatus.RECEIVED -> this.notifySyntaxAnalysis(SyntaxAnalysisEvent(EventStatus.START, message, null, emptyList()))
@@ -416,6 +443,10 @@ abstract class AglEditorAbstract<AsmType : Any, ContextType : Any, EditorStyleTy
         asm: Any?
     ) {
         logger.logTrace { "sentenceSemanticAnalysisResponse $endPointIdentity, $requestId, $status, $message, $issues, <asm>" }
+        if (isCurrentProcessRequest(requestId).not()) {
+            logger.logTrace { "sentenceSemanticAnalysisResponse ignored, $requestId is not the current request" }
+            return
+        }
         this.receiveIssues(issues.toList())
         when (status) {
             MessageResponseStatus.RECEIVED -> this.notifySemanticAnalysis(SemanticAnalysisEvent(EventStatus.START, message, null, emptyList()))
