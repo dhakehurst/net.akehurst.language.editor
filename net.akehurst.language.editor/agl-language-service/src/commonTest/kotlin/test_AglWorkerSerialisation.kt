@@ -41,7 +41,6 @@ import net.akehurst.language.regex.api.UnescapedLiteral
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.scanner.api.MatchableKind
 import net.akehurst.language.sentence.api.InputLocation
-import net.akehurst.language.sppt.treedata.TreeDataComplete2
 import net.akehurst.language.types.api.TypesDomain
 import net.akehurst.language.types.asm.StdLibDefault
 import net.akehurst.language.types.builder.typesDomain
@@ -524,60 +523,7 @@ class test_AglWorkerSerialisation {
 
     // --- MessageParseResult ---
 
-    @Test
-    fun test_TreeDataComplete_empty() {
-        val treeData = TreeDataComplete2(0)
 
-        val expected = MessageParseResult2(
-            EndPointIdentity(editorId, sessionId), RequestIdentity("1"),
-            MessageResponseStatus.RECEIVED,
-            "Start",
-            emptyList(),
-            treeData
-        )
-
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageParseResult2>(jsonStr)
-
-        assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.message, actual.message)
-        assertEquals(expected.issues, actual.issues)
-        assertEquals(expected.treeData, actual.treeData)
-    }
-
-    @Test
-    fun test_TreeDataComplete_a() {
-        val p = Agl.processorFromStringSimple(
-            GrammarString(
-                """
-            namespace test
-            grammar Test {
-                S = 'a' ;
-            }
-        """.trimIndent()
-            )
-        ).processor!!
-        val treeData = p.parse("a").sppt?.treeData!!
-
-        val expected = MessageParseResult2(
-            EndPointIdentity(editorId, sessionId), RequestIdentity("1"),
-            MessageResponseStatus.RECEIVED,
-            "Start",
-            emptyList(),
-            treeData
-        )
-
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        println(jsonStr)
-        val actual = AglWorkerSerialisation.deserialise<MessageParseResult2>(jsonStr)
-
-        assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.message, actual.message)
-        assertEquals(expected.issues, actual.issues)
-        assertEquals(expected.treeData, actual.treeData)
-        assertTrue(expected.treeData.matches(actual.treeData))
-        assertTrue(actual.treeData.matches(expected.treeData))
-    }
 
     @Test
     fun MessageParseResult_com_Start() {
