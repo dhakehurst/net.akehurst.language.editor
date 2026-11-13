@@ -29,10 +29,12 @@ import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageResponseStatus
 import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.common.AglStyleHandlerCssClass
+import net.akehurst.language.editor.language.service.ParseInterruptRegister
 import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
+import net.akehurst.language.parser.api.ParseInterrupt
 import net.akehurst.language.parser.api.ParseResult
 import net.akehurst.language.parser.leftcorner.ParseResultDefault
 import net.akehurst.language.reference.asm.CrossReferenceDomainDefault
@@ -51,6 +53,9 @@ abstract class AglWorkerAbstract {
 
     // editorId -> options
     private var _editorOptions: MutableMap<String, EditorOptions> = mutableMapOf()
+
+    // each request is given its own ParseInterrupt, processor.interrupt would stop every parse of the processor
+    private val _interrupts = ParseInterruptRegister()
 
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
     protected abstract fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String?
@@ -163,7 +168,8 @@ abstract class AglWorkerAbstract {
     }
 
     protected fun interrupt(port: Any, message: MessageParserInterruptRequest) {
-        _languageDefinition[message.languageId]?.processor?.interrupt(message.reason)
+        // only the older request of this endPoint is stopped, not other parses that use the same processor
+        _interrupts.interrupt(message.endPoint, message.requestId, message.languageId, ParseInterruptRegister.Kind.PROCESS, message.reason)
     }
 
     protected fun setStyle(port: Any, message: MessageSetStyle) {
@@ -188,11 +194,20 @@ abstract class AglWorkerAbstract {
         val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
         val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
 
-        //val scan = scan(port, message.endPoint, proc, message.text)
-        val parse = parse(port, message.endPoint, message.requestId, message.languageId, proc, message.options, message.text)
-        val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(port, message.endPoint, message.requestId, proc, message.options, it) }
-        val semanticAnalysis =
-            syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(port, message.endPoint, message.requestId, message.languageId, proc, message.options, it, r.locationMap) } }
+        val interrupt = _interrupts.start(message.endPoint, message.requestId, message.languageId, ParseInterruptRegister.Kind.PROCESS, "New parse request")
+        try {
+            val opts = Agl.options(message.options) { parse { interrupt(interrupt) } }
+            //val scan = scan(port, message.endPoint, proc, message.text)
+            val parse = parse(port, message.endPoint, message.requestId, message.languageId, proc, opts, message.text, interrupt)
+            val syntaxAnalysis = parse.sppt?.let {
+                if (_interrupts.isCancelled(interrupt)) null else this.syntaxAnalysis(port, message.endPoint, message.requestId, proc, opts, it)
+            }
+            val semanticAnalysis = syntaxAnalysis?.let { r ->
+                r.asm?.let { if (_interrupts.isCancelled(interrupt)) null else this.semanticAnalysis(port, message.endPoint, message.requestId, message.languageId, proc, opts, it, r.locationMap) }
+            }
+        } finally {
+            _interrupts.finish(message.endPoint, message.languageId, ParseInterruptRegister.Kind.PROCESS, interrupt)
+        }
     }
 
     /*
@@ -212,6 +227,8 @@ abstract class AglWorkerAbstract {
         }
     */
 
+    private fun cancelledMessage(interrupt: ParseInterrupt) = "Cancelled: ${interrupt.message ?: "the parser was terminated"}"
+
     protected fun parse(
         port: Any,
         endPoint: EndPointIdentity,
@@ -219,7 +236,8 @@ abstract class AglWorkerAbstract {
         languageId: LanguageIdentity,
         proc: LanguageProcessor<Any, Any>,
         processOptions: ProcessOptions<Any, Any>,
-        sentence: String
+        sentence: String,
+        interrupt: ParseInterrupt
     ): ParseResult {
         return try {
             sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), null))
@@ -227,7 +245,12 @@ abstract class AglWorkerAbstract {
             if (true == editorOptions?.parse) {
                 val result = proc.parse(sentence, processOptions.parse)
                 val sppt = result.sppt
-                if (null == sppt) {
+                if (_interrupts.isCancelled(interrupt, result.issues)) {
+                    // stopped because a newer request has been received (or the processor was interrupted)
+                    // the 'Parser was terminated' error is not a syntax error of the sentence, so it is not sent
+                    sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.IGNORED, cancelledMessage(interrupt), emptyList(), null))
+                    return ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
+                } else if (null == sppt) {
                     sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null))
                 } else {
                     val sentenceObj = SentenceDefault(sentence, processOptions.parse.sentenceIdentity.invoke())
@@ -452,13 +475,19 @@ abstract class AglWorkerAbstract {
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), 0, emptyList()))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
-            val result = proc.expectedItemsAt(
-                message.text,
-                message.position,
-                message.options
-            )
-            sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.SUCCESS, "Success", result.issues.all.toList(), result.offset, result.items))
-            result.items
+            val interrupt = _interrupts.start(message.endPoint, message.requestId, message.languageId, ParseInterruptRegister.Kind.CODE_COMPLETE, "New code complete request")
+            try {
+                val opts = Agl.options(message.options) { parse { interrupt(interrupt) } }
+                val result = proc.expectedItemsAt(message.text, message.position, opts)
+                if (_interrupts.isCancelled(interrupt, result.issues)) {
+                    // an interrupted expectedAt has no result, it is not an error
+                    sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.IGNORED, cancelledMessage(interrupt), emptyList(), 0, emptyList()))
+                } else {
+                    sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.SUCCESS, "Success", result.issues.all.toList(), result.offset, result.items))
+                }
+            } finally {
+                _interrupts.finish(message.endPoint, message.languageId, ParseInterruptRegister.Kind.CODE_COMPLETE, interrupt)
+            }
         } catch (t: Throwable) {
             val msg = "Exception during 'getCodeCompletions' - ${t::class.simpleName} - ${t.message ?: ""}"
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.FAILURE, msg, emptyList(), 0, emptyList()))

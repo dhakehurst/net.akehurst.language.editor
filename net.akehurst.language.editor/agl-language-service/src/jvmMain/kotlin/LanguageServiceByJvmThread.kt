@@ -37,8 +37,10 @@ open class LanguageServiceByJvmThread(
     private val _stateLock = ReentrantLock()
     private val _tracker = ProcessRequestTracker()
 
-    // a LanguageProcessor is shared by all editors of a language and is not thread safe,
-    // so requests that use the processor of one language are executed one at a time
+    // a LanguageProcessor is shared by all editors of a language,
+    // requests (from the editors) that use the processor of one language are executed one at a time.
+    // Each request has its own ParseInterrupt (see LanguageServiceRequestDirectExecution),
+    // so stopping one does not stop other parses of the processor (e.g. direct calls of processor.parse)
     private val _languageLocks = mutableMapOf<LanguageIdentity, ReentrantLock>()
 
     private fun <T> withLanguageLock(languageId: LanguageIdentity, action: () -> T): T =

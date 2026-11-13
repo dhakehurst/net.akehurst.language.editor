@@ -531,6 +531,9 @@ object AglWorkerSerialisation {
                 interface_("ParseStreamListener") {
 
                 }
+                interface_("ParseInterrupt") {
+
+                }
             }
             namespace("net.akehurst.language.agl.runtime.structure", listOf("net.akehurst.language.parser.api", "std")) {
                 data("RuntimeRule") {
@@ -705,6 +708,8 @@ object AglWorkerSerialisation {
                        parameter(setOf(),"expectedAtFromAllTokenStarts", "Boolean", false)
                        parameter(setOf(),"streamListener", "ParseStreamListener", true)
                        parameter(setOf(),"streamLagWarningLimit", "Integer", false)
+                       // not serialised, the language service gives each request its own ParseInterrupt
+                       parameter(setOf(),"interrupt", "ParseInterrupt", true)
                     }
                     propertyOf(setOf(VAR, REF, STR), "reverseFindWordStartRegex", "String", true)
                     propertyOf(setOf(VAR, REF, STR), "reverseFindWordStartBySkipRules", "Boolean", false)
