@@ -30,9 +30,19 @@ class EditorDemoApplication(
             "Statecharts",
             "TraceabilityQuery",
             "Xml",
+            "KerML_2_Agl",
+            "KerML_2_Std",
+            "SysML_2_Agl",
+            "SysML_2_Std",
+            "BSc",
+            "Embedded",
+            "English",
+            "SSS",
         )
         for (path in examples) {
-            val info = readContent("files/examples/$path/info.txt") ?: path
+            // the first line of info.txt is the label, an example whose first line is blank is not shown
+            val info = readContent("files/examples/$path/info.txt")?.lines()?.firstOrNull() ?: path
+            if (info.isBlank()) continue
             val sentence = readContent("files/examples/$path/sentence.txt")
             val grammar = readContent("files/examples/$path/grammar.agl-grm")
             val style = readContent("files/examples/$path/style.agl-sty")
@@ -52,7 +62,9 @@ class EditorDemoApplication(
             val references = lang.crossReferenceString?.value ?: ""
             val format = lang.formatString?.value ?: ""
             val context = "" //TODO
-            Examples.add(id.value, id.value, "", grammar, types, asmTransform, references, style, format, context)
+            // an example sentence for an AGL language, if there is one
+            val sentence = readContent("files/examples/${id.value}/sentence.txt") ?: ""
+            Examples.add(id.value, id.value, sentence, grammar, types, asmTransform, references, style, format, context)
         }
     }
 

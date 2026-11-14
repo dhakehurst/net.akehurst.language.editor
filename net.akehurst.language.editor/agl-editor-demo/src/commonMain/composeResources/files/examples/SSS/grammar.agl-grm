@@ -1,0 +1,7 @@
+namespace net.akehurst.language.example
+
+// From: [E Scott and A Johnstone. Generalized bottom up parsers with reduced stack activity. The Computer Journal, 48(5):565–587, 2005]
+
+grammar SSS {
+	S = S S S | S S | 'a' ;
+}

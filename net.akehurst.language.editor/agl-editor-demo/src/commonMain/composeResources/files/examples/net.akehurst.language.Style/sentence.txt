@@ -1,0 +1,15 @@
+namespace test
+styles {
+    $keyword {
+      foreground: purple;
+      font-weight: bold;
+    }
+    'xyz','abc' {
+      foreground: blue;
+      font-weight: bold;
+    }
+    "'([^'\\]|\\.)*'" {
+      foreground: green;
+      font-weight: italic;
+    }
+}

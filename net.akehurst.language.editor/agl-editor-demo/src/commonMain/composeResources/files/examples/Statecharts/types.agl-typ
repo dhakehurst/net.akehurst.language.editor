@@ -1,5 +1,4 @@
-namespace external {
-    datatype AnnotationType
-    datatype RegularState
-    datatype BuiltInType
-}
+namespace external
+    data AnnotationType
+    data RegularState
+    data BuiltInType

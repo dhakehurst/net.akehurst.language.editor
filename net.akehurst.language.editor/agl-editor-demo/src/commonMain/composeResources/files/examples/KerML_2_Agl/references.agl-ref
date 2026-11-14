@@ -1,5 +1,4 @@
-namespace com.itemis.sysml.kerml.cst.KerML {
-
+namespace com.itemis.sysml.kerml.cst.KerML
     identify AliasMember by name
     identify SimpleClassifier by classifierDeclaration.identification.name
     identify DataType by classifierDeclaration.identification.name
@@ -29,4 +28,3 @@ namespace com.itemis.sysml.kerml.cst.KerML {
             property qualifiedName refers-to Classifier
         }
     }
-}

@@ -1,0 +1,18 @@
+namespace net.akehurst.language.example
+
+grammar Inner {
+    S = A | SA ;
+    SA = S A ;
+    A = a ;
+    leaf a = 'a' ;
+}
+
+grammar Outer {
+   S = B | SBC ;
+   SBC = S BC ;
+   BC = B | C ;
+   B = b Inner::S b ;
+   C = c Inner::S c ;
+   leaf b = 'b' ;
+   leaf c = 'c' ;
+}

@@ -1,4 +1,4 @@
-namespace com.itemis.create.Global {
+namespace com.itemis.create.Global
     import external  //imports types AnnotationType, RegularState, BuiltInType
 
     identify Interface by id
@@ -36,18 +36,12 @@ namespace com.itemis.create.Global {
             property fqn refers-to BuiltInType
         }
     }
-}
 
-namespace com.itemis.create.States {
-}
+namespace com.itemis.create.States
 
-namespace com.itemis.create.Transitions {
+namespace com.itemis.create.Transitions
 
-
-
-}
-
-namespace com.itemis.create.Statechart {
+namespace com.itemis.create.Statechart
     identify State by name
     references {
         in Statechart {
@@ -57,4 +51,3 @@ namespace com.itemis.create.Statechart {
             }
         }
     }
-}

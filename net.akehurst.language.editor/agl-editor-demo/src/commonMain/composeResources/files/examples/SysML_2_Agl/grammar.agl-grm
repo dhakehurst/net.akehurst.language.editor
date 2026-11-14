@@ -24,7 +24,7 @@ grammar Base {
 }
 
 // 8.2.2.4
-grammar Annotations extends Base {
+grammar Annotations : Base {
     Annotation = QualifiedName ;
     OwnedAnnotation = AnnotatingElement ;
     AnnotatingMember = AnnotatingElement ;
@@ -42,7 +42,7 @@ grammar Annotations extends Base {
 }
 
 /*
-grammar Metadata extends Annotations {
+grammar Metadata : Annotations {
 
     MetadataDefinition = 'abstract'? 'def' Definition ;
     PrefixMetadataAnnotation = PrefixMetadataUsage ;
@@ -80,7 +80,7 @@ grammar Metadata extends Annotations {
 */
 
 // 8.2.2.2
-grammar ElementsAndRelationships extends Annotations {
+grammar ElementsAndRelationships : Annotations {
 
     RelationshipBody = ';' | '{' OwnedAnnotation* '}' ;
 
@@ -91,7 +91,7 @@ grammar ElementsAndRelationships extends Annotations {
 }
 
 // 8.2.2.3
-grammar Dependencies extends ElementsAndRelationships {
+grammar Dependencies : ElementsAndRelationships {
     Dependency =
         PrefixMetadataAnnotation*
         'dependency' DependencyDeclaration RelationshipBody
@@ -108,7 +108,7 @@ grammar Expressions {
 
 
 // 8.2.2.5
-grammar NamespacesAndPackages extends Dependencies, Expressions {
+grammar NamespacesAndPackages : Dependencies, Expressions {
 
     //RootNamespace = PackageBodyElement* ;
     Package =  PrefixMetadataMember* PackageDeclaration PackageBody ;
