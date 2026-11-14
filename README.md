@@ -9,3 +9,12 @@ Current editors
 - Ace - (legacy, may need fixing)
 - Monaco (legacy, may need fixing)
 - CK (legacy, may need fixing)
+
+## Demo
+
+The module `net.akehurst.language.editor/agl-editor-demo` is a Compose Multiplatform demo of the AGL Compose editor
+(define a language with grammar, style, types, transform, references and format; edit sentences and see the parse tree and AST).
+It targets JVM desktop and wasmJs (browser). From `net.akehurst.language.editor`:
+
+- desktop: `./gradlew :agl-editor-demo:run`
+- browser: `./gradlew :agl-editor-demo:wasmJsBrowserDevelopmentRun`

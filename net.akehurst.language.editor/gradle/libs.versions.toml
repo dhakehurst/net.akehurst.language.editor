@@ -17,6 +17,7 @@ kotlinx-coroutines = "1.11.0"
 compose = "1.12.2"
 compose-material3 = "1.12.0-alpha03"
 material-icons = "1.7.3"
+compose-navigation = "2.9.2"
 
 kotest = "6.1.11"
 
@@ -27,6 +28,9 @@ nal-kotlinx-komposite = { module = "net.akehurst.language:kotlinx-komposite", ve
 
 nak-compose-code-editor-api = { module = "net.akehurst.kotlin.compose:code-editor-api", version.ref = "nak-compose-code-editor" }
 nak-compose-code-editor = {module="net.akehurst.kotlin.compose:code-editor",version.ref = "nak-compose-code-editor" }
+nak-compose-components = { module = "net.akehurst.kotlin.compose:components", version.ref = "nak-compose-code-editor" }
+nak-compose-layout-multipane = { module = "net.akehurst.kotlin.compose:layout-multipane", version.ref = "nak-compose-code-editor" }
+compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "compose-navigation" }
 
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
