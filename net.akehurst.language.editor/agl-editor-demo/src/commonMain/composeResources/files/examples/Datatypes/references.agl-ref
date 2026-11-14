@@ -5,6 +5,7 @@ namespace net.akehurst.language.example.Datatypes
 
     references {
         in TypeReference {
-            property type refers-to Primitive|Datatype|Collection
+            // 'Collection' is qualified, because the std library also has a type named Collection
+            property type refers-to Primitive|Datatype|net.akehurst.language.example.Datatypes.Collection
         }
     }

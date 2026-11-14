@@ -1,1 +1,11 @@
 // use this editor to enter or override the rules for transforming from the parse tree to the abstract syntax model
+
+// '#override-default-transform' starts from the default transform, which is derived from the grammar.
+// With no rules written below, the default is used for every grammar rule.
+// To change the result for a grammar rule, write a rule for it in an 'asm-transform' block, e.g.
+//   asm-transform BasicTutorial {
+//     greeting: Greeting() { ... }
+//   }
+// rules that are not written keep the default.
+#override-default-transform
+namespace net.akehurst.language.example

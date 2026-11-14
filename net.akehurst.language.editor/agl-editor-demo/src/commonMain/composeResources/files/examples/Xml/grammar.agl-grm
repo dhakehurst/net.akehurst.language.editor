@@ -1,6 +1,10 @@
 namespace net.akehurst.language.xml
 
 grammar Xml {
+	// text content can follow a tag with no whitespace between them (e.g. '<name>Belgian'),
+	// so a skip (WS) is not required between tokens
+	#skipRequiredBetweenTokens: false
+
 	skip leaf WS = "\s" ;
 
 	document = prolog? comment* element ;
