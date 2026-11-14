@@ -92,6 +92,6 @@ class test_examples {
                 sb.appendLine("  EXCEPTION: ${t.stackTraceToString().lines().take(12).joinToString("\n    ")}")
             }
         }
-        println(sb)
+        println(sb); File(System.getProperty("java.io.tmpdir"), "examples-report.txt").writeText(sb.toString())
     }
 }

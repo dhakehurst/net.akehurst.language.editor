@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2023 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
+ * Copyright (C) 2026 Dr. David H. Akehurst (http://dr.david.h.akehurst.net)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,59 +15,91 @@
  */
 
 /*
- * This grammar does not work too well with AGL as it is written for a top-down LL parser (which AGL is not).
- * There is another grammar written specifically for AGL and modularised which is better in many ways.
+ * The 'standard' KerML textual grammar.
+ *
+ * Converted from the textual BNF files of the SysML v2 Release 2026-09.1
+ *   https://github.com/Systems-Modeling/SysML-v2-Release  bnf/KerML-textual-bnf.kebnf  (KerML v1.1 Beta 2)
+ * Rule names and structure are kept as in the specification. The abstract syntax parts of the notation
+ * (property assignments 'p =', 'p +=', 'p ?=', name resolution '[QualifiedName]' and non-parsing
+ * assignments '{ ... }') are removed. A choice option that is empty becomes an optional choice.
+ * Places where the specification BNF is changed are marked with '// AGL:'.
  */
+namespace net.akehurst.language.kerML
 
-namespace com.itemis.sysml.kerml.cst
-
-grammar KerML {
+grammar KerMLv1_1 {
 
     #defaultGoalRule: RootNamespace
+    // KerML reserves its keywords (8.2.2.6), the Classic scanner does that
+    #scanner: Classic
 
-    // 8.2.2 Root
-    // 8.2.2.1 Line Terminators and White Space
+    // Part 1 - Kernel Modeling Language (KerML)
+
+    // Clause 8.2 Concrete Syntax
+
+    // Clause 8.2.2 Lexical Structure
+    // The lexical rules are written as AGL leaf rules using regular expressions.
+
+    // Clause 8.2.2.1 Line Terminators and White Space
     skip leaf WHITE_SPACE = "\s+" ;
 
-    // 8.2.2.2 Notes and Comments
-    skip leaf SINGLE_LINE_NOTE = "//[^\n\r]*" ;
-    skip leaf MULTILINE_NOTE = "//\*[^*]*\*+(?:[^*/][^*]*\*+)*/" ;
-    leaf REGULAR_COMMENT = "/\*[^*]*\*+(?:[^*/][^*]*\*+)*/" ;
+    // Clause 8.2.2.2 Notes and Comments
+    // AGL: a SINGLE_LINE_NOTE must not start with '//*', otherwise '//* note */ );' would be one single line note
+    skip leaf SINGLE_LINE_NOTE = "//([^*\r\n][^\r\n]*)?" ;
+    skip leaf MULTILINE_NOTE = "//[*][^*]*[*]+(?:[^*/][^*]*[*]+)*/" ;
+    leaf REGULAR_COMMENT = "/[*][^*]*[*]+(?:[^*/][^*]*[*]+)*/" ;
 
+    // Clause 8.2.2.3 Names
     NAME = BASIC_NAME | UNRESTRICTED_NAME ;
-    leaf BASIC_NAME = "[a-zA-Z_][0-9a-zA-Z_]*" ;
-    leaf UNRESTRICTED_NAME = "'([^'\\]|\\.)*'" ;
+    leaf BASIC_NAME = "[a-zA-Z_][a-zA-Z_0-9]*" ;
+    // ESCAPE_SEQUENCE (Table 4) = \' \" \b \f \t \n \\
+    leaf UNRESTRICTED_NAME = "'([^'\\\r\n]|\\['\"bftn\\])*'" ;
 
-    // 8.2.2.4 Numeric Values
+    // Clause 8.2.2.4 Numeric Values
     leaf DECIMAL_VALUE = "[0-9]+" ;
-    leaf EXPONENTIAL_VALUE = DECIMAL_VALUE ('e' | 'E') ('+' | '-')? DECIMAL_VALUE ;
+    leaf EXPONENTIAL_VALUE = "[0-9]+[eE][+-]?[0-9]+" ;
 
-    // 8.2.2.5 String Value
-    leaf STRING_VALUE = "\"(\\\"|[^\"])*\"" ;
+    // Clause 8.2.2.5 String Value
+    leaf STRING_VALUE = "\"([^\"\\\r\n]|\\['\"bftn\\])*\"" ;
 
-    // 8.2.2.7 Symbols
-    leaf TYPED_BY = ':' | "typed(\s+)by" ;
-    leaf SPECIALIZES = ':>' | 'specializes' ;
-    leaf SUBSETS = ':>' | 'subsets' ;
-    leaf REFERENCES = '::>' | 'references' ;
-    leaf REDEFINES = ':>>' | 'redefines' ;
-    leaf CONJUGATES = '~' | 'conjugates' ;
+    // Clause 8.2.2.6 Reserved Words, 8.2.2.7 Symbols
+    // Every literal used in the grammar is a reserved keyword or symbol, the Classic scanner does that.
+    // They are not leaf rules, because 'typed' 'by' may have white space between the keywords.
+    TYPED_BY    = ':'   | 'typed' 'by' ;
+    SPECIALIZES = ':>'  | 'specializes' ;
+    SUBSETS     = ':>'  | 'subsets' ;
+    REFERENCES  = '::>' | 'references' ;
+    CROSSES     = '=>'  | 'crosses' ;
+    REDEFINES   = ':>>' | 'redefines' ;
+    CONJUGATES  = '~'   | 'conjugates' ;
 
-    // 8.2.3.1 Elements and Relationships Concrete Syntax
+    // Clause 8.2.3 Root Concrete Syntax
+
+    // Clause 8.2.3.1 Elements and Relationships Concrete Syntax
+
     Identification = ( '<' NAME '>' )? NAME? ;
-    RelationshipBody = ';' | '{' RelationshipOwnedElement* '}' ;
-    RelationshipOwnedElement = OwnedRelatedElement | OwnedAnnotation ;
-    OwnedRelatedElement = NonFeatureElement | FeatureElement ;
-
-    // 8.2.3.2 Dependencies
-    Dependency =
-        PrefixMetadataAnnotation* 'dependency'
-        ( Identification? 'from' )? QualifiedName ( ',' QualifiedName)*
-        'to' QualifiedName ( ',' QualifiedName)*
-        RelationshipBody
+    RelationshipBody
+        = ';'
+        | '{' RelationshipOwnedElement* '}'
+    ;
+    RelationshipOwnedElement
+        = OwnedRelatedElement
+        | OwnedAnnotation
+    ;
+    OwnedRelatedElement
+        = NonFeatureElement
+        | FeatureElement
     ;
 
-    // 8.2.3.3.1 Annotations
+    // Clause 8.2.3.2 Dependencies Concrete Syntax
+
+    Dependency =
+        PrefixMetadataAnnotation* 'dependency' ( Identification? 'from' )? QualifiedName ( ',' QualifiedName )* 'to' QualifiedName ( ',' QualifiedName )* RelationshipBody
+    ;
+
+    // Clause 8.2.3.3 Annotations Concrete Syntax
+
+    // Clause 8.2.3.3.1 Annotations
+
     Annotation = QualifiedName ;
     OwnedAnnotation = AnnotatingElement ;
     AnnotatingElement
@@ -77,36 +109,75 @@ grammar KerML {
         | MetadataFeature
     ;
 
-    Comment = ( 'comment' Identification ( 'about' Annotation ( ',' Annotation)*  )? )? REGULAR_COMMENT ;
-    Documentation = 'doc' Identification REGULAR_COMMENT ;
+    // Clause 8.2.3.3.2 Comments and Documentation
 
-    // 8.2.3.3.3 Textual Representation
+    Comment =
+        ( 'comment' Identification ( 'about' Annotation ( ',' Annotation )* )? )? ( 'locale' STRING_VALUE )? REGULAR_COMMENT
+    ;
+    Documentation = 'doc' Identification ( 'locale' STRING_VALUE )? REGULAR_COMMENT ;
+
+    // Clause 8.2.3.3.3 Textual Representation
+
     TextualRepresentation = ( 'rep' Identification )? 'language' STRING_VALUE REGULAR_COMMENT ;
 
-    // 8.2.3.4.1 Namespaces
+    // Clause 8.2.3.4 Namespaces Concrete Syntax
+
+    // Clause 8.2.3.4.1 Namespaces
+
     RootNamespace = NamespaceBodyElement* ;
-    Namespace = PrefixMetadataMember NamespaceDeclaration NamespaceBody ;
+    // (See Note 1)
+
+    Namespace = PrefixMetadataMember* NamespaceDeclaration NamespaceBody ;
+    // (See Note 2)
+
     NamespaceDeclaration = 'namespace' Identification ;
-    NamespaceBody = ';' | '{' NamespaceBodyElement* '}' ;
-    NamespaceBodyElement = NamespaceMember | AliasMember | Import ;
+    NamespaceBody
+        = ';'
+        | '{' NamespaceBodyElement* '}'
+    ;
+    NamespaceBodyElement
+        = NamespaceMember
+        | AliasMember
+        | Import
+    ;
     MemberPrefix = VisibilityIndicator? ;
-    VisibilityIndicator = 'public' | 'private' | 'protected' ;
-    NamespaceMember = NonFeatureMember | NamespaceFeatureMember ;
+    VisibilityIndicator
+        = 'public'
+        | 'private'
+        | 'protected'
+    ;
+    NamespaceMember
+        = NonFeatureMember
+        | NamespaceFeatureMember
+    ;
     NonFeatureMember = MemberPrefix MemberElement ;
     NamespaceFeatureMember = MemberPrefix FeatureElement ;
     AliasMember = MemberPrefix 'alias' ( '<' NAME '>' )? NAME? 'for' QualifiedName RelationshipBody ;
-    QualifiedName = NAME ('::' NAME)* ; // QualifiedName = (NAME '::')* NAME ;
+    QualifiedName = ( '$' '::' )? ( NAME '::' )* NAME ;
 
-    // 8.2.3.4.2 Imports
-    Import = VisibilityIndicator? 'import' 'all'? ImportDeclaration RelationshipBody ;
-    ImportDeclaration = MembershipImport | NamespaceImport ;
+    // Clause 8.2.3.4.2 Imports
+
+    Import = VisibilityIndicator 'import' 'all'? ImportDeclaration RelationshipBody ;
+    ImportDeclaration
+        = MembershipImport
+        | NamespaceImport
+    ;
     MembershipImport = QualifiedName ( '::' '**' )? ;
-    NamespaceImport = QualifiedName '::' '*' ( '::' '**' )?  |  FilterPackage ;
+    // (See Note 1)
+
+    NamespaceImport
+        = QualifiedName '::' '*' ( '::' '**' )?
+        | FilterPackage
+    ;
     FilterPackage = ImportDeclaration FilterPackageMember+ ;
     FilterPackageMember = '[' OwnedExpression ']' ;
 
-    // 8.2.3.4.3 Namespace Elements
-    MemberElement = AnnotatingElement | NonFeatureElement ;
+    // Clause 8.2.3.4.3 Namespace Elements
+
+    MemberElement
+        = AnnotatingElement
+        | NonFeatureElement
+    ;
     NonFeatureElement
         = Dependency
         | Namespace
@@ -135,7 +206,6 @@ grammar KerML {
         | Redefinition
         | TypeFeaturing
     ;
-
     FeatureElement
         = Feature
         | Step
@@ -145,18 +215,22 @@ grammar KerML {
         | Connector
         | BindingConnector
         | Succession
-        | ItemFlow
-        | SuccessionItemFlow
+        | Flow
+        | SuccessionFlow
     ;
 
+    // Clause 8.2.4 Core Concrete Syntax
 
-    // 8.2.4 Core
-    // 8.2.4.1 Types
-    // 8.2.4.1.1 Types
+    // Clause 8.2.4.1 Types Concrete Syntax
+
+    // Clause 8.2.4.1.1 Types
+
     Type = TypePrefix 'type' TypeDeclaration TypeBody ;
     TypePrefix = 'abstract'? PrefixMetadataMember* ;
-    TypeDeclaration = 'all'? Identification OwnedMultiplicity? ( SpecializationPart | ConjugationPart )+ TypeRelationshipPart* ;
-    SpecializationPart = SPECIALIZES OwnedSpecialization ( ','OwnedSpecialization )* ;
+    TypeDeclaration =
+        'all'? Identification OwnedMultiplicity? ( SpecializationPart | ConjugationPart )+ TypeRelationshipPart*
+    ;
+    SpecializationPart = SPECIALIZES OwnedSpecialization ( ',' OwnedSpecialization )* ;
     ConjugationPart = CONJUGATES OwnedConjugation ;
     TypeRelationshipPart
         = DisjoiningPart
@@ -168,7 +242,10 @@ grammar KerML {
     UnioningPart = 'unions' Unioning ( ',' Unioning )* ;
     IntersectingPart = 'intersects' Intersecting ( ',' Intersecting )* ;
     DifferencingPart = 'differences' Differencing ( ',' Differencing )* ;
-    TypeBody = ';' | '{' TypeBodyElement* '}' ;
+    TypeBody
+        = ';'
+        | '{' TypeBodyElement* '}'
+    ;
     TypeBodyElement
         = NonFeatureMember
         | FeatureMember
@@ -176,68 +253,103 @@ grammar KerML {
         | Import
     ;
 
-    // 8.2.4.1.2 Specialization
+    // Clause 8.2.4.1.2 Specialization
+
     Specialization = ( 'specialization' Identification )? 'subtype' SpecificType SPECIALIZES GeneralType RelationshipBody ;
     OwnedSpecialization = GeneralType ;
-    SpecificType = QualifiedName | OwnedFeatureChain ;
-    GeneralType = QualifiedName | OwnedFeatureChain ;
+    SpecificType
+        = QualifiedName
+        | OwnedFeatureChain
+    ;
+    GeneralType
+        = QualifiedName
+        | OwnedFeatureChain
+    ;
 
-    // 8.2.4.1.3 Conjugation
+    // Clause 8.2.4.1.3 Conjugation
+
     Conjugation =
-        ( 'conjugation' Identification )?
-        'conjugate' ( QualifiedName | FeatureChain )
-        CONJUGATES  ( QualifiedName | FeatureChain)
-        RelationshipBody
+        ( 'conjugation' Identification )? 'conjugate' ( QualifiedName | FeatureChain ) CONJUGATES ( QualifiedName | FeatureChain ) RelationshipBody
     ;
-    OwnedConjugation = QualifiedName | FeatureChain ;
+    OwnedConjugation
+        = QualifiedName
+        | FeatureChain
+    ;
 
-    // 8.2.4.1.4 Disjoining
+    // Clause 8.2.4.1.4 Disjoining
+
     Disjoining =
-        ( 'disjoining' Identification )?
-        'disjoint' ( QualifiedName |  FeatureChain )
-        'from' ( QualifiedName | FeatureChain )
-        RelationshipBody
+        ( 'disjoining' Identification )? 'disjoint' ( QualifiedName | FeatureChain ) 'from' ( QualifiedName | FeatureChain ) RelationshipBody
     ;
-    OwnedDisjoining = QualifiedName | FeatureChain ;
+    OwnedDisjoining
+        = QualifiedName
+        | FeatureChain
+    ;
 
-    //8.2.4.1.5 Unioning, Intersecting and Differencing
-    Unioning =QualifiedName | OwnedFeatureChain ;
-    Intersecting = QualifiedName | OwnedFeatureChain ;
-    Differencing = QualifiedName | OwnedFeatureChain ;
+    // Clause 8.2.4.1.5 Unioning, Intersecting and Differencing
 
-    //8.2.4.1.6 Feature Membership
-    FeatureMember = TypeFeatureMember | OwnedFeatureMember ;
+    Unioning
+        = QualifiedName
+        | OwnedFeatureChain
+    ;
+    Intersecting
+        = QualifiedName
+        | OwnedFeatureChain
+    ;
+    Differencing
+        = QualifiedName
+        | OwnedFeatureChain
+    ;
+
+    // Clause 8.2.4.1.6 Feature Membership
+
+    FeatureMember
+        = TypeFeatureMember
+        | OwnedFeatureMember
+    ;
     TypeFeatureMember = MemberPrefix 'member' FeatureElement ;
     OwnedFeatureMember = MemberPrefix FeatureElement ;
 
-    // 8.2.4.2 Classifiers
-    //8.2.4.2.1 Classifiers
+    // Clause 8.2.4.2 Classifiers Concrete Syntax
+
+    // Clause 8.2.4.2.1 Classifiers
+
     Classifier = TypePrefix 'classifier' ClassifierDeclaration TypeBody ;
     ClassifierDeclaration =
-        'all'? Identification OwnedMultiplicity? ( SuperclassingPart | ConjugationPart )?
-        TypeRelationshipPart*
+        'all'? Identification OwnedMultiplicity? ( SuperclassingPart | ConjugationPart )? TypeRelationshipPart*
     ;
     SuperclassingPart = SPECIALIZES OwnedSubclassification ( ',' OwnedSubclassification )* ;
 
-    // 8.2.4.2.2 Subclassification
+    // Clause 8.2.4.2.2 Subclassification
+
     Subclassification =
-        ( 'specialization' Identification )? 'subclassifier' QualifiedName SPECIALIZES QualifiedName
-        RelationshipBody
+        ( 'specialization' Identification )? 'subclassifier' QualifiedName SPECIALIZES QualifiedName RelationshipBody
     ;
     OwnedSubclassification = QualifiedName ;
 
-    // 8.2.4.3 Features
-    //8.2.4.3.1 Features
-    Feature = FeaturePrefix ( 'feature'? FeatureDeclaration | 'feature' | PrefixMetadataMember ) ValuePart? TypeBody ;
-    FeaturePrefix = FeatureDirection? 'abstract'? ( 'composite' | 'portion' )? 'readonly'? 'derived'?  'end'? PrefixMetadataMember* ;
-    FeatureDirection = 'in' | 'out' | 'inout' ;
+    // Clause 8.2.4.3 Features Concrete Syntax
+
+    // Clause 8.2.4.3.1 Features
+
+    Feature =
+        ( FeaturePrefix ( 'feature' | PrefixMetadataMember ) FeatureDeclaration? | ( EndFeaturePrefix | BasicFeaturePrefix ) FeatureDeclaration ) ValuePart? TypeBody
+    ;
+    // (See Note 1)
+
+    EndFeaturePrefix = 'const'? 'end' ;
+    BasicFeaturePrefix = FeatureDirection? 'derived'? 'abstract'? ( 'composite' | 'portion' )? ( 'var' | 'const' )? ;
+    FeaturePrefix = ( EndFeaturePrefix OwnedCrossFeatureMember? | BasicFeaturePrefix ) PrefixMetadataMember* ;
+    // (See Note 1)
+
+    OwnedCrossFeatureMember = OwnedCrossFeature ;
+    OwnedCrossFeature = BasicFeaturePrefix FeatureDeclaration ;
+    FeatureDirection
+        = 'in'
+        | 'out'
+        | 'inout'
+    ;
     FeatureDeclaration =
-        'all'?
-        ( FeatureIdentification ( FeatureSpecializationPart | ConjugationPart )?
-          | FeatureSpecializationPart
-          | FeatureConjugationPart
-        )
-        FeatureRelationshipPart*
+        'all'? ( FeatureIdentification ( FeatureSpecializationPart | ConjugationPart )? | FeatureSpecializationPart | ConjugationPart ) FeatureRelationshipPart*
     ;
     FeatureIdentification
         = '<' NAME '>' NAME?
@@ -260,128 +372,154 @@ grammar KerML {
         = OwnedMultiplicity
         | OwnedMultiplicity? ( 'ordered' 'nonunique'? | 'nonunique' 'ordered'? )
     ;
-    FeatureSpecialization = Typings | Subsettings | References | Redefinitions ;
+    FeatureSpecialization
+        = Typings
+        | Subsettings
+        | References
+        | Crosses
+        | Redefinitions
+    ;
     Typings = TypedBy ( ',' OwnedFeatureTyping )* ;
     TypedBy = TYPED_BY OwnedFeatureTyping ;
     Subsettings = Subsets ( ',' OwnedSubsetting )* ;
     Subsets = SUBSETS OwnedSubsetting ;
     References = REFERENCES OwnedReferenceSubsetting ;
+    Crosses = CROSSES OwnedCrossSubsetting ;
     Redefinitions = Redefines ( ',' OwnedRedefinition )* ;
     Redefines = REDEFINES OwnedRedefinition ;
 
-    //8.2.4.3.2 Feature Typing
-    FeatureTyping =
-        ( 'specialization' Identification )?
-        'typing' QualifiedName
-        TYPED_BY GeneralType
-        RelationshipBody
-    ;
+    // Clause 8.2.4.3.2 Feature Typing
+
+    FeatureTyping = ( 'specialization' Identification )? 'typing' QualifiedName TYPED_BY GeneralType RelationshipBody ;
     OwnedFeatureTyping = GeneralType ;
 
-    //8.2.4.3.3 Subsetting
-    Subsetting =
-        ( 'specialization' Identification )?
-        'subset' SpecificType
-        SUBSETS GeneralType
-        RelationshipBody
-    ;
+    // Clause 8.2.4.3.3 Subsetting
+
+    Subsetting = ( 'specialization' Identification )? 'subset' SpecificType SUBSETS GeneralType RelationshipBody ;
     OwnedSubsetting = GeneralType ;
     OwnedReferenceSubsetting = GeneralType ;
+    OwnedCrossSubsetting = GeneralType ;
 
-    //8.2.4.3.4 Redefinition
+    // Clause 8.2.4.3.4 Redefinition
+
     Redefinition =
-        ( 'specialization' Identification )?
-        'redefinition' SpecificType
-        REDEFINES GeneralType
-        RelationshipBody
+        ( 'specialization' Identification )? 'redefinition' SpecificType REDEFINES GeneralType RelationshipBody
     ;
     OwnedRedefinition = GeneralType ;
 
-    //8.2.4.3.5 Feature Chaining
+    // Clause 8.2.4.3.5 Feature Chaining
+
     OwnedFeatureChain = FeatureChain ;
     FeatureChain = OwnedFeatureChaining ( '.' OwnedFeatureChaining )+ ;
     OwnedFeatureChaining = QualifiedName ;
 
-    //8.2.4.3.6 Feature Inverting
+    // Clause 8.2.4.3.6 Feature Inverting
+
     FeatureInverting =
-        ( 'inverting' Identification? )?
-        'inverse' ( QualifiedName | OwnedFeatureChain)
-        'of' ( QualifiedName | OwnedFeatureChain )
-        RelationshipBody
+        ( 'inverting' Identification? )? 'inverse' ( QualifiedName | OwnedFeatureChain ) 'of' ( QualifiedName | OwnedFeatureChain ) RelationshipBody
     ;
-    OwnedFeatureInverting = QualifiedName | OwnedFeatureChain;
+    OwnedFeatureInverting
+        = QualifiedName
+        | OwnedFeatureChain
+    ;
 
-/* Feature Conjugation */
+    // Clause 8.2.4.3.7 Type Featuring
 
-FeatureConjugationPart = CONJUGATES FeatureConjugation ;
-FeatureConjugation = QualifiedName ;
-
-
-    //8.2.4.3.7 Type Featuring
     TypeFeaturing = 'featuring' ( Identification 'of' )? QualifiedName 'by' QualifiedName RelationshipBody ;
     OwnedTypeFeaturing = QualifiedName ;
 
+    // Clause 8.2.5 Kernel Concrete Syntax
 
-    // 8.2.5.1
+    // Clause 8.2.5.1 Data Types Concrete Syntax
+
     DataType = TypePrefix 'datatype' ClassifierDeclaration TypeBody ;
-    // 8.2.5.2
+
+    // Clause 8.2.5.2 Classes Concrete Syntax
+
     Class = TypePrefix 'class' ClassifierDeclaration TypeBody ;
-    // 8.2.5.3
+
+    // Clause 8.2.5.3 Structures Concrete Syntax
+
     Structure = TypePrefix 'struct' ClassifierDeclaration TypeBody ;
-    // 8.2.5.4
+
+    // Clause 8.2.5.4 Associations Concrete Syntax
+
     Association = TypePrefix 'assoc' ClassifierDeclaration TypeBody ;
     AssociationStructure = TypePrefix 'assoc' 'struct' ClassifierDeclaration TypeBody ;
 
-    // 8.2.5.5 Connectors Concrete Syntax
-    // 8.2.5.5.1 Connectors
-    Connector = FeaturePrefix 'connector' ConnectorDeclaration TypeBody ;
-    ConnectorDeclaration = BinaryConnectorDeclaration | NaryConnectorDeclaration ;
-    BinaryConnectorDeclaration = ( FeatureDeclaration? 'from' | 'all'? 'from'? )? ConnectorEndMember 'to' ConnectorEndMember ;
-    NaryConnectorDeclaration = FeatureDeclaration ( '(' [ConnectorEndMember /',']2+ ')' )? ;
+    // Clause 8.2.5.5 Connectors Concrete Syntax
 
-ConnectorEndMember = ConnectorEnd ;
-ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
+    // Clause 8.2.5.5.1 Connectors
 
-    //8.2.5.5.2 Binding Connectors
-    BindingConnector  = FeaturePrefix 'binding' BindingConnectorDeclaration TypeBody ;
+    Connector = FeaturePrefix 'connector' ( FeatureDeclaration? ValuePart? | ConnectorDeclaration ) TypeBody ;
+    ConnectorDeclaration
+        = BinaryConnectorDeclaration
+        | NaryConnectorDeclaration
+    ;
+    BinaryConnectorDeclaration = ( FeatureDeclaration? 'from' | 'all' 'from'? )? ConnectorEndMember 'to' ConnectorEndMember ;
+    NaryConnectorDeclaration = FeatureDeclaration? '(' ConnectorEndMember ',' ConnectorEndMember ( ',' ConnectorEndMember )* ')' ;
+    ConnectorEndMember = ConnectorEnd ;
+    ConnectorEnd = OwnedCrossMultiplicityMember? ( NAME REFERENCES )? OwnedReferenceSubsetting ;
+    OwnedCrossMultiplicityMember = OwnedCrossMultiplicity ;
+    OwnedCrossMultiplicity = OwnedMultiplicity ;
+
+    // Clause 8.2.5.5.2 Binding Connectors
+
+    BindingConnector = FeaturePrefix 'binding' BindingConnectorDeclaration TypeBody ;
     BindingConnectorDeclaration
         = FeatureDeclaration ( 'of' ConnectorEndMember '=' ConnectorEndMember )?
         | 'all'? ( 'of'? ConnectorEndMember '=' ConnectorEndMember )?
     ;
 
-    //8.2.5.5.3 Successions
+    // Clause 8.2.5.5.3 Successions
+
     Succession = FeaturePrefix 'succession' SuccessionDeclaration TypeBody ;
     SuccessionDeclaration
         = FeatureDeclaration ( 'first' ConnectorEndMember 'then' ConnectorEndMember )?
         | 'all'? ( 'first'? ConnectorEndMember 'then' ConnectorEndMember )?
     ;
 
-    // 8.2.5.6 Behaviors
-    //8.2.5.6.1 Behaviors
+    // Clause 8.2.5.6 Behaviors Concrete Syntax
+
+    // Clause 8.2.5.6.1 Behaviors
+
     Behavior = TypePrefix 'behavior' ClassifierDeclaration TypeBody ;
-    //8.2.5.6.2 Steps
+
+    // Clause 8.2.5.6.2 Steps
+
     Step = FeaturePrefix 'step' FeatureDeclaration ValuePart? TypeBody ;
 
-    //8.2.5.7 Functions Concrete Syntax
-    //8.2.5.7.1 Functions
+    // Clause 8.2.5.7 Functions Concrete Syntax
+
+    // Clause 8.2.5.7.1 Functions
+
     Function = TypePrefix 'function' ClassifierDeclaration FunctionBody ;
-    FunctionBody = ';' | '{' FunctionBodyPart '}' ;
-    FunctionBodyPart = ( TypeBodyElement | ReturnFeatureMember )* ( ResultExpressionMember )? ;
+    FunctionBody
+        = ';'
+        | '{' FunctionBodyPart '}'
+    ;
+    FunctionBodyPart = ( TypeBodyElement | ReturnFeatureMember )* ResultExpressionMember? ;
     ReturnFeatureMember = MemberPrefix 'return' FeatureElement ;
     ResultExpressionMember = MemberPrefix OwnedExpression ;
 
-    //8.2.5.7.2 Expressions
+    // Clause 8.2.5.7.2 Expressions
+
     Expression = FeaturePrefix 'expr' FeatureDeclaration ValuePart? FunctionBody ;
 
-    //8.2.5.7.3 Predicates
+    // Clause 8.2.5.7.3 Predicates
+
     Predicate = TypePrefix 'predicate' ClassifierDeclaration FunctionBody ;
 
-    // 8.2.5.7.4 Boolean Expressions and Invariants
-    BooleanExpression = FeaturePrefix 'bool' FeatureDeclaration ValuePart? FunctionBody ;
-    Invariant = FeaturePrefix 'inv' ( 'true' | 'false' )? FeatureDeclaration ValuePart? FunctionBody ;
+    // Clause 8.2.5.7.4 Boolean Expressions and Invariants
 
-    //8.2.5.8 Expressions Concrete Syntax
-    //8.2.5.8.1 Operator Expressions
+    BooleanExpression = FeaturePrefix 'bool' FeatureDeclaration ValuePart? FunctionBody ;
+    // AGL: changed from spec: spec has FeatureDeclaration (not optional), so 'inv { ... }' (used in the KerML library) cannot be parsed
+    Invariant = FeaturePrefix 'inv' ( 'true' | 'false' )? FeatureDeclaration? ValuePart? FunctionBody ;
+
+    // Clause 8.2.5.8 Expressions Concrete Syntax
+
+    // Clause 8.2.5.8.1 Operator Expressions
+
     OwnedExpressionReferenceMember = OwnedExpressionReference ;
     OwnedExpressionReference = OwnedExpressionMember ;
     OwnedExpressionMember = OwnedExpression ;
@@ -395,25 +533,54 @@ ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
         | ExtentExpression
         | PrimaryExpression
     ;
-    ConditionalExpression = 'if' ArgumentMember '?' ArgumentExpressionMember 'else' ArgumentExpressionMember ;
-    ConditionalBinaryOperatorExpression = ArgumentMember ConditionalBinaryOperator ArgumentExpressionMember ;
-    ConditionalBinaryOperator = '??' | 'or' | 'and' | 'implies' ;
-    BinaryOperatorExpression = ArgumentMember BinaryOperator ArgumentMember ;
-    BinaryOperator =
-        '|' | '&' | 'xor' | '..'
-        | '===' | '!==' | '==' | '!='
-        | '<' | '>' | '<=' | '>='
-        | '+' | '-' | '*' | '/'
-        | '%' | '^' | '**'
+    ConditionalExpression = 'if' ArgumentMember '?' ArgumentExpressionMember 'else' ArgumentExpressionMember EmptyResultMember ;
+    ConditionalBinaryOperatorExpression = ArgumentMember ConditionalBinaryOperator ArgumentExpressionMember EmptyResultMember ;
+    ConditionalBinaryOperator
+        = '??'
+        | 'or'
+        | 'and'
+        | 'implies'
     ;
-    UnaryOperatorExpression = UnaryOperator ArgumentMember ;
-    UnaryOperator = '+' | '-' | '~' | 'not' ;
-    ClassificationExpression = ( ArgumentMember )? ( ClassificationTestOperator TypeReferenceMember | CastOperator TypeResultMember) ;
-    ClassificationTestOperator = 'istype' | 'hastype' | '@' ;
+    BinaryOperatorExpression = ArgumentMember BinaryOperator ArgumentMember EmptyResultMember ;
+    BinaryOperator
+        = '|'
+        | '&'
+        | 'xor'
+        | '..'
+        | '=='
+        | '!='
+        | '==='
+        | '!=='
+        | '<'
+        | '>'
+        | '<='
+        | '>='
+        | '+'
+        | '-'
+        | '*'
+        | '/'
+        | '%'
+        | '^'
+        | '**'
+    ;
+    UnaryOperatorExpression = UnaryOperator ArgumentMember EmptyResultMember ;
+    UnaryOperator
+        = '+'
+        | '-'
+        | '~'
+        | 'not'
+    ;
+    ClassificationExpression =
+        ArgumentMember? ( ClassificationTestOperator TypeReferenceMember | CastOperator TypeResultMember ) EmptyResultMember
+    ;
+    ClassificationTestOperator
+        = 'istype'
+        | 'hastype'
+        | '@'
+    ;
     CastOperator = 'as' ;
     MetaclassificationExpression =
-        MetadataArgumentMember
-        ( MetaClassificationTestOperator TypeReferenceMember | MetaCastOperator TypeResultMember )
+        MetadataArgumentMember ( MetaclassificationTestOperator TypeReferenceMember | MetaCastOperator TypeResultMember ) EmptyResultMember
     ;
     ArgumentMember = Argument ;
     Argument = ArgumentValue ;
@@ -424,18 +591,26 @@ ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
     MetadataArgumentMember = MetadataArgument ;
     MetadataArgument = MetadataValue ;
     MetadataValue = MetadataReference ;
-    MetadataReference = QualifiedName ;
-    MetaClassificationTestOperator = '@@' ;
+    MetadataReference = ElementReferenceMember ;
+    MetaclassificationTestOperator = '@@' ;
     MetaCastOperator = 'meta' ;
-    ExtentExpression ='all' TypeReferenceMember ;
+    ExtentExpression = 'all' TypeReferenceMember ;
     TypeReferenceMember = TypeReference ;
     TypeResultMember = TypeReference ;
     TypeReference = ReferenceTyping ;
     ReferenceTyping = QualifiedName ;
+    EmptyResultMember = EmptyFeature ;
+    EmptyFeature = ;
 
-    // 8.2.5.8.2 Primary Expressions
-    PrimaryExpression = FeatureChainExpression | NonFeatureChainPrimaryExpression ;
-    PrimaryExpressionMember = PrimaryExpression ;
+    // Clause 8.2.5.8.2 Primary Expressions
+
+    PrimaryExpression
+        = FeatureChainExpression
+        | NonFeatureChainPrimaryExpression
+    ;
+    PrimaryArgumentValue = PrimaryExpression ;
+    PrimaryArgument = PrimaryArgumentValue ;
+    PrimaryArgumentMember = PrimaryArgument ;
     NonFeatureChainPrimaryExpression
         = BracketExpression
         | IndexExpression
@@ -445,43 +620,68 @@ ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
         | FunctionOperationExpression
         | BaseExpression
     ;
-    NonFeatureChainPrimaryExpressionMember = NonFeatureChainPrimaryExpression ;
-    BracketExpression =  PrimaryExpressionMember '[' SequenceExpressionListMember ']' ;
-    IndexExpression = PrimaryExpressionMember '#' '(' SequenceExpressionListMember ')' ;
+    NonFeatureChainPrimaryArgumentValue = NonFeatureChainPrimaryExpression ;
+    NonFeatureChainPrimaryArgument = NonFeatureChainPrimaryArgumentValue ;
+    NonFeatureChainPrimaryArgumentMember = PrimaryArgument ;
+    BracketExpression = PrimaryArgumentMember '[' SequenceExpressionListMember ']' ;
+    IndexExpression = PrimaryArgumentMember '#' '(' SequenceExpressionListMember ')' ;
     SequenceExpression = '(' SequenceExpressionList ')' ;
-    SequenceExpressionList = OwnedExpression ','? | SequenceOperatorExpression ;
+    SequenceExpressionList
+        = OwnedExpression ','?
+        | SequenceOperatorExpression
+    ;
     SequenceOperatorExpression = OwnedExpressionMember ',' SequenceExpressionListMember ;
     SequenceExpressionListMember = SequenceExpressionList ;
-    FeatureChainExpression = NonFeatureChainPrimaryExpressionMember '.' FeatureChainMember ;
-    CollectExpression = PrimaryExpressionMember '.' BodyExpressionMember ;
-    SelectExpression = PrimaryExpressionMember '.?' BodyExpressionMember ;
+    FeatureChainExpression = NonFeatureChainPrimaryArgumentMember '.' FeatureChainMember ;
+    CollectExpression = PrimaryArgumentMember '.' BodyArgumentMember ;
+    SelectExpression = PrimaryArgumentMember '.?' BodyArgumentMember ;
     FunctionOperationExpression =
-        PrimaryExpressionMember '->'
-        ReferenceTyping ( BodyExpressionMember | FunctionReferenceExpression | ArgumentList )
+        PrimaryArgumentMember '->' InstantiatedTypeMember ( BodyArgumentMember | FunctionReferenceArgumentMember | ArgumentList ) EmptyResultMember
     ;
-    BodyExpressionMember = BodyExpression ;
-    FunctionExpressionMember = FunctionReferenceExpression ;
+    BodyArgumentMember = BodyArgument ;
+    BodyArgument = BodyArgumentValue ;
+    BodyArgumentValue = BodyExpression ;
+    FunctionReferenceArgumentMember = FunctionReferenceArgument ;
+    FunctionReferenceArgument = FunctionReferenceArgumentValue ;
+    FunctionReferenceArgumentValue = FunctionReferenceExpression ;
     FunctionReferenceExpression = FunctionReferenceMember ;
     FunctionReferenceMember = FunctionReference ;
     FunctionReference = ReferenceTyping ;
-    FeatureChainMember = FeatureReferenceMember | OwnedFeatureChainMember ;
+    FeatureChainMember
+        = FeatureReferenceMember
+        | OwnedFeatureChainMember
+    ;
     OwnedFeatureChainMember = FeatureChain ;
 
-    //8.2.5.8.3 Base Expressions
+    // Clause 8.2.5.8.3 Base Expressions
+
     BaseExpression
         = NullExpression
         | LiteralExpression
         | FeatureReferenceExpression
         | MetadataAccessExpression
         | InvocationExpression
+        | ConstructorExpression
         | BodyExpression
     ;
-    NullExpression = 'null' | '(' ')' ;
-    FeatureReferenceExpression = FeatureReferenceMember ;
+    NullExpression
+        = 'null'
+        | '(' ')'
+    ;
+    FeatureReferenceExpression = FeatureReferenceMember EmptyResultMember ;
     FeatureReferenceMember = FeatureReference ;
     FeatureReference = QualifiedName ;
-    MetadataAccessExpression = QualifiedName '.' 'metadata' ;
-    InvocationExpression = ( OwnedFeatureTyping | OwnedSubsetting ) ArgumentList ;
+    MetadataAccessExpression = ElementReferenceMember '.' 'metadata' ;
+    ElementReferenceMember = QualifiedName ;
+    InvocationExpression = InstantiatedTypeMember ArgumentList EmptyResultMember ;
+    ConstructorExpression = 'new' InstantiatedTypeMember ConstructorResultMember ;
+    ConstructorResultMember = ConstructorResult ;
+    ConstructorResult = ArgumentList ;
+    InstantiatedTypeMember
+        = InstantiatedTypeReference
+        | OwnedFeatureChainMember
+    ;
+    InstantiatedTypeReference = QualifiedName ;
     ArgumentList = '(' ( PositionalArgumentList | NamedArgumentList )? ')' ;
     PositionalArgumentList = ArgumentMember ( ',' ArgumentMember )* ;
     NamedArgumentList = NamedArgumentMember ( ',' NamedArgumentMember )* ;
@@ -492,7 +692,8 @@ ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
     ExpressionBodyMember = ExpressionBody ;
     ExpressionBody = '{' FunctionBodyPart '}' ;
 
-    //8.2.5.8.4 Literal Expressions
+    // Clause 8.2.5.8.4 Literal Expressions
+
     LiteralExpression
         = LiteralBoolean
         | LiteralString
@@ -501,7 +702,10 @@ ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
         | LiteralInfinity
     ;
     LiteralBoolean = BooleanValue ;
-    BooleanValue = 'true' | 'false' ;
+    BooleanValue
+        = 'true'
+        | 'false'
+    ;
     LiteralString = STRING_VALUE ;
     LiteralInteger = DECIMAL_VALUE ;
     LiteralReal = RealValue ;
@@ -511,52 +715,71 @@ ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
     ;
     LiteralInfinity = '*' ;
 
-    //8.2.5.9 Interactions Concrete Syntax
-    //8.2.5.9.1 Interactions
+    // Clause 8.2.5.9 Interactions Concrete Syntax
+
+    // Clause 8.2.5.9.1 Interactions
+
     Interaction = TypePrefix 'interaction' ClassifierDeclaration TypeBody ;
 
-    //8.2.5.9.2 Item Flows
-    ItemFlow = FeaturePrefix 'flow' ItemFlowDeclaration TypeBody ;
-    SuccessionItemFlow = FeaturePrefix 'succession' 'flow' ItemFlowDeclaration TypeBody ;
-    ItemFlowDeclaration
-        = FeatureDeclaration ValuePart? ( 'of' ItemFeatureMember )? ( 'from' ItemFlowEndMember 'to' ItemFlowEndMember )?
-        | 'all'? ItemFlowEndMember 'to' ItemFlowEndMember
-    ;
-    ItemFeatureMember = ItemFeature ;
-    ItemFeature
-        = Identification ItemFeatureSpecializationPart ValuePart?
-        | OwnedFeatureTyping OwnedMultiplicity?
-        | OwnedMultiplicity OwnedFeatureTyping?
-    ;
-    ItemFeatureSpecializationPart = FeatureSpecialization+ MultiplicityPart? FeatureSpecialization* | MultiplicityPart FeatureSpecialization+ ;
-    ItemFlowEndMember = ItemFlowEnd ;
-    ItemFlowEnd = ( OwnedReferenceSubsetting '.' )? ItemFlowFeatureMember ;
-    ItemFlowFeatureMember = ItemFlowFeature ;
-    ItemFlowFeature = ItemFlowRedefinition ;
-    ItemFlowRedefinition = QualifiedName ;
+    // Clause 8.2.5.9.2 Flows
 
-    //8.2.5.10 Feature Values Concrete Syntax
+    Flow = FeaturePrefix 'flow' FlowDeclaration TypeBody ;
+    SuccessionFlow = FeaturePrefix 'succession' 'flow' FlowDeclaration TypeBody ;
+    FlowDeclaration
+        = FeatureDeclaration ValuePart? ( 'of' PayloadFeatureMember )? ( 'from' FlowEndMember 'to' FlowEndMember )?
+        | 'all'? FlowEndMember 'to' FlowEndMember
+    ;
+    PayloadFeatureMember = PayloadFeature ;
+    PayloadFeature
+        = Identification PayloadFeatureSpecializationPart ValuePart?
+        | Identification ValuePart
+        | OwnedFeatureTyping OwnedMultiplicity?
+        | OwnedMultiplicity OwnedFeatureTyping
+    ;
+    PayloadFeatureSpecializationPart
+        = FeatureSpecialization+ MultiplicityPart? FeatureSpecialization*
+        | MultiplicityPart FeatureSpecialization+
+    ;
+    FlowEndMember = FlowEnd ;
+    FlowEnd = ( OwnedReferenceSubsetting '.' )? FlowFeatureMember ;
+    FlowFeatureMember = FlowFeature ;
+    FlowFeature = FlowFeatureRedefinition ;
+    // (See Note 1)
+
+    FlowFeatureRedefinition = QualifiedName ;
+
+    // Clause 8.2.5.10 Feature Values Concrete Syntax
+
     ValuePart = FeatureValue ;
     FeatureValue = ( '=' | ':=' | 'default' ( '=' | ':=' )? ) OwnedExpression ;
 
-    // 8.2.5.11 Multiplicities
-    Multiplicity = MultiplicitySubset | MultiplicityRange ;
+    // Clause 8.2.5.11 Multiplicities Concrete Syntax
+
+    Multiplicity
+        = MultiplicitySubset
+        | MultiplicityRange
+    ;
     MultiplicitySubset = 'multiplicity' Identification Subsets TypeBody ;
     MultiplicityRange = 'multiplicity' Identification MultiplicityBounds TypeBody ;
     OwnedMultiplicity = OwnedMultiplicityRange ;
     OwnedMultiplicityRange = MultiplicityBounds ;
     MultiplicityBounds = '[' ( MultiplicityExpressionMember '..' )? MultiplicityExpressionMember ']' ;
-    MultiplicityExpressionMember =  LiteralExpression | FeatureReferenceExpression ;
+    MultiplicityExpressionMember = ( LiteralExpression | FeatureReferenceExpression ) ;
 
-    //8.2.5.12 Metadata Concrete Syntax
+    // Clause 8.2.5.12 Metadata Concrete Syntax
+
     Metaclass = TypePrefix 'metaclass' ClassifierDeclaration TypeBody ;
     PrefixMetadataAnnotation = '#' PrefixMetadataFeature ;
     PrefixMetadataMember = '#' PrefixMetadataFeature ;
     PrefixMetadataFeature = OwnedFeatureTyping ;
-    MetadataFeature = ( '@' | 'metadata' ) MetadataFeatureDeclaration ( 'about' Annotation ( ',' Annotation )* )? MetadataBody ;
-    MetadataFeatureDeclaration = ( Identification TYPED_BY )? OwnedFeatureTyping ;
-    MetadataBody = ';' | '{' MetadataBodyElement* '}' ;
-
+    MetadataFeature =
+        PrefixMetadataMember* ( '@' | 'metadata' ) MetadataFeatureDeclaration ( 'about' Annotation ( ',' Annotation )* )? MetadataBody
+    ;
+    MetadataFeatureDeclaration = ( Identification ( ':' | 'typed' 'by' ) )? OwnedFeatureTyping ;
+    MetadataBody
+        = ';'
+        | '{' MetadataBodyElement* '}'
+    ;
     MetadataBodyElement
         = NonFeatureMember
         | MetadataBodyFeatureMember
@@ -564,10 +787,14 @@ ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
         | Import
     ;
     MetadataBodyFeatureMember = MetadataBodyFeature ;
-    MetadataBodyFeature = 'feature'? REDEFINES? OwnedRedefinition FeatureSpecializationPart? ValuePart? MetadataBody ;
+    MetadataBodyFeature =
+        'feature'? ( ':>>' | 'redefines' )? OwnedRedefinition FeatureSpecializationPart? ValuePart? MetadataBody
+    ;
 
-    // 8.2.5.13 Packages Concrete Syntax
+    // Clause 8.2.5.13 Packages Concrete Syntax
+
     Package = PrefixMetadataMember* PackageDeclaration PackageBody ;
+    // AGL: changed from spec: spec has ( isStandard ?= 'standard' ) without '?'; 'standard' is optional (as in the SysML grammar and the examples)
     LibraryPackage = 'standard'? 'library' PrefixMetadataMember* PackageDeclaration PackageBody ;
     PackageDeclaration = 'package' Identification ;
     PackageBody
@@ -575,5 +802,4 @@ ConnectorEnd = (NAME REFERENCES )? OwnedReferenceSubsetting OwnedMultiplicity? ;
         | '{' ( NamespaceBodyElement | ElementFilterMember )* '}'
     ;
     ElementFilterMember = MemberPrefix 'filter' OwnedExpression ';' ;
-
 }

@@ -1,1 +1,1 @@
-KerML v2 (Std version)
+KerML v2 2026-09 (Standard grammar)

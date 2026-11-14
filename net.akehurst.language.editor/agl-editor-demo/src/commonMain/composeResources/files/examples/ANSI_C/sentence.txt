@@ -1,0 +1,1 @@
+total = (price + tax) * count(items, 0x1F, 2.5e3f) - offsets[i].delta++

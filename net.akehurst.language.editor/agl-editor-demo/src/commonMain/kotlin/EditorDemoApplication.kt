@@ -34,6 +34,7 @@ class EditorDemoApplication(
             "KerML_2_Std",
             "SysML_2_Agl",
             "SysML_2_Std",
+            "ANSI_C",
             "BSc",
             "Embedded",
             "English",
