@@ -38,8 +38,7 @@ import net.akehurst.language.parser.api.ParseInterrupt
 import net.akehurst.language.parser.api.ParseResult
 import net.akehurst.language.parser.leftcorner.ParseResultDefault
 import net.akehurst.language.reference.asm.CrossReferenceDomainDefault
-import net.akehurst.language.sentence.api.Sentence
-import net.akehurst.language.sentence.common.SentenceDefault
+import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.sppt.api.SharedPackedParseTree
 
 
@@ -56,6 +55,17 @@ abstract class AglWorkerAbstract {
 
     // each request is given its own ParseInterrupt, processor.interrupt would stop every parse of the processor
     private val _interrupts = ParseInterruptRegister()
+
+    // endPoint -> the leaves of the line tokens last sent to it,
+    // kept so that the tokens can be sent again, styled with a new style, without re-parsing the sentence
+    private val _lastLineTokens = mutableMapOf<EndPointIdentity, LastLineTokens>()
+
+    private class LastLineTokens(
+        val requestId: RequestIdentity,
+        val languageId: LanguageIdentity,
+        val tokens: List<List<LeafData>>,
+        val lineTokensChunkSize: Int
+    )
 
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
     protected abstract fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String?
@@ -181,6 +191,11 @@ abstract class AglWorkerAbstract {
             if (null != styleMdl) {
                 styleHndlr.updateStyleModel(styleMdl)
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.SUCCESS, "OK", result.allIssues.all.toList(), styleMdl))
+                // the sentence may have been processed before the style was set (or changed),
+                // so send its tokens again, styled with the new style (including those styled from the parse tree)
+                _lastLineTokens[message.endPoint]?.let { last ->
+                    this.sendLineTokens(port, message.endPoint, last.requestId, last.languageId, last.tokens, last.lineTokensChunkSize)
+                }
             } else {
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.FAILURE, "Invalid Style", result.allIssues.all.toList(), null))
             }
@@ -251,10 +266,11 @@ abstract class AglWorkerAbstract {
                     sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.IGNORED, cancelledMessage(interrupt), emptyList(), null))
                     return ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
                 } else if (null == sppt) {
+                    // the editor drops the line tokens it has when the parse fails, so they are not sent again either
+                    _lastLineTokens.remove(endPoint)
                     sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null))
                 } else {
-                    val sentenceObj = SentenceDefault(sentence, processOptions.parse.sentenceIdentity.invoke())
-                    this.sendLineTokens(port, endPoint, requestId, languageId, sentenceObj, sppt, editorOptions.lineTokensChunkSize)
+                    this.sendLineTokens(port, endPoint, requestId, languageId, sppt.tokensByLineAll(), editorOptions.lineTokensChunkSize)
                     if (editorOptions.parseTree) {
                         //TODO: send TreeData rather than encode parse tree...it should be faster
                         val treeStr = serialiseParseTreeToStringJson(sentence, sppt)
@@ -275,6 +291,7 @@ abstract class AglWorkerAbstract {
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Exception during 'parse' - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
+            _lastLineTokens.remove(endPoint)
             sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.FAILURE, msg, emptyList(), null))
             ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
         }
@@ -415,14 +432,13 @@ abstract class AglWorkerAbstract {
         endPoint: EndPointIdentity,
         requestId: RequestIdentity,
         languageId: LanguageIdentity,
-        sentence: Sentence,
-        sppt: SharedPackedParseTree,
+        tokens: List<List<LeafData>>,
         lineTokensChunkSize: Int
     ) {
         try {
             val editorOptions = _editorOptions[endPoint.editorId]
             if (true == editorOptions?.parseLineTokens) {
-                val tokens = sppt.tokensByLineAll()
+                _lastLineTokens[endPoint] = LastLineTokens(requestId, languageId, tokens, lineTokensChunkSize)
                 val style = this._styleHandler[languageId] ?: error("StyleHandler for ${languageId} not found") //TODO: send Error msg not exception
                 if (0 < lineTokensChunkSize) {
                     val lineTokensChunked = tokens.chunked(lineTokensChunkSize)

@@ -174,6 +174,18 @@ open class LanguageServiceRequestDirectExecution(
     // each request is given its own ParseInterrupt, processor.interrupt would stop every parse of the processor
     private val _interrupts = ParseInterruptRegister()
 
+    // endPoint -> the leaves of the line tokens last sent to it,
+    // kept so that the tokens can be sent again, styled with a new style, without re-parsing the sentence
+    private val _lastLineTokens = mutableMapOf<EndPointIdentity, LastLineTokens>()
+
+    private class LastLineTokens(
+        val requestId: RequestIdentity,
+        val languageId: LanguageIdentity,
+        val source: String,
+        val tokens: List<List<LeafData>>,
+        val lineTokensChunkSize: Int
+    )
+
     fun getLanguageDefinition(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity): LanguageDefinition<Any, Any>? {
         val ld =  if (Agl.registry.languages.containsKey(languageId)) {
             Agl.registry.languages[languageId]!! as LanguageDefinition<Any, Any>
@@ -259,6 +271,9 @@ open class LanguageServiceRequestDirectExecution(
                 if (null != styleMdl) {
                     styleHndlr.updateStyleModel(styleMdl)
                     response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.allIssues.all.toList(), styleMdl)
+                    // the sentence may have been processed before the style was set (or changed),
+                    // so send its tokens again, styled with the new style (including those styled from the parse tree)
+                    resendLineTokens(endPointIdentity)
                 } else {
                     response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, "Error in style string", result.allIssues.all.toList(), null)
                 }
@@ -441,6 +456,8 @@ open class LanguageServiceRequestDirectExecution(
                     response.sentenceParseResponse(endPointIdentity, requestId, MessageResponseStatus.IGNORED, cancelledMessage(interrupt), emptyList(), null)
                     return ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
                 } else if (null == sppt) {
+                    // the editor drops the line tokens it has when the parse fails, so they are not sent again either
+                    _lastLineTokens.remove(endPointIdentity)
                     response.sentenceParseResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null)
                 } else {
                     val tokens = sppt.tokensByLineAll()
@@ -462,6 +479,7 @@ open class LanguageServiceRequestDirectExecution(
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Exception during 'parse' - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
+            _lastLineTokens.remove(endPointIdentity)
             response.sentenceParseResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, msg, emptyList(), null)
             ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
         }
@@ -479,6 +497,7 @@ open class LanguageServiceRequestDirectExecution(
         try {
             val editorOptions = _editorOptions[endPointIdentity]
             if (true == editorOptions?.parseLineTokens) {
+                _lastLineTokens[endPointIdentity] = LastLineTokens(requestId, languageId, source, tokens, lineTokensChunkSize)
                 val style = this._styleHandler[endPointIdentity]
                 if (null == style) {
                     val msg = "StyleHandler for ${languageId} not found"
@@ -511,8 +530,13 @@ open class LanguageServiceRequestDirectExecution(
         }
     }
 
-    private fun sendLineTokens() {
-
+    /** send the line tokens last sent to [endPointIdentity] again, styled with its current style handler */
+    private fun resendLineTokens(endPointIdentity: EndPointIdentity) {
+        val last = _lastLineTokens[endPointIdentity]
+        if (null != last) {
+            logger.logTrace { "resendLineTokens $endPointIdentity, ${last.languageId}, ${last.requestId}" }
+            this.sendLineTokens(endPointIdentity, last.requestId, last.languageId, last.source, last.tokens, last.lineTokensChunkSize)
+        }
     }
 
     private fun <AsmType : Any, ContextType : Any> syntaxAnalysis(
