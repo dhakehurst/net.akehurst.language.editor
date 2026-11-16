@@ -72,7 +72,7 @@ class test_examples {
                 ld.update(
                     grammarString = GrammarString(grammar),
                     typesString = read(eg, "types.agl-typ").blankAsNull()?.let { TypesString(it) },
-                    asmTransformString = read(eg, "asmTransform.agl-trn").blankAsNull()?.let { AsmTransformString(it) },
+                    asmTransformString = read(eg, "asmTransform.agl-trf").blankAsNull()?.let { AsmTransformString(it) },
                     crossReferenceString = read(eg, "references.agl-ref").blankAsNull()?.let { CrossReferenceString(it) },
                     styleString = read(eg, "style.agl-sty").blankAsNull()?.let { StyleString(it) },
                     formatString = read(eg, "format.agl-fmt").blankAsNull()?.let { FormatString(it) },

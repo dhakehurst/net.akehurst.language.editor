@@ -47,7 +47,7 @@ class EditorDemoApplication(
             val sentence = readContent("files/examples/$path/sentence.txt")
             val grammar = readContent("files/examples/$path/grammar.agl-grm")
             val style = readContent("files/examples/$path/style.agl-sty")
-            val asmTransform = readContent("files/examples/$path/asmTransform.agl-trn")
+            val asmTransform = readContent("files/examples/$path/asmTransform.agl-trf")
             val types = readContent("files/examples/$path/types.agl-typ")
             val references = readContent("files/examples/$path/references.agl-ref")
             val format = readContent("files/examples/$path/format.agl-fmt")
