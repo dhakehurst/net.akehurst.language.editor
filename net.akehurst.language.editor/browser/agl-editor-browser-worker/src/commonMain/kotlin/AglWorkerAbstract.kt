@@ -20,6 +20,7 @@ import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
+import net.akehurst.language.agl.processor.tokensWithSemanticTags
 import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
@@ -403,6 +404,11 @@ abstract class AglWorkerAbstract {
                     }
                     val result = proc.semanticAnalysis(asm, opts)
                     val issues = result.issues.all
+                    // the line tokens of this sentence again, with the semantic tags (for style rules such as 'refers-to T')
+                    val last = _lastLineTokens[endPoint]
+                    if (result.semanticTags.isNotEmpty() && null != last && last.requestId == requestId) {
+                        this.sendLineTokens(port, endPoint, requestId, languageId, tokensWithSemanticTags(last.tokens, result.semanticTags), last.lineTokensChunkSize)
+                    }
                     if (editorOptions.semanticAnalysisAsm) {
                         sendMessage(port, MessageSemanticAnalysisResult(endPoint, requestId, MessageResponseStatus.SUCCESS, "Success", issues.toList(), asm))
                     } else {

@@ -20,6 +20,7 @@ import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.kotlinx.logging.common.LoggerCommon
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
+import net.akehurst.language.agl.processor.tokensWithSemanticTags
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.agl.processor.contextFromLanguageDefinition
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
@@ -631,6 +632,11 @@ open class LanguageServiceRequestDirectExecution(
                     }
                 }
                 val result = proc.semanticAnalysis(asm, opts)
+                // the line tokens of this sentence again, with the semantic tags (for style rules such as 'refers-to T')
+                val last = _lastLineTokens[endPointIdentity]
+                if (result.semanticTags.isNotEmpty() && null != last && last.requestId == requestId) {
+                    this.sendLineTokens(endPointIdentity, requestId, languageId, "SemanticAnalysis", tokensWithSemanticTags(last.tokens, result.semanticTags), last.lineTokensChunkSize)
+                }
                 if (editorOptions.semanticAnalysisAsm) {
                     response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "Success", result.issues.all.toList(), asm)
                 } else {
