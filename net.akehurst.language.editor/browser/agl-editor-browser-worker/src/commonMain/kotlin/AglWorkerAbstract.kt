@@ -19,6 +19,9 @@ package net.akehurst.language.editor.worker
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
+import net.akehurst.language.api.semanticAnalyser.SentenceContext
+import net.akehurst.language.style.api.AglStyleDomain
+import net.akehurst.language.grammar.processor.contextFromGrammar
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.agl.processor.tokensWithSemanticTags
 import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
@@ -187,7 +190,16 @@ abstract class AglWorkerAbstract {
         try {
             val styleHndlr = AglStyleHandlerCssClass(message.languageId)
             this._styleHandler[message.languageId] = styleHndlr
-            val result = Agl.registry.agl.style.processor!!.process(message.styleStr)
+            // the grammar and types of the language, so that the style's rule names and semantic selector types ('refers-to T') are checked and resolved
+            val ld = this._languageDefinition[message.languageId]
+            val grmDom = ld?.grammarDomain
+            val typesDom = ld?.typesDomain
+            val styleOpts = Agl.options<AglStyleDomain, SentenceContext> {
+                semanticAnalysis {
+                    if (null != grmDom && null != typesDom) sentenceContext(contextFromGrammar(grmDom).union(contextFromTypesDomain(typesDom)))
+                }
+            }
+            val result = Agl.registry.agl.style.processor!!.process(message.styleStr, styleOpts)
             val styleMdl = result.asm
             if (null != styleMdl) {
                 styleHndlr.updateStyleModel(styleMdl)

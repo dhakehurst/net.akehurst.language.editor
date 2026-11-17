@@ -21,6 +21,7 @@ import net.akehurst.kotlinx.logging.common.LoggerCommon
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
 import net.akehurst.language.agl.processor.tokensWithSemanticTags
+import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.agl.processor.contextFromLanguageDefinition
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
@@ -261,6 +262,8 @@ open class LanguageServiceRequestDirectExecution(
                     semanticAnalysis {
                         sentenceContext(
                             contextFromGrammar(grmDom)
+                                // the types of the language, for the types of semantic selectors ('refers-to T')
+                                .let { ctx -> langDef.typesDomain?.let { ctx.union(contextFromTypesDomain(it)) } ?: ctx }
                                 .union(
                                     contextFromLanguageDefinition(_languageDefinition.values, "StyleSet") { lang -> lang.styleDomain }
                                 )

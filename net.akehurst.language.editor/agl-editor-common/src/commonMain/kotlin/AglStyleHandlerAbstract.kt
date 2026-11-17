@@ -96,7 +96,7 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
             sel.value == AglStyleDomainDefault.NO_STYLE_ID.value -> _baseStyles.add(editorStyle)
             sel.value == AglStyleDomainDefault.KEYWORD_STYLE_ID.value -> _metaStyles.add(Pair(KEYWORD_REGEX, editorStyle))
             sel.kind == AglStyleSelectorKind.SPECIAL -> Unit // unknown special selector, styles nothing
-            else -> _selectorToEditorStyles.getOrPut(sel.value) { mutableListOf() }.add(editorStyle)
+            else -> _selectorToEditorStyles.getOrPut(sel.matchTag) { mutableListOf() }.add(editorStyle)
         }
     }
 
@@ -134,12 +134,12 @@ abstract class AglStyleHandlerAbstract<EditorStyleType : EditorStyle>(
      */
     override fun convert(selector: AglStyleSelector): EditorStyleType = when {
         selector.value == AglStyleDomainDefault.NO_STYLE_ID.value -> _baseStyles.firstOrNull() ?: EDITOR_NO_STYLE
-        else -> _selectorToEditorStyles[selector.value]?.firstOrNull() ?: let {
+        else -> _selectorToEditorStyles[selector.matchTag]?.firstOrNull() ?: let {
             val editorStyle = createEditorStyleType(EditorStyleIdentity(_stylePrefix + this._nextEditorStyleNum))
             _ruleOrder[editorStyle] = this._nextEditorStyleNum
             this._nextEditorStyleNum++
             _editorStyles[editorStyle.identity] = editorStyle
-            _selectorToEditorStyles.getOrPut(selector.value) { mutableListOf() }.add(editorStyle)
+            _selectorToEditorStyles.getOrPut(selector.matchTag) { mutableListOf() }.add(editorStyle)
             editorStyle
         }
     }
