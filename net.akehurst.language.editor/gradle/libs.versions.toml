@@ -1,17 +1,17 @@
 [versions]
-project = "2.4.0-SNAPSHOT"
+project = "2.4.0"
 
 kotlin = "2.4.0"
 dokka = "2.2.0"
 buildconfig = "6.1.2"
-exportPublic = "2.4.0-SNAPSHOT"
-reflect = "2.4.0-SNAPSHOT"
+exportPublic = "2.4.0"
+reflect = "2.4.0"
 vanniktech = "0.37.0"
 
-nal-agl = "4.2.4.0-SNAPSHOT"
-nak-compose-code-editor = "2.4.0-SNAPSHOT"
-nak-kserialisation = "2.4.0-SNAPSHOT"
-nak-kotlinx = "2.4.0-SNAPSHOT"
+nal-agl = "4.2.4.0"
+nak-compose-code-editor = "2.4.0"
+nak-kserialisation = "2.4.0"
+nak-kotlinx = "2.4.0"
 
 kotlinx-coroutines = "1.11.0"
 compose = "1.12.2"

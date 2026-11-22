@@ -39,7 +39,7 @@ repositories {
             includeGroupByRegex("net\\.akehurst.+")
         }
         mavenContent {
-            snapshotsOnly()
+            //snapshotsOnly()
         }
     }
     mavenCentral()
