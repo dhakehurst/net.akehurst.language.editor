@@ -16,7 +16,7 @@
 
 package net.akehurst.language.editor.browser.ck
 
-import net.akehurst.kotlinx.logging.common.LoggerJsConsole
+import net.akehurst.kotlinx.logging.common.LoggerBrowserConsole
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.SentenceContextAny
 import net.akehurst.language.api.processor.GrammarString
@@ -38,7 +38,7 @@ class test_AglTokenizerByWorkerCk {
             grammarDefinitionStr = GrammarString("")
         )
         val editorId = "test-editor"
-        val logger = LoggerJsConsole("test")
+        val logger = LoggerBrowserConsole("test")
         val styleHandler = AglStyleHandlerCkStyle(languageId)
         val agl = AglComponents<Asm, SentenceContextAny>(languageDef, editorId, logger, styleHandler)
         val emi = EditorModelIndex()

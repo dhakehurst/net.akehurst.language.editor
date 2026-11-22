@@ -41,7 +41,6 @@ import net.akehurst.language.regex.api.UnescapedLiteral
 import net.akehurst.language.scanner.api.Matchable
 import net.akehurst.language.scanner.api.MatchableKind
 import net.akehurst.language.sentence.api.InputLocation
-import net.akehurst.language.sppt.treedata.TreeDataComplete2
 import net.akehurst.language.types.api.TypesDomain
 import net.akehurst.language.types.asm.StdLibDefault
 import net.akehurst.language.types.builder.typesDomain
@@ -149,8 +148,15 @@ class test_AglWorkerSerialisation {
 
     @Test
     fun Asm_serialise_deserialise() {
-
-        val input: Asm = asmSimple() {
+        // asmSimple now needs the element types to exist in the types domain
+        val tm = typesDomain("Test", true) {
+            namespace("ns") {
+                data("Root")
+                data("Elem1")
+                data("Elem2")
+            }
+        }
+        val input: Asm = asmSimple(typesDomain = tm) {
             element("Root") {
                 propertyElementExplicitType("content", "Elem1") {
                     propertyString("propString", "stringValue")
@@ -229,6 +235,7 @@ class test_AglWorkerSerialisation {
         val tm = typesDomain("Test", true) {
             namespace("ns") {
                 data("Root")
+                data("Elem1")
                 data("Elem2") {
                     propertyPrimitiveType("id", "String", false, 0)
                     propertyPrimitiveType("ref", "String", false, 1)
@@ -516,60 +523,7 @@ class test_AglWorkerSerialisation {
 
     // --- MessageParseResult ---
 
-    @Test
-    fun test_TreeDataComplete_empty() {
-        val treeData = TreeDataComplete2(0)
 
-        val expected = MessageParseResult2(
-            EndPointIdentity(editorId, sessionId), RequestIdentity("1"),
-            MessageResponseStatus.RECEIVED,
-            "Start",
-            emptyList(),
-            treeData
-        )
-
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        val actual = AglWorkerSerialisation.deserialise<MessageParseResult2>(jsonStr)
-
-        assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.message, actual.message)
-        assertEquals(expected.issues, actual.issues)
-        assertEquals(expected.treeData, actual.treeData)
-    }
-
-    @Test
-    fun test_TreeDataComplete_a() {
-        val p = Agl.processorFromStringSimple(
-            GrammarString(
-                """
-            namespace test
-            grammar Test {
-                S = 'a' ;
-            }
-        """.trimIndent()
-            )
-        ).processor!!
-        val treeData = p.parse("a").sppt?.treeData!!
-
-        val expected = MessageParseResult2(
-            EndPointIdentity(editorId, sessionId), RequestIdentity("1"),
-            MessageResponseStatus.RECEIVED,
-            "Start",
-            emptyList(),
-            treeData
-        )
-
-        val jsonStr = AglWorkerSerialisation.serialise(expected)
-        println(jsonStr)
-        val actual = AglWorkerSerialisation.deserialise<MessageParseResult2>(jsonStr)
-
-        assertEquals(expected.endPoint, actual.endPoint)
-        assertEquals(expected.message, actual.message)
-        assertEquals(expected.issues, actual.issues)
-        assertEquals(expected.treeData, actual.treeData)
-        assertTrue(expected.treeData.matches(actual.treeData))
-        assertTrue(actual.treeData.matches(expected.treeData))
-    }
 
     @Test
     fun MessageParseResult_com_Start() {
@@ -744,8 +698,17 @@ class test_AglWorkerSerialisation {
             MessageResponseStatus.SUCCESS,
             "OK",
             emptyList(),
-            asmSimple() {
-                element("Unit") {
+            // asmSimple now needs the element types to exist in the types domain
+            asmSimple(typesDomain = typesDomain("Test", true) {
+                namespace("ns") {
+                    data("Unit")
+                    data("Primitive")
+                    data("Datatype")
+                    data("Property")
+                    data("TypeReference")
+                }
+            }) {
+                element("ns.Unit") {
                     propertyListOfElement("declaration") {
                         element("Primitive") {
                             propertyString("id", "String")

@@ -2,8 +2,8 @@ package net.akehurst.language.editor.compose.viewer
 
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import net.akehurst.kotlin.compose.editor.CodeEditorStateHolder
-import net.akehurst.kotlin.compose.editor.CodeEditorView
+import net.akehurst.kotlin.compose.viewer.CodeViewerStateHolder
+import net.akehurst.kotlin.compose.viewer.CodeViewerView
 import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.language.agl.Agl
 import net.akehurst.language.agl.simple.contextAsmSimple
@@ -15,7 +15,7 @@ import net.akehurst.language.api.processor.StyleString
 import net.akehurst.language.api.processor.TypesString
 import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.common.aglEditorOptions
-import net.akehurst.language.editor.compose.attachToComposeEditor
+import net.akehurst.language.editor.compose.attachToComposeViewer
 import net.akehurst.language.editor.language.service.LanguageServiceDirectExecution
 
 class AglComposeTextViewer(
@@ -49,17 +49,17 @@ class AglComposeTextViewer(
         }
     val editorOptions = aglEditorOptions { }
 
-    val editorId = "text-editor"
+    val editorId = "text-viewer"
     val endPointIdentity: EndPointIdentity = EndPointIdentity(editorId, "<none>")
 
     val logFunction: LogFunction = { lvl, prefix, msg, t -> println("$lvl: $prefix - $msg") }
     val languageService = LanguageServiceDirectExecution(logFunction)
 
-    val editorState = CodeEditorStateHolder(
+    val editorState = CodeViewerStateHolder(
         initialText = initialText
     )
 
-    val aglEditor = Agl.attachToComposeEditor(
+    val aglEditor = Agl.attachToComposeViewer(
         languageService,
         languageDefinition,
         { Agl.options { semanticAnalysis { sentenceContext(contextAsmSimple()) } } },
@@ -74,14 +74,14 @@ class AglComposeTextViewer(
     @Composable
     fun content() {
         Surface {
-            CodeEditorView(editorState)
+            CodeViewerView(editorState)
         }
     }
 
     var text: String
         get() = editorState.rawText
         set(value) {
-            editorState.setNewText(value)
+            aglEditor.text = value // processes the new text
         }
 
     fun updateLanguageDefinition(

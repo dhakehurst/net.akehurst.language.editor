@@ -19,7 +19,11 @@ package net.akehurst.language.editor.worker
 import net.akehurst.kotlin.json.JsonString
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
+import net.akehurst.language.api.semanticAnalyser.SentenceContext
+import net.akehurst.language.style.api.AglStyleDomain
+import net.akehurst.language.grammar.processor.contextFromGrammar
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
+import net.akehurst.language.agl.processor.tokensWithSemanticTags
 import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
 import net.akehurst.language.api.processor.*
@@ -29,15 +33,16 @@ import net.akehurst.language.editor.api.EndPointIdentity
 import net.akehurst.language.editor.api.MessageResponseStatus
 import net.akehurst.language.editor.api.RequestIdentity
 import net.akehurst.language.editor.common.AglStyleHandlerCssClass
+import net.akehurst.language.editor.language.service.ParseInterruptRegister
 import net.akehurst.language.editor.language.service.messages.*
 import net.akehurst.language.grammar.processor.AglGrammarSemanticAnalyser
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
+import net.akehurst.language.parser.api.ParseInterrupt
 import net.akehurst.language.parser.api.ParseResult
 import net.akehurst.language.parser.leftcorner.ParseResultDefault
 import net.akehurst.language.reference.asm.CrossReferenceDomainDefault
-import net.akehurst.language.sentence.api.Sentence
-import net.akehurst.language.sentence.common.SentenceDefault
+import net.akehurst.language.sppt.api.LeafData
 import net.akehurst.language.sppt.api.SharedPackedParseTree
 
 
@@ -51,6 +56,20 @@ abstract class AglWorkerAbstract {
 
     // editorId -> options
     private var _editorOptions: MutableMap<String, EditorOptions> = mutableMapOf()
+
+    // each request is given its own ParseInterrupt, processor.interrupt would stop every parse of the processor
+    private val _interrupts = ParseInterruptRegister()
+
+    // endPoint -> the leaves of the line tokens last sent to it,
+    // kept so that the tokens can be sent again, styled with a new style, without re-parsing the sentence
+    private val _lastLineTokens = mutableMapOf<EndPointIdentity, LastLineTokens>()
+
+    private class LastLineTokens(
+        val requestId: RequestIdentity,
+        val languageId: LanguageIdentity,
+        val tokens: List<List<LeafData>>,
+        val lineTokensChunkSize: Int
+    )
 
     protected abstract fun sendMessage(port: Any, msg: AglWorkerMessage, transferables: Array<Any> = emptyArray())
     protected abstract fun serialiseParseTreeToStringJson(sentence: String, sppt: SharedPackedParseTree?): String?
@@ -163,18 +182,33 @@ abstract class AglWorkerAbstract {
     }
 
     protected fun interrupt(port: Any, message: MessageParserInterruptRequest) {
-        _languageDefinition[message.languageId]?.processor?.interrupt(message.reason)
+        // only the older request of this endPoint is stopped, not other parses that use the same processor
+        _interrupts.interrupt(message.endPoint, message.requestId, message.languageId, ParseInterruptRegister.Kind.PROCESS, message.reason)
     }
 
     protected fun setStyle(port: Any, message: MessageSetStyle) {
         try {
             val styleHndlr = AglStyleHandlerCssClass(message.languageId)
             this._styleHandler[message.languageId] = styleHndlr
-            val result = Agl.registry.agl.style.processor!!.process(message.styleStr)
+            // the grammar and types of the language, so that the style's rule names and semantic selector types ('refers-to T') are checked and resolved
+            val ld = this._languageDefinition[message.languageId]
+            val grmDom = ld?.grammarDomain
+            val typesDom = ld?.typesDomain
+            val styleOpts = Agl.options<AglStyleDomain, SentenceContext> {
+                semanticAnalysis {
+                    if (null != grmDom && null != typesDom) sentenceContext(contextFromGrammar(grmDom).union(contextFromTypesDomain(typesDom)))
+                }
+            }
+            val result = Agl.registry.agl.style.processor!!.process(message.styleStr, styleOpts)
             val styleMdl = result.asm
             if (null != styleMdl) {
                 styleHndlr.updateStyleModel(styleMdl)
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.SUCCESS, "OK", result.allIssues.all.toList(), styleMdl))
+                // the sentence may have been processed before the style was set (or changed),
+                // so send its tokens again, styled with the new style (including those styled from the parse tree)
+                _lastLineTokens[message.endPoint]?.let { last ->
+                    this.sendLineTokens(port, message.endPoint, last.requestId, last.languageId, last.tokens, last.lineTokensChunkSize)
+                }
             } else {
                 sendMessage(port, MessageSetStyleResponse(message.endPoint, message.requestId, MessageResponseStatus.FAILURE, "Invalid Style", result.allIssues.all.toList(), null))
             }
@@ -188,11 +222,20 @@ abstract class AglWorkerAbstract {
         val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
         val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
 
-        //val scan = scan(port, message.endPoint, proc, message.text)
-        val parse = parse(port, message.endPoint, message.requestId, message.languageId, proc, message.options, message.text)
-        val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(port, message.endPoint, message.requestId, proc, message.options, it) }
-        val semanticAnalysis =
-            syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(port, message.endPoint, message.requestId, message.languageId, proc, message.options, it, r.locationMap) } }
+        val interrupt = _interrupts.start(message.endPoint, message.requestId, message.languageId, ParseInterruptRegister.Kind.PROCESS, "New parse request")
+        try {
+            val opts = Agl.options(message.options) { parse { interrupt(interrupt) } }
+            //val scan = scan(port, message.endPoint, proc, message.text)
+            val parse = parse(port, message.endPoint, message.requestId, message.languageId, proc, opts, message.text, interrupt)
+            val syntaxAnalysis = parse.sppt?.let {
+                if (_interrupts.isCancelled(interrupt)) null else this.syntaxAnalysis(port, message.endPoint, message.requestId, proc, opts, it)
+            }
+            val semanticAnalysis = syntaxAnalysis?.let { r ->
+                r.asm?.let { if (_interrupts.isCancelled(interrupt)) null else this.semanticAnalysis(port, message.endPoint, message.requestId, message.languageId, proc, opts, it, r.locationMap) }
+            }
+        } finally {
+            _interrupts.finish(message.endPoint, message.languageId, ParseInterruptRegister.Kind.PROCESS, interrupt)
+        }
     }
 
     /*
@@ -212,6 +255,8 @@ abstract class AglWorkerAbstract {
         }
     */
 
+    private fun cancelledMessage(interrupt: ParseInterrupt) = "Cancelled: ${interrupt.message ?: "the parser was terminated"}"
+
     protected fun parse(
         port: Any,
         endPoint: EndPointIdentity,
@@ -219,7 +264,8 @@ abstract class AglWorkerAbstract {
         languageId: LanguageIdentity,
         proc: LanguageProcessor<Any, Any>,
         processOptions: ProcessOptions<Any, Any>,
-        sentence: String
+        sentence: String,
+        interrupt: ParseInterrupt
     ): ParseResult {
         return try {
             sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), null))
@@ -227,11 +273,17 @@ abstract class AglWorkerAbstract {
             if (true == editorOptions?.parse) {
                 val result = proc.parse(sentence, processOptions.parse)
                 val sppt = result.sppt
-                if (null == sppt) {
+                if (_interrupts.isCancelled(interrupt, result.issues)) {
+                    // stopped because a newer request has been received (or the processor was interrupted)
+                    // the 'Parser was terminated' error is not a syntax error of the sentence, so it is not sent
+                    sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.IGNORED, cancelledMessage(interrupt), emptyList(), null))
+                    return ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
+                } else if (null == sppt) {
+                    // the editor drops the line tokens it has when the parse fails, so they are not sent again either
+                    _lastLineTokens.remove(endPoint)
                     sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null))
                 } else {
-                    val sentenceObj = SentenceDefault(sentence, processOptions.parse.sentenceIdentity.invoke())
-                    this.sendLineTokens(port, endPoint, requestId, languageId, sentenceObj, sppt, editorOptions.lineTokensChunkSize)
+                    this.sendLineTokens(port, endPoint, requestId, languageId, sppt.tokensByLineAll(), editorOptions.lineTokensChunkSize)
                     if (editorOptions.parseTree) {
                         //TODO: send TreeData rather than encode parse tree...it should be faster
                         val treeStr = serialiseParseTreeToStringJson(sentence, sppt)
@@ -252,6 +304,7 @@ abstract class AglWorkerAbstract {
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Exception during 'parse' - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
+            _lastLineTokens.remove(endPoint)
             sendMessage(port, MessageParseResult(endPoint, requestId, MessageResponseStatus.FAILURE, msg, emptyList(), null))
             ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
         }
@@ -363,6 +416,11 @@ abstract class AglWorkerAbstract {
                     }
                     val result = proc.semanticAnalysis(asm, opts)
                     val issues = result.issues.all
+                    // the line tokens of this sentence again, with the semantic tags (for style rules such as 'refers-to T')
+                    val last = _lastLineTokens[endPoint]
+                    if (result.semanticTags.isNotEmpty() && null != last && last.requestId == requestId) {
+                        this.sendLineTokens(port, endPoint, requestId, languageId, tokensWithSemanticTags(last.tokens, result.semanticTags), last.lineTokensChunkSize)
+                    }
                     if (editorOptions.semanticAnalysisAsm) {
                         sendMessage(port, MessageSemanticAnalysisResult(endPoint, requestId, MessageResponseStatus.SUCCESS, "Success", issues.toList(), asm))
                     } else {
@@ -392,14 +450,13 @@ abstract class AglWorkerAbstract {
         endPoint: EndPointIdentity,
         requestId: RequestIdentity,
         languageId: LanguageIdentity,
-        sentence: Sentence,
-        sppt: SharedPackedParseTree,
+        tokens: List<List<LeafData>>,
         lineTokensChunkSize: Int
     ) {
         try {
             val editorOptions = _editorOptions[endPoint.editorId]
             if (true == editorOptions?.parseLineTokens) {
-                val tokens = sppt.tokensByLineAll()
+                _lastLineTokens[endPoint] = LastLineTokens(requestId, languageId, tokens, lineTokensChunkSize)
                 val style = this._styleHandler[languageId] ?: error("StyleHandler for ${languageId} not found") //TODO: send Error msg not exception
                 if (0 < lineTokensChunkSize) {
                     val lineTokensChunked = tokens.chunked(lineTokensChunkSize)
@@ -452,13 +509,19 @@ abstract class AglWorkerAbstract {
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), 0, emptyList()))
             val ld = this._languageDefinition[message.languageId] ?: error("LanguageDefinition '${message.languageId}' not found, was it created correctly?")
             val proc = ld.processor ?: error("Processor for '${message.languageId}' not found, is the grammar correctly set ?")
-            val result = proc.expectedItemsAt(
-                message.text,
-                message.position,
-                message.options
-            )
-            sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.SUCCESS, "Success", result.issues.all.toList(), result.offset, result.items))
-            result.items
+            val interrupt = _interrupts.start(message.endPoint, message.requestId, message.languageId, ParseInterruptRegister.Kind.CODE_COMPLETE, "New code complete request")
+            try {
+                val opts = Agl.options(message.options) { parse { interrupt(interrupt) } }
+                val result = proc.expectedItemsAt(message.text, message.position, opts)
+                if (_interrupts.isCancelled(interrupt, result.issues)) {
+                    // an interrupted expectedAt has no result, it is not an error
+                    sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.IGNORED, cancelledMessage(interrupt), emptyList(), 0, emptyList()))
+                } else {
+                    sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.SUCCESS, "Success", result.issues.all.toList(), result.offset, result.items))
+                }
+            } finally {
+                _interrupts.finish(message.endPoint, message.languageId, ParseInterruptRegister.Kind.CODE_COMPLETE, interrupt)
+            }
         } catch (t: Throwable) {
             val msg = "Exception during 'getCodeCompletions' - ${t::class.simpleName} - ${t.message ?: ""}"
             sendMessage(port, MessageCodeCompleteResult(message.endPoint, message.requestId, MessageResponseStatus.FAILURE, msg, emptyList(), 0, emptyList()))

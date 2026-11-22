@@ -20,6 +20,8 @@ import net.akehurst.kotlinx.logging.api.LogFunction
 import net.akehurst.kotlinx.logging.common.LoggerCommon
 import net.akehurst.language.agl.*
 import net.akehurst.language.agl.processor.SyntaxAnalysisResultDefault
+import net.akehurst.language.agl.processor.tokensWithSemanticTags
+import net.akehurst.language.agl.semanticAnalyser.contextFromTypesDomain
 import net.akehurst.language.agl.processor.contextFromGrammarRegistry
 import net.akehurst.language.agl.processor.contextFromLanguageDefinition
 import net.akehurst.language.agl.syntaxAnalyser.LocationMapDefault
@@ -33,6 +35,7 @@ import net.akehurst.language.grammar.processor.contextFromGrammar
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.issues.api.LanguageProcessorPhase
 import net.akehurst.language.issues.ram.IssueHolder
+import net.akehurst.language.parser.api.ParseInterrupt
 import net.akehurst.language.parser.api.ParseResult
 import net.akehurst.language.parser.leftcorner.ParseResultDefault
 import net.akehurst.language.scanner.api.Matchable
@@ -170,6 +173,21 @@ open class LanguageServiceRequestDirectExecution(
     // editorId -> EditorOptions
     private var _editorOptions: MutableMap<EndPointIdentity, EditorOptions> = mutableMapOf()
 
+    // each request is given its own ParseInterrupt, processor.interrupt would stop every parse of the processor
+    private val _interrupts = ParseInterruptRegister()
+
+    // endPoint -> the leaves of the line tokens last sent to it,
+    // kept so that the tokens can be sent again, styled with a new style, without re-parsing the sentence
+    private val _lastLineTokens = mutableMapOf<EndPointIdentity, LastLineTokens>()
+
+    private class LastLineTokens(
+        val requestId: RequestIdentity,
+        val languageId: LanguageIdentity,
+        val source: String,
+        val tokens: List<List<LeafData>>,
+        val lineTokensChunkSize: Int
+    )
+
     fun getLanguageDefinition(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity): LanguageDefinition<Any, Any>? {
         val ld =  if (Agl.registry.languages.containsKey(languageId)) {
             Agl.registry.languages[languageId]!! as LanguageDefinition<Any, Any>
@@ -244,6 +262,8 @@ open class LanguageServiceRequestDirectExecution(
                     semanticAnalysis {
                         sentenceContext(
                             contextFromGrammar(grmDom)
+                                // the types of the language, for the types of semantic selectors ('refers-to T')
+                                .let { ctx -> langDef.typesDomain?.let { ctx.union(contextFromTypesDomain(it)) } ?: ctx }
                                 .union(
                                     contextFromLanguageDefinition(_languageDefinition.values, "StyleSet") { lang -> lang.styleDomain }
                                 )
@@ -255,6 +275,9 @@ open class LanguageServiceRequestDirectExecution(
                 if (null != styleMdl) {
                     styleHndlr.updateStyleModel(styleMdl)
                     response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.allIssues.all.toList(), styleMdl)
+                    // the sentence may have been processed before the style was set (or changed),
+                    // so send its tokens again, styled with the new style (including those styled from the parse tree)
+                    resendLineTokens(endPointIdentity)
                 } else {
                     response.processorSetStyleResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, "Error in style string", result.allIssues.all.toList(), null)
                 }
@@ -266,7 +289,8 @@ open class LanguageServiceRequestDirectExecution(
 
     override fun interruptRequest(endPointIdentity: EndPointIdentity, requestId: RequestIdentity, languageId: LanguageIdentity, reason: String) {
         logger.logTrace { "interruptRequest $endPointIdentity, $languageId" }
-        getLanguageDefinition(endPointIdentity, requestId, languageId)?.processor?.interrupt(reason)
+        // only the older request of this endPoint is stopped, not other parses that use the same processor
+        _interrupts.interrupt(endPointIdentity, requestId, languageId, ParseInterruptRegister.Kind.PROCESS, reason)
     }
 
     override fun <AsmType : Any, ContextType : Any> sentenceProcessRequest(
@@ -279,10 +303,20 @@ open class LanguageServiceRequestDirectExecution(
         logger.logTrace { "sentenceProcessRequest $endPointIdentity, $languageId" }
         getLanguageDefinition(endPointIdentity, requestId, languageId)?.let { ld ->
             val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
-            val scan = scan(endPointIdentity, requestId, languageId, proc, processOptions, sentence)
-            val parse = parse(endPointIdentity, requestId, languageId, proc, processOptions, sentence)
-            val syntaxAnalysis = parse.sppt?.let { this.syntaxAnalysis(endPointIdentity, requestId, languageId, proc, processOptions, it) }
-            val semanticAnalysis = syntaxAnalysis?.let { r -> r.asm?.let { this.semanticAnalysis(endPointIdentity, requestId, languageId, proc, processOptions, it, r.locationMap) } }
+            val interrupt = _interrupts.start(endPointIdentity, requestId, languageId, ParseInterruptRegister.Kind.PROCESS, "New parse request")
+            try {
+                val opts = Agl.options(processOptions) { parse { interrupt(interrupt) } }
+                val scan = scan(endPointIdentity, requestId, languageId, proc, opts, sentence)
+                val parse = parse(endPointIdentity, requestId, languageId, proc, opts, sentence, interrupt)
+                val syntaxAnalysis = parse.sppt?.let {
+                    if (isCancelled(interrupt)) null else this.syntaxAnalysis(endPointIdentity, requestId, languageId, proc, opts, it)
+                }
+                val semanticAnalysis = syntaxAnalysis?.let { r ->
+                    r.asm?.let { if (isCancelled(interrupt)) null else this.semanticAnalysis(endPointIdentity, requestId, languageId, proc, opts, it, r.locationMap) }
+                }
+            } finally {
+                _interrupts.finish(endPointIdentity, languageId, ParseInterruptRegister.Kind.PROCESS, interrupt)
+            }
         }
     }
 
@@ -298,8 +332,19 @@ open class LanguageServiceRequestDirectExecution(
         try {
             getLanguageDefinition(endPointIdentity, requestId, languageId)?.let { ld ->
                 val proc = ld.processor as LanguageProcessor<AsmType, ContextType>? ?: error("Processor for '${languageId}' not found, is the grammar correctly set ?")
-                val result = proc.expectedItemsAt(sentence, position, processOptions)
-                response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.issues.all.toList(), result.offset, result.items)
+                val interrupt = _interrupts.start(endPointIdentity, requestId, languageId, ParseInterruptRegister.Kind.CODE_COMPLETE, "New code complete request")
+                try {
+                    val opts = Agl.options(processOptions) { parse { interrupt(interrupt) } }
+                    val result = proc.expectedItemsAt(sentence, position, opts)
+                    if (_interrupts.isCancelled(interrupt, result.issues)) {
+                        // an interrupted expectedAt has no result, it is not an error
+                        response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.IGNORED, cancelledMessage(interrupt), emptyList(), 0, emptyList())
+                    } else {
+                        response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "OK", result.issues.all.toList(), result.offset, result.items)
+                    }
+                } finally {
+                    _interrupts.finish(endPointIdentity, languageId, ParseInterruptRegister.Kind.CODE_COMPLETE, interrupt)
+                }
             }
         } catch (t: Throwable) {
             response.sentenceCodeCompleteResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, t.message ?: "Thrown exception: ${t::class.simpleName}", emptyList(), 0, emptyList())
@@ -307,6 +352,10 @@ open class LanguageServiceRequestDirectExecution(
     }
 
     // --- Implementation ---
+    private fun isCancelled(interrupt: ParseInterrupt) = _interrupts.isCancelled(interrupt)
+
+    private fun cancelledMessage(interrupt: ParseInterrupt) = "Cancelled: ${interrupt.message ?: "the parser was terminated"}"
+
     protected open fun configureLanguageDefinition(
         ld: LanguageDefinition<Any, Any>,
         grammarStr: GrammarString?,
@@ -378,7 +427,7 @@ open class LanguageServiceRequestDirectExecution(
                 response.sentenceScanResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "Success", result.issues.all.toList())
                 result
             } else {
-                response.sentenceParseResponse(endPointIdentity, requestId, MessageResponseStatus.IGNORED, "Scan not enabled, in editor and process options", emptyList(), null)
+                response.sentenceScanResponse(endPointIdentity, requestId, MessageResponseStatus.IGNORED, "Scan not enabled, in editor and process options", emptyList())
                 ScanResultDefault(emptyList(), IssueHolder(LanguageProcessorPhase.SCAN))
             }
         } catch (t: Throwable) {
@@ -395,7 +444,8 @@ open class LanguageServiceRequestDirectExecution(
         languageId: LanguageIdentity,
         proc: LanguageProcessor<AsmType, ContextType>,
         processOptions: ProcessOptions<AsmType, ContextType>,
-        sentence: String
+        sentence: String,
+        interrupt: ParseInterrupt
     ): ParseResult {
         logger.logTrace { "parse $endPointIdentity, $languageId" }
         return try {
@@ -404,7 +454,14 @@ open class LanguageServiceRequestDirectExecution(
             if (true == editorOptions?.parse && processOptions.parse.enabled) {
                 val result = proc.parse(sentence, processOptions.parse)
                 val sppt = result.sppt
-                if (null == sppt) {
+                if (_interrupts.isCancelled(interrupt, result.issues)) {
+                    // stopped because a newer request has been received (or the processor was interrupted)
+                    // the 'Parser was terminated' error is not a syntax error of the sentence, so it is not sent
+                    response.sentenceParseResponse(endPointIdentity, requestId, MessageResponseStatus.IGNORED, cancelledMessage(interrupt), emptyList(), null)
+                    return ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
+                } else if (null == sppt) {
+                    // the editor drops the line tokens it has when the parse fails, so they are not sent again either
+                    _lastLineTokens.remove(endPointIdentity)
                     response.sentenceParseResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, "Parse Failed", result.issues.all.toList(), null)
                 } else {
                     val tokens = sppt.tokensByLineAll()
@@ -426,6 +483,7 @@ open class LanguageServiceRequestDirectExecution(
         } catch (t: Throwable) {
             val st = t.stackTraceToString().substring(0, 100)
             val msg = "Exception during 'parse' - ${t::class.simpleName} - ${t.message ?: ""}\n$st"
+            _lastLineTokens.remove(endPointIdentity)
             response.sentenceParseResponse(endPointIdentity, requestId, MessageResponseStatus.FAILURE, msg, emptyList(), null)
             ParseResultDefault(null, IssueHolder(LanguageProcessorPhase.PARSE))
         }
@@ -443,6 +501,7 @@ open class LanguageServiceRequestDirectExecution(
         try {
             val editorOptions = _editorOptions[endPointIdentity]
             if (true == editorOptions?.parseLineTokens) {
+                _lastLineTokens[endPointIdentity] = LastLineTokens(requestId, languageId, source, tokens, lineTokensChunkSize)
                 val style = this._styleHandler[endPointIdentity]
                 if (null == style) {
                     val msg = "StyleHandler for ${languageId} not found"
@@ -475,8 +534,13 @@ open class LanguageServiceRequestDirectExecution(
         }
     }
 
-    private fun sendLineTokens() {
-
+    /** send the line tokens last sent to [endPointIdentity] again, styled with its current style handler */
+    private fun resendLineTokens(endPointIdentity: EndPointIdentity) {
+        val last = _lastLineTokens[endPointIdentity]
+        if (null != last) {
+            logger.logTrace { "resendLineTokens $endPointIdentity, ${last.languageId}, ${last.requestId}" }
+            this.sendLineTokens(endPointIdentity, last.requestId, last.languageId, last.source, last.tokens, last.lineTokensChunkSize)
+        }
     }
 
     private fun <AsmType : Any, ContextType : Any> syntaxAnalysis(
@@ -571,6 +635,11 @@ open class LanguageServiceRequestDirectExecution(
                     }
                 }
                 val result = proc.semanticAnalysis(asm, opts)
+                // the line tokens of this sentence again, with the semantic tags (for style rules such as 'refers-to T')
+                val last = _lastLineTokens[endPointIdentity]
+                if (result.semanticTags.isNotEmpty() && null != last && last.requestId == requestId) {
+                    this.sendLineTokens(endPointIdentity, requestId, languageId, "SemanticAnalysis", tokensWithSemanticTags(last.tokens, result.semanticTags), last.lineTokensChunkSize)
+                }
                 if (editorOptions.semanticAnalysisAsm) {
                     response.sentenceSemanticAnalysisResponse(endPointIdentity, requestId, MessageResponseStatus.SUCCESS, "Success", result.issues.all.toList(), asm)
                 } else {

@@ -1,0 +1,4 @@
+namespace external
+    data AnnotationType
+    data RegularState
+    data BuiltInType

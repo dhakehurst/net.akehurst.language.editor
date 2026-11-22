@@ -23,7 +23,6 @@ import net.akehurst.language.editor.api.*
 import net.akehurst.language.editor.common.AglTokenDefault
 import net.akehurst.language.issues.api.LanguageIssue
 import net.akehurst.language.scanner.api.Matchable
-import net.akehurst.language.sppt.api.TreeData
 import net.akehurst.language.style.api.AglStyleDomain
 import kotlin.math.min
 
@@ -60,9 +59,6 @@ object EditorMessage {
     }
     class MessageProcessRequest {
         cmp options
-    }
-    class MessageParseResult2 {
-        cmp treeData
     }
     class MessageSetStyleResponse {
         cmp styleModel
@@ -222,18 +218,6 @@ data class MessageParseResult(
 ) : AglWorkerMessageResponse("MessageParseResult") {
     override fun toString(): String =
         "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, treeSerialised='...')"
-}
-
-data class MessageParseResult2(
-    override val endPoint: EndPointIdentity,
-    override val requestId: RequestIdentity,
-    override val status: MessageResponseStatus,
-    val message: String,
-    override val issues: List<LanguageIssue>,
-    val treeData: TreeData
-) : AglWorkerMessageResponse("MessageParseResult") {
-    override fun toString(): String =
-        "${super.action}(endPoint=$endPoint, status=$status, message=$message, issues=$issues, treeData='...')"
 }
 
 data class MessageSyntaxAnalysisResult(

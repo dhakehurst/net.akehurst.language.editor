@@ -1,0 +1,25 @@
+namespace test
+
+grammar Common {
+    skip WHITESPACE = "\s+" ;
+	skip SINGLE_LINE_COMMENT = "/\*[^*]*\*+([^*/][^*]*\*+)*/" ;
+	skip MULTI_LINE_COMMENT = "//[^\n\r]*" ;
+
+    leaf ID = "[A-Za-z_][A-Za-z0-9_]*" ;
+}
+
+grammar Test extends Common {
+    unit = declaration* ;
+    declaration = datatype | primitive | collection ;
+    primitive = 'primitive' ID ;
+    collection = 'collection' ID typeParameters? ;
+    typeParameters = '<' typeParameterList '>' ;
+    typeParameterList = [ID / ',']+ ;
+    datatype = 'class' ID '{' property* '}' ;
+    property = ID ':' typeReference ;
+    typeReference = type typeArguments? ;
+    typeArguments = '<' typeArgumentList '>' ;
+    typeArgumentList = [typeReference / ',']+ ;
+
+    leaf type = ID;
+}

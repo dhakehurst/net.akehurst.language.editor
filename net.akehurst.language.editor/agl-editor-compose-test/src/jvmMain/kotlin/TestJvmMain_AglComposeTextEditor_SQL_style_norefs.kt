@@ -18,13 +18,11 @@ package net.akehurst.language.editor.compose.test
 
 
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.window.singleWindowApplication
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import net.akehurst.kotlin.compose.editor.AutocompleteStateCompose
 import net.akehurst.kotlinx.logging.api.LoggingManager
-import net.akehurst.kotlinx.logging.common.LoggingByConsole
+import net.akehurst.kotlinx.logging.api.LoggingByConsole
 import net.akehurst.language.api.processor.GrammarString
 import net.akehurst.language.api.processor.StyleString
 import net.akehurst.language.editor.compose.AglComposeTextEditor

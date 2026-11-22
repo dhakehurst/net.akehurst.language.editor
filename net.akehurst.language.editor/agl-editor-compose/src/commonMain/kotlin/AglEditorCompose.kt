@@ -27,6 +27,7 @@ import net.akehurst.kotlin.compose.editor.api.AutocompleteItemDivider
 import net.akehurst.kotlin.compose.editor.api.AutocompleteRequestData
 import net.akehurst.kotlin.compose.editor.api.AutocompleteSuggestion
 import net.akehurst.kotlin.compose.editor.api.ComposeCodeEditor
+import net.akehurst.kotlin.compose.editor.api.ComposeCodeViewer
 import net.akehurst.kotlin.compose.editor.api.TextDecorationStyle
 import net.akehurst.kotlin.compose.editor.api.simple.AutocompleteItemSimple
 import net.akehurst.kotlinx.logging.api.LogFunction
@@ -60,7 +61,36 @@ fun <AsmType : Any, ContextType : Any> Agl.attachToComposeEditor(
         editorId = editorId,
         editorOptions = editorOptions,
         logFunction = logFunction,
-        composeEditor = composeEditor
+        composeViewer = composeEditor
+    )
+    languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
+    aglEditor.initialise()
+    return aglEditor
+}
+
+/**
+ * Attach AGL to a read-only code viewer (e.g. a CodeViewerStateHolder shown with CodeViewerView).
+ * The text is styled and issues are marked, but there is no autocomplete and the text cannot be edited.
+ * Set the text with the returned [AglEditor.text] (not on the viewer directly), so that it is (re)processed.
+ */
+fun <AsmType : Any, ContextType : Any> Agl.attachToComposeViewer(
+    languageService: LanguageService,
+    languageDefinition: LanguageDefinition<AsmType, ContextType>,
+    processOptions: () -> ProcessOptions<AsmType, ContextType>,
+    editorId: String,
+    editorOptions: EditorOptions,
+    logFunction: LogFunction,
+    composeViewer: ComposeCodeViewer
+): AglEditor<AsmType, ContextType> {
+    val aglEditor = AglEditorCompose<AsmType, ContextType>(
+        languageServiceRequest = languageService.request,
+        languageDefinition = languageDefinition,
+        processOptions = processOptions,
+        editorId = editorId,
+        editorOptions = editorOptions,
+        logFunction = logFunction,
+        composeViewer = composeViewer,
+        readOnly = true
     )
     languageService.addResponseListener(aglEditor.endPointIdentity, aglEditor)
     aglEditor.initialise()
@@ -75,22 +105,32 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     editorId: String,
     editorOptions: EditorOptions,
     logFunction: LogFunction,
-    val composeEditor: ComposeCodeEditor
+    /** the compose code editor, or viewer */
+    val composeViewer: ComposeCodeViewer,
+    /** when true, the text is not edited by the user (no autocomplete, no text change handling) */
+    val readOnly: Boolean = composeViewer !is ComposeCodeEditor
 ) : AglEditorAbstract<AsmType, ContextType, ComposeStyle>(
     languageServiceRequest, languageDefinition, processOptions, EndPointIdentity(editorId, "none"),
     editorOptions, logFunction, AglStyleHandlerComposeStyle(languageDefinition.identity)
 ) {
 
-    override val baseEditor: Any get() = composeEditor
+    /** the compose code editor, null when attached to a viewer */
+    val composeEditor: ComposeCodeEditor? get() = composeViewer as? ComposeCodeEditor
+
+    override val baseEditor: Any get() = composeViewer
     override val isConnected: Boolean get() = true
     override var text: String
-        get() = composeEditor.rawText
+        get() = composeViewer.rawText
         set(value) {
-            composeEditor.rawText = value
+            composeViewer.rawText = value
+            if (readOnly) {
+                // a viewer does not report text changes, so process the new text here
+                onEditorTextChangeInternal(value)
+            }
         }
 
     //TODO: add setter! - currently cannot 'set' annotatedString in TextFieldState
-    val styledText get() = composeEditor.annotatedText
+    val styledText get() = composeViewer.annotatedText
 
     var errorMessageProvider = { issue: LanguageIssue -> issue.message }
     var errorMarkerColorProvider = { issue: LanguageIssue -> when(issue.kind) {
@@ -137,23 +177,26 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
 
     fun initialise() {
         this.updateLanguageDefinition(languageDefinition)
-        composeEditor.requestAutocompleteSuggestions = { request, result ->
-            try {
-                requestAutocomplete(request, result)
-            } catch (t: Throwable) {
-                logger.logError(t) { "Failed to requestAutocompleteSuggestions" }
+        val ed = composeEditor
+        if (null != ed && readOnly.not()) {
+            ed.requestAutocompleteSuggestions = { request, result ->
+                try {
+                    requestAutocomplete(request, result)
+                } catch (t: Throwable) {
+                    logger.logError(t) { "Failed to requestAutocompleteSuggestions" }
+                }
             }
-        }
-        composeEditor.onTextChange = { txt ->
-            try {
-                onEditorTextChangeInternal(txt.toString())
-            } catch (t: Throwable) {
-                logger.logError(t) { "Failed to onTextChange" }
+            ed.onTextChange = { txt ->
+                try {
+                    onEditorTextChangeInternal(txt.toString())
+                } catch (t: Throwable) {
+                    logger.logError(t) { "Failed to onTextChange" }
+                }
             }
         }
 
         // trigger first sentence process
-        onEditorTextChangeInternal(composeEditor.rawText)
+        onEditorTextChangeInternal(composeViewer.rawText)
     }
 
     override fun resetTokenization(fromLine: Int) {
@@ -161,7 +204,7 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
         workerTokenizer.refresh()
         //TODO: maybe do this different!
         //FIXME: is 'this.text' the correct value here ?
-        composeEditor.lineStyles = workerTokenizer.aglTokenizer.getAllTokensByLine(text).mapValues { (k, v) ->
+        composeViewer.lineStyles = workerTokenizer.aglTokenizer.getAllTokensByLine(text).mapValues { (k, v) ->
             workerTokenizer.toEditorTokens(v)
         }
 //        composeEditor.refreshTokens() //calling this causes undo/redo to stop working
@@ -185,8 +228,8 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
     override fun clearIssueMarkers() {
         logger.logTrace { "AglEditorCompose.clearIssueMarkers" }
         try {
-            composeEditor.clearMarginItems()
-            composeEditor.clearTextMarkers()
+            composeViewer.clearMarginItems()
+            composeViewer.clearTextMarkers()
         } catch (t: Throwable) {
             logger.logError(t) { "AglEditorCompose.exception during clearIssueMarkers: " }
         }
@@ -225,8 +268,8 @@ class AglEditorCompose<AsmType : Any, ContextType : Any>(
                         SpanStyle(color = colour)//, textDecoration = TextDecoration.Underline, platformStyle = PlatformSpanStyle_TextDecorationLineStyle_WAVY)
                     )
                 }
-                composeEditor.addMarginItem(line - 1, it.kind.toString(), errorMessageProvider(it), icon, colour)
-                composeEditor.addTextMarker(pos, len, style, TextDecorationStyle.SQUIGGLY)
+                composeViewer.addMarginItem(line - 1, it.kind.toString(), errorMessageProvider(it), icon, colour)
+                composeViewer.addTextMarker(pos, len, style, TextDecorationStyle.SQUIGGLY)
             }
         } catch (t: Throwable) {
             logger.logError(t) { "AglEditorCompose.exception during clearIssueMarkers: " }

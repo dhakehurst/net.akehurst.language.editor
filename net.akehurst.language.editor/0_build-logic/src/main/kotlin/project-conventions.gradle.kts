@@ -28,8 +28,8 @@ plugins {
     signing
     alias(libs.plugins.vanniktech.maven.publish)
 }
-val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
-val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
+val kotlin_languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_4
+val kotlin_apiVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_4
 val jvmTargetVersion = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
 
 repositories {
@@ -39,7 +39,7 @@ repositories {
             includeGroupByRegex("net\\.akehurst.+")
         }
         mavenContent {
-            snapshotsOnly()
+            //snapshotsOnly()
         }
     }
     mavenCentral()
@@ -132,6 +132,8 @@ tasks.named("publish").get().dependsOn("javadocJar")
 
 tasks.named<Test>("jvmTest") {
     useJUnitPlatform()
+    // several modules have no JVM tests; Gradle 9 fails jvmTest by default when none are discovered
+    failOnNoDiscoveredTests = false
     filter {
         isFailOnNoMatchingTests = false
     }

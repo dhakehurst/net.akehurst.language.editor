@@ -1,0 +1,14 @@
+// From the SysML v2 Release 2026-09.1, examples/Address Book Example (Eclipse Public License v2.0)
+private import ScalarValues::*;
+package AddressBookModel {
+	
+	class Entry {
+		name: String;
+		address: String;
+	}
+	
+	class AddressBook {
+		entries: Entry[*];
+	}
+	
+}

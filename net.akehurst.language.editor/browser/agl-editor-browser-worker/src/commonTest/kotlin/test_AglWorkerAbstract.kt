@@ -145,7 +145,7 @@ class test_AglWorkerAbstract {
                     MessageResponseStatus.SUCCESS, "OK",
                     emptyList(),
                     listOf(
-                        Matchable(1, 1, "'a'", UnescapedLiteral("a"), MatchableKind.LITERAL)
+                        Matchable(2, 1, "'a'", UnescapedLiteral("a"), MatchableKind.LITERAL)
                     )
                 )
             ),
@@ -450,7 +450,7 @@ class test_AglWorkerAbstract {
         """.trimIndent()
 
         // create userGrammar
-        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), requestId, languageId, userGrammar, crossReferenceStr, null, null, EditorOptionsDefault()))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), requestId, languageId, userGrammar, typesModelStr = null, transformStr = null, crossReferenceStr = crossReferenceStr, editorOptions = EditorOptionsDefault()))
         // set style for agl grammar (is this needed?)
         sut.receive(port, MessageSetStyle(EndPointIdentity(editorId, sessionId), requestId, languageId, styleStr))
         // process the userGrammar sentence
@@ -490,7 +490,7 @@ class test_AglWorkerAbstract {
         // because LanguageService is in same mem space, no serialisation occurs,
         // hence same ASM is returned for Syntax and Semantic analysis, and the Semantic analysis resolves the references.
         // TODO: could make test better by cloning the asm !
-        val expectedAsmSyn = asmSimple() {
+        val expectedAsmSyn = asmSimple(typesDomain = expectedTypeModel) { // asmSimple now needs the element types to exist in the types domain
             element("Unit") {
                 propertyListOfElement("declaration") {
                     element("Primitive") {
@@ -544,6 +544,8 @@ class test_AglWorkerAbstract {
             // TODO: could make test better by cloning the asm !
             MessageSyntaxAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSem),// expectedAsmSyn),
             MessageSemanticAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), null),
+            // line tokens sent again with the semantic tags (e.g. for style selectors 'refers-to')
+            MessageLineTokens(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", 0, emptyList()),
             MessageSemanticAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSem)
         )
 
@@ -652,11 +654,11 @@ class test_AglWorkerAbstract {
                 identify S by a
         """.trimIndent()
 
-        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(languageId.value), languageId, grammarStr, referencesStr, null, null, EditorOptionsDefault()))
+        sut.receive(port, MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(languageId.value), languageId, grammarStr, typesModelStr = null, transformStr = null, crossReferenceStr = referencesStr, editorOptions = EditorOptionsDefault()))
 
         sut.receive(
             port,
-            MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(Agl.registry.agl.crossReferenceLanguageIdentity.value), Agl.registry.agl.crossReferenceLanguageIdentity, grammarStr, referencesStr, null, null, EditorOptionsDefault())
+            MessageProcessorCreate(EndPointIdentity(editorId, sessionId), RequestIdentity(Agl.registry.agl.crossReferenceLanguageIdentity.value), Agl.registry.agl.crossReferenceLanguageIdentity, grammarStr, typesModelStr = null, transformStr = null, crossReferenceStr = referencesStr, editorOptions = EditorOptionsDefault())
         )
         sut.receive(port, MessageSetStyle(EndPointIdentity(editorId, sessionId), RequestIdentity(Agl.registry.agl.crossReferenceLanguageIdentity.value), Agl.registry.agl.crossReferenceLanguageIdentity, styleStr))
 
