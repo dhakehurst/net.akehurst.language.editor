@@ -544,6 +544,8 @@ class test_AglWorkerAbstract {
             // TODO: could make test better by cloning the asm !
             MessageSyntaxAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSem),// expectedAsmSyn),
             MessageSemanticAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.RECEIVED, "Start", emptyList(), null),
+            // line tokens sent again with the semantic tags (e.g. for style selectors 'refers-to')
+            MessageLineTokens(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", 0, emptyList()),
             MessageSemanticAnalysisResult(EndPointIdentity(editorId, sessionId), requestId, MessageResponseStatus.SUCCESS, "Success", emptyList(), expectedAsmSem)
         )
 

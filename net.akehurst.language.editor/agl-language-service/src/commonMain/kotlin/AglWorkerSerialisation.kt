@@ -783,7 +783,11 @@ object AglWorkerSerialisation {
                        parameter(setOf(),"provideValuesForPatternTerminals", "Boolean", false)
                        parameter(setOf(),"other", "Map", false)
                        parameter(setOf(),"ruleDepth", "Map", false)
+                       parameter(setOf(),"sentenceAsm", "Any", true)
+                       parameter(setOf(),"sentenceLocationMap", "LocationMap", true)
                     }
+                    propertyOf(setOf(VAR, REF, STR), "sentenceAsm", "Any", true)
+                    propertyOf(setOf(VAR, CMP, STR), "sentenceLocationMap", "LocationMap", true)
                     propertyOf(setOf(VAR, REF, STR), "ruleDepth", "Map", false) {
                         typeArgument("String")
                         typeArgument("Integer")
